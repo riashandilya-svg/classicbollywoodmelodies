@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Hai Apna Dil Toh Awaara</title>
+<title>Hai Apna Dil Toh Awaara</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
@@ -369,7 +369,7 @@ canvas {
     <div id="brandBar">
         <span>Ria Om Shandilya</span>
       </div>      
-    <h1> Hai Apna Dil Toh Awaara</h1>
+    <h1>Hai Apna Dil Toh Awaara</h1>
 <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
     <div id="trainingProgressFill"></div>
@@ -462,15 +462,10 @@ import { Midi } from 'https://cdn.skypack.dev/@tonejs/midi@2.0.28';
 // ================================
 const SONG_CONFIG = {
     id: "haiapna",
-    title: "haiapna",
-
-    timeSignature: [4, 4], // 4/4
-    measures: 41,
-
-    // MIDI is linear — sheet logic comes later
+    title: "Hai Apna Dil Toh Awaara",
+    timeSignature: [4, 4], // Change if different time signature
+    measures: 41,  // ← Change to actual number of measures in your MIDI
     repeats: [],
-
-    // optional future hooks
     pickupBeats: 0
 };
 // ================================
@@ -480,9 +475,10 @@ const SONG_CONFIG = {
 // Logical measures are sheet numbers (what user types in)
 // Repeat section: 7..14 is duplicated once in the MIDI timeline
 // ================================
-const REPEAT_START = 0;
-const REPEAT_END = 0;  // Only bars 7-13 repeat (bar 14 doesn't)
-const REPEAT_LEN = 0;  // This becomes 7
+const REPEAT_START = 0;  // No repeats
+const REPEAT_END = 0;    // No repeats
+const REPEAT_LEN = 0;
+    
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
@@ -1183,7 +1179,7 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         if (isBlackMidi(midi)) continue;
 
         const x = whiteIndex * getWhiteKeyWidth()        ;
-        const isTreble = expectedMidiTreble.has(midi);
+   const isTreble = expectedMidiTreble.has(midi) || expectedMidiNote === midi;
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
     ctx.fillStyle = "#FFECB3"; // ☀️ yellow
@@ -1230,7 +1226,7 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         getWhiteKeyWidth()
         * 0.7;
 
-        const isTreble = expectedMidiTreble.has(midi);
+   const isTreble = expectedMidiTreble.has(midi) || expectedMidiNote === midi;
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
@@ -1350,16 +1346,27 @@ const feedback = document.getElementById('feedback');
 // ---------- WRONG NOTE ----------
 if (noteName !== currentTrainingNote) {
 
-const expectedMidi = allMidiNotes[trainingIndex].midi;
+const expectedNote = practiceNotes[trainingIndex];  // ← MOVED TO TOP (only once!)
+const expectedMidi = expectedNote.midi;
 const explanation = explainWrongNote(midiNote, expectedMidi);
-
+    
 feedback.textContent = explanation;
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
 feedback.classList.add('wrong', 'show');
 
 failureCount++;
-expectedMidiNote = expectedMidi;
+
+// ✅ FIX: Properly highlight the CORRECT note on keyboard
+if (expectedNote.track === TREBLE) {  // ← Remove the duplicate "const expectedNote = ..." line
+    expectedMidiTreble.clear();
+    expectedMidiTreble.add(expectedMidi);
+    expectedMidiBass.clear();
+} else if (expectedNote.track === BASS) {
+    expectedMidiBass.clear();
+    expectedMidiBass.add(expectedMidi);
+    expectedMidiTreble.clear();
+}
 // 🔴 Update side circles (WRONG)
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
@@ -2270,8 +2277,6 @@ practiceNotes = allMidiNotes
         const p = getMeasureFromTime(note.time);
         if (p === null) return null;
         
-        // ONLY include notes from measures we explicitly selected
-        if (!allowedPhysical.has(p)) return null;
 // ONLY include notes from measures we explicitly selected
 if (!allowedPhysical.has(p)) {
             if (note.time >= 48 && note.time <= 54) {
