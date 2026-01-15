@@ -961,6 +961,7 @@ let targetNote = null;
 // 🎯 Training Progress Helpers
 function showTrainingProgress() {
     document.getElementById('trainingProgress').style.display = 'block';
+    updateTrainingProgress();
 }
 
 function hideTrainingProgress() {
@@ -970,7 +971,6 @@ function hideTrainingProgress() {
 function updateTrainingProgress() {
     if (!practiceNotes || practiceNotes.length === 0) return;
 
-    // Progress based on completed notes
     const percent = Math.min(
         100,
         Math.round((trainingIndex / practiceNotes.length) * 100)
@@ -1106,7 +1106,7 @@ function noteToX(midi) {
 
     // Black keys sit between white keys
     if (isBlackMidi(midi)) {
-        x -= getWhiteKeyWidth()* 0.35;
+        x -= getWhiteKeyWidth()        * 0.35;
     }
 
     return x;
@@ -1192,10 +1192,10 @@ if (isTreble) {
 } else {
     ctx.fillStyle = "#ffffff";
 }
-        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
 
         ctx.strokeStyle = "#000";
-        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
 // White key note name
 if (showNoteNames) {
     ctx.fillStyle = "#000";
@@ -1205,7 +1205,7 @@ if (showNoteNames) {
 
     ctx.fillText(
         getNoteName(midi),
-        x + getWhiteKeyWidth()/ 2,
+        x + getWhiteKeyWidth()        / 2,
         keyboardTop + keyHeight - 5
     );
 }
@@ -1222,11 +1222,13 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         continue;
     }
 
-    const blackKeyWidth = getWhiteKeyWidth()* 0.6;
+    const blackKeyWidth = getWhiteKeyWidth()    * 0.6;
     const blackKeyHeight = keyHeight * 0.6;
 
     const x =
-        (whiteIndex - 1) * getWhiteKeyWidth()+ getWhiteKeyWidth()* 0.7;
+        (whiteIndex - 1) * getWhiteKeyWidth()        +
+        getWhiteKeyWidth()
+        * 0.7;
 
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
@@ -1433,7 +1435,7 @@ fallingRectangles.push({
     y: startY,
     startY,
     endY,
-    width: getWhiteKeyWidth()* 0.86,
+    width: getWhiteKeyWidth() * 0.86,
     height,
 
     gradient,
@@ -1494,7 +1496,7 @@ fallingRectangles = [];
 previewMode = true;
 
 const feedback = document.getElementById('feedback');
-feedback.textContent = 'Listen first...';
+feedback.textContent = 'Listen first…';
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -1579,40 +1581,27 @@ previewTimeouts.push(endTimeout);
 
 
 function spawnNextValidNote(){
-    while (trainingIndex < practiceNotes.length) {
-        const note = practiceNotes[trainingIndex];
 
-        const isTreble = note.track === TREBLE;
-        const isBass   = note.track === BASS;
+    while (trainingIndex < practiceNotes.length) {
+    const note = practiceNotes[trainingIndex];
+    const currentMeasure = getLogicalSheetMeasureFromTime(note.time);
+
+    const isTreble = note.track === TREBLE;
+const isBass   = note.track === BASS;
+
 
         if (
-            clefMode === 'both' ||
-            (clefMode === 'treble' && isTreble) ||
-            (clefMode === 'bass' && isBass)
-        ) {
-            spawnTrainingNote(note);
-            return;
-        }
-
-        trainingIndex++;
-        if (heldTime >= expectedHoldDuration) {
-            feedback.textContent = 'Good!';
-
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('correct', 'show');
-    explanationLocked = false;
-    waitingForInput = false;
-    expectedMidiNote = null;
-    trainingIndex++;
-    updateTrainingProgress();  // ✅ ADD THIS LINE
-
-    // clear only AFTER success
-    document.getElementById('holdInfo').textContent = '';
-
-    setTimeout(() => spawnNextValidNote(), 300);
-        updateTrainingProgress();
+    clefMode === 'both' ||
+    (clefMode === 'treble' && isTreble) ||
+    (clefMode === 'bass' && isBass)
+) {
+        spawnTrainingNote(note);
+        return;
     }
+
+    trainingIndex++;
+    updateTrainingProgress();
+}
 
 if (loopEnabled) {
     trainingIndex = 0;
@@ -1670,6 +1659,8 @@ function animate() {
 
 
 const progress = elapsed / getFallTimeMs();
+
+    ;
 
     rect.y = rect.startY + progress * (rect.endY - rect.startY);
 // 🎯 NOTE HAS LANDED ON KEYBOARD (ALWAYS HIGHLIGHT)
@@ -1804,7 +1795,7 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
     // Representative black key
     const targetMidi = arrowTargetGroup === "2" ? 61 : 66;
 
-    const x = noteToX(targetMidi) + getWhiteKeyWidth()/ 2;
+    const x = noteToX(targetMidi) + getWhiteKeyWidth()    / 2;
     const y = keyboardTop - 140;
 
     // Arrow
@@ -2346,6 +2337,8 @@ if (emptyBars.length) {
 
     // 🔄 RESET TRAINING STATE
     trainingIndex = 0;
+    showTrainingProgress();
+updateTrainingProgress();
     clefMode = selectedHand === 'both' ? 'both' : selectedHand;
 // sectionStartTime already set correctly above — REMOVE THIS LINE
 
@@ -2618,7 +2611,7 @@ feedback.classList.add('correct', 'show');
     waitingForInput = false;
     expectedMidiNote = null;
     trainingIndex++;
-
+updateTrainingProgress();
     // clear only AFTER success
     document.getElementById('holdInfo').textContent = '';
 
