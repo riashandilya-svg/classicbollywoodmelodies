@@ -1359,7 +1359,18 @@ void feedback.offsetWidth;
 feedback.classList.add('wrong', 'show');
 
 failureCount++;
-expectedMidiNote = expectedMidi;
+
+// ✅ FIX: Properly highlight the CORRECT note on keyboard
+const expectedNote = practiceNotes[trainingIndex];
+if (expectedNote.track === TREBLE) {
+    expectedMidiTreble.clear();
+    expectedMidiTreble.add(expectedMidi);
+    expectedMidiBass.clear();
+} else if (expectedNote.track === BASS) {
+    expectedMidiBass.clear();
+    expectedMidiBass.add(expectedMidi);
+    expectedMidiTreble.clear();
+}
 // 🔴 Update side circles (WRONG)
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
