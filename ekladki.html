@@ -971,10 +971,10 @@ function hideTrainingProgress() {
 function updateTrainingProgress() {
     if (!practiceNotes || practiceNotes.length === 0) return;
 
-    // ✅ FIX: Add 1 to trainingIndex so last note shows 100%
+    // Progress based on completed notes
     const percent = Math.min(
         100,
-        Math.round(((trainingIndex + 1) / practiceNotes.length) * 100)
+        Math.round((trainingIndex / practiceNotes.length) * 100)
     );
 
     document.getElementById('trainingProgressFill').style.width =
@@ -1495,7 +1495,7 @@ fallingRectangles = [];
 previewMode = true;
 
 const feedback = document.getElementById('feedback');
-feedback.textContent = 'Listen first…';
+feedback.textContent = 'This is what we'll play!';
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -1607,7 +1607,9 @@ if (loopEnabled) {
     }, 600);
     return;
 }
-updateTrainingProgress();  // ✅ ADD THIS LINE - force 100% at completion
+// Force 100% at completion
+trainingIndex = practiceNotes.length;
+updateTrainingProgress();
 
 const feedback = document.getElementById('feedback');
 feedback.textContent = 'Excellent work! 🌟';
@@ -2332,7 +2334,6 @@ if (emptyBars.length) {
 
     // 🔄 RESET TRAINING STATE
     trainingIndex = 0;
-    updateTrainingProgress();  // ✅ ADD THIS - reset to 0% at start
     clefMode = selectedHand === 'both' ? 'both' : selectedHand;
 // sectionStartTime already set correctly above — REMOVE THIS LINE
 
