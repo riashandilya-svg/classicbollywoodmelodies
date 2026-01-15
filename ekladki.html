@@ -1595,6 +1595,22 @@ function spawnNextValidNote(){
         }
 
         trainingIndex++;
+        if (heldTime >= expectedHoldDuration) {
+            feedback.textContent = 'Good!';
+
+feedback.classList.remove('correct', 'wrong', 'show');
+void feedback.offsetWidth;
+feedback.classList.add('correct', 'show');
+    explanationLocked = false;
+    waitingForInput = false;
+    expectedMidiNote = null;
+    trainingIndex++;
+    updateTrainingProgress();  // ✅ ADD THIS LINE
+
+    // clear only AFTER success
+    document.getElementById('holdInfo').textContent = '';
+
+    setTimeout(() => spawnNextValidNote(), 300);
         updateTrainingProgress();
     }
 
