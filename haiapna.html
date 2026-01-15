@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hai Apna Dil Toh Awaara</title>
+<title> Hai Apna Dil Toh Awaara</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
@@ -369,7 +369,7 @@ canvas {
     <div id="brandBar">
         <span>Ria Om Shandilya</span>
       </div>      
-    <h1>Hai Apna Dil Toh Awaara</h1>
+    <h1> Hai Apna Dil Toh Awaara</h1>
 <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
     <div id="trainingProgressFill"></div>
@@ -430,7 +430,7 @@ canvas {
 <button id="countToggle">Counting</button>
 <button id="subdivisionToggle">1 & 2 &</button>
 <button id="languageToggle">EN</button>
-
+    
 <label style="display:flex;align-items:center;gap:6px;font-size:16px;">
     <input type="checkbox" id="skipRepeatsCheckbox">
     Skip repeats in sheet
@@ -461,11 +461,16 @@ import { Midi } from 'https://cdn.skypack.dev/@tonejs/midi@2.0.28';
 // SONG CONFIG (SHEET STRUCTURE)
 // ================================
 const SONG_CONFIG = {
-    id: "hai-apna-dil",
-    title: "Hai Apna Dil Toh Awaara",
-    timeSignature: [4, 4], // Change if different time signature
-    measures: 41,  // ← Change to actual number of measures in your MIDI
+    id: "haiapna",
+    title: "haiapna",
+
+    timeSignature: [4, 4], // 4/4
+    measures: 41,
+
+    // MIDI is linear — sheet logic comes later
     repeats: [],
+
+    // optional future hooks
     pickupBeats: 0
 };
 // ================================
@@ -476,9 +481,8 @@ const SONG_CONFIG = {
 // Repeat section: 7..14 is duplicated once in the MIDI timeline
 // ================================
 const REPEAT_START = 0;
-const REPEAT_END = 0;
-const REPEAT_LEN = 0;
-
+const REPEAT_END = 0;  // Only bars 7-13 repeat (bar 14 doesn't)
+const REPEAT_LEN = 0;  // This becomes 7
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
@@ -512,7 +516,7 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
 
 
 async function loadSongMidi() {
-    const response = await fetch("haiapna.mid");  // ← Your new MIDI file name
+    const response = await fetch("haiapna.mid");
     const arrayBuffer = await response.arrayBuffer();
 
     currentMidi = new Midi(arrayBuffer);
@@ -726,12 +730,8 @@ freeModeButton.classList.add('side-floating');
 setControlsEnabled(true); // ✅ buttons enabled immediately
 // 🎵 Auto-load built-in song
 (async () => {
-    if (midiInputs.length === 0) {
-        await initMIDI();
-    }
     await loadSongMidi();
 })();
-
 
 
 function updateSpeed(delta) {
@@ -878,6 +878,11 @@ loopCheckbox.addEventListener('change', () => {
 });
 freeModeButton.addEventListener('click', async () => {
     await Tone.start();
+    
+    // ✅ Request MIDI on first user interaction
+    if (midiInputs.length === 0) {
+        await initMIDI();
+    }
 
     freeMode = !freeMode;
 
@@ -2189,6 +2194,26 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 
 startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
+    
+    // ✅ Initialize MIDI on first click
+    if (midiInputs.length === 0) {
+        try {
+            const midiAccess = await navigator.requestMIDIAccess();
+            console.log('✅ MIDI Access granted');
+            
+            for (const input of midiAccess.inputs.values()) {
+                console.log('🔌 Connected:', input.name);
+                midiInputs.push(input);
+                
+                input.onmidimessage = (event) => {
+                    handleMIDIMessage(event);
+                };
+            }
+        } catch (err) {
+            console.error('❌ MIDI Error:', err);
+        }
+    }
+    
     hardStopUserNote();
 
     const selectedHand = handSelect.value;
@@ -2312,6 +2337,8 @@ if (emptyBars.length) {
 
     // 🔄 RESET TRAINING STATE
     trainingIndex = 0;
+    showTrainingProgress();
+updateTrainingProgress();
     clefMode = selectedHand === 'both' ? 'both' : selectedHand;
 // sectionStartTime already set correctly above — REMOVE THIS LINE
 
@@ -2532,6 +2559,10 @@ addMidiFallingRectangle(
 
 function handleMIDIMessage(event) {
     if (previewMode) return;
+    
+    // ✅ ADD THIS LINE:
+    Tone.start();
+    
     const [status, note, velocity] = event.data;
     const messageType = status & 0xf0;
 
@@ -2550,11 +2581,12 @@ if (isNoteOn) {
 
     // -------- NOTE OFF --------
     if (isNoteOff) {
-        // 🎹 FREE MODE — release immediately
+// 🎹 FREE MODE — release immediately
 if (freeMode && note === freeModeActiveNote) {
-    synth.triggerRelease(getNoteName(note));
+    freeModeSynth.triggerRelease(getNoteName(note));  // ← Use freeModeSynth
     freeModeActiveNote = null;
     expectedMidiNote = null;
+    expectedMidiTreble.clear();  // ← Clear keyboard highlight
     return;
 }
 
@@ -2579,7 +2611,7 @@ feedback.classList.add('correct', 'show');
     waitingForInput = false;
     expectedMidiNote = null;
     trainingIndex++;
-
+updateTrainingProgress();
     // clear only AFTER success
     document.getElementById('holdInfo').textContent = '';
 
