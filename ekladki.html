@@ -1348,11 +1348,13 @@ const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
 
 // ---------- WRONG NOTE ----------
+// ---------- WRONG NOTE ----------
 if (noteName !== currentTrainingNote) {
 
-const expectedMidi = allMidiNotes[trainingIndex].midi;
+const expectedNote = practiceNotes[trainingIndex];
+const expectedMidi = expectedNote.midi;
 const explanation = explainWrongNote(midiNote, expectedMidi);
-
+    
 feedback.textContent = explanation;
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
