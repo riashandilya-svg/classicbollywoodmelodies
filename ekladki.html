@@ -1350,7 +1350,7 @@ const feedback = document.getElementById('feedback');
 // ---------- WRONG NOTE ----------
 if (noteName !== currentTrainingNote) {
 
-const expectedNote = practiceNotes[trainingIndex];  // ← ADD THIS FIRST
+const expectedNote = practiceNotes[trainingIndex];  // ← MOVED TO TOP (only once!)
 const expectedMidi = expectedNote.midi;
 const explanation = explainWrongNote(midiNote, expectedMidi);
     
@@ -1362,8 +1362,7 @@ feedback.classList.add('wrong', 'show');
 failureCount++;
 
 // ✅ FIX: Properly highlight the CORRECT note on keyboard
-const expectedNote = practiceNotes[trainingIndex];
-if (expectedNote.track === TREBLE) {
+if (expectedNote.track === TREBLE) {  // ← Remove the duplicate "const expectedNote = ..." line
     expectedMidiTreble.clear();
     expectedMidiTreble.add(expectedMidi);
     expectedMidiBass.clear();
