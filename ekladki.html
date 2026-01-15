@@ -1183,7 +1183,7 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         if (isBlackMidi(midi)) continue;
 
         const x = whiteIndex * getWhiteKeyWidth()        ;
-        const isTreble = expectedMidiTreble.has(midi);
+   const isTreble = expectedMidiTreble.has(midi) || expectedMidiNote === midi;
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
     ctx.fillStyle = "#FFECB3"; // ☀️ yellow
@@ -1230,7 +1230,7 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         getWhiteKeyWidth()
         * 0.7;
 
-        const isTreble = expectedMidiTreble.has(midi);
+   const isTreble = expectedMidiTreble.has(midi) || expectedMidiNote === midi;
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
