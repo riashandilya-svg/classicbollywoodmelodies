@@ -430,7 +430,6 @@ canvas {
 <button id="countToggle">Counting</button>
 <button id="subdivisionToggle">1 & 2 &</button>
 <button id="languageToggle">EN</button>
-<button id="midiTestButton" style="background-color: #9333EA;">Test MIDI</button>
     
 <label style="display:flex;align-items:center;gap:6px;font-size:16px;">
     <input type="checkbox" id="skipRepeatsCheckbox">
@@ -2196,9 +2195,23 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
     
-    // ✅ Request MIDI on first user interaction
+    // ✅ Initialize MIDI on first click
     if (midiInputs.length === 0) {
-        await initMIDI();
+        try {
+            const midiAccess = await navigator.requestMIDIAccess();
+            console.log('✅ MIDI Access granted');
+            
+            for (const input of midiAccess.inputs.values()) {
+                console.log('🔌 Connected:', input.name);
+                midiInputs.push(input);
+                
+                input.onmidimessage = (event) => {
+                    handleMIDIMessage(event);
+                };
+            }
+        } catch (err) {
+            console.error('❌ MIDI Error:', err);
+        }
     }
     
     hardStopUserNote();
