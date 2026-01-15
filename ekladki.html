@@ -730,12 +730,9 @@ freeModeButton.classList.add('side-floating');
 setControlsEnabled(true); // ✅ buttons enabled immediately
 // 🎵 Auto-load built-in song
 (async () => {
-    if (midiInputs.length === 0) {
-        await initMIDI();
-    }
+    await initMIDI();  // ← Always call this first
     await loadSongMidi();
 })();
-
 
 
 function updateSpeed(delta) {
@@ -2536,6 +2533,10 @@ addMidiFallingRectangle(
 
 function handleMIDIMessage(event) {
     if (previewMode) return;
+    
+    // ✅ ADD THIS LINE:
+    Tone.start();
+    
     const [status, note, velocity] = event.data;
     const messageType = status & 0xf0;
 
@@ -2554,11 +2555,12 @@ if (isNoteOn) {
 
     // -------- NOTE OFF --------
     if (isNoteOff) {
-        // 🎹 FREE MODE — release immediately
+// 🎹 FREE MODE — release immediately
 if (freeMode && note === freeModeActiveNote) {
-    synth.triggerRelease(getNoteName(note));
+    freeModeSynth.triggerRelease(getNoteName(note));  // ← Use freeModeSynth
     freeModeActiveNote = null;
     expectedMidiNote = null;
+    expectedMidiTreble.clear();  // ← Clear keyboard highlight
     return;
 }
 
