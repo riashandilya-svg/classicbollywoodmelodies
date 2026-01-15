@@ -730,7 +730,6 @@ freeModeButton.classList.add('side-floating');
 setControlsEnabled(true); // ✅ buttons enabled immediately
 // 🎵 Auto-load built-in song
 (async () => {
-    await initMIDI();  // ← Always call this first
     await loadSongMidi();
 })();
 
@@ -879,6 +878,11 @@ loopCheckbox.addEventListener('change', () => {
 });
 freeModeButton.addEventListener('click', async () => {
     await Tone.start();
+    
+    // ✅ Request MIDI on first user interaction
+    if (midiInputs.length === 0) {
+        await initMIDI();
+    }
 
     freeMode = !freeMode;
 
@@ -2190,6 +2194,12 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 
 startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
+    
+    // ✅ Request MIDI on first user interaction
+    if (midiInputs.length === 0) {
+        await initMIDI();
+    }
+    
     hardStopUserNote();
 
     const selectedHand = handSelect.value;
