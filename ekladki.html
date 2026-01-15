@@ -971,9 +971,10 @@ function hideTrainingProgress() {
 function updateTrainingProgress() {
     if (!practiceNotes || practiceNotes.length === 0) return;
 
+    // ✅ FIX: Add 1 to trainingIndex so last note shows 100%
     const percent = Math.min(
         100,
-        Math.round((trainingIndex / practiceNotes.length) * 100)
+        Math.round(((trainingIndex + 1) / practiceNotes.length) * 100)
     );
 
     document.getElementById('trainingProgressFill').style.width =
