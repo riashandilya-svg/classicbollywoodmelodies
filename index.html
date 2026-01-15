@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ria Om Shandilya</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --btnText: #2b1140;
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        radial-gradient(520px 320px at 35% 55%, rgba(255,90,210,0.14), transparent 60%),
+        var(--bg);
+    }
+
+    .banner{
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(140,120,160,0.18);
+    }
+
+    .banner span{
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+    }
+
+    main{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 44px 18px 70px;
+      text-align: center;
+    }
+
+    h1{
+      font-size: clamp(28px, 4.8vw, 54px);
+      line-height: 1.06;
+      margin: 18px 0 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .sub{
+      margin: 0 auto 22px;
+      max-width: 640px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 760px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      text-align: left;
+      border-radius: 22px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 24px 55px rgba(22, 10, 35, 0.13);
+    }
+
+    /* Default blobs (will be overridden per theme) */
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-80px -90px auto auto;
+      width: 230px;
+      height: 230px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%,
+        rgba(255,120,160,0.40),
+        rgba(155,110,255,0.28),
+        rgba(255,90,210,0.18),
+        transparent 62%);
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      left:-120px;
+      bottom:-140px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 60% 40%,
+        rgba(255,80,90,0.24),
+        rgba(255,120,160,0.18),
+        transparent 62%);
+      pointer-events: none;
+    }
+
+    .card > *{
+      position: relative;
+      z-index: 1;
+    }
+
+    .book-title{
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    .book-meta{
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 650;
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.30);
+      background:
+        linear-gradient(135deg,
+          rgba(255,120,160,0.26),
+          rgba(155,110,255,0.20),
+          rgba(255,90,210,0.14));
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+
+    .btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    .arrow{
+      font-weight: 800;
+      font-size: 18px;
+      line-height: 1;
+      margin-top: -1px;
+    }
+
+    /* ===== Book layout + optional image ===== */
+    .card.book{
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .book-content{
+      flex: 1;
+      min-width: 0;
+    }
+
+    .book-art{
+      width: 120px;
+      height: 120px;
+      border-radius: 18px;
+      overflow: hidden;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,0.35);
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+    }
+
+    .book-art img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (max-width: 520px){
+      .card.book{ flex-direction: column; align-items: stretch; }
+      .book-art{ width: 100%; height: 170px; }
+    }
+
+    /* ===== Theme variables ===== */
+    .card.book{
+      --a1: rgba(155,110,255,0.28);
+      --a2: rgba(255,120,160,0.24);
+      --btn-bg: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20), rgba(255,90,210,0.14));
+      --btn-border: rgba(155,110,255,0.30);
+      --btn-text: #2b1140;
+      --card-border: rgba(140, 120, 160, 0.18);
+    }
+
+    .card.book{
+      border-color: var(--card-border);
+    }
+
+    .card.book:hover{
+      border-color: var(--btn-border);
+    }
+
+    .card.book::before{
+      background: radial-gradient(circle at 30% 30%,
+        var(--a1),
+        var(--a2),
+        transparent 62%);
+    }
+
+    .card.book::after{
+      background: radial-gradient(circle at 60% 40%,
+        var(--a2),
+        transparent 62%);
+    }
+
+    .card.book .btn{
+      background: var(--btn-bg);
+      border-color: var(--btn-border);
+      color: var(--btn-text);
+    }
+
+    /* Soulful: Royal Blue */
+    .card.soulful{
+      --a1: rgba(20, 70, 255, 0.38);
+      --a2: rgba(60, 170, 255, 0.22);
+      --btn-bg: linear-gradient(135deg, rgba(20,70,255,0.34), rgba(60,170,255,0.22));
+      --btn-border: rgba(20,70,255,0.38);
+      --btn-text: #07143a;
+    }
+
+    /* Romantic: Red */
+    .card.romantic{
+      --a1: rgba(235, 50, 70, 0.38);
+      --a2: rgba(255, 140, 140, 0.22);
+      --btn-bg: linear-gradient(135deg, rgba(235,50,70,0.34), rgba(255,140,140,0.22));
+      --btn-border: rgba(235,50,70,0.38);
+      --btn-text: #3a0b12;
+    }
+
+    /* Peppy: Black + Yellow */
+    .card.peppy{
+      --a1: rgba(0, 0, 0, 0.40);
+      --a2: rgba(255, 210, 0, 0.28);
+      --btn-bg: linear-gradient(135deg, rgba(0,0,0,0.92), rgba(255,210,0,0.92));
+      --btn-border: rgba(0,0,0,0.40);
+      --btn-text: #111;
+    }
+
+    /* Classic: Light Blue */
+    .card.classic{
+      --a1: rgba(120, 205, 255, 0.40);
+      --a2: rgba(190, 240, 255, 0.25);
+      --btn-bg: linear-gradient(135deg, rgba(120,205,255,0.34), rgba(190,240,255,0.22));
+      --btn-border: rgba(120,205,255,0.40);
+      --btn-text: #05304a;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="banner">
+    <span>Ria Om Shandilya</span>
+  </header>
+
+  <main>
+    <h1>Pick a book</h1>
+    <p class="sub">Choose a mood, then pick a song inside.</p>
+
+    <section class="grid">
+
+      <div class="card book soulful">
+        <div class="book-content">
+          <h2 class="book-title">1. Soulful Bollywood Melodies</h2>
+          <p class="book-meta">Slow, expressive pieces</p>
+          <a class="btn" href="soulful/index.html">Open <span class="arrow">→</span></a>
+        </div>
+        <div class="book-art">
+          <img src="images/soulful.jpg" alt="Soulful book cover">
+        </div>
+      </div>
+
+      <div class="card book peppy">
+        <div class="book-content">
+          <h2 class="book-title">2. Peppy Bollywood Melodies</h2>
+          <p class="book-meta">Upbeat, energetic tunes</p>
+          <a class="btn" href="peppy/index.html">Open <span class="arrow">→</span></a>
+        </div>
+        <div class="book-art">
+          <img src="images/peppy.jpg" alt="Peppy book cover">
+        </div>
+      </div>
+
+      <div class="card book romantic">
+        <div class="book-content">
+          <h2 class="book-title">3. Romantic Bollywood Melodies</h2>
+          <p class="book-meta">Warm, lyrical songs</p>
+          <a class="btn" href="romantic/index.html">Open <span class="arrow">→</span></a>
+        </div>
+        <div class="book-art">
+          <img src="images/romantic.jpg" alt="Romantic book cover">
+        </div>
+      </div>
+
+      <div class="card book classic">
+        <div class="book-content">
+          <h2 class="book-title">4. Classic Bollywood Melodies</h2>
+          <p class="book-meta">Golden-era favorites</p>
+          <a class="btn" href="classic/classicindex.html">Open <span class="arrow">→</span></a>
+        </div>
+        <div class="book-art">
+          <img src="images/classic.jpg" alt="Classic book cover">
+        </div>
+      </div>
+
+    </section>
+  </main>
+</body>
+</html>
