@@ -1469,23 +1469,24 @@ function spawnTrainingNote(noteObj) {
 
     expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
 
-    // 🎹 CHECK IF THIS IS A CHORD (multiple notes at same time)
+// 🎹 CHECK IF THIS IS A CHORD (multiple notes at same time)
     currentChordNotes.clear();
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
     currentChordNotes.add(noteObj.midi);
     
-// Look ahead for simultaneous notes (within 10ms)
+// Look ahead for simultaneous notes (within 10ms) FROM THE SAME TRACK
     // ✅ USE playTime (compressed timeline) instead of original time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
         
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
+        // ✅ ONLY add notes from the SAME track (same hand)
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01 && nextNote.track === noteObj.track) {
             currentChordNotes.add(nextNote.midi);
-        } else {
+        } else if (Math.abs(nextPlayTime - currentPlayTime) >= 0.01) {
             break;
         }
     }
