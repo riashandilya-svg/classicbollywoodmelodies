@@ -2099,27 +2099,10 @@ explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
         
-// 🧹 Clear piano state
-expectedMidiNote = null;
-activeMidiNote = null;
-currentTrainingNote = null;
-noteHoldStartTime = null;
-pressedNotes = [];
-
-        // 🎹 Clear keyboard highlights
-expectedMidiTreble.clear();
-expectedMidiBass.clear();
-
-// 🎹 Clear chord state
-currentChordNotes.clear();
-midiPressedNotes.clear();
-chordNotesCompleted.clear();
-
-
-// 🎹 Clear chord state
-currentChordNotes.clear();
-midiPressedNotes.clear();
-chordNotesCompleted.clear();
+        // 🔓 Clear chord highlights on success
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        
         // ✅ Skip ALL notes in the chord
         trainingIndex += currentChordNotes.size;
 updateTrainingProgress();
@@ -2539,19 +2522,11 @@ function resetAll() {
     noteHoldStartTime = null;
     pressedNotes = [];
 
-    // 🎹 Clear keyboard highlights
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-
-    // 🎹 Clear chord state
-    currentChordNotes.clear();
-    midiPressedNotes.clear();
-    chordNotesCompleted.clear();
-
     // 🖼️ Clear visuals
     const feedback = document.getElementById('feedback');
     feedback.textContent = '';
-    feedback.classList.remove('correct', 'wrong', 'show');
+
+feedback.classList.remove('correct', 'wrong', 'show');
     document.getElementById('holdInfo').textContent = '';
 
     // ⚙️ Reset speed and UI
@@ -2575,16 +2550,16 @@ function resetAll() {
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
 
-    // 💬 Confirm reset
+// 💬 Confirm reset
     feedback.textContent = 'All reset — ready!';
     console.log('✅ All reset');
-    
     document.getElementById('pressedNoteCircle').textContent = '';
-    document.getElementById('pressedNoteCircle').className = 'note-circle';
-    document.getElementById('correctNoteCircle').textContent = '';
+document.getElementById('pressedNoteCircle').className = 'note-circle';
+
+document.getElementById('correctNoteCircle').textContent = '';
 
     // ✅ Re-enable Stop button
-    stopButton.disabled = false;
+    stopButton.disabled = true;
 }
 
 function startFullSongPlayback() {
