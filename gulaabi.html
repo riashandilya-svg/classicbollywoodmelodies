@@ -2099,9 +2099,16 @@ explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
         
-        // 🔓 Clear chord highlights on success
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+// 🧹 Clear piano state
+expectedMidiNote = null;
+activeMidiNote = null;
+currentTrainingNote = null;
+noteHoldStartTime = null;
+pressedNotes = [];
+
+// 🎹 Clear keyboard highlights
+expectedMidiTreble.clear();
+expectedMidiBass.clear();
         
         // ✅ Skip ALL notes in the chord
         trainingIndex += currentChordNotes.size;
