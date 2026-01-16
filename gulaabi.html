@@ -997,8 +997,6 @@ let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null; // legacy (keep for safety)
 
-let expectedMidiTreble = new Set(); // RIGHT hand (can hold chords)
-let expectedMidiBass   = new Set(); // LEFT hand (can hold chords)
 let currentChordNotes = new Set(); // All notes in current chord being trained
 let midiPressedNotes = new Set(); // Currently held MIDI notes
 let chordNotesCompleted = new Set(); // Completed notes for mouse mode
@@ -1297,7 +1295,7 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 // SHARED USER NOTE HANDLER (MIDI + MOUSE)
 // =======================================
-function processUserNoteOn(midiNote, isMidiInput = false) {
+function processUserNoteOn(midiNote) {
 
 // ❌ DO NOT hard-stop in Free Mode (allows glide)
 if (!freeMode) {
@@ -1350,103 +1348,6 @@ if (!trainingActive) return;
 const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
 
-const isChord = currentChordNotes.size > 1;
-
-// 🎹 CHORD MODE
-if (isChord) {
-    // MIDI: Check if user is pressing ALL chord notes simultaneously
-    if (isMidiInput) {
-        midiPressedNotes.add(midiNote);
-        
-        // Check if all chord notes are now pressed
-        const allPressed = Array.from(currentChordNotes).every(note => 
-            midiPressedNotes.has(note)
-        );
-        
-        if (!allPressed) {
-            feedback.textContent = `Chord: press all ${currentChordNotes.size} notes together!`;
-            feedback.classList.remove('correct', 'wrong', 'show');
-            void feedback.offsetWidth;
-            feedback.classList.add('show');
-            return;
-        }
-        
-        // ✅ All chord notes pressed!
-        feedback.textContent = 'Hold this chord';
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('show');
-        
-        noteHoldStartTime = performance.now();
-        activeMidiNote = midiNote; // Store any note from chord
-        
-       ensureSynth();
-        currentChordNotes.forEach(note => {
-            synth.triggerAttack(getNoteName(note));
-        });
-        
-        // 🔓 Clear highlights when chord is successfully held
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-        
-        document.getElementById('pressedNoteCircle').textContent = 
-            Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
-        document.getElementById('pressedNoteCircle').className = 'note-circle correct';
-        document.getElementById('correctNoteCircle').textContent = 
-            Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
-        
-        return;
-    } 
-    // MOUSE: Allow playing chord notes individually
-    else {
-        if (!currentChordNotes.has(midiNote)) {
-            feedback.textContent = `Wrong note! Chord needs: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(', ')}`;
-            feedback.classList.remove('correct', 'wrong', 'show');
-            void feedback.offsetWidth;
-            feedback.classList.add('wrong', 'show');
-            
-            document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
-            document.getElementById('pressedNoteCircle').className = 'note-circle wrong';
-            document.getElementById('correctNoteCircle').textContent = 
-                Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
-            return;
-        }
-        
-        // Correct note in chord
-        chordNotesCompleted.add(midiNote);
-        
-        ensureSynth();
-        synth.triggerAttack(getNoteName(midiNote));
-        
-        if (chordNotesCompleted.size === currentChordNotes.size) {
-            // All chord notes played!
-            feedback.textContent = 'Hold all chord notes';
-            noteHoldStartTime = performance.now();
-            activeMidiNote = midiNote;
-            
-            document.getElementById('pressedNoteCircle').textContent = 
-                Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
-        document.getElementById('pressedNoteCircle').className = 'note-circle correct';
-            
-            // 🔓 Clear highlights when all chord notes clicked
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
-        } else {
-            feedback.textContent = `Good! Now add: ${Array.from(currentChordNotes).filter(n => !chordNotesCompleted.has(n)).map(n => getNoteName(n)).join(', ')}`;
-        }
-        
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('show');
-        
-        document.getElementById('correctNoteCircle').textContent = 
-            Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
-        
-        return;
-    }
-}
-
-// ---------- SINGLE NOTE MODE (original logic) ----------
 // ---------- WRONG NOTE ----------
 if (noteName !== currentTrainingNote) {
 
@@ -1546,7 +1447,7 @@ fallingRectangles.push({
 
 
 function spawnTrainingNote(noteObj) {
-    hardStopUserNote();   // 🔒 ensure silence before spawning
+    hardStopUserNote();
     trainingActive = true;
     visualsPlaying = true;
     fallingRectangles = [];
@@ -1591,7 +1492,7 @@ function spawnTrainingNote(noteObj) {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
     }
 
-noteHoldStartTime = null;
+    noteHoldStartTime = null;
     setTargetNote(noteName);
     
     // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES
@@ -2119,7 +2020,7 @@ canvas.addEventListener('mousedown', async (e) => {
 
     lastMouseMidi = midiNote;
 
-processUserNoteOn(midiNote, false);
+    processUserNoteOn(midiNote);
 });
 canvas.addEventListener('mousemove', (e) => {
     if (!mouseDown || !freeMode) return;
@@ -2152,11 +2053,8 @@ canvas.addEventListener('mouseup', () => {
 }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
-    
-    const isChord = currentChordNotes.size > 1;
-
-// ❌ Ignore releases of wrong notes (single note mode)
-if (!isChord && getNoteName(activeMidiNote) !== currentTrainingNote) {
+// ❌ Ignore releases of wrong notes
+if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     activeMidiNote = null;
     noteHoldStartTime = null;
     return;
@@ -2165,16 +2063,9 @@ if (!isChord && getNoteName(activeMidiNote) !== currentTrainingNote) {
     const note = activeMidiNote;
     const heldTime = performance.now() - noteHoldStartTime;
 
-    // Release all chord notes or single note
-    if (isChord) {
-        currentChordNotes.forEach(midi => {
-            synth.triggerRelease(getNoteName(midi));
-        });
-    } else {
-        synth.triggerRelease(getNoteName(note));
-    }
+    synth.triggerRelease(getNoteName(note));
 
-    if (heldTime >= expectedHoldDuration) {        
+    if (heldTime >= expectedHoldDuration) {
         const feedback = document.getElementById('feedback');
 feedback.textContent = 'Good!';
 
@@ -2184,14 +2075,8 @@ feedback.classList.add('correct', 'show');
         explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
-// Skip ahead past all chord notes
-        if (isChord) {
-            trainingIndex += currentChordNotes.size;
-        } else {
-            trainingIndex++;
-        }
-        
-updateTrainingProgress();
+        trainingIndex++;
+updateTrainingProgress();   // ✅ ADD THIS LINE
 
 document.getElementById('holdInfo').textContent = '';
 setTimeout(() => spawnNextValidNote(), 300);
@@ -2728,9 +2613,10 @@ function handleMIDIMessage(event) {
 if (isNoteOn) {
     pressedNotes = [noteName];
 
-processUserNoteOn(note, true); // ✅ Mark as MIDI input
+    processUserNoteOn(note);
 }
-// -------- NOTE OFF --------
+
+    // -------- NOTE OFF --------
     if (isNoteOff) {
 // 🎹 FREE MODE — release immediately
 if (freeMode && note === freeModeActiveNote) {
@@ -2741,32 +2627,18 @@ if (freeMode && note === freeModeActiveNote) {
     return;
 }
 
-        // Remove from MIDI pressed notes tracking
-        midiPressedNotes.delete(note);
-        
         if (note !== activeMidiNote || noteHoldStartTime === null) return;
-        
-        const isChord = currentChordNotes.size > 1;
-
-// ❌ Ignore releases of wrong notes (single note mode)
-if (!isChord && getNoteName(note) !== currentTrainingNote) {
+// ❌ Ignore releases of wrong notes
+if (getNoteName(note) !== currentTrainingNote) {
     activeMidiNote = null;
     noteHoldStartTime = null;
     return;
 }
 
         const heldTime = performance.now() - noteHoldStartTime;
-        
-        // Release all chord notes or single note
-        if (isChord) {
-            currentChordNotes.forEach(midi => {
-                synth.triggerRelease(getNoteName(midi));
-            });
-        } else {
-            synth.triggerRelease(getNoteName(note));
-        }
+        synth.triggerRelease(getNoteName(note));
 
-if (heldTime >= expectedHoldDuration) {
+        if (heldTime >= expectedHoldDuration) {
             feedback.textContent = 'Good!';
 
 feedback.classList.remove('correct', 'wrong', 'show');
@@ -2775,16 +2647,8 @@ feedback.classList.add('correct', 'show');
     explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
-    
-    // Skip ahead past all chord notes
-    if (isChord) {
-        trainingIndex += currentChordNotes.size;
-    } else {
-        trainingIndex++;
-    }
-    
+    trainingIndex++;
 updateTrainingProgress();
-    
     // clear only AFTER success
     document.getElementById('holdInfo').textContent = '';
 
