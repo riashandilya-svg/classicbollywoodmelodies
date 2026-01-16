@@ -1352,7 +1352,8 @@ const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
 
 // ---------- WRONG NOTE ----------
-if (noteName !== currentTrainingNote) {
+// ✅ Check if this note is part of the expected chord
+if (!currentChordNotes.has(midiNote)) {
 
 const expectedMidi = allMidiNotes[trainingIndex].midi;
 const explanation = explainWrongNote(midiNote, expectedMidi);
@@ -1376,7 +1377,7 @@ document.getElementById('correctNoteCircle').textContent =
 return;
 }
 
-// ---------- CORRECT NOTE ----------
+    // ---------- CORRECT NOTE ----------
 // 🟢 Update side circles (CORRECT)
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
