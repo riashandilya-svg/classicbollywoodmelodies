@@ -524,8 +524,8 @@ async function loadSongMidi() {
     allMidiNotes = [];
 
 currentMidi.tracks.forEach((track, trackIndex) => {
-        // ⚠️ SWAP: Track 0 = BASS (left hand), Track 1 = TREBLE (right hand)
-        const clef = trackIndex === 0 ? BASS : TREBLE;
+        // Track 0 = TREBLE (right hand), Track 1 = BASS (left hand)
+        const clef = trackIndex === 0 ? TREBLE : BASS;
 
         track.notes.forEach(note => {
             allMidiNotes.push({
