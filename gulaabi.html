@@ -1377,7 +1377,7 @@ document.getElementById('correctNoteCircle').textContent =
 return;
 }
 
-    // ---------- CORRECT NOTE ----------
+// ---------- CORRECT NOTE ----------
 // 🟢 Update side circles (CORRECT)
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
@@ -1388,16 +1388,30 @@ document.getElementById('pressedNoteCircle')
 document.getElementById('correctNoteCircle').textContent =
     currentTrainingNote;
 explanationLocked = false;
-feedback.textContent = 'Hold this note';
 showBlackKeyArrow = false;
 arrowTargetGroup = null;
 failureCount = 0;
+
+// ✅ Track which notes in the chord have been pressed
+midiPressedNotes.add(midiNote);
+
+// 🎹 Check if ALL chord notes are now pressed
+const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
+
+if (allPressed && noteHoldStartTime === null) {
+    // ALL notes pressed - start the hold timer
+    feedback.textContent = 'Hold this chord';
+    noteHoldStartTime = performance.now();
+} else if (!allPressed) {
+    // Still waiting for more notes
+    const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
+    feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
+}
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
 feedback.classList.add('show');
 
-noteHoldStartTime = performance.now();
 activeMidiNote = midiNote;
 ensureSynth();
 
