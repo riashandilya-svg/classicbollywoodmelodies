@@ -1400,8 +1400,10 @@ const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.
 
 if (allPressed && noteHoldStartTime === null) {
     // ALL notes pressed - start the hold timer
-    feedback.textContent = 'Hold this chord';
+    const isChord = currentChordNotes.size > 1;
+    feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
+    
 } else if (!allPressed) {
     // Still waiting for more notes
     const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
