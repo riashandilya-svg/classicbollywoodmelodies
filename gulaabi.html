@@ -1380,10 +1380,14 @@ if (isChord) {
         noteHoldStartTime = performance.now();
         activeMidiNote = midiNote; // Store any note from chord
         
-        ensureSynth();
+       ensureSynth();
         currentChordNotes.forEach(note => {
             synth.triggerAttack(getNoteName(note));
         });
+        
+        // 🔓 Clear highlights when chord is successfully held
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
         
         document.getElementById('pressedNoteCircle').textContent = 
             Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
@@ -1422,7 +1426,11 @@ if (isChord) {
             
             document.getElementById('pressedNoteCircle').textContent = 
                 Array.from(currentChordNotes).map(n => getNoteName(n)).join('+');
-            document.getElementById('pressedNoteCircle').className = 'note-circle correct';
+        document.getElementById('pressedNoteCircle').className = 'note-circle correct';
+            
+            // 🔓 Clear highlights when all chord notes clicked
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
         } else {
             feedback.textContent = `Good! Now add: ${Array.from(currentChordNotes).filter(n => !chordNotesCompleted.has(n)).map(n => getNoteName(n)).join(', ')}`;
         }
@@ -1583,7 +1591,7 @@ function spawnTrainingNote(noteObj) {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
     }
 
-    noteHoldStartTime = null;
+noteHoldStartTime = null;
     setTargetNote(noteName);
     
     // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES
@@ -1595,6 +1603,20 @@ function spawnTrainingNote(noteObj) {
             performance.now()
         );
     });
+
+    // 🎹 HIGHLIGHT KEYBOARD for chord notes (persistent until played)
+    if (isChord) {
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        
+        currentChordNotes.forEach(midi => {
+            if (noteObj.track === TREBLE) {
+                expectedMidiTreble.add(midi);
+            } else if (noteObj.track === BASS) {
+                expectedMidiBass.add(midi);
+            }
+        });
+    }
 }
 
 function playMeasurePreview(startTime, clef) {
@@ -1783,21 +1805,23 @@ if (
 ) {
     rect.landed = true;
 
-    // 🔔 highlight the piano key
+    // 🔔 highlight the piano key (but don't remove if it's part of current chord)
     if (rect.track === TREBLE) {
-    expectedMidiTreble.add(rect.midi);
-} else if (rect.track === BASS) {
-    expectedMidiBass.add(rect.midi);
+        expectedMidiTreble.add(rect.midi);
+    } else if (rect.track === BASS) {
+        expectedMidiBass.add(rect.midi);
+    }
+
+    // ⏱ REMOVE HIGHLIGHT ONLY IF NOT PART OF CURRENT CHORD
+    const isPartOfCurrentChord = currentChordNotes.has(rect.midi);
+    
+    if (!isPartOfCurrentChord) {
+        setTimeout(() => {
+            expectedMidiTreble.delete(rect.midi);
+            expectedMidiBass.delete(rect.midi);
+        }, 100);
+    }
 }
-
-
-    // ⏱ REMOVE HIGHLIGHT IMMEDIATELY AFTER LANDING
-    setTimeout(() => {
-        expectedMidiTreble.delete(rect.midi);
-        expectedMidiBass.delete(rect.midi);
-    }, 100); // ← zero delay = no lingering
-}
-
 if (rect.y > canvas.height) {
     return false;
 }
