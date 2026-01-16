@@ -1475,10 +1475,14 @@ function spawnTrainingNote(noteObj) {
     
     currentChordNotes.add(noteObj.midi);
     
-    // Look ahead for simultaneous notes (within 10ms)
+// Look ahead for simultaneous notes (within 10ms)
+    // ✅ USE playTime (compressed timeline) instead of original time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
-        if (Math.abs(nextNote.time - noteObj.time) < 0.01) {
+        const currentPlayTime = noteObj.playTime ?? noteObj.time;
+        const nextPlayTime = nextNote.playTime ?? nextNote.time;
+        
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
             currentChordNotes.add(nextNote.midi);
         } else {
             break;
