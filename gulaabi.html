@@ -997,6 +997,8 @@ let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null; // legacy (keep for safety)
 
+let expectedMidiTreble = new Set(); // RIGHT hand (can hold chords)
+let expectedMidiBass   = new Set(); // LEFT hand (can hold chords)
 let currentChordNotes = new Set(); // All notes in current chord being trained
 let midiPressedNotes = new Set(); // Currently held MIDI notes
 let chordNotesCompleted = new Set(); // Completed notes for mouse mode
@@ -2072,11 +2074,16 @@ feedback.textContent = 'Good!';
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
 feedback.classList.add('correct', 'show');
-        explanationLocked = false;
+explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
+        
+        // 🔓 Clear chord highlights on success
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        
         trainingIndex++;
-updateTrainingProgress();   // ✅ ADD THIS LINE
+updateTrainingProgress();
 
 document.getElementById('holdInfo').textContent = '';
 setTimeout(() => spawnNextValidNote(), 300);
@@ -2267,7 +2274,7 @@ if (
     return;
 }
 if (endMeasure > MAX_LOGICAL_MEASURE) {
-    alert(`Max sheet measure is ${MAX_LOGICAL_MEASURE}`);
+alert(`Max sheet measure is ${MAX_LOGICAL_MEASURE}`);
     return;
 }
 
@@ -2644,9 +2651,14 @@ if (getNoteName(note) !== currentTrainingNote) {
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
 feedback.classList.add('correct', 'show');
-    explanationLocked = false;
+explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
+    
+    // 🔓 Clear chord highlights on success
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    
     trainingIndex++;
 updateTrainingProgress();
     // clear only AFTER success
