@@ -1167,15 +1167,15 @@ function explainWrongNote(playedMidi, expectedMidi) {
         if (octaveDiff > 0) {
             return `You played the correct note (${playedName[0]}),
 but it should be ${Math.abs(octaveDiff)} octave lower.`;
-        } else {
+        } else if (octaveDiff < 0) {
             return `You played the correct note (${playedName[0]}),
 but it should be ${Math.abs(octaveDiff)} octave higher.`;
         }
+        // If octaveDiff === 0, fall through to generic message
     }
 
     return `Almost There! Let's try again 😊`;
 }
-
 function drawKeyboard() {
     const keyHeight = KEYBOARD_HEIGHT;
 const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
@@ -2648,6 +2648,9 @@ if (isNoteOn) {
     // -------- NOTE OFF --------
     if (isNoteOff) {
 // 🎹 FREE MODE — release immediately
+// -------- NOTE OFF --------
+    if (isNoteOff) {
+// 🎹 FREE MODE — release immediately
 if (freeMode && note === freeModeActiveNote) {
     freeModeSynth.triggerRelease(getNoteName(note));  // ← Use freeModeSynth
     freeModeActiveNote = null;
@@ -2656,16 +2659,22 @@ if (freeMode && note === freeModeActiveNote) {
     return;
 }
 
-        if (note !== activeMidiNote || noteHoldStartTime === null) return;
-// ❌ Ignore releases of wrong notes
-if (getNoteName(note) !== currentTrainingNote) {
-    activeMidiNote = null;
-    noteHoldStartTime = null;
-    return;
-}
+        // ✅ For chords: only process release if this note is part of the chord
+        if (!currentChordNotes.has(note)) return;
+        
+        // Remove from pressed notes
+        midiPressedNotes.delete(note);
+        
+        // Release the audio
+        synth.triggerRelease(getNoteName(note));
+        
+        // ✅ Only check hold duration when ALL notes have been released
+        if (midiPressedNotes.size > 0) return; // Still holding some notes
+        
+        // All notes released - check if held long enough
+        if (noteHoldStartTime === null) return;
 
         const heldTime = performance.now() - noteHoldStartTime;
-        synth.triggerRelease(getNoteName(note));
 
         if (heldTime >= expectedHoldDuration) {
    feedback.textContent = 'Good!';
