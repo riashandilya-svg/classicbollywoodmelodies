@@ -2073,7 +2073,7 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     synth.triggerRelease(getNoteName(note));
 
     if (heldTime >= expectedHoldDuration) {
-        const feedback = document.getElementById('feedback');
+const feedback = document.getElementById('feedback');
 feedback.textContent = 'Good!';
 
 feedback.classList.remove('correct', 'wrong', 'show');
@@ -2087,7 +2087,8 @@ explanationLocked = false;
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         
-        trainingIndex++;
+        // ✅ Skip ALL notes in the chord
+        trainingIndex += currentChordNotes.size;
 updateTrainingProgress();
 
 document.getElementById('holdInfo').textContent = '';
@@ -2651,7 +2652,7 @@ if (getNoteName(note) !== currentTrainingNote) {
         synth.triggerRelease(getNoteName(note));
 
         if (heldTime >= expectedHoldDuration) {
-            feedback.textContent = 'Good!';
+   feedback.textContent = 'Good!';
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -2664,7 +2665,8 @@ explanationLocked = false;
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     
-    trainingIndex++;
+    // ✅ Skip ALL notes in the chord
+    trainingIndex += currentChordNotes.size;
 updateTrainingProgress();
     // clear only AFTER success
     document.getElementById('holdInfo').textContent = '';
