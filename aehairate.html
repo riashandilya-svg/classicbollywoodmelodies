@@ -28,6 +28,7 @@
 border-bottom: 1px solid rgba(140,120,160,0.18);
 
 
+
   z-index: 10000;
 }
 
@@ -47,7 +48,7 @@ border-bottom: 1px solid rgba(140,120,160,0.18);
   --navy: rgba(10, 20, 60, 0.10);
   --yellow: rgba(255, 210, 0, 0.16);
 
-  --accent-primary: #6d3cff;   /* violet button */
+--accent-primary: #7E57C2;   /* soft violet */
   --accent-success: #22C55E;
   --accent-error: #EF4444;
 
@@ -98,7 +99,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-    background-color: #2563EB;
+    background-color: #FFA000;
     transform: translateY(-1px);
 }
 
@@ -187,7 +188,7 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #22C55E; /* GREEN */
+    background: #FFC107; /* GOLDEN */
     color: white;
 }
 
@@ -1242,9 +1243,9 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
+    ctx.fillStyle = "#FFF59D"; // 🌟 true golden
 } else if (isBass) {
-    ctx.fillStyle = "#BBF7D0"; // 🍏 green
+    ctx.fillStyle = "#D1C4E9"; // 💜 soft violet
 } else {
     ctx.fillStyle = "#ffffff";
 }
@@ -1290,9 +1291,9 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#FF9800"; // yellow/orange
+    ctx.fillStyle = "#FBC02D"; // 🌟 true golden
 } else if (isBass) {
-    ctx.fillStyle = "#16A34A"; // green
+    ctx.fillStyle = "#7E57C2"; // 💜 soft violet
 } else {
     ctx.fillStyle = "#000";
 }
@@ -1484,18 +1485,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-    if (track === TREBLE) {
-    // ☀️ TRUE PIANO YELLOW
-    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
-    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
-    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
-    gradient.addColorStop(1.00, "#FBC02D"); // base
+if (track === TREBLE) {
+    // 🌟 TRUE GOLDEN
+    gradient.addColorStop(0.00, "#FFFDE7"); // bright highlight
+    gradient.addColorStop(0.25, "#FFF59D"); // light golden
+    gradient.addColorStop(0.55, "#FFEB3B"); // pure golden
+    gradient.addColorStop(1.00, "#FBC02D"); // base golden
 } else if (track === BASS) {
-    // 🍏 TRUE PIANO GREEN
-    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
-    gradient.addColorStop(0.25, "#86EFAC"); // light green
-    gradient.addColorStop(0.55, "#4ADE80"); // pure green
-    gradient.addColorStop(1.00, "#22C55E"); // base
+    // 💜 SOFT VIOLET
+    gradient.addColorStop(0.00, "#EDE7F6"); // very light violet
+    gradient.addColorStop(0.25, "#B39DDB"); // soft violet
+    gradient.addColorStop(0.55, "#7E57C2"); // medium violet
+    gradient.addColorStop(1.00, "#5E35B1"); // base violet
 }
 
 fallingRectangles.push({
@@ -1876,11 +1877,18 @@ if (!rect.landed) {
     // shimmer code
 }
 
-    if (showNoteNames && rect.isMidi && rect.noteName) {
-        ctx.fillStyle = "rgba(0,0,0,0.85)";
-ctx.font = "bold 15px Arial";
-ctx.shadowColor = "rgba(255,255,255,0.6)";
-ctx.shadowBlur = 2;
+if (showNoteNames && rect.isMidi && rect.noteName) {
+        // White text for bass (left hand), black for treble (right hand)
+        if (rect.track === BASS) {
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            ctx.shadowColor = "rgba(0,0,0,0.4)";
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.85)";
+            ctx.shadowColor = "rgba(255,255,255,0.6)";
+        }
+        
+        ctx.font = "bold 15px Arial";
+        ctx.shadowBlur = 2;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
