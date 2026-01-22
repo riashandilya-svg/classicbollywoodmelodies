@@ -26,7 +26,7 @@
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
 border-bottom: 1px solid rgba(235, 50, 70, 0.18);
-    
+
   z-index: 10000;
 }
 
@@ -46,7 +46,7 @@ border-bottom: 1px solid rgba(235, 50, 70, 0.18);
   --red2: rgba(255, 120, 130, 0.16);
   --softBlack: rgba(0, 0, 0, 0.10);
 
---accent-primary: #E57373;   /* light red */
+  --accent-primary: #e31b3b;   /* romantic red button */
   --accent-success: #22C55E;
   --accent-error: #EF4444;
 
@@ -97,7 +97,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-    background-color: #EF5350;
+    background-color: #2563EB;
     transform: translateY(-1px);
 }
 
@@ -186,7 +186,7 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #E57373; /* LIGHT RED */
+    background: #22C55E; /* GREEN */
     color: white;
 }
 
@@ -1187,17 +1187,10 @@ but it should be ${Math.abs(octaveDiff)} octave higher.`;
     return `Almost There! Let's try again 😊`;
 }
 function drawKeyboard() {
-        // Clear any stale highlights
-    if (!trainingActive && !freeMode) {
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-    }
-
     const keyHeight = KEYBOARD_HEIGHT;
 const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
 
     // ---- WHITE KEYS ----
-    ctx.fillStyle = "#ffffff"; 
     let whiteIndex = 0;
 
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
@@ -1207,11 +1200,11 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#E57373"; // ❤️ medium red
+    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
 } else if (isBass) {
-    ctx.fillStyle = "#424242"; // 🖤 dark gray
+    ctx.fillStyle = "#BBF7D0"; // 🍏 green
 } else {
-    ctx.fillStyle = "#000";  // ← BLACK for black keys
+    ctx.fillStyle = "#ffffff";
 }
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
 
@@ -1255,11 +1248,11 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#FFCDD2"; // ❤️ light red
+    ctx.fillStyle = "#FF9800"; // yellow/orange
 } else if (isBass) {
-    ctx.fillStyle = "#757575"; // 🖤 gray
+    ctx.fillStyle = "#16A34A"; // green
 } else {
-    ctx.fillStyle = "#ffffff";  // ← WHITE for white keys
+    ctx.fillStyle = "#000";
 }
 
     ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
@@ -1449,18 +1442,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-  if (track === TREBLE) {
-    // ❤️ LIGHT RED
-    gradient.addColorStop(0.00, "#FFEBEE"); // very light red
-    gradient.addColorStop(0.25, "#EF9A9A"); // light red
-    gradient.addColorStop(0.55, "#E57373"); // medium red
-    gradient.addColorStop(1.00, "#EF5350"); // base red
+    if (track === TREBLE) {
+    // ☀️ TRUE PIANO YELLOW
+    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
+    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
+    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
+    gradient.addColorStop(1.00, "#FBC02D"); // base
 } else if (track === BASS) {
-    // 🖤 BLACK
-    gradient.addColorStop(0.00, "#616161"); // light gray
-    gradient.addColorStop(0.25, "#424242"); // medium gray
-    gradient.addColorStop(0.55, "#212121"); // dark gray
-    gradient.addColorStop(1.00, "#000000"); // pure black
+    // 🍏 TRUE PIANO GREEN
+    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
+    gradient.addColorStop(0.25, "#86EFAC"); // light green
+    gradient.addColorStop(0.55, "#4ADE80"); // pure green
+    gradient.addColorStop(1.00, "#22C55E"); // base
 }
 
 fallingRectangles.push({
@@ -1841,18 +1834,11 @@ if (!rect.landed) {
     // shimmer code
 }
 
-if (showNoteNames && rect.isMidi && rect.noteName) {
-        // White text for bass (black notes), Black text for treble (red notes)
-        if (rect.track === BASS) {
-            ctx.fillStyle = "rgba(255,255,255,0.95)";
-            ctx.shadowColor = "rgba(0,0,0,0.5)";
-        } else {
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.shadowColor = "rgba(255,255,255,0.7)";
-        }
-        
-        ctx.font = "bold 15px Arial";
-        ctx.shadowBlur = 2;
+    if (showNoteNames && rect.isMidi && rect.noteName) {
+        ctx.fillStyle = "rgba(0,0,0,0.85)";
+ctx.font = "bold 15px Arial";
+ctx.shadowColor = "rgba(255,255,255,0.6)";
+ctx.shadowBlur = 2;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
