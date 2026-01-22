@@ -25,7 +25,8 @@
 
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-soft);
+border-bottom: 1px solid rgba(140,120,160,0.18);
+
 
   z-index: 10000;
 }
@@ -38,17 +39,22 @@
 
 
 
-    :root {
-    --bg-main: #F7F9FC;
-    --bg-surface: #FFFFFF;
+:root{
+  --bg-main: #ffffff;          /* ✅ keep WHITE background */
+  --bg-surface: rgba(255,255,255,0.86);
 
-    --accent-primary: #3B82F6;   /* blue */
-    --accent-success: #22C55E;   /* green */
-    --accent-error: #EF4444;     /* red */
+  --violet: rgba(155,110,255,0.22);
+  --navy: rgba(10, 20, 60, 0.10);
+  --yellow: rgba(255, 210, 0, 0.16);
 
-    --text-main: #1F2937;
-    --border-soft: #CBD5E1;
+  --accent-primary: #6d3cff;   /* violet button */
+  --accent-success: #22C55E;
+  --accent-error: #EF4444;
+
+  --text-main: #1A1A1F;
+  --border-soft: rgba(140,120,160,0.18);
 }
+
 body {
     margin: 0;
     padding: 80px 0 40px 0; /* room for brand bar + heading */
@@ -60,7 +66,13 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-main);
+background:
+  radial-gradient(900px 520px at 20% 0%, var(--violet), transparent 60%),
+  radial-gradient(900px 520px at 85% 10%, var(--yellow), transparent 62%),
+  radial-gradient(780px 480px at 50% 80%, rgba(155,110,255,0.12), transparent 60%),
+  radial-gradient(520px 320px at 35% 55%, var(--navy), transparent 60%),
+  var(--bg-main);
+
     color: var(--text-main);
 }
 h1 {
