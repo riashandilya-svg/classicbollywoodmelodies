@@ -1187,6 +1187,12 @@ but it should be ${Math.abs(octaveDiff)} octave higher.`;
     return `Almost There! Let's try again 😊`;
 }
 function drawKeyboard() {
+        // Clear any stale highlights
+    if (!trainingActive && !freeMode) {
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+    }
+
     const keyHeight = KEYBOARD_HEIGHT;
 const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
 
