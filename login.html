@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login</title>
+</head>
+<body>
+  <h2>Login</h2>
+  <p>Enter your email. You’ll receive a login link/OTP.</p>
+
+  <input id="email" type="email" placeholder="you@example.com" />
+  <button id="send">Send login link</button>
+
+  <p id="msg"></p>
+
+  <!-- Supabase JS (browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    // TODO: paste your values here
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_secret_LaoCAsQlSeaT0UD_QyGWfw_X0EGzvrl";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const msg = document.getElementById("msg");
+    const emailInput = document.getElementById("email");
+
+    document.getElementById("send").addEventListener("click", async () => {
+      msg.textContent = "Sending...";
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        msg.textContent = "Please enter your email.";
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          // After login, user returns here (you can change later)
+emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/"
+        }
+      });
+
+      if (error) {
+        msg.textContent = "Error: " + error.message;
+      } else {
+        msg.textContent = "Sent! Check your email for the login link.";
+      }
+    });
+  </script>
+</body>
+</html>
