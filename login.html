@@ -7,47 +7,53 @@
 </head>
 <body>
   <h2>Login</h2>
-  <p>Enter your email. You’ll receive a login link/OTP.</p>
-
   <input id="email" type="email" placeholder="you@example.com" />
   <button id="send">Send login link</button>
-
   <p id="msg"></p>
 
-  <!-- Supabase JS (browser) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    // TODO: paste your values here
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     const msg = document.getElementById("msg");
-    const emailInput = document.getElementById("email");
+    const btn = document.getElementById("send");
 
-    document.getElementById("send").addEventListener("click", async () => {
-      msg.textContent = "Sending...";
-      const email = emailInput.value.trim();
+    // 1) Prove the click handler is running
+    btn.addEventListener("click", async () => {
+      msg.textContent = "Button clicked. Sending...";
+      console.log("Button clicked");
 
-      if (!email) {
-        msg.textContent = "Please enter your email.";
-        return;
-      }
+      // 2) Prove Supabase library loaded
+      console.log("supabase global is:", typeof supabase);
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          // After login, user returns here (you can change later)
-emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/"
+      const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL";
+      const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY"; // must be anon
+
+      try {
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const email = document.getElementById("email").value.trim();
+        if (!email) {
+          msg.textContent = "Please enter your email.";
+          return;
         }
-      });
 
-      if (error) {
-        msg.textContent = "Error: " + error.message;
-      } else {
-        msg.textContent = "Sent! Check your email for the login link.";
+        const { error } = await sb.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/"
+          }
+        });
+
+        if (error) {
+          msg.textContent = "Error: " + error.message;
+          console.log("Supabase error:", error);
+        } else {
+          msg.textContent = "Sent! Check your inbox/spam.";
+          console.log("OTP email sent");
+        }
+      } catch (e) {
+        msg.textContent = "JS error: " + (e && e.message ? e.message : e);
+        console.log("JS exception:", e);
       }
     });
   </script>
