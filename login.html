@@ -2,161 +2,259 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login • The Bollywood Melodies Series</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login • Classic Bollywood Melodies</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
-    :root { color-scheme: light; }
-    body {
+    :root{
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --btnText: #2b1140;
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #f6f7fb;
-      color: #111827;
-    }
-    .wrap {
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        radial-gradient(520px 320px at 35% 55%, rgba(255,90,210,0.14), transparent 60%),
+        var(--bg);
     }
-    .card {
-      width: 100%;
-      max-width: 460px;
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 22px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+
+    .banner{
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(140,120,160,0.18);
     }
-    h1 {
-      margin: 0 0 6px;
+
+    .banner-link{
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
       font-size: 22px;
-      letter-spacing: 0.2px;
+      letter-spacing: 0.7px;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 12px;
     }
-    p {
-      margin: 0 0 14px;
-      color: #4b5563;
-      line-height: 1.4;
-      font-size: 14px;
+
+    .banner-link:hover{ text-decoration: underline; }
+
+    main{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 44px 18px 70px;
+      text-align: center;
     }
-    label {
+
+    h1{
+      font-size: clamp(28px, 4.8vw, 54px);
+      line-height: 1.06;
+      margin: 18px 0 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .sub{
+      margin: 0 auto 22px;
+      max-width: 640px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .card{
+      max-width: 520px;
+      margin: 18px auto 0;
+      text-align: left;
+      border-radius: 22px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-80px -90px auto auto;
+      width: 230px;
+      height: 230px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%,
+        rgba(255,120,160,0.40),
+        rgba(155,110,255,0.28),
+        rgba(255,90,210,0.18),
+        transparent 62%);
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      left:-120px;
+      bottom:-140px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 60% 40%,
+        rgba(255,80,90,0.24),
+        rgba(255,120,160,0.18),
+        transparent 62%);
+      pointer-events: none;
+    }
+
+    .card > *{ position: relative; z-index: 1; }
+
+    label{
       display: block;
-      font-size: 13px;
-      margin: 14px 0 6px;
-      color: #374151;
-    }
-    input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px 12px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
       font-size: 14px;
+      font-weight: 600;
+      margin: 14px 0 6px;
+      color: rgba(26,26,31,0.85);
+    }
+
+    input{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(155,110,255,0.26);
       outline: none;
+      background: rgba(255,255,255,0.72);
+      font-size: 14px;
     }
-    input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+
+    input:focus{
+      border-color: rgba(155,110,255,0.45);
+      box-shadow: 0 0 0 4px rgba(155,110,255,0.14);
     }
-    .row {
+
+    .row{
       display: flex;
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 14px;
+      flex-wrap: wrap;
     }
-    button {
-      border: 0;
-      border-radius: 10px;
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       padding: 12px 14px;
-      font-size: 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 650;
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.30);
+      background:
+        linear-gradient(135deg,
+          rgba(255,120,160,0.26),
+          rgba(155,110,255,0.20),
+          rgba(255,90,210,0.14));
+      transition: transform 0.14s ease, filter 0.14s ease;
       cursor: pointer;
     }
-    .primary {
-      background: #111827;
-      color: white;
-      flex: 1;
+
+    .btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
     }
-    .primary:disabled {
-      opacity: 0.6;
+
+    .btn.secondary{
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(140,120,160,0.22);
+      color: rgba(26,26,31,0.85);
+    }
+
+    .btn:disabled{
+      opacity: 0.65;
       cursor: not-allowed;
+      transform: none;
     }
-    .ghost {
-      background: transparent;
-      border: 1px solid #d1d5db;
-      color: #111827;
-    }
-    .msg {
-      margin-top: 12px;
-      font-size: 13px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid transparent;
-      display: none;
-    }
-    .msg.info { display: block; background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
-    .msg.ok   { display: block; background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
-    .msg.err  { display: block; background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-    .tiny {
+
+    .msg{
       margin-top: 14px;
-      font-size: 12px;
-      color: #6b7280;
+      font-size: 14px;
+      color: var(--muted);
+      min-height: 22px;
     }
-    .tiny a { color: #111827; }
+
+    .helper{
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Login</h1>
-      <p>Enter your email to receive a secure login link. You’ll come back to the app automatically.</p>
+  <header class="banner">
+    <!-- back to your main portfolio page -->
+    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+  </header>
 
+  <main>
+    <h1>Login</h1>
+    <p class="sub">Enter your email to receive a secure login link, then come right back to the app.</p>
+
+    <section class="card">
       <label for="email">Email</label>
       <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
 
       <div class="row">
-        <button id="send" class="primary">Send login link</button>
-        <button id="back" class="ghost" type="button">Back</button>
+        <button id="send" class="btn">Send login link</button>
+        <a class="btn secondary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">Back to app</a>
       </div>
 
       <div id="msg" class="msg"></div>
-
-      <div class="tiny">
-        Tip: if you don’t see the email, check Spam/Promotions.
-      </div>
-    </div>
-  </div>
+      <div class="helper">Tip: check Spam/Promotions if you don’t see the email.</div>
+    </section>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <script>
-    const msgBox = document.getElementById("msg");
+    const msg = document.getElementById("msg");
     const btn = document.getElementById("send");
-    const back = document.getElementById("back");
-    const emailEl = document.getElementById("email");
 
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function showMsg(type, text) {
-      msgBox.className = "msg " + type;
-      msgBox.textContent = text;
-    }
-
-    back.addEventListener("click", () => {
-      window.location.href = "https://riashandilya-svg.github.io/classicbollywoodmelodies/";
-    });
-
     btn.addEventListener("click", async () => {
-      const email = emailEl.value.trim();
-
+      const email = document.getElementById("email").value.trim();
       if (!email) {
-        showMsg("err", "Please enter your email.");
+        msg.textContent = "Please enter your email.";
         return;
       }
 
       btn.disabled = true;
-      showMsg("info", "Sending login link...");
+      msg.textContent = "Sending login link…";
 
       try {
         const { error } = await sb.auth.signInWithOtp({
@@ -166,13 +264,10 @@
           }
         });
 
-        if (error) {
-          showMsg("err", "Error: " + error.message);
-        } else {
-          showMsg("ok", "Sent! Check your inbox (and Spam/Promotions).");
-        }
+        if (error) msg.textContent = "Error: " + error.message;
+        else msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
       } catch (e) {
-        showMsg("err", "Something went wrong. Please try again.");
+        msg.textContent = "Something went wrong. Please try again.";
         console.log(e);
       } finally {
         btn.disabled = false;
