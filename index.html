@@ -327,6 +327,13 @@
   <main>
     <h1>Pick a book</h1>
     <p class="sub">Choose a mood, then pick a song inside.</p>
+    <div id="authBox" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+  <span id="userBox" style="display:none; padding:12px 14px; border-radius:14px; border:1px solid rgba(140,120,160,0.18); background:rgba(255,255,255,0.55);"></span>
+
+  <a id="loginLink" class="btn" href="./login.html">Login</a>
+  <button id="logoutBtn" class="btn secondary" style="display:none;" type="button">Logout</button>
+</div>
+
  <div style="margin: 14px 0 6px;">
     <a class="btn" href="./login.html">Login</a>
   </div>
@@ -382,5 +389,49 @@
 
     </section>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // Use the SAME values as login.html
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+  const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY_HERE"; // anon only
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function renderAuthUI() {
+    const { data: { session } } = await sb.auth.getSession();
+
+    const box = document.getElementById("authBox");
+    const userBox = document.getElementById("userBox");
+    const loginLink = document.getElementById("loginLink");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (session && session.user) {
+      // logged in
+      const email = session.user.email || "User";
+      userBox.textContent = `Welcome, ${email}`;
+      userBox.style.display = "block";
+      logoutBtn.style.display = "inline-flex";
+      loginLink.style.display = "none";
+    } else {
+      // logged out
+      userBox.style.display = "none";
+      logoutBtn.style.display = "none";
+      loginLink.style.display = "inline-flex";
+    }
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    await renderAuthUI();
+  });
+
+  // Re-render when auth changes (clicking email link etc.)
+  sb.auth.onAuthStateChange(() => {
+    renderAuthUI();
+  });
+
+  renderAuthUI();
+</script>
 </body>
 </html>
