@@ -1,42 +1,164 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login</title>
+  <title>Login • The Bollywood Melodies Series</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #f6f7fb;
+      color: #111827;
+    }
+    .wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 460px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      letter-spacing: 0.2px;
+    }
+    p {
+      margin: 0 0 14px;
+      color: #4b5563;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin: 14px 0 6px;
+      color: #374151;
+    }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .primary {
+      background: #111827;
+      color: white;
+      flex: 1;
+    }
+    .primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .ghost {
+      background: transparent;
+      border: 1px solid #d1d5db;
+      color: #111827;
+    }
+    .msg {
+      margin-top: 12px;
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      display: none;
+    }
+    .msg.info { display: block; background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+    .msg.ok   { display: block; background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+    .msg.err  { display: block; background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .tiny {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .tiny a { color: #111827; }
+  </style>
 </head>
+
 <body>
-  <h2>Login</h2>
-  <input id="email" type="email" placeholder="you@example.com" />
-  <button id="send">Send login link</button>
-  <p id="msg"></p>
+  <div class="wrap">
+    <div class="card">
+      <h1>Login</h1>
+      <p>Enter your email to receive a secure login link. You’ll come back to the app automatically.</p>
+
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+
+      <div class="row">
+        <button id="send" class="primary">Send login link</button>
+        <button id="back" class="ghost" type="button">Back</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <div class="tiny">
+        Tip: if you don’t see the email, check Spam/Promotions.
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    const msg = document.getElementById("msg");
+    const msgBox = document.getElementById("msg");
     const btn = document.getElementById("send");
+    const back = document.getElementById("back");
+    const emailEl = document.getElementById("email");
 
-    // 1) Prove the click handler is running
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function showMsg(type, text) {
+      msgBox.className = "msg " + type;
+      msgBox.textContent = text;
+    }
+
+    back.addEventListener("click", () => {
+      window.location.href = "https://riashandilya-svg.github.io/classicbollywoodmelodies/";
+    });
+
     btn.addEventListener("click", async () => {
-      msg.textContent = "Button clicked. Sending...";
-      console.log("Button clicked");
+      const email = emailEl.value.trim();
 
-      // 2) Prove Supabase library loaded
-      console.log("supabase global is:", typeof supabase);
+      if (!email) {
+        showMsg("err", "Please enter your email.");
+        return;
+      }
 
-      const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c"; // must be anon
+      btn.disabled = true;
+      showMsg("info", "Sending login link...");
 
       try {
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        const email = document.getElementById("email").value.trim();
-        if (!email) {
-          msg.textContent = "Please enter your email.";
-          return;
-        }
-
         const { error } = await sb.auth.signInWithOtp({
           email,
           options: {
@@ -45,15 +167,15 @@
         });
 
         if (error) {
-          msg.textContent = "Error: " + error.message;
-          console.log("Supabase error:", error);
+          showMsg("err", "Error: " + error.message);
         } else {
-          msg.textContent = "Sent! Check your inbox/spam.";
-          console.log("OTP email sent");
+          showMsg("ok", "Sent! Check your inbox (and Spam/Promotions).");
         }
       } catch (e) {
-        msg.textContent = "JS error: " + (e && e.message ? e.message : e);
-        console.log("JS exception:", e);
+        showMsg("err", "Something went wrong. Please try again.");
+        console.log(e);
+      } finally {
+        btn.disabled = false;
       }
     });
   </script>
