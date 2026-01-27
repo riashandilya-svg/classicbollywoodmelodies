@@ -237,78 +237,67 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const msg = document.getElementById("msg");
-    const btn = document.getElementById("send");
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const msg = document.getElementById("msg");
+  const btn = document.getElementById("send");
 
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
 
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-btn.addEventListener("click", async () => {
-  const email = document.getElementById("email").value.trim();
+  btn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
 
-  if (!email) {
-    msg.textContent = "Please enter your email.";
-    return;
-  }
-
-  // Cooldown so users (and you) don’t spam the endpoint
-  btn.disabled = true;
-  let secondsLeft = 60;
-
-  const originalText = btn.textContent;
-  btn.textContent = `Sending…`;
-
-  const tick = setInterval(() => {
-    secondsLeft -= 1;
-    if (secondsLeft > 0) {
-      btn.textContent = `Try again in ${secondsLeft}s`;
-    } else {
-      clearInterval(tick);
-      btn.textContent = originalText;
-      btn.disabled = false;
+    if (!email) {
+      msg.textContent = "Please enter your email.";
+      return;
     }
-  }, 1000);
 
-  msg.textContent = "Sending login link…";
+    // Cooldown so users don’t spam
+    btn.disabled = true;
+    let secondsLeft = 60;
 
-  try {
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/"
-      }
-    });
+    const originalText = btn.textContent;
+    btn.textContent = "Sending…";
 
-    if (error) {
-      // If Supabase rate limits, tell the user clearly
-      if ((error.message || "").toLowerCase().includes("rate limit")) {
-        msg.textContent = "Too many requests. Please wait a bit and try again.";
+    const tick = setInterval(() => {
+      secondsLeft -= 1;
+      if (secondsLeft > 0) {
+        btn.textContent = `Try again in ${secondsLeft}s`;
       } else {
-        msg.textContent = "Error: " + error.message;
-      }
-      console.log("Supabase error:", error);
-    } else {
-      msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
-    }
-  } catch (e) {
-    msg.textContent = "Something went wrong. Please try again.";
-    console.log("JS exception:", e);
-  }
-});
-
-
-        if (error) msg.textContent = "Error: " + error.message;
-        else msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
-      } catch (e) {
-        msg.textContent = "Something went wrong. Please try again.";
-        console.log(e);
-      } finally {
+        clearInterval(tick);
+        btn.textContent = originalText;
         btn.disabled = false;
       }
-    });
-  </script>
+    }, 1000);
+
+    msg.textContent = "Sending login link…";
+
+    try {
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/"
+        }
+      });
+
+      if (error) {
+        if ((error.message || "").toLowerCase().includes("rate limit")) {
+          msg.textContent = "Too many requests. Please wait a bit and try again.";
+        } else {
+          msg.textContent = "Error: " + error.message;
+        }
+        console.log("Supabase error:", error);
+      } else {
+        msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
+      }
+    } catch (e) {
+      msg.textContent = "Something went wrong. Please try again.";
+      console.log("JS exception:", e);
+    }
+  });
+ </script>
 </body>
 </html>
