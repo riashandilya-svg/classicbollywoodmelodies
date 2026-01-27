@@ -226,10 +226,22 @@
       display: block;
     }
 
-    @media (max-width: 520px){
-      .card.book{ flex-direction: column; align-items: stretch; }
-      .book-art{ width: 100%; height: 170px; }
-    }
+  @media (max-width: 520px){
+  .card.book{ flex-direction: column; align-items: stretch; }
+  .book-art{
+    width: 100%;
+    height: auto;              /* change */
+    aspect-ratio: 16 / 9;      /* add */
+    border-radius: 18px;
+  }
+  .book-art img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;   /* add */
+  }
+}
+
 
     /* ===== Theme variables ===== */
     .card.book{
