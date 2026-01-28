@@ -38,16 +38,24 @@ export async function showPaywall(options = {}) {
     const { data, error } = await window.supabase.auth.getSession();
     if (error) console.warn("supabase getSession error:", error);
 
-    email = normalizeEmail(data?.session?.user?.email);
-    userId = data?.session?.user?.id || "";
+  email = normalizeEmail(data?.session?.user?.email);
+userId = data?.session?.user?.id || "";
 
-    const isOwner = OWNER_EMAILS.includes(email);
+// ✅ OWNER BYPASS (by user id = safest)
+const OWNER_USER_IDS = [
+  "11b81b74-54ef-4a54-b803-ab6c0f88b187",
+];
 
-    if (isOwner) {
-      paywallEl.style.display = "none";
-      appEl.style.display = "block";
-      return;
-    }
+const isOwner =
+  OWNER_USER_IDS.includes(userId) ||
+  OWNER_EMAILS.includes(email); // optional backup
+
+if (isOwner) {
+  paywallEl.style.display = "none";
+  appEl.style.display = "block";
+  return;
+}
+
   } catch (e) {
     console.warn("Paywall session check failed:", e);
   }
