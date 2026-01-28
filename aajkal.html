@@ -381,6 +381,8 @@ canvas {
         <span>Ria Om Shandilya</span>
       </div>      
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
+    <div id="app">
+
 <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
     <div id="trainingProgressFill"></div>
@@ -462,6 +464,12 @@ canvas {
     <div class="note-list" id="noteList"></div>
 </div>   <!-- closes bottomDock -->
 </div>   <!-- closes midiDisplay -->
+</div> <!-- closes app -->
+<div id="paywall" style="display:none; max-width:720px; width:92%; padding:16px; border:1px solid rgba(235,50,70,0.18); border-radius:14px; background:rgba(255,255,255,0.9); box-shadow:0 8px 24px rgba(0,0,0,0.10);">
+  <h2 style="margin:0 0 8px 0;">This song is locked</h2>
+  <p style="margin:0 0 12px 0;">Please buy to unlock and save your progress.</p>
+  <button id="buyBtn">Buy this song</button>
+</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
@@ -2779,6 +2787,11 @@ loadSongMidi();
 
   // When coming back via Back button
   window.addEventListener("pageshow", requireLogin);
+</script>
+<script type="module">
+  // TEMP TEST: force locked view
+  document.getElementById("app").style.display = "none";
+  document.getElementById("paywall").style.display = "block";
 </script>
 
 </body>
