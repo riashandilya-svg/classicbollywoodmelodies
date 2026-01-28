@@ -50,7 +50,7 @@ export async function showPaywall(options = {}) {
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
-  // Render locked UI immediately (simple + safe)
+  // Render locked UI immediately
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
@@ -84,7 +84,7 @@ export async function showPaywall(options = {}) {
     console.warn("Paywall session/access check failed:", e);
   }
 
-  // Buy button handler (wired in section 3 below)
+  // Buy button handler (checkout will be added in later steps)
   const buyBtn = document.getElementById("buyBtn");
   if (buyBtn) {
     buyBtn.addEventListener("click", async () => {
