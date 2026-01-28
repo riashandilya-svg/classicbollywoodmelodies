@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Signing you in...</title>
+  </head>
+  <body>
+    Signing you in...
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+      const supabaseUrl = "PASTE_YOUR_SUPABASE_URL";
+      const supabaseAnonKey = "PASTE_YOUR_SUPABASE_ANON_KEY";
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+
+      if (error) {
+        document.body.innerText = "Login failed: " + error.message;
+      } else {
+        window.location.href = "../index.html";
+      }
+    </script>
+  </body>
+</html>
