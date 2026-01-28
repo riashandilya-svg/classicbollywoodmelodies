@@ -422,12 +422,8 @@ canvas {
       </div>    
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
-       <!-- 🔒 PAYWALL (hidden by default) -->
-<div id="paywall" style="display:none; width:min(720px, 92%); padding:16px; border:1px solid rgba(235,50,70,0.25); border-radius:14px; background:rgba(255,255,255,0.85); margin:14px auto;">
-    <h3 style="margin:0 0 6px 0;">This song is locked</h3>
-    <p style="margin:0 0 12px 0;">Please buy to unlock this lesson.</p>
-    <button id="buyBtn">Buy this song</button>
-  </div>
+<div id="paywall"></div>
+
       <div id="app">
 
       <!-- 🎯 Training Progress Bar -->
@@ -2810,12 +2806,6 @@ holdEl.innerHTML =
 
 </script>
 <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-<script type="module">
-  import { showPaywall } from "/classicbollywoodmelodies/js/paywall.js";
-
-  // TEMP TEST: force the paywall to show
-  showPaywall({ title: "This song is locked" });
-</script>
 
 <script type="module">
   async function requireLogin() {
@@ -2830,6 +2820,12 @@ holdEl.innerHTML =
 
   // When coming back via Back button
   window.addEventListener("pageshow", requireLogin);
+</script>
+<script type="module">
+  import { showPaywall } from "/classicbollywoodmelodies/js/paywall.js";
+
+  // TEMP TEST: force the paywall to show
+  showPaywall({ title: "This song is locked" });
 </script>
 
 </body>
