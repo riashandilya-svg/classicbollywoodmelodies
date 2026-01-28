@@ -322,5 +322,42 @@
     setTimeout(renderAuthUI, 800);
   })();
 </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const sendBtn = document.getElementById("send");
+    const discordBtn = document.getElementById("discord");
+
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    console.log("login.html loaded, discordBtn=", !!discordBtn, "sendBtn=", !!sendBtn);
+
+    discordBtn?.addEventListener("click", async () => {
+      msg.textContent = "Opening Discord login…";
+      const { data, error } = await sb.auth.signInWithOAuth({
+        provider: "discord",
+        options: {
+          redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+        }
+      });
+      if (error) msg.textContent = "Discord error: " + error.message;
+      if (data?.url) window.location.href = data.url;
+    });
+
+    sendBtn?.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) { msg.textContent = "Please enter your email."; return; }
+      msg.textContent = "Sending login link…";
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+        }
+      });
+      msg.textContent = error ? ("Email error: " + error.message) : "Sent! Check your inbox.";
+    });
+  </script>
 </body>
 </html>
