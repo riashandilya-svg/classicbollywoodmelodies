@@ -362,6 +362,43 @@ canvas {
     border-radius: 10px;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
 }
+/* 🔒 Paywall card */
+#paywall{
+  display: none;                 /* hidden until JS shows it */
+  width: min(420px, 92%);
+  padding: 16px 18px;
+  margin: 14px auto;
+  border: 1px solid rgba(235,50,70,0.22);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+#paywall h3{
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 0.3px;
+}
+
+#paywall p{
+  margin: 0 0 14px 0;
+  font-size: 15px;
+  opacity: 0.9;
+  line-height: 1.45;
+}
+
+#buyBtn{
+  display: inline-block;
+  width: auto;
+  min-width: 180px;
+  padding: 10px 18px;
+  border-radius: 12px;
+}
+
+/* 🔒 Default: hide the app until unlocked */
+#app { display: none; }
 
 </style>
 </head>
@@ -370,6 +407,8 @@ canvas {
         <span>Ria Om Shandilya</span>
       </div>      
     <h1>Aaoge Jab Tum Saajana</h1>
+    <div id="paywall"></div>
+<div id="app">
 <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
     <div id="trainingProgressFill"></div>
@@ -2660,6 +2699,26 @@ loadSongMidi();
 
   // When coming back via Back button
   window.addEventListener("pageshow", requireLogin);
+</script>
+<script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+
+<script type="module">
+  async function requireLogin() {
+    const { data } = await window.supabase.auth.getSession();
+    if (!data.session) {
+      window.location.replace("/classicbollywoodmelodies/login.html");
+    }
+  }
+
+  await requireLogin();
+  window.addEventListener("pageshow", requireLogin);
+</script>
+
+<script type="module">
+  import { showPaywall } from "/classicbollywoodmelodies/js/paywall.js";
+
+  // TEMP TEST: always show paywall (remove later when purchases are real)
+  showPaywall({ title: "This song is locked" });
 </script>
 
 </body>
