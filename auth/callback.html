@@ -9,38 +9,45 @@
     Signing you in...
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>  
-      const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      (async () => {
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code"); // PKCE flow (sometimes)
-        const token_hash = url.searchParams.get("token_hash"); // Magic link flow (common)
-        const type = url.searchParams.get("type"); // usually "magiclink"
+  (async () => {
+    const url = new URL(window.location.href);
 
-        let error = null;
+    // Supabase may return params in query (?a=b) OR in hash (#a=b)
+    const queryParams = url.searchParams;
+    const hashParams = new URLSearchParams((url.hash || "").replace(/^#/, ""));
 
-        if (code) {
-          // If you ever switch to PKCE, this will handle it
-          const res = await sb.auth.exchangeCodeForSession(window.location.href);
-          error = res.error;
-        } else if (token_hash && type) {
-          // This is the important one for your current emails
-          const res = await sb.auth.verifyOtp({ type, token_hash });
-          error = res.error;
-        } else {
-          error = { message: "Missing login parameters in URL." };
-        }
+    const code = queryParams.get("code") || hashParams.get("code");
+    const token_hash = queryParams.get("token_hash") || hashParams.get("token_hash");
+    const type = queryParams.get("type") || hashParams.get("type") || "magiclink";
 
-        if (error) {
-          document.body.innerText = "Login failed: " + error.message;
-          return;
-        }
+    let error = null;
 
-        window.location.href = "../index.html";
-      })();
-    </script>
+    if (code) {
+      const res = await sb.auth.exchangeCodeForSession(window.location.href);
+      error = res.error;
+    } else if (token_hash) {
+      const res = await sb.auth.verifyOtp({ type, token_hash });
+      error = res.error;
+    } else {
+      // If someone lands here without params, just send them to login
+      window.location.href = "../login.html";
+      return;
+    }
+
+    if (error) {
+      document.body.innerText = "Login failed: " + error.message;
+      return;
+    }
+
+    window.location.href = "../index.html";
+  })();
+</script>
+
   </body>
 </html>
