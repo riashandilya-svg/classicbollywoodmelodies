@@ -6,6 +6,35 @@ function normalizeEmail(email) {
 
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
+// Bundle keys we accept (you have ALL_SONGS in DB)
+function hasAllSongs(ownedSet) {
+  return ownedSet.has("ALL_SONGS") || ownedSet.has("bundle:all_songs");
+}
+
+// If productId is missing, infer from URL: /songs/aajkal.html -> song:aajkal
+function inferProductIdFromUrl() {
+  try {
+    const path = window.location.pathname || "";
+    const file = path.split("/").pop() || "";      // aajkal.html
+    const base = file.replace(/\.html$/i, "");     // aajkal
+    if (!base) return "";
+    return `song:${base}`;
+  } catch {
+    return "";
+  }
+}
+
+// Normalize productId so it supports:
+// - "song:aajkal" (already ok)
+// - "aajkal" (we’ll convert)
+// - missing (we infer)
+function normalizeProductId(productId) {
+  const p = (productId || "").trim();
+  if (!p) return inferProductIdFromUrl();
+  if (p.startsWith("song:") || p.startsWith("bundle:")) return p;
+  return `song:${p}`;
+}
+
 async function userHasAccess(productId, session) {
   const email = normalizeEmail(session?.user?.email);
 
@@ -15,7 +44,10 @@ async function userHasAccess(productId, session) {
   const userId = session?.user?.id;
   if (!userId) return false;
 
-  // ✅ Fetch ALL this user's entitlements, then compare safely with trim()
+  const needed = normalizeProductId(productId);
+  if (!needed) return false;
+
+  // ✅ Fetch all entitlements for this user, trim newline junk
   const { data, error } = await window.supabase
     .from("entitlements")
     .select("product_id")
@@ -27,15 +59,13 @@ async function userHasAccess(productId, session) {
   }
 
   const owned = new Set((data || []).map(r => (r.product_id || "").trim()));
-  const needed = (productId || "").trim();
 
-  // ✅ Accept either bundle key format
-  const hasAllSongs =
-    owned.has("ALL_SONGS") || owned.has("bundle:all_songs");
+  // Debug (keep for now)
+  console.log("[PAYWALL] needed:", needed);
+  console.log("[PAYWALL] owned:", Array.from(owned));
 
-  return hasAllSongs || owned.has(needed);
+  return hasAllSongs(owned) || owned.has(needed);
 }
-
 
 export async function showPaywall(options = {}) {
   const paywallEl = document.getElementById("paywall");
@@ -50,6 +80,7 @@ export async function showPaywall(options = {}) {
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
+  // Locked UI
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
@@ -64,14 +95,11 @@ export async function showPaywall(options = {}) {
     if (error) console.warn("supabase getSession error:", error);
 
     const session = data?.session;
-    const productId = options.productId;
+    if (!session) return; // not logged in -> stay locked
 
-    if (!productId) {
-      console.warn("showPaywall missing options.productId");
-      return; // stay locked
-    }
-
-    const allowed = await userHasAccess(productId, session);
+    // ✅ productId can be missing now, we will infer it
+    const allowed = await userHasAccess(options.productId, session);
+    console.log("[PAYWALL] allowed:", allowed);
 
     if (allowed) {
       paywallEl.style.display = "none";
@@ -82,7 +110,7 @@ export async function showPaywall(options = {}) {
     console.warn("Paywall session/access check failed:", e);
   }
 
-  // Buy button
+  // Buy button handler (if/when you wire Razorpay)
   const buyBtn = document.getElementById("buyBtn");
   if (buyBtn) {
     buyBtn.addEventListener("click", async () => {
@@ -91,7 +119,7 @@ export async function showPaywall(options = {}) {
         return;
       }
       await window.startRazorpayCheckout({
-        productId: options.productId,
+        productId: normalizeProductId(options.productId),
         title: options.title || "Locked",
       });
     });
