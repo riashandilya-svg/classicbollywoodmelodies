@@ -243,82 +243,84 @@
 
  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const msg = document.getElementById("msg");
-  const sendBtn = document.getElementById("send");
-  const discordBtn = document.getElementById("discord");
-
   const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-
-  // If this logs "undefined", supabase-js didn't load
-  console.log("supabase global is:", typeof supabase);
-
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Discord login (no email limits)
-  if (discordBtn) {
-    discordBtn.addEventListener("click", async () => {
-      msg.textContent = "Opening Discord login…";
+  async function finishAuthFromUrlIfPresent() {
+    const url = new URL(window.location.href);
+    const q = url.searchParams;
+    const h = new URLSearchParams((url.hash || "").replace(/^#/, ""));
 
-      const { data, error } = await sb.auth.signInWithOAuth({
-        provider: "discord",
-        options: {
-          redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
-        }
-      });
+    const code = q.get("code") || h.get("code");
+    const access_token = q.get("access_token") || h.get("access_token");
+    const refresh_token = q.get("refresh_token") || h.get("refresh_token");
 
-      if (error) {
-        msg.textContent = "Discord error: " + error.message;
-        console.log(error);
-        return;
-      }
+    if (code) {
+      const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
+      if (error) console.log("exchangeCodeForSession error:", error);
+      window.history.replaceState({}, document.title, "./index.html");
+      return;
+    }
 
-      // Usually redirects automatically, but this helps if browser blocks it
-      if (data?.url) window.location.href = data.url;
-    });
+    if (access_token && refresh_token) {
+      const { error } = await sb.auth.setSession({ access_token, refresh_token });
+      if (error) console.log("setSession error:", error);
+      window.history.replaceState({}, document.title, "./index.html");
+      return;
+    }
   }
 
-  // Email login link
-  if (sendBtn) {
-    sendBtn.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      if (!email) {
-        msg.textContent = "Please enter your email.";
-        return;
-      }
+  async function renderAuthUI() {
+    const { data: { session } } = await sb.auth.getSession();
 
-      // simple cooldown
-      sendBtn.disabled = true;
-      const originalText = sendBtn.textContent;
-      sendBtn.textContent = "Sending…";
-      msg.textContent = "Sending login link…";
+    const userBox = document.getElementById("userBox");
+    const loginLink = document.getElementById("loginLink");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-      try {
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
-          }
-        });
+    if (session && session.user) {
+      const userId = session.user.id;
 
-        if (error) {
-          msg.textContent = "Email error: " + error.message;
-          console.log(error);
-        } else {
-          msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
+      const { data: profile } = await sb
+        .from("profiles")
+        .select("display_name, setup_completed")
+        .eq("id", userId)
+        .single();
+
+      // If setup not completed, redirect to setup page (only once)
+      if (profile && profile.setup_completed === false) {
+        if (!window.location.pathname.endsWith("/setup.html")) {
+          window.location.href = "./setup.html";
+          return;
         }
-      } catch (e) {
-        msg.textContent = "Something went wrong. Check console.";
-        console.log(e);
-      } finally {
-        setTimeout(() => {
-          sendBtn.disabled = false;
-          sendBtn.textContent = originalText;
-        }, 60000);
       }
-    });
+
+      const displayName = (profile && profile.display_name) ? profile.display_name : "there";
+      userBox.textContent = `Welcome, ${displayName}`;
+      userBox.style.display = "inline-flex";
+      logoutBtn.style.display = "inline-flex";
+      loginLink.style.display = "none";
+    } else {
+      userBox.style.display = "none";
+      logoutBtn.style.display = "none";
+      loginLink.style.display = "inline-flex";
+    }
   }
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    await renderAuthUI();
+  });
+
+  sb.auth.onAuthStateChange(() => {
+    renderAuthUI();
+  });
+
+  (async () => {
+    await finishAuthFromUrlIfPresent();
+    await renderAuthUI();
+    setTimeout(renderAuthUI, 800);
+  })();
 </script>
-
 </body>
 </html>
