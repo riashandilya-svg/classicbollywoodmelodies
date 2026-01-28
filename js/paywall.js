@@ -1,73 +1,61 @@
 // /classicbollywoodmelodies/js/paywall.js
 
-// This module only controls UI (paywall vs app).
-// Auth + entitlements check happens elsewhere (or later you can add purchase checks).
+function normalizeEmail(email) {
+  return (email || "").trim().toLowerCase();
+}
 
-export function showPaywall({
-  title = "This song is locked",
-  message = "Please purchase or unlock access to continue.",
-  buttonText = "Unlock",
-  onBuy = null
-} = {}) {
-  const paywall = document.getElementById("paywall");
-  const app = document.getElementById("app");
+// ✅ Put your email(s) here
+const OWNER_EMAILS = [
+  "riaomshandilya@gmail.com",
+];
 
-  if (!paywall) {
-    console.warn("showPaywall: #paywall not found");
+export async function showPaywall(options = {}) {
+  const paywallEl = document.getElementById("paywall");
+  const appEl = document.getElementById("app");
+
+  if (!paywallEl || !appEl) {
+    console.error("Missing #paywall or #app element");
     return;
   }
 
-  // Hide the app until unlocked
-  if (app) app.style.display = "none";
+  // Default: locked (safe)
+  appEl.style.display = "none";
+  paywallEl.style.display = "block";
 
-  // Build paywall UI
-  paywall.innerHTML = `
-    <h3>${escapeHtml(title)}</h3>
-    <p>${escapeHtml(message)}</p>
-    <button id="buyBtn">${escapeHtml(buttonText)}</button>
+  // Try to detect logged-in user
+  try {
+    const { data, error } = await window.supabase.auth.getSession();
+    if (error) console.warn("supabase getSession error:", error);
+
+    const email = normalizeEmail(data?.session?.user?.email);
+
+    // ✅ OWNER BYPASS
+    const isOwner = OWNER_EMAILS.includes(email);
+
+    if (isOwner) {
+      paywallEl.style.display = "none";
+      appEl.style.display = "block";
+      return;
+    }
+  } catch (e) {
+    console.warn("Paywall session check failed:", e);
+  }
+
+  // Still locked: render minimal paywall UI (safe even if empty)
+  const title = options.title || "This song is locked";
+  const body = options.body || "Please buy to unlock this lesson.";
+
+  paywallEl.innerHTML = `
+    <h3>${title}</h3>
+    <p>${body}</p>
+    <button id="buyBtn" type="button">Buy this song</button>
   `;
 
-  paywall.style.display = "block";
-
-  const btn = document.getElementById("buyBtn");
-  if (btn) {
-    btn.addEventListener("click", async () => {
-      // If you pass a handler, run it. Otherwise just alert.
-      if (typeof onBuy === "function") {
-        try {
-          btn.disabled = true;
-          btn.textContent = "Loading…";
-          await onBuy();
-        } catch (e) {
-          console.error(e);
-          alert("Something went wrong. Please try again.");
-        } finally {
-          btn.disabled = false;
-          btn.textContent = buttonText;
-        }
-      } else {
-        alert("Unlock flow not connected yet.");
-      }
+  // Optional: wire later
+  const buyBtn = document.getElementById("buyBtn");
+  if (buyBtn) {
+    buyBtn.addEventListener("click", () => {
+      alert("Purchases not connected yet.");
     });
   }
-}
-
-export function unlockApp() {
-  const paywall = document.getElementById("paywall");
-  const app = document.getElementById("app");
-
-  if (paywall) {
-    paywall.style.display = "none";
-    paywall.innerHTML = "";
-  }
-  if (app) app.style.display = "block";
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
