@@ -393,6 +393,32 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c"; // anon only
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function finishAuthFromUrlIfPresent() {
+  const url = new URL(window.location.href);
+  const q = url.searchParams;
+  const h = new URLSearchParams((url.hash || "").replace(/^#/, ""));
+
+  const code = q.get("code") || h.get("code");
+  const access_token = q.get("access_token") || h.get("access_token");
+  const refresh_token = q.get("refresh_token") || h.get("refresh_token");
+
+  // If Supabase/Discord sent us a code, exchange it for a session
+  if (code) {
+    const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
+    if (error) console.log("exchangeCodeForSession error:", error);
+    // Clean URL so it doesn't repeat
+    window.history.replaceState({}, document.title, "./index.html");
+    return;
+  }
+
+  // If we got tokens in the hash, set session directly
+  if (access_token && refresh_token) {
+    const { error } = await sb.auth.setSession({ access_token, refresh_token });
+    if (error) console.log("setSession error:", error);
+    window.history.replaceState({}, document.title, "./index.html");
+    return;
+  }
+}
 
   async function renderAuthUI() {
     const { data: { session } } = await sb.auth.getSession();
@@ -443,8 +469,12 @@ if (session && session.user) {
     renderAuthUI();
   });
 
-renderAuthUI();
-setTimeout(renderAuthUI, 800);
+(async () => {
+  await finishAuthFromUrlIfPresent();
+  await renderAuthUI();
+  setTimeout(renderAuthUI, 800);
+})();
+
 
 </script>
 </body>
