@@ -4,24 +4,17 @@ function normalizeEmail(email) {
   return (email || "").trim().toLowerCase();
 }
 
-// ✅ Put your email(s) here
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
-/**
- * productId examples:
- *  - "song:aajkal"
- *  - "bundle:all_songs"
- */
 async function userHasAccess(productId, session) {
   const email = normalizeEmail(session?.user?.email);
 
-  // ✅ Owner bypass
+  // Owner bypass
   if (OWNER_EMAILS.includes(email)) return true;
 
   const userId = session?.user?.id;
   if (!userId) return false;
 
-  // ✅ Check entitlement: either this product OR bundle unlock
   const { data, error } = await window.supabase
     .from("entitlements")
     .select("product_id")
@@ -46,11 +39,10 @@ export async function showPaywall(options = {}) {
     return;
   }
 
-  // ✅ Default locked
+  // Default locked
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
-  // ✅ Locked UI
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
@@ -60,20 +52,17 @@ export async function showPaywall(options = {}) {
     <button id="buyBtn" type="button">Buy this song</button>
   `;
 
-  // ✅ Must provide productId per song page
-  const productId = options.productId;
-  if (!productId) {
-    console.warn("showPaywall missing options.productId");
-    return; // stay locked
-  }
-
-  // ✅ Session + access check
   try {
     const { data, error } = await window.supabase.auth.getSession();
     if (error) console.warn("supabase getSession error:", error);
 
     const session = data?.session;
-    if (!session) return; // not logged in -> stay locked
+    const productId = options.productId;
+
+    if (!productId) {
+      console.warn("showPaywall missing options.productId");
+      return; // stay locked
+    }
 
     const allowed = await userHasAccess(productId, session);
 
@@ -86,7 +75,7 @@ export async function showPaywall(options = {}) {
     console.warn("Paywall session/access check failed:", e);
   }
 
-  // ✅ Buy handler (optional)
+  // Buy button
   const buyBtn = document.getElementById("buyBtn");
   if (buyBtn) {
     buyBtn.addEventListener("click", async () => {
@@ -95,8 +84,8 @@ export async function showPaywall(options = {}) {
         return;
       }
       await window.startRazorpayCheckout({
-        productId,
-        title,
+        productId: options.productId,
+        title: options.title || "Locked",
       });
     });
   }
