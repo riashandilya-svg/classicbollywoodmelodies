@@ -1,26 +1,32 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Signing you in...</title>
   </head>
   <body>
     Signing you in...
 
-    <script type="module">
-      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
   const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+      (async () => {
+        // This is the critical line: finish the email login
+        const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
 
-      if (error) {
-        document.body.innerText = "Login failed: " + error.message;
-      } else {
+        if (error) {
+          document.body.innerText = "Login failed: " + error.message;
+          return;
+        }
+
+        // Redirect back to the app
         window.location.href = "../index.html";
-      }
+      })();
     </script>
   </body>
 </html>
