@@ -5,9 +5,37 @@ function normalizeEmail(email) {
 }
 
 // ✅ Put your email(s) here
-const OWNER_EMAILS = [
-  "riaomshandilya@gmail.com",
-];
+const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
+
+/**
+ * productId examples:
+ *  - `song:aajkal`
+ *  - `bundle:all_songs`
+ */
+async function userHasAccess(productId, session) {
+  const email = normalizeEmail(session?.user?.email);
+
+  // ✅ Owner bypass
+  if (OWNER_EMAILS.includes(email)) return true;
+
+  const userId = session?.user?.id;
+  if (!userId) return false;
+
+  // Check entitlement: either this product OR bundle unlock
+  const { data, error } = await window.supabase
+    .from("entitlements")
+    .select("product_id")
+    .eq("user_id", userId)
+    .in("product_id", [productId, "bundle:all_songs"])
+    .limit(1);
+
+  if (error) {
+    console.warn("entitlements read error:", error);
+    return false;
+  }
+
+  return (data || []).length > 0;
+}
 
 export async function showPaywall(options = {}) {
   const paywallEl = document.getElementById("paywall");
@@ -18,79 +46,56 @@ export async function showPaywall(options = {}) {
     return;
   }
 
-  // Default: locked
+  // Default locked
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
-  // Safety: if supabase isn't ready, stay locked
-  if (!window.supabase?.auth?.getSession) {
-    paywallEl.innerHTML = `
-      <h3>Locked</h3>
-      <p>Auth not ready (window.supabase missing).</p>
-    `;
-    return;
-  }
-
-  let email = "";
-  let userId = "";
-
-  try {
-    const { data, error } = await window.supabase.auth.getSession();
-    if (error) console.warn("supabase getSession error:", error);
-
-  email = normalizeEmail(data?.session?.user?.email);
-userId = data?.session?.user?.id || "";
-
-// ✅ OWNER BYPASS (by user id = safest)
-const OWNER_USER_IDS = [
-  "11b81b74-54ef-4a54-b803-ab6c0f88b187",
-];
-
-const isOwner =
-  OWNER_USER_IDS.includes(userId) ||
-  OWNER_EMAILS.includes(email); // optional backup
-
-if (isOwner) {
-  paywallEl.style.display = "none";
-  appEl.style.display = "block";
-  return;
-}
-
-  } catch (e) {
-    console.warn("Paywall session check failed:", e);
-  }
-
-  // Still locked: render paywall UI + show who is logged in + sign out for testing
+  // Render locked UI immediately (simple + safe)
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
   paywallEl.innerHTML = `
     <h3>${title}</h3>
     <p>${body}</p>
-
-    <p style="font-size:13px;opacity:0.8;margin-top:10px;">
-      Logged in as: <b>${email || "not logged in"}</b>
-      <br/>
-      User ID: <span style="font-family:monospace;">${userId || "-"}</span>
-    </p>
-
     <button id="buyBtn" type="button">Buy this song</button>
-    <button id="signOutBtn" type="button" style="margin-left:8px;">Sign out</button>
   `;
 
-  const buyBtn = document.getElementById("buyBtn");
-  if (buyBtn) {
-    buyBtn.addEventListener("click", () => {
-      alert("Purchases not connected yet.");
-    });
+  // Session + access check
+  try {
+    const { data, error } = await window.supabase.auth.getSession();
+    if (error) console.warn("supabase getSession error:", error);
+
+    const session = data?.session;
+    const productId = options.productId; // REQUIRED per page
+
+    if (!productId) {
+      console.warn("showPaywall missing options.productId");
+      return; // stay locked
+    }
+
+    const allowed = await userHasAccess(productId, session);
+
+    if (allowed) {
+      paywallEl.style.display = "none";
+      appEl.style.display = "block";
+      return;
+    }
+  } catch (e) {
+    console.warn("Paywall session/access check failed:", e);
   }
 
-  const signOutBtn = document.getElementById("signOutBtn");
-  if (signOutBtn) {
-    signOutBtn.addEventListener("click", async () => {
-      await window.supabase.auth.signOut();
-      // reload so requireLogin kicks in
-      window.location.reload();
+  // Buy button handler (wired in section 3 below)
+  const buyBtn = document.getElementById("buyBtn");
+  if (buyBtn) {
+    buyBtn.addEventListener("click", async () => {
+      if (typeof window.startRazorpayCheckout !== "function") {
+        alert("Checkout is not configured yet.");
+        return;
+      }
+      await window.startRazorpayCheckout({
+        productId: options.productId,
+        title: options.title || "Locked",
+      });
     });
   }
 }
