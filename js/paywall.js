@@ -7,6 +7,9 @@ function normalizeEmail(email) {
 // ✅ Put your email(s) here
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
+// ✅ ONE constant used everywhere
+const ALL_ACCESS_PRODUCT_ID = "bundle:all_songs";
+
 /**
  * productId examples:
  *  - `song:aajkal`
@@ -21,12 +24,12 @@ async function userHasAccess(productId, session) {
   const userId = session?.user?.id;
   if (!userId) return false;
 
-  // Check entitlement: either this product OR bundle unlock
+  // Check entitlement: either this product OR all-songs bundle
   const { data, error } = await window.supabase
     .from("entitlements")
     .select("product_id")
     .eq("user_id", userId)
-    .in("product_id", [productId, "bundle:all_songs"])
+    .in("product_id", [productId, ALL_ACCESS_PRODUCT_ID])
     .limit(1);
 
   if (error) {
@@ -60,18 +63,19 @@ export async function showPaywall(options = {}) {
     <button id="buyBtn" type="button">Buy this song</button>
   `;
 
+  // productId is REQUIRED
+  const productId = options.productId;
+  if (!productId) {
+    console.warn("showPaywall missing options.productId");
+    return; // stay locked
+  }
+
   // Session + access check
   try {
     const { data, error } = await window.supabase.auth.getSession();
     if (error) console.warn("supabase getSession error:", error);
 
     const session = data?.session;
-    const productId = options.productId; // REQUIRED per page
-
-    if (!productId) {
-      console.warn("showPaywall missing options.productId");
-      return; // stay locked
-    }
 
     const allowed = await userHasAccess(productId, session);
 
@@ -93,8 +97,8 @@ export async function showPaywall(options = {}) {
         return;
       }
       await window.startRazorpayCheckout({
-        productId: options.productId,
-        title: options.title || "Locked",
+        productId,
+        title,
       });
     });
   }
