@@ -2810,6 +2810,12 @@ holdEl.innerHTML =
 
 </script>
 <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+<script type="module">
+  import { showPaywall } from "/classicbollywoodmelodies/js/paywall.js";
+
+  // TEMP TEST: force the paywall to show
+  showPaywall({ title: "This song is locked" });
+</script>
 
 <script type="module">
   async function requireLogin() {
@@ -2824,22 +2830,6 @@ holdEl.innerHTML =
 
   // When coming back via Back button
   window.addEventListener("pageshow", requireLogin);
-</script>
-    <script>
-  // TEMP: until we connect purchases
-  // Locked mode:
-  document.getElementById("paywall").style.display = "block";
-  document.getElementById("app").style.display = "none";
-
-  // UNLOCK mode (later we will do this when user owns the song):
-  // document.getElementById("paywall").style.display = "none";
-  // document.getElementById("app").style.display = "block";
-</script>
-
-<script type="module">
-  // TEST ONLY: force lock so you can see paywall UI
-  document.getElementById("paywall").style.display = "block";
-  document.getElementById("app").style.display = "none";
 </script>
 
 </body>
