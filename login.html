@@ -241,99 +241,84 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const msg = document.getElementById("msg");
-  const btn = document.getElementById("send");
-const discordBtn = document.getElementById("discord");
+  const sendBtn = document.getElementById("send");
+  const discordBtn = document.getElementById("discord");
 
   const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
 
+  // If this logs "undefined", supabase-js didn't load
+  console.log("supabase global is:", typeof supabase);
+
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-discordBtn.addEventListener("click", async () => {
-  msg.textContent = "Opening Discord login…";
 
-discordBtn.addEventListener("click", async () => {
-  msg.textContent = "Opening Discord login…";
+  // Discord login (no email limits)
+  if (discordBtn) {
+    discordBtn.addEventListener("click", async () => {
+      msg.textContent = "Opening Discord login…";
 
-  const { data, error } = await sb.auth.signInWithOAuth({
-    provider: "discord",
-    options: {
-      redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html",
-      skipBrowserRedirect: true
-    }
-  });
-
-  if (error) {
-    msg.textContent = "Error: " + error.message;
-    console.log("Discord OAuth error:", error);
-    return;
-  }
-
-  console.log("Discord OAuth URL:", data?.url);
-  if (!data?.url) {
-    msg.textContent = "Could not start Discord login.";
-    return;
-  }
-
-  // Now we manually redirect
-  window.location.href = data.url;
-});
-
-
-  btn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-
-    if (!email) {
-      msg.textContent = "Please enter your email.";
-      return;
-    }
-
-    // Cooldown so users don’t spam
-    btn.disabled = true;
-    let secondsLeft = 60;
-
-    const originalText = btn.textContent;
-    btn.textContent = "Sending…";
-
-    const tick = setInterval(() => {
-      secondsLeft -= 1;
-      if (secondsLeft > 0) {
-        btn.textContent = `Try again in ${secondsLeft}s`;
-      } else {
-        clearInterval(tick);
-        btn.textContent = originalText;
-        btn.disabled = false;
-      }
-    }, 1000);
-
-    msg.textContent = "Sending login link…";
-
-    try {
-      const { error } = await sb.auth.signInWithOtp({
-        email,
+      const { data, error } = await sb.auth.signInWithOAuth({
+        provider: "discord",
         options: {
-emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
-
+          redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
         }
       });
 
       if (error) {
-        if ((error.message || "").toLowerCase().includes("rate limit")) {
-          msg.textContent = "Too many requests. Please wait a bit and try again.";
-        } else {
-          msg.textContent = "Error: " + error.message;
-        }
-        console.log("Supabase error:", error);
-      } else {
-        msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
+        msg.textContent = "Discord error: " + error.message;
+        console.log(error);
+        return;
       }
-    } catch (e) {
-      msg.textContent = "Something went wrong. Please try again.";
-      console.log("JS exception:", e);
-    }
-  });
- </script>
+
+      // Usually redirects automatically, but this helps if browser blocks it
+      if (data?.url) window.location.href = data.url;
+    });
+  }
+
+  // Email login link
+  if (sendBtn) {
+    sendBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        msg.textContent = "Please enter your email.";
+        return;
+      }
+
+      // simple cooldown
+      sendBtn.disabled = true;
+      const originalText = sendBtn.textContent;
+      sendBtn.textContent = "Sending…";
+      msg.textContent = "Sending login link…";
+
+      try {
+        const { error } = await sb.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+          }
+        });
+
+        if (error) {
+          msg.textContent = "Email error: " + error.message;
+          console.log(error);
+        } else {
+          msg.textContent = "Sent! Check your inbox (and Spam/Promotions).";
+        }
+      } catch (e) {
+        msg.textContent = "Something went wrong. Check console.";
+        console.log(e);
+      } finally {
+        setTimeout(() => {
+          sendBtn.disabled = false;
+          sendBtn.textContent = originalText;
+        }, 60000);
+      }
+    });
+  }
+</script>
+
 </body>
 </html>
