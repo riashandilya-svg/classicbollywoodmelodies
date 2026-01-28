@@ -254,21 +254,33 @@ const discordBtn = document.getElementById("discord");
 discordBtn.addEventListener("click", async () => {
   msg.textContent = "Opening Discord login…";
 
+discordBtn.addEventListener("click", async () => {
+  msg.textContent = "Opening Discord login…";
+
   const { data, error } = await sb.auth.signInWithOAuth({
     provider: "discord",
     options: {
-redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+      redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html",
+      skipBrowserRedirect: true
     }
   });
 
   if (error) {
     msg.textContent = "Error: " + error.message;
+    console.log("Discord OAuth error:", error);
     return;
   }
 
-  // Supabase will redirect automatically. This is just a fallback.
-  if (data?.url) window.location.href = data.url;
+  console.log("Discord OAuth URL:", data?.url);
+  if (!data?.url) {
+    msg.textContent = "Could not start Discord login.";
+    return;
+  }
+
+  // Now we manually redirect
+  window.location.href = data.url;
 });
+
 
   btn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
