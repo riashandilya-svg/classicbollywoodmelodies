@@ -1,8 +1,8 @@
-// paywall.js
+// /classicbollywoodmelodies/js/paywall.js
+
 export function showPaywall({ title = "This song is locked" } = {}) {
   const paywall = document.getElementById("paywall");
   const app = document.getElementById("app");
-
   if (!paywall || !app) return;
 
   paywall.innerHTML = `
@@ -20,7 +20,6 @@ export function showPaywall({ title = "This song is locked" } = {}) {
 export function unlockApp() {
   const paywall = document.getElementById("paywall");
   const app = document.getElementById("app");
-
   if (!paywall || !app) return;
 
   paywall.style.display = "none";
