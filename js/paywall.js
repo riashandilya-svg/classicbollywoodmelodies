@@ -6,36 +6,12 @@ function normalizeEmail(email) {
 
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
-// Bundle keys we accept (you have ALL_SONGS in DB)
-function hasAllSongs(ownedSet) {
-  return ownedSet.has("ALL_SONGS") || ownedSet.has("bundle:all_songs");
-}
-
-// If productId is missing, infer from URL: /songs/aajkal.html -> song:aajkal
-function inferProductIdFromUrl() {
-  try {
-    const path = window.location.pathname || "";
-    const file = path.split("/").pop() || "";      // aajkal.html
-    const base = file.replace(/\.html$/i, "");     // aajkal
-    if (!base) return "";
-    return `song:${base}`;
-  } catch {
-    return "";
-  }
-}
-
-// Normalize productId so it supports:
-// - "song:aajkal" (already ok)
-// - "aajkal" (we’ll convert)
-// - missing (we infer)
-function normalizeProductId(productId) {
-  const p = (productId || "").trim();
-  if (!p) return inferProductIdFromUrl();
-  if (p.startsWith("song:") || p.startsWith("bundle:")) return p;
-  return `song:${p}`;
-}
+// ✅ accepts ALL common "all songs" keys so you don't get stuck again
+const ALL_SONG_KEYS = ["all_songs", "ALL_SONGS", "bundle:all_songs"];
 
 async function userHasAccess(productId, session) {
+  productId = (productId || "").trim();
+
   const email = normalizeEmail(session?.user?.email);
 
   // ✅ Owner bypass
@@ -44,10 +20,6 @@ async function userHasAccess(productId, session) {
   const userId = session?.user?.id;
   if (!userId) return false;
 
-  const needed = normalizeProductId(productId);
-  if (!needed) return false;
-
-  // ✅ Fetch all entitlements for this user, trim newline junk
   const { data, error } = await window.supabase
     .from("entitlements")
     .select("product_id")
@@ -58,13 +30,17 @@ async function userHasAccess(productId, session) {
     return false;
   }
 
-  const owned = new Set((data || []).map(r => (r.product_id || "").trim()));
+  const owned = (data || []).map(r => (r.product_id || "").trim());
 
-  // Debug (keep for now)
-  console.log("[PAYWALL] needed:", needed);
-  console.log("[PAYWALL] owned:", Array.from(owned));
+  const hasBundle = owned.some(p => ALL_SONG_KEYS.includes(p));
+  const hasSong = owned.includes(productId);
 
-  return hasAllSongs(owned) || owned.has(needed);
+  // Debug (you can remove later)
+  console.log("[PAYWALL] needed:", productId);
+  console.log("[PAYWALL] owned:", owned);
+  console.log("[PAYWALL] hasBundle:", hasBundle, "hasSong:", hasSong);
+
+  return hasBundle || hasSong;
 }
 
 export async function showPaywall(options = {}) {
@@ -80,7 +56,6 @@ export async function showPaywall(options = {}) {
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
-  // Locked UI
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
@@ -95,10 +70,15 @@ export async function showPaywall(options = {}) {
     if (error) console.warn("supabase getSession error:", error);
 
     const session = data?.session;
-    if (!session) return; // not logged in -> stay locked
+    const productId = options.productId;
 
-    // ✅ productId can be missing now, we will infer it
-    const allowed = await userHasAccess(options.productId, session);
+    if (!productId) {
+      console.warn("showPaywall missing options.productId");
+      return; // stay locked
+    }
+
+    const allowed = await userHasAccess(productId, session);
+
     console.log("[PAYWALL] allowed:", allowed);
 
     if (allowed) {
@@ -110,7 +90,6 @@ export async function showPaywall(options = {}) {
     console.warn("Paywall session/access check failed:", e);
   }
 
-  // Buy button handler (if/when you wire Razorpay)
   const buyBtn = document.getElementById("buyBtn");
   if (buyBtn) {
     buyBtn.addEventListener("click", async () => {
@@ -119,7 +98,7 @@ export async function showPaywall(options = {}) {
         return;
       }
       await window.startRazorpayCheckout({
-        productId: normalizeProductId(options.productId),
+        productId: options.productId,
         title: options.title || "Locked",
       });
     });
