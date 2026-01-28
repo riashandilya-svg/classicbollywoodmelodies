@@ -402,20 +402,36 @@
     const loginLink = document.getElementById("loginLink");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    if (session && session.user) {
-      // logged in
-      const email = session.user.email || "User";
-      userBox.textContent = `Welcome, ${email}`;
-userBox.style.display = "inline-flex";
-      logoutBtn.style.display = "inline-flex";
-      loginLink.style.display = "none";
-    } else {
-      // logged out
-      userBox.style.display = "none";
-      logoutBtn.style.display = "none";
-      loginLink.style.display = "inline-flex";
+if (session && session.user) {
+  // logged in
+  const userId = session.user.id;
+
+  const { data: profile } = await sb
+    .from("profiles")
+    .select("display_name, setup_completed")
+    .eq("id", userId)
+    .single();
+
+  // If setup not completed, send them to setup.html (only once)
+  if (profile && profile.setup_completed === false) {
+    if (!window.location.pathname.endsWith("/setup.html")) {
+      window.location.href = "./setup.html";
+      return;
     }
   }
+
+  const displayName = (profile && profile.display_name) ? profile.display_name : "there";
+  userBox.textContent = `Welcome, ${displayName}`;
+  userBox.style.display = "inline-flex";
+  logoutBtn.style.display = "inline-flex";
+  loginLink.style.display = "none";
+} else {
+  // logged out
+  userBox.style.display = "none";
+  logoutBtn.style.display = "none";
+  loginLink.style.display = "inline-flex";
+}
+
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
