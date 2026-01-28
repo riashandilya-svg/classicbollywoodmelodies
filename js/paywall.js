@@ -7,13 +7,10 @@ function normalizeEmail(email) {
 // ✅ Put your email(s) here
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
-// ✅ ONE constant used everywhere
-const ALL_ACCESS_PRODUCT_ID = "bundle:all_songs";
-
 /**
  * productId examples:
- *  - `song:aajkal`
- *  - `bundle:all_songs`
+ *  - "song:aajkal"
+ *  - "bundle:all_songs"
  */
 async function userHasAccess(productId, session) {
   const email = normalizeEmail(session?.user?.email);
@@ -24,12 +21,12 @@ async function userHasAccess(productId, session) {
   const userId = session?.user?.id;
   if (!userId) return false;
 
-  // Check entitlement: either this product OR all-songs bundle
+  // ✅ Check entitlement: either this product OR bundle unlock
   const { data, error } = await window.supabase
     .from("entitlements")
     .select("product_id")
     .eq("user_id", userId)
-    .in("product_id", [productId, ALL_ACCESS_PRODUCT_ID])
+    .in("product_id", [productId, "bundle:all_songs"])
     .limit(1);
 
   if (error) {
@@ -49,11 +46,11 @@ export async function showPaywall(options = {}) {
     return;
   }
 
-  // Default locked
+  // ✅ Default locked
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
-  // Render locked UI immediately
+  // ✅ Locked UI
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
@@ -63,19 +60,20 @@ export async function showPaywall(options = {}) {
     <button id="buyBtn" type="button">Buy this song</button>
   `;
 
-  // productId is REQUIRED
+  // ✅ Must provide productId per song page
   const productId = options.productId;
   if (!productId) {
     console.warn("showPaywall missing options.productId");
     return; // stay locked
   }
 
-  // Session + access check
+  // ✅ Session + access check
   try {
     const { data, error } = await window.supabase.auth.getSession();
     if (error) console.warn("supabase getSession error:", error);
 
     const session = data?.session;
+    if (!session) return; // not logged in -> stay locked
 
     const allowed = await userHasAccess(productId, session);
 
@@ -88,7 +86,7 @@ export async function showPaywall(options = {}) {
     console.warn("Paywall session/access check failed:", e);
   }
 
-  // Buy button handler (checkout will be added in later steps)
+  // ✅ Buy handler (optional)
   const buyBtn = document.getElementById("buyBtn");
   if (buyBtn) {
     buyBtn.addEventListener("click", async () => {
