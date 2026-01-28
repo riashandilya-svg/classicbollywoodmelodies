@@ -7,9 +7,11 @@ function normalizeEmail(email) {
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
 async function userHasAccess(productId, session) {
+  productId = (productId || "").trim(); // ✅ important
+
   const email = normalizeEmail(session?.user?.email);
 
-  // Owner bypass
+  // ✅ Owner bypass
   if (OWNER_EMAILS.includes(email)) return true;
 
   const userId = session?.user?.id;
@@ -29,6 +31,7 @@ async function userHasAccess(productId, session) {
 
   return (data || []).length > 0;
 }
+
 
 export async function showPaywall(options = {}) {
   const paywallEl = document.getElementById("paywall");
