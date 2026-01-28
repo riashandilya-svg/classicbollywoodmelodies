@@ -7,8 +7,6 @@ function normalizeEmail(email) {
 const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
 
 async function userHasAccess(productId, session) {
-  productId = (productId || "").trim();
-
   const email = normalizeEmail(session?.user?.email);
 
   // ✅ Owner bypass
@@ -17,7 +15,7 @@ async function userHasAccess(productId, session) {
   const userId = session?.user?.id;
   if (!userId) return false;
 
-  // ✅ pull all entitlements for the user, then compare with trim
+  // ✅ Fetch ALL this user's entitlements, then compare safely with trim()
   const { data, error } = await window.supabase
     .from("entitlements")
     .select("product_id")
@@ -28,13 +26,14 @@ async function userHasAccess(productId, session) {
     return false;
   }
 
-  const owned = new Set(
-    (data || [])
-      .map(r => (r.product_id || "").trim())
-      .filter(Boolean)
-  );
+  const owned = new Set((data || []).map(r => (r.product_id || "").trim()));
+  const needed = (productId || "").trim();
 
-  return owned.has(productId) || owned.has("bundle:all_songs");
+  // ✅ Accept either bundle key format
+  const hasAllSongs =
+    owned.has("ALL_SONGS") || owned.has("bundle:all_songs");
+
+  return hasAllSongs || owned.has(needed);
 }
 
 
