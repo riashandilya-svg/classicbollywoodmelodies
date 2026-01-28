@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Setup • Classic Bollywood Melodies</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --btnText: #2b1140;
+    }
+
+    *{ box-sizing: border-box; }
+
+    body{
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        radial-gradient(520px 320px at 35% 55%, rgba(255,90,210,0.14), transparent 60%),
+        var(--bg);
+    }
+
+    .banner{
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(140,120,160,0.18);
+    }
+
+    .banner-link{
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+    .banner-link:hover{ text-decoration: underline; }
+
+    main{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 44px 18px 70px;
+      text-align: center;
+    }
+
+    h1{
+      font-size: clamp(28px, 4.8vw, 54px);
+      line-height: 1.06;
+      margin: 18px 0 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .sub{
+      margin: 0 auto 22px;
+      max-width: 700px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .card{
+      max-width: 760px;
+      margin: 18px auto 0;
+      text-align: left;
+      border-radius: 22px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-80px -90px auto auto;
+      width: 230px;
+      height: 230px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%,
+        rgba(255,120,160,0.40),
+        rgba(155,110,255,0.28),
+        rgba(255,90,210,0.18),
+        transparent 62%);
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      left:-120px;
+      bottom:-140px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 60% 40%,
+        rgba(255,80,90,0.24),
+        rgba(255,120,160,0.18),
+        transparent 62%);
+      pointer-events: none;
+    }
+
+    .card > *{ position: relative; z-index: 1; }
+
+    label{
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin: 14px 0 6px;
+      color: rgba(26,26,31,0.85);
+    }
+
+    input, select, textarea{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(155,110,255,0.26);
+      outline: none;
+      background: rgba(255,255,255,0.72);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    textarea{ min-height: 90px; resize: vertical; }
+
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(155,110,255,0.45);
+      box-shadow: 0 0 0 4px rgba(155,110,255,0.14);
+    }
+
+    .grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 760px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .bookPick{
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      border-radius: 18px;
+      border: 1px solid rgba(140,120,160,0.18);
+      background: rgba(255,255,255,0.55);
+      padding: 12px;
+    }
+
+    .book-art{
+      width: 84px;
+      height: 84px;
+      border-radius: 16px;
+      overflow: hidden;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,0.35);
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+    }
+
+    .book-art img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .bookText{ flex: 1; min-width: 0; }
+    .bookTitle{ margin: 0; font-weight: 650; font-size: 15px; }
+    .bookMeta{ margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+    .checkRow{
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 14px;
+      color: rgba(26,26,31,0.86);
+      font-size: 14px;
+    }
+
+    .checkRow input{
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: rgba(155,110,255,0.90);
+    }
+
+    .row{
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 650;
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.30);
+      background:
+        linear-gradient(135deg,
+          rgba(255,120,160,0.26),
+          rgba(155,110,255,0.20),
+          rgba(255,90,210,0.14));
+      transition: transform 0.14s ease, filter 0.14s ease;
+      cursor: pointer;
+    }
+
+    .btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    .btn.secondary{
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(140,120,160,0.22);
+      color: rgba(26,26,31,0.85);
+    }
+
+    .btn:disabled{
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .msg{
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      min-height: 22px;
+    }
+
+    .hint{
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="banner">
+    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+  </header>
+
+  <main>
+    <h1>Quick setup</h1>
+    <p class="sub">Answer a few quick questions so I can personalize your practice. This takes 30 seconds.</p>
+
+    <section class="card">
+      <label for="name">Your name (what should I call you?)</label>
+      <input id="name" type="text" placeholder="e.g., Aanya" maxlength="40" />
+
+      <div class="grid">
+        <div>
+          <label for="age">Age bracket</label>
+          <select id="age">
+            <option value="">Select…</option>
+            <option value="Under 13">Under 13</option>
+            <option value="13–17">13–17</option>
+            <option value="18–24">18–24</option>
+            <option value="25–34">25–34</option>
+            <option value="35–44">35–44</option>
+            <option value="45+">45+</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="level">Difficulty level</label>
+          <select id="level">
+            <option value="">Select…</option>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </div>
+      </div>
+
+      <label style="margin-top:16px;">Which books do you own?</label>
+
+      <div class="grid">
+        <label class="bookPick">
+          <input type="checkbox" class="bookCheck" value="soulful" />
+          <div class="book-art"><img src="Soulful.jpg" alt="Soulful Bollywood Melodies"></div>
+          <div class="bookText">
+            <p class="bookTitle">Soulful Bollywood Melodies</p>
+            <p class="bookMeta">Slow, expressive pieces</p>
+          </div>
+        </label>
+
+        <label class="bookPick">
+          <input type="checkbox" class="bookCheck" value="peppy" />
+          <div class="book-art"><img src="peppy.jpg" alt="Peppy Bollywood Melodies"></div>
+          <div class="bookText">
+            <p class="bookTitle">Peppy Bollywood Melodies</p>
+            <p class="bookMeta">Upbeat, energetic tunes</p>
+          </div>
+        </label>
+
+        <label class="bookPick">
+          <input type="checkbox" class="bookCheck" value="romantic" />
+          <div class="book-art"><img src="romantic.jpg" alt="Romantic Bollywood Melodies"></div>
+          <div class="bookText">
+            <p class="bookTitle">Romantic Bollywood Melodies</p>
+            <p class="bookMeta">Warm, lyrical songs</p>
+          </div>
+        </label>
+
+        <label class="bookPick">
+          <input type="checkbox" class="bookCheck" value="classic" />
+          <div class="book-art"><img src="classic.jpg" alt="Classic Bollywood Melodies"></div>
+          <div class="bookText">
+            <p class="bookTitle">Classic Bollywood Melodies</p>
+            <p class="bookMeta">Golden-era favorites</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="hint">If you own at least one book, you’ll get the discounted “book owner” prices inside the app.</div>
+
+      <label for="suggest" style="margin-top:16px;">Optional: what song would you like next?</label>
+      <textarea id="suggest" placeholder="Type a song name (optional)"></textarea>
+
+      <label class="checkRow">
+        <input id="optin" type="checkbox" />
+        <span>
+          Yes, keep me updated about new books and releases (about 4–5 emails per year, we don’t spam).
+        </span>
+      </label>
+
+      <div class="row">
+        <button id="saveBtn" class="btn">Save and continue</button>
+        <a class="btn secondary" href="./index.html">Skip for now</a>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const msg = document.getElementById("msg");
+    const saveBtn = document.getElementById("saveBtn");
+
+    function getCheckedBooks() {
+      return Array.from(document.querySelectorAll(".bookCheck:checked")).map(x => x.value);
+    }
+
+    function booksToIsBookOwner(books) {
+      return books.length > 0;
+    }
+
+    async function requireLogin() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session || !session.user) {
+        window.location.href = "./login.html";
+        return null;
+      }
+      return session.user;
+    }
+
+    async function prefillIfExists(user) {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("display_name, age_bracket, difficulty_level, books_owned, song_suggestion, marketing_opt_in")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !data) return;
+
+      if (data.display_name) document.getElementById("name").value = data.display_name;
+      if (data.age_bracket) document.getElementById("age").value = data.age_bracket;
+      if (data.difficulty_level) document.getElementById("level").value = data.difficulty_level;
+      if (Array.isArray(data.books_owned)) {
+        for (const v of data.books_owned) {
+          const box = document.querySelector(`.bookCheck[value="${v}"]`);
+          if (box) box.checked = true;
+        }
+      }
+      if (data.song_suggestion) document.getElementById("suggest").value = data.song_suggestion;
+      document.getElementById("optin").checked = !!data.marketing_opt_in;
+    }
+
+    async function saveProfile(user) {
+      const display_name = document.getElementById("name").value.trim();
+      const age_bracket = document.getElementById("age").value;
+      const difficulty_level = document.getElementById("level").value;
+      const books_owned = getCheckedBooks();
+      const song_suggestion = document.getElementById("suggest").value.trim() || null;
+      const marketing_opt_in = document.getElementById("optin").checked;
+
+      if (!display_name) {
+        msg.textContent = "Please enter your name.";
+        return;
+      }
+
+      // Simple rule: if they checked any book, treat as book owner for pricing.
+      const is_book_owner = booksToIsBookOwner(books_owned);
+
+      saveBtn.disabled = true;
+      msg.textContent = "Saving…";
+
+      const { error } = await sb
+        .from("profiles")
+        .update({
+          display_name,
+          age_bracket: age_bracket || null,
+          difficulty_level: difficulty_level || null,
+          books_owned,
+          song_suggestion,
+          marketing_opt_in,
+          is_book_owner
+        })
+        .eq("id", user.id);
+
+      saveBtn.disabled = false;
+
+      if (error) {
+        msg.textContent = "Save failed: " + error.message;
+        return;
+      }
+
+      msg.textContent = "Saved!";
+      window.location.href = "./index.html";
+    }
+
+    (async () => {
+      const user = await requireLogin();
+      if (!user) return;
+      await prefillIfExists(user);
+
+      saveBtn.addEventListener("click", () => saveProfile(user));
+    })();
+  </script>
+</body>
+</html>
