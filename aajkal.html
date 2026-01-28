@@ -2764,14 +2764,21 @@ holdEl.innerHTML =
 }
 loadSongMidi();
 </script>
-    <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+<script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
 
 <script type="module">
-  const { data } = await window.supabase.auth.getSession();
-  if (!data.session) {
-    // Not logged in → send them to your login page
-    window.location.href = "/classicbollywoodmelodies/login.html";
+  async function requireLogin() {
+    const { data } = await window.supabase.auth.getSession();
+    if (!data.session) {
+      window.location.replace("/classicbollywoodmelodies/login.html");
+    }
   }
+
+  // First load
+  await requireLogin();
+
+  // When coming back via Back button
+  window.addEventListener("pageshow", requireLogin);
 </script>
 
 </body>
