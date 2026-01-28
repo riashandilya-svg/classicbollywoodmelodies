@@ -18,18 +18,29 @@ export async function showPaywall(options = {}) {
     return;
   }
 
-  // Default: locked (safe)
+  // Default: locked
   appEl.style.display = "none";
   paywallEl.style.display = "block";
 
-  // Try to detect logged-in user
+  // Safety: if supabase isn't ready, stay locked
+  if (!window.supabase?.auth?.getSession) {
+    paywallEl.innerHTML = `
+      <h3>Locked</h3>
+      <p>Auth not ready (window.supabase missing).</p>
+    `;
+    return;
+  }
+
+  let email = "";
+  let userId = "";
+
   try {
     const { data, error } = await window.supabase.auth.getSession();
     if (error) console.warn("supabase getSession error:", error);
 
-    const email = normalizeEmail(data?.session?.user?.email);
+    email = normalizeEmail(data?.session?.user?.email);
+    userId = data?.session?.user?.id || "";
 
-    // ✅ OWNER BYPASS
     const isOwner = OWNER_EMAILS.includes(email);
 
     if (isOwner) {
@@ -41,21 +52,37 @@ export async function showPaywall(options = {}) {
     console.warn("Paywall session check failed:", e);
   }
 
-  // Still locked: render minimal paywall UI (safe even if empty)
+  // Still locked: render paywall UI + show who is logged in + sign out for testing
   const title = options.title || "This song is locked";
   const body = options.body || "Please buy to unlock this lesson.";
 
   paywallEl.innerHTML = `
     <h3>${title}</h3>
     <p>${body}</p>
+
+    <p style="font-size:13px;opacity:0.8;margin-top:10px;">
+      Logged in as: <b>${email || "not logged in"}</b>
+      <br/>
+      User ID: <span style="font-family:monospace;">${userId || "-"}</span>
+    </p>
+
     <button id="buyBtn" type="button">Buy this song</button>
+    <button id="signOutBtn" type="button" style="margin-left:8px;">Sign out</button>
   `;
 
-  // Optional: wire later
   const buyBtn = document.getElementById("buyBtn");
   if (buyBtn) {
     buyBtn.addEventListener("click", () => {
       alert("Purchases not connected yet.");
+    });
+  }
+
+  const signOutBtn = document.getElementById("signOutBtn");
+  if (signOutBtn) {
+    signOutBtn.addEventListener("click", async () => {
+      await window.supabase.auth.signOut();
+      // reload so requireLogin kicks in
+      window.location.reload();
     });
   }
 }
