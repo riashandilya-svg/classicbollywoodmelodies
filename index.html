@@ -445,7 +445,14 @@ if (session && session.user) {
       return;
     }
   }
-
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    await renderAuthUI();
+  });
+  // Re-render when auth changes (clicking email link etc.)
+  sb.auth.onAuthStateChange(() => {
+    renderAuthUI();
+  });
   const displayName = (profile && profile.display_name) ? profile.display_name : "there";
   userBox.textContent = `Welcome, ${displayName}`;
   userBox.style.display = "inline-flex";
@@ -457,17 +464,9 @@ if (session && session.user) {
   logoutBtn.style.display = "none";
   loginLink.style.display = "inline-flex";
 }
+}
 
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-    await renderAuthUI();
-  });
-
-  // Re-render when auth changes (clicking email link etc.)
-  sb.auth.onAuthStateChange(() => {
-    renderAuthUI();
-  });
 
 (async () => {
   await finishAuthFromUrlIfPresent();
