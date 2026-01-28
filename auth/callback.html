@@ -54,5 +54,23 @@
         window.location.href = "../index.html";
       })();
     </script>
+    <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+
+<script type="module">
+  // This page runs when user clicks the magic link.
+  // It exchanges the URL code for a session and saves it.
+  const { data, error } = await window.supabase.auth.exchangeCodeForSession(window.location.href);
+
+  const msg = document.getElementById("msg");
+
+  if (error) {
+    msg.textContent = "Login failed: " + error.message;
+  } else {
+    msg.textContent = "Login success. Redirecting...";
+    // Go to any page you want after login:
+    window.location.href = "/classicbollywoodmelodies/login.html";
+  }
+</script>
+<div id="msg">Finishing login...</div>
   </body>
 </html>
