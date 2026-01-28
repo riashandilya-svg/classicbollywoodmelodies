@@ -241,123 +241,56 @@
     </section>
   </main>
 
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script>
+  const msg = document.getElementById("msg");
+  const sendBtn = document.getElementById("send");
+  const discordBtn = document.getElementById("discord");
+
   const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  async function finishAuthFromUrlIfPresent() {
-    const url = new URL(window.location.href);
-    const q = url.searchParams;
-    const h = new URLSearchParams((url.hash || "").replace(/^#/, ""));
+  discordBtn.addEventListener("click", async () => {
+    msg.textContent = "Opening Discord login…";
 
-    const code = q.get("code") || h.get("code");
-    const access_token = q.get("access_token") || h.get("access_token");
-    const refresh_token = q.get("refresh_token") || h.get("refresh_token");
-
-    if (code) {
-      const { error } = await sb.auth.exchangeCodeForSession(window.location.href);
-      if (error) console.log("exchangeCodeForSession error:", error);
-      window.history.replaceState({}, document.title, "./index.html");
-      return;
-    }
-
-    if (access_token && refresh_token) {
-      const { error } = await sb.auth.setSession({ access_token, refresh_token });
-      if (error) console.log("setSession error:", error);
-      window.history.replaceState({}, document.title, "./index.html");
-      return;
-    }
-  }
-
-  async function renderAuthUI() {
-    const { data: { session } } = await sb.auth.getSession();
-
-    const userBox = document.getElementById("userBox");
-    const loginLink = document.getElementById("loginLink");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    if (session && session.user) {
-      const userId = session.user.id;
-
-      const { data: profile } = await sb
-        .from("profiles")
-        .select("display_name, setup_completed")
-        .eq("id", userId)
-        .single();
-
-      // If setup not completed, redirect to setup page (only once)
-      if (profile && profile.setup_completed === false) {
-        if (!window.location.pathname.endsWith("/setup.html")) {
-          window.location.href = "./setup.html";
-          return;
-        }
+    const { data, error } = await sb.auth.signInWithOAuth({
+      provider: "discord",
+      options: {
+        redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
       }
+    });
 
-      const displayName = (profile && profile.display_name) ? profile.display_name : "there";
-      userBox.textContent = `Welcome, ${displayName}`;
-      userBox.style.display = "inline-flex";
-      logoutBtn.style.display = "inline-flex";
-      loginLink.style.display = "none";
-    } else {
-      userBox.style.display = "none";
-      logoutBtn.style.display = "none";
-      loginLink.style.display = "inline-flex";
+    if (error) {
+      msg.textContent = "Discord error: " + error.message;
+      console.log(error);
+      return;
     }
-  }
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-    await renderAuthUI();
+    if (data?.url) window.location.href = data.url;
   });
 
-  sb.auth.onAuthStateChange(() => {
-    renderAuthUI();
-  });
+  sendBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    if (!email) {
+      msg.textContent = "Please enter your email.";
+      return;
+    }
 
-  (async () => {
-    await finishAuthFromUrlIfPresent();
-    await renderAuthUI();
-    setTimeout(renderAuthUI, 800);
-  })();
+    msg.textContent = "Sending login link…";
+
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+      }
+    });
+
+    msg.textContent = error
+      ? ("Email error: " + error.message)
+      : "Sent! Check your inbox (and Spam/Promotions).";
+  });
 </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const msg = document.getElementById("msg");
-    const sendBtn = document.getElementById("send");
-    const discordBtn = document.getElementById("discord");
 
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    console.log("login.html loaded, discordBtn=", !!discordBtn, "sendBtn=", !!sendBtn);
-
-    discordBtn?.addEventListener("click", async () => {
-      msg.textContent = "Opening Discord login…";
-      const { data, error } = await sb.auth.signInWithOAuth({
-        provider: "discord",
-        options: {
-          redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
-        }
-      });
-      if (error) msg.textContent = "Discord error: " + error.message;
-      if (data?.url) window.location.href = data.url;
-    });
-
-    sendBtn?.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      if (!email) { msg.textContent = "Please enter your email."; return; }
-      msg.textContent = "Sending login link…";
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
-        }
-      });
-      msg.textContent = error ? ("Email error: " + error.message) : "Sent! Check your inbox.";
-    });
-  </script>
 </body>
 </html>
