@@ -213,6 +213,7 @@
 </head>
 
 <body>
+  <div id="status">Checking login...</div>
   <header class="banner">
     <!-- back to your main portfolio page -->
     <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
@@ -293,5 +294,17 @@
 </script>
   
 <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+<script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+
+<script type="module">
+  const { data } = await window.supabase.auth.getSession();
+  const status = document.getElementById("status");
+
+  if (data.session) {
+    status.textContent = "Logged in as: " + data.session.user.email;
+  } else {
+    status.textContent = "Not logged in";
+  }
+</script>
 </body>
 </html>
