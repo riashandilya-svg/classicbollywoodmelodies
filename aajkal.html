@@ -380,10 +380,17 @@ canvas {
     <div id="brandBar">
         <span>Ria Om Shandilya</span>
       </div>      
-      <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
-    <div id="app">
+      <!-- 🔒 PAYWALL (hidden by default) -->
+<div id="paywall" style="display:none; width:min(720px, 92%); padding:16px; border:1px solid rgba(235,50,70,0.25); border-radius:14px; background:rgba(255,255,255,0.85); margin:14px auto;">
+  <h3 style="margin:0 0 6px 0;">This song is locked</h3>
+  <p style="margin:0 0 12px 0;">Please buy to unlock this lesson.</p>
+  <button id="buyBtn">Buy this song</button>
+</div>
 
-<!-- 🎯 Training Progress Bar -->
+      <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
+      <div id="app">
+
+      <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
     <div id="trainingProgressFill"></div>
     <span id="trainingProgressText">0%</span>
@@ -465,11 +472,6 @@ canvas {
 </div>   <!-- closes bottomDock -->
 </div>   <!-- closes midiDisplay -->
 </div> <!-- closes app -->
-<div id="paywall" style="display:none; max-width:720px; width:92%; padding:16px; border:1px solid rgba(235,50,70,0.18); border-radius:14px; background:rgba(255,255,255,0.9); box-shadow:0 8px 24px rgba(0,0,0,0.10);">
-  <h2 style="margin:0 0 8px 0;">This song is locked</h2>
-  <p style="margin:0 0 12px 0;">Please buy to unlock and save your progress.</p>
-  <button id="buyBtn">Buy this song</button>
-</div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
@@ -1115,8 +1117,7 @@ function getWhiteKeyWidth() {
     return canvas.width / TOTAL_WHITE_KEYS;
 }
 function xToMidi(x) {
-    let whiteKeyIndex = Math.floor(x / getWhiteKeyWidth()
-    );
+    let whiteKeyIndex = Math.floor(x / getWhiteKeyWidth());
     let count = 0;
 
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
@@ -1137,12 +1138,12 @@ function noteToX(midi) {
         }
     }
 
-    let x = whiteIndex * getWhiteKeyWidth()
-    ;
+    let x = whiteIndex * getWhiteKeyWidth();
+
 
     // Black keys sit between white keys
     if (isBlackMidi(midi)) {
-        x -= getWhiteKeyWidth()        * 0.35;
+        x -= getWhiteKeyWidth() * 0.35;
     }
 
     return x;
@@ -1218,7 +1219,7 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         if (isBlackMidi(midi)) continue;
 
-        const x = whiteIndex * getWhiteKeyWidth()        ;
+        const x = whiteIndex * getWhiteKeyWidth();
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
@@ -1231,7 +1232,7 @@ if (isTreble) {
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
 
         ctx.strokeStyle = "#000";
-        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
+        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
 // White key note name
 if (showNoteNames) {
     ctx.fillStyle = "#000";
@@ -1241,7 +1242,7 @@ if (showNoteNames) {
 
     ctx.fillText(
         getNoteName(midi),
-        x + getWhiteKeyWidth()        / 2,
+        x + getWhiteKeyWidth() / 2,
         keyboardTop + keyHeight - 5
     );
 }
@@ -1258,13 +1259,11 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         continue;
     }
 
-    const blackKeyWidth = getWhiteKeyWidth()    * 0.6;
+    const blackKeyWidth = getWhiteKeyWidth() * 0.6;
     const blackKeyHeight = keyHeight * 0.6;
 
     const x =
-        (whiteIndex - 1) * getWhiteKeyWidth()        +
-        getWhiteKeyWidth()
-        * 0.7;
+    (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
 
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
@@ -1749,9 +1748,7 @@ function animate() {
     performance.now() - rect.startTime;
 
 
-const progress = elapsed / getFallTimeMs();
-
-    ;
+    const progress = elapsed / getFallTimeMs();
 
     rect.y = rect.startY + progress * (rect.endY - rect.startY);
 // 🎯 NOTE HAS LANDED ON KEYBOARD (ALWAYS HIGHLIGHT)
@@ -2173,7 +2170,7 @@ holdEl.innerHTML =
 }
 
 retryTimeout = setTimeout(() => {
-    spawnTrainingNote(practiceNotes[trainingIndex]    );
+    spawnTrainingNote(practiceNotes[trainingIndex]);
 }, 600);
 
     }
@@ -2761,7 +2758,7 @@ holdEl.innerHTML =
 
 
     setTimeout(() => {
-        spawnTrainingNote(practiceNotes[trainingIndex]        );
+        spawnTrainingNote(practiceNotes[trainingIndex]);
     }, 600);
 }
 
@@ -2770,7 +2767,7 @@ holdEl.innerHTML =
         activeMidiNote = null;
     }
 }
-loadSongMidi();
+
 </script>
 <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
 
@@ -2789,9 +2786,9 @@ loadSongMidi();
   window.addEventListener("pageshow", requireLogin);
 </script>
 <script type="module">
-  // TEMP TEST: force locked view
-  document.getElementById("app").style.display = "none";
+  // TEST ONLY: force lock so you can see paywall UI
   document.getElementById("paywall").style.display = "block";
+  document.getElementById("app").style.display = "none";
 </script>
 
 </body>
