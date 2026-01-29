@@ -48,29 +48,37 @@
       mix-blend-mode: screen;
     }
 
-    /* ===== Sticky banner becomes a real navbar ===== */
+    /* ===== Sticky banner ===== */
     .banner{
       position: sticky;
       top: 0;
       z-index: 9999;
-      min-height: 64px;
-      display: flex;
-      align-items: center;
+      height: 64px;
 
       background: rgba(255,255,255,0.72);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(140,120,160,0.18);
     }
 
+    /* Use absolute positioning so:
+       - title is perfectly centered in viewport
+       - account dock sits at absolute right edge */
     .navInner{
+      position: relative;
+      height: 64px;
       width: 100%;
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 10px 18px;
+    }
+
+    .brandCenter{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      justify-content: center;
+      pointer-events: auto;
+      padding: 0 10px;
     }
 
     .banner-link{
@@ -86,14 +94,19 @@
     }
     .banner-link:hover{ text-decoration: underline; }
 
-    /* ===== Account area inside banner (right side) ===== */
+    /* ===== Account dock at absolute right ===== */
     .accountDock{
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
       display: none; /* only when logged in */
       align-items: center;
       justify-content: flex-end;
       gap: 10px;
-      flex-wrap: wrap;
-      max-width: 100%;
+      flex-wrap: nowrap;
+      pointer-events: auto;
+      max-width: calc(100% - 24px);
     }
 
     .welcomeText{
@@ -177,6 +190,41 @@
       background: rgba(155,110,255,0.18);
     }
 
+    /* On small screens, stack account items but keep them right-aligned */
+    @media (max-width: 760px){
+      .banner{ height: auto; }
+      .navInner{ height: auto; padding: 10px 0 12px; }
+
+      .brandCenter{
+        position: static;
+        transform: none;
+        justify-content: center;
+        margin: 0 auto 8px;
+      }
+
+      .accountDock{
+        position: static;
+        transform: none;
+        right: auto;
+        top: auto;
+        justify-content: center;
+        padding: 0 12px 2px;
+        flex-wrap: wrap;
+      }
+
+      .welcomeText{ width: 100%; text-align: center; }
+
+      .actionStrip{
+        width: 100%;
+        justify-content: center;
+      }
+
+      .stripItem{
+        flex: 1;
+        justify-content: center;
+      }
+    }
+
     /* Logged out: login row stays in page content */
     .authRow{
       margin: 12px 0 6px;
@@ -238,25 +286,6 @@
 
     @media (max-width: 760px){
       .grid{ grid-template-columns: 1fr; }
-
-      /* make navbar stack nicely */
-      .navInner{
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-      }
-      .accountDock{
-        justify-content: center;
-        width: 100%;
-      }
-      .actionStrip{
-        width: 100%;
-        justify-content: center;
-      }
-      .stripItem{
-        flex: 1;
-        justify-content: center;
-      }
     }
 
     .card{
@@ -395,9 +424,12 @@
 
   <header class="banner">
     <div class="navInner">
-      <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+      <!-- Centered title (true center of viewport) -->
+      <div class="brandCenter">
+        <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+      </div>
 
-      <!-- Right-side account strip (only when logged in) -->
+      <!-- Absolute right side -->
       <div id="accountDock" class="accountDock" aria-label="Account actions">
         <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
 
@@ -416,7 +448,6 @@
     <h1>Pick a book</h1>
     <p class="sub">Choose a mood, then pick a song inside.</p>
 
-    <!-- Logged out: show only login -->
     <div class="authRow" id="authRow">
       <a id="loginLink" class="btn" href="./login.html">Login</a>
     </div>
@@ -482,12 +513,12 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function setYear() {
+    function setYear(){
       const el = document.getElementById("year");
       if (el) el.textContent = new Date().getFullYear();
     }
 
-    async function renderAuthUI() {
+    async function renderAuthUI(){
       const { data: { session } } = await sb.auth.getSession();
 
       const accountDock = document.getElementById("accountDock");
@@ -516,7 +547,6 @@
 
         accountDock.style.display = "flex";
         authRow.style.display = "none";
-
       } else {
         accountDock.style.display = "none";
         authRow.style.display = "flex";
