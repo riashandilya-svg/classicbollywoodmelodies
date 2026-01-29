@@ -165,11 +165,11 @@ async function userHasAccess(productId, session) {
       name: "Classic Bollywood Melodies",
       description: description,
       prefill: { email: session.user?.email || "" },
- handler: async (response) => {
-  console.log('[PAYWALL] Payment completed, verifying...', response);
+handler: async (response) => {
+  console.log('🎵 [PAYWALL] Payment completed, verifying...', response);
   try {
     const fresh = await getSessionOrThrow();
-    console.log('[PAYWALL] Session obtained:', fresh.user.id);
+    console.log('✅ [PAYWALL] Session obtained:', fresh.user.id);
     
     const result = await verifyPayment({ 
       productId, 
@@ -178,12 +178,12 @@ async function userHasAccess(productId, session) {
       currency: order.currency
     });
     
-    console.log('[PAYWALL] Verification result:', result);
-    alert('Payment verified! Reloading...');
+    console.log('✅ [PAYWALL] Verification result:', result);
+    alert('Payment verified! Check console. Reloading...');
     window.location.reload();
   } catch (e) {
-    console.error('[PAYWALL] Verification error:', e);
-    alert('Error: ' + (e?.message || "Verification failed"));
+    console.error('❌ [PAYWALL] Verification error:', e);
+    alert('ERROR: ' + (e?.message || JSON.stringify(e)));
   }
 },
     });
