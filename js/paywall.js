@@ -6,7 +6,7 @@
   const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
   const ALL_SONG_KEYS = ["bundle:all_songs", "all_songs", "ALL_SONGS"];
 
-const PRICE_RUPEES = 19900; // paise
+  const PRICE_RUPEES = 19900; // paise
   const CURRENCY = "INR";
 
   function normalizeEmail(email) {
@@ -70,34 +70,51 @@ const PRICE_RUPEES = 19900; // paise
     return hasBundle || hasSong;
   }
 
-async function createOrder({ productId }) {
-  const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
-    body: {
-      productId,
-      amount: PRICE_RUPEES,
-      currency: CURRENCY,
-    },
-  });
+  async function createOrder({ productId }) {
+    const session = await getSessionOrThrow();
+    
+    const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
+      body: {
+        productId,
+        amount: PRICE_RUPEES,
+        currency: CURRENCY,
+      },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
 
-  if (error) throw new Error(error.message || "Create order failed");
-  return data;
-}
+    if (error) {
+      console.error("[PAYWALL] Create order error:", error);
+      throw new Error(error.message || "Create order failed");
+    }
+    if (!data) {
+      throw new Error("Edge Function returned a non-2xx status code");
+    }
+    return data;
+  }
 
+  async function verifyPayment({ productId, response }) {
+    const session = await getSessionOrThrow();
+    
+    const { data, error } = await window.supabase.functions.invoke("verify-razorpay-payment", {
+      body: {
+        productId,
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+      },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
 
-async function verifyPayment({ productId, response }) {
-  const { data, error } = await window.supabase.functions.invoke("verify-razorpay-payment", {
-    body: {
-      productId,
-      razorpay_order_id: response.razorpay_order_id,
-      razorpay_payment_id: response.razorpay_payment_id,
-      razorpay_signature: response.razorpay_signature,
-    },
-  });
-
-  if (error) throw new Error(error.message || "Payment verification failed");
-  return data;
-}
-
+    if (error) {
+      console.error("[PAYWALL] Verify payment error:", error);
+      throw new Error(error.message || "Payment verification failed");
+    }
+    return data;
+  }
 
   async function startRazorpayCheckout({ productId }) {
     assertSupabase();
@@ -105,7 +122,6 @@ async function verifyPayment({ productId, response }) {
 
     const session = await getSessionOrThrow();
     const order = await createOrder({ productId });
-
 
     const rzp = new window.Razorpay({
       key: order.key_id,
