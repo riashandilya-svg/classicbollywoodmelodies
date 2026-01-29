@@ -99,11 +99,47 @@ window.startRazorpayCheckout = async function startRazorpayCheckout({ productId 
     prefill: {
       email: email || "",
     },
-    handler: function (response) {
-      // This is NOT verified yet. We will verify server-side next step.
-      console.log("Razorpay handler response:", response);
-      alert("Payment completed. Next step: server verification + auto-unlock.");
-    },
+    handler: async function (response) {
+      try {
+        // response has: razorpay_payment_id, razorpay_order_id, razorpay_signature
+        const { data, error } = await window.supabase.auth.getSession();
+        if (error) throw error;
+        const token = data?.session?.access_token;
+        if (!token) throw new Error("Not logged in");
+    
+        const verifyRes = await fetch(
+          "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/verify-razorpay-payment",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              productId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          }
+        );
+    
+        const verifyJson = await verifyRes.json();
+        if (!verifyRes.ok) {
+          console.error("verify failed:", verifyJson);
+          alert("Payment verification failed. Please contact support.");
+          return;
+        }
+    
+        alert("✅ Payment verified. Unlocking now...");
+    
+        // simplest unlock: reload page so showPaywall runs again and reads entitlements
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Verification error");
+      }
+    },    
   };
 
   const rzp = new window.Razorpay(options);
