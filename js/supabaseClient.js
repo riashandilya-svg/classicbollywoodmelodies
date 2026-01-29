@@ -20,6 +20,7 @@
 window.supabase = client;
 window.supabase.supabaseKey = SUPABASE_ANON_KEY;
 window.sb = client;
+console.log("Supabase client ready:", client);
 
   console.log("Supabase client ready:", client);
 })();
