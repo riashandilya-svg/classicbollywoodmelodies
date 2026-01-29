@@ -1,3 +1,4 @@
+
 // /classicbollywoodmelodies/js/paywall.js
 
 function normalizeEmail(email) {
@@ -69,18 +70,27 @@ window.startRazorpayCheckout = async function startRazorpayCheckout({ productId 
   const currency = "INR";
 const amount = 199; // rupees (backend converts to paise)
 
-  // 3) Ask our Edge Function to create a Razorpay order
-  const res = await fetch(
-    "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/create-razorpay-order",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ productId, currency, amount }),
-    }
-  );
+// 3) Ask our Edge Function to create a Razorpay order
+const payload = { access_token: token, productId, currency, amount };
+
+const res = await fetch(
+  "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/create-razorpay-order",
+  {
+    method: "POST",
+    headers: {
+      // keep it "simple" to avoid preflight headaches
+      "Content-Type": "text/plain;charset=UTF-8",
+    },
+    body: JSON.stringify(payload),
+  }
+);
+
+const order = await res.json();
+if (!res.ok) {
+  console.error("create-order failed:", order);
+  throw new Error(order?.error || order?.message || "Create order failed");
+}
+
 
   const order = await res.json();
   if (!res.ok) {
