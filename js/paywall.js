@@ -117,32 +117,34 @@ async function userHasAccess(productId, session) {
   }
 
   // ✅ UPDATED: Verify payment with amount and currency
- // ✅ UPDATED: Verify payment with credit redemption
- async function verifyPayment({ productId, response, amount, currency, useCredits = false }) {
-  const session = await getSessionOrThrow();
+  async function verifyPayment({ productId, response, amount, currency }) {
+    try {
+      console.log('[PAYWALL] Calling verify with:', { productId, amount, currency, response });
+      
+      const result = await window.supabase.supabase.functions.invoke('verify-razorpay-payment', {
+        body: {
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          productId: productId,
+          amount: amount,
+          currency: currency
+        }
+      });
   
-  const { data, error } = await window.supabase.functions.invoke("verify-razorpay-payment", {
-    body: {
-      productId,
-      amount,
-      currency,
-      useCredits,
-      razorpay_order_id: response.razorpay_order_id,
-      razorpay_payment_id: response.razorpay_payment_id,
-      razorpay_signature: response.razorpay_signature,
-    },
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: window.supabase.supabaseKey,
-    },
-  });
-
-  if (error) {
-    console.error("[PAYWALL] Verify payment error:", error);
-    throw new Error(error.message || "Payment verification failed");
+      console.log('[PAYWALL] Verify result:', result);
+  
+      if (result.error) {
+        console.error('[PAYWALL] Verify payment error:', result.error);
+        throw new Error(result.error.message || 'Payment verification failed');
+      }
+  
+      return result.data;
+    } catch (error) {
+      console.error('[PAYWALL] Verify payment error:', error);
+      throw error;
+    }
   }
-  return data;
-}
 
   // ✅ UPDATED: Razorpay checkout with dynamic pricing
   async function startRazorpayCheckout({ productId, currency = "INR" }) {
