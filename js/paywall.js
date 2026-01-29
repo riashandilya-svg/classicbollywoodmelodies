@@ -159,7 +159,7 @@ if (!res.ok) {
   rzp.open();
 };
 
-export async function showPaywall(options = {}) {
+window.showPaywall = async function showPaywall(options = {}) {
   const paywallEl = document.getElementById("paywall");
   const appEl = document.getElementById("app");
 
