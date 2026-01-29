@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -53,28 +54,32 @@
       position: sticky;
       top: 0;
       z-index: 9999;
+      height: 64px;
+
       background: rgba(255,255,255,0.72);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(140,120,160,0.18);
     }
 
-    /* Grid ensures:
-       - center title stays centered in viewport
-       - account sits on far right
-       - no overlap, ever */
-    .navGrid{
-      display: grid;
-      grid-template-columns: 1fr auto 1fr; /* left spacer, center title, right account */
-      align-items: center;
-      min-height: 64px;
-      padding: 8px 12px;
+    /* Use absolute positioning so:
+       - title is perfectly centered in viewport
+       - account dock sits at absolute right edge */
+    .navInner{
+      position: relative;
+      height: 64px;
       width: 100%;
     }
 
-    .navTitle{
-      grid-column: 2;
-      justify-self: center;
-      text-align: center;
+    .brandCenter{
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      padding: 0 10px;
     }
 
     .banner-link{
@@ -90,27 +95,19 @@
     }
     .banner-link:hover{ text-decoration: underline; }
 
+    /* ===== Account dock at absolute right ===== */
     .accountDock{
-      grid-column: 3;
-      justify-self: end;         /* absolute right */
-      display: none;             /* only when logged in */
-      align-items: center;
-      gap: 10px;
-      max-width: 100%;
-      min-width: 0;
-    }
-
-    /* Layout rule:
-       - Wide screens: welcome + strip on same line
-       - Smaller screens: welcome above strip (two lines)
-       Also: never overlap center title because grid prevents it. */
-    .accountLayout{
-      display: flex;
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none; /* only when logged in */
       align-items: center;
       justify-content: flex-end;
       gap: 10px;
       flex-wrap: nowrap;
-      min-width: 0;
+      pointer-events: auto;
+      max-width: calc(100% - 24px);
     }
 
     .welcomeText{
@@ -138,8 +135,7 @@
       animation: shimmerViolet 6.8s ease-in-out infinite;
 
       padding: 2px 2px;
-      white-space: nowrap;  /* stays one line unless we intentionally stack via media query */
-      flex: 0 0 auto;
+      white-space: nowrap;
     }
 
     @keyframes shimmerViolet{
@@ -156,7 +152,6 @@
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(10px);
       box-shadow: 0 14px 40px rgba(22,10,35,0.08);
-      flex: 0 0 auto;
     }
 
     .stripItem{
@@ -196,40 +191,42 @@
       background: rgba(155,110,255,0.18);
     }
 
-    /* ===== Responsive rule you asked for =====
-       When the screen gets tighter, stack:
-       Welcome (top) + strip (below).
-       Still stays on the right, never overlaps title. */
-    @media (max-width: 880px){
-      .navGrid{
-        grid-template-columns: 1fr auto 1fr;
-        padding: 10px 12px;
+    /* On small screens, stack account items but keep them right-aligned */
+    @media (max-width: 760px){
+      .banner{ height: auto; }
+      .navInner{ height: auto; padding: 10px 0 12px; }
+
+      .brandCenter{
+        position: static;
+        transform: none;
+        justify-content: center;
+        margin: 0 auto 8px;
       }
 
-      .accountLayout{
-        flex-direction: column;
-        align-items: flex-end; /* keep right aligned */
-        gap: 6px;
+      .accountDock{
+        position: static;
+        transform: none;
+        right: auto;
+        top: auto;
+        justify-content: center;
+        padding: 0 12px 2px;
+        flex-wrap: wrap;
       }
 
-      .welcomeText{
-        white-space: nowrap;
-      }
-    }
-
-    /* Very small screens: let the strip use available width on right side */
-    @media (max-width: 520px){
-      .navGrid{
-        padding: 10px 10px;
-      }
+      .welcomeText{ width: 100%; text-align: center; }
 
       .actionStrip{
-        width: auto;
-        max-width: 100%;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .stripItem{
+        flex: 1;
+        justify-content: center;
       }
     }
 
-    /* Logged out: login row in content */
+    /* Logged out: login row stays in page content */
     .authRow{
       margin: 12px 0 6px;
       display:flex;
@@ -427,22 +424,22 @@
   <canvas id="glitter" aria-hidden="true"></canvas>
 
   <header class="banner">
-    <div class="navGrid">
-      <div class="navTitle">
+    <div class="navInner">
+      <!-- Centered title (true center of viewport) -->
+      <div class="brandCenter">
         <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
       </div>
 
+      <!-- Absolute right side -->
       <div id="accountDock" class="accountDock" aria-label="Account actions">
-        <div class="accountLayout">
-          <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
+        <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
 
-          <div class="actionStrip" role="navigation" aria-label="Account navigation">
-            <a class="stripItem primary" href="./dashboard.html">Dashboard</a>
-            <div class="stripDivider" aria-hidden="true"></div>
-            <a class="stripItem" href="./verify-book.html">Verify Book</a>
-            <div class="stripDivider" aria-hidden="true"></div>
-            <button id="logoutBtn" class="stripItem" type="button">Logout</button>
-          </div>
+        <div class="actionStrip" role="navigation" aria-label="Account navigation">
+          <a class="stripItem primary" href="./dashboard.html">Dashboard</a>
+          <div class="stripDivider" aria-hidden="true"></div>
+          <a class="stripItem" href="./verify-book.html">Verify Book</a>
+          <div class="stripDivider" aria-hidden="true"></div>
+          <button id="logoutBtn" class="stripItem" type="button">Logout</button>
         </div>
       </div>
     </div>
@@ -682,3 +679,4 @@
   </script>
 </body>
 </html>
+```
