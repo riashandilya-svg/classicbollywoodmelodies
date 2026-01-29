@@ -18,7 +18,11 @@
       --border: rgba(140, 120, 160, 0.18);
       --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
       --btnText: #2b1140;
-      --gold: 255, 191, 47;
+
+      /* violet palette */
+      --violet: 155, 110, 255;
+      --violetDeep: 85, 55, 190;
+      --pink: 255, 120, 160;
     }
 
     *{ box-sizing: border-box; }
@@ -71,143 +75,151 @@
     }
     .banner-link:hover{ text-decoration: underline; }
 
-    /* Welcome line (no box, pretty shimmer) */
-    .welcome-wrap{
+    /* ===== NEW: single-line account bar ===== */
+    .accountBarWrap{
       max-width: 980px;
       margin: 10px auto 0;
       padding: 0 18px;
-      display: flex;
-      justify-content: center;
     }
 
-    .welcome-line{
-      display: none;
+    .accountBar{
+      display: none; /* only show when logged in */
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap; /* on small screens it wraps nicely */
+    }
+
+    /* prettier welcome (no underline) */
+    .welcomeText{
       font-family: "Cormorant Garamond", serif;
       font-weight: 700;
-      font-size: clamp(18px, 2.3vw, 26px);
+      font-size: clamp(18px, 2.1vw, 26px);
       letter-spacing: -0.01em;
-      line-height: 1.15;
-      text-align: center;
-      padding: 2px 0;
-      position: relative;
+      line-height: 1.1;
 
       background: linear-gradient(
         100deg,
-        rgba(43,17,64,0.95) 0%,
-        rgba(43,17,64,0.95) 24%,
-        rgba(var(--gold),0.95) 42%,
-        rgba(255,255,255,0.95) 50%,
-        rgba(var(--gold),0.90) 60%,
-        rgba(43,17,64,0.95) 78%,
-        rgba(43,17,64,0.95) 100%
+        rgba(var(--violetDeep), 0.98) 0%,
+        rgba(var(--violetDeep), 0.98) 18%,
+        rgba(var(--violet), 0.95) 40%,
+        rgba(255,255,255,0.92) 50%,
+        rgba(var(--violet), 0.95) 62%,
+        rgba(var(--violetDeep), 0.98) 82%,
+        rgba(var(--violetDeep), 0.98) 100%
       );
       background-size: 220% 100%;
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      filter: drop-shadow(0 0 18px rgba(var(--gold),0.18));
-      animation: shimmer 6.8s ease-in-out infinite;
+      filter: drop-shadow(0 0 16px rgba(var(--violet),0.18));
+      animation: shimmerViolet 6.8s ease-in-out infinite;
+      padding: 2px 4px;
+      white-space: nowrap;
     }
 
-    @keyframes shimmer{
+    @keyframes shimmerViolet{
       0%,100%{ background-position: 0% 50%; }
       50%{ background-position: 100% 50%; }
     }
 
-    .welcome-line::after{
-      content:"";
-      display:block;
-      width: min(380px, 72vw);
-      height: 3px;
-      margin: 8px auto 0;
-      border-radius: 999px;
-      background: linear-gradient(90deg,
-        rgba(var(--gold),0.70),
-        rgba(255,255,255,0.90),
-        rgba(var(--gold),0.50)
-      );
-      opacity: .75;
-      filter: blur(.15px);
-    }
-
-    /* Vertical quick links rail */
-    .quicklinks{
-      position: fixed;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 9997; /* under canvas */
-      display: none;
-      flex-direction: column;
+    .accountActions{
+      display: inline-flex;
+      align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    .ql-link{
-      width: 46px;
-      height: 46px;
-      display: grid;
-      place-items: center;
-      border-radius: 16px;
+    .pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
       text-decoration: none;
-      border: 1px solid rgba(140,120,160,0.18);
-      background: rgba(255,255,255,0.74);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 18px 50px rgba(22,10,35,0.10);
-      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
-      position: relative;
+      font-weight: 650;
+      font-size: 13px;
+
+      border: 1px solid rgba(155,110,255,0.26);
+      background: rgba(255,255,255,0.66);
+      backdrop-filter: blur(10px);
+      color: rgba(26,26,31,0.86);
+      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, border-color .12s ease;
       user-select: none;
     }
 
-    .ql-link:hover{
-      transform: translateY(-2px);
+    .pill:hover{
+      transform: translateY(-1px);
       filter: brightness(1.03);
-      box-shadow: 0 24px 70px rgba(22,10,35,0.14);
+      box-shadow: 0 18px 55px rgba(22,10,35,0.12);
+      border-color: rgba(155,110,255,0.38);
     }
 
-    .ql-link[data-tip]::before{
-      content: attr(data-tip);
-      position: absolute;
-      right: 58px;
-      top: 50%;
-      transform: translateY(-50%);
-      white-space: nowrap;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(140,120,160,0.18);
-      background: rgba(255,255,255,0.86);
-      color: rgba(26,26,31,0.86);
-      font-size: 12px;
-      font-weight: 700;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .12s ease;
-      box-shadow: 0 16px 40px rgba(22,10,35,0.10);
+    .pill.primary{
+      border-color: rgba(155,110,255,0.40);
+      background: linear-gradient(135deg,
+        rgba(155,110,255,0.24),
+        rgba(255,120,160,0.18),
+        rgba(155,110,255,0.14)
+      );
+      color: #2b1140;
     }
-    .ql-link:hover::before{ opacity: 1; }
 
-    @media (max-width: 760px){
-      .quicklinks{
-        right: auto;
-        left: 50%;
-        top: auto;
-        bottom: 14px;
-        transform: translateX(-50%);
-        flex-direction: row;
-      }
-      .ql-link[data-tip]::before{ display:none; }
+    .pill.danger{
+      border-color: rgba(155,110,255,0.22);
+      background: rgba(255,255,255,0.72);
+    }
+
+    .pill .icon{
+      font-size: 16px;
+      line-height: 1;
+      margin-top: -1px;
+    }
+
+    /* login row when logged out */
+    .authRow{
+      margin: 12px 0 6px;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 650;
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.30);
+      background:
+        linear-gradient(135deg,
+          rgba(255,120,160,0.26),
+          rgba(155,110,255,0.20),
+          rgba(255,90,210,0.14));
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
     }
 
     main{
       max-width: 980px;
       margin: 0 auto;
-      padding: 18px 18px 70px;
+      padding: 14px 18px 70px; /* tighter */
       text-align: center;
     }
 
     h1{
       font-size: clamp(28px, 4.8vw, 54px);
       line-height: 1.06;
-      margin: 12px 0 10px;
+      margin: 10px 0 10px;
       letter-spacing: -0.02em;
     }
 
@@ -280,6 +292,14 @@
 
     .card > *{ position: relative; z-index: 1; }
 
+    .card.book{
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .book-content{ flex: 1; min-width: 0; }
+
     .book-title{
       margin: 0 0 6px;
       font-size: 20px;
@@ -291,52 +311,6 @@
       margin: 0 0 16px;
       color: var(--muted);
       font-size: 14px;
-    }
-
-    .btn{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      text-decoration: none;
-      font-weight: 650;
-      color: var(--btnText);
-      border: 1px solid rgba(155,110,255,0.30);
-      background:
-        linear-gradient(135deg,
-          rgba(255,120,160,0.26),
-          rgba(155,110,255,0.20),
-          rgba(255,90,210,0.14));
-      transition: transform 0.14s ease, filter 0.14s ease;
-    }
-    .btn:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-    }
-
-    .btn.secondary{
-      background: rgba(255,255,255,0.75);
-      border-color: rgba(140,120,160,0.20);
-      color: rgba(26,26,31,0.82);
-    }
-
-    .arrow{
-      font-weight: 800;
-      font-size: 18px;
-      line-height: 1;
-      margin-top: -1px;
-    }
-
-    .card.book{
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .book-content{
-      flex: 1;
-      min-width: 0;
     }
 
     .book-art{
@@ -373,45 +347,48 @@
       }
     }
 
-    .authRow{
-      margin: 12px 0 6px;
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-
     @media (prefers-reduced-motion: reduce){
-      .welcome-line{ animation: none !important; }
+      .welcomeText{ animation: none !important; }
       #glitter{ display:none !important; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Cursor glitter -->
   <canvas id="glitter" aria-hidden="true"></canvas>
 
   <header class="banner">
     <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
   </header>
 
-  <div class="welcome-wrap">
-    <div id="welcomeLine" class="welcome-line" aria-live="polite"></div>
-  </div>
+  <!-- Single-line account bar -->
+  <div class="accountBarWrap">
+    <div id="accountBar" class="accountBar" aria-label="Account actions">
+      <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
 
-  <div id="quickLinks" class="quicklinks" aria-label="Quick links">
-    <a id="dashboardLink" class="ql-link" href="./dashboard.html" data-tip="Dashboard" aria-label="Dashboard">🎵</a>
-    <a id="verifyLink" class="ql-link" href="./verify-book.html" data-tip="Verify Book" aria-label="Verify Book">📚</a>
+      <div class="accountActions">
+        <a id="dashboardLink" class="pill primary" href="./dashboard.html" aria-label="Dashboard">
+          <span class="icon">🎵</span> <span>Dashboard</span>
+        </a>
+
+        <a id="verifyLink" class="pill" href="./verify-book.html" aria-label="Verify Book">
+          <span class="icon">📚</span> <span>Verify Book</span>
+        </a>
+
+        <button id="logoutBtn" class="pill danger" type="button" aria-label="Logout">
+          <span class="icon">↩️</span> <span>Logout</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <main>
     <h1>Pick a book</h1>
     <p class="sub">Choose a mood, then pick a song inside.</p>
 
-    <div class="authRow" id="authBox">
+    <!-- Logged out: show only login -->
+    <div class="authRow" id="authRow">
       <a id="loginLink" class="btn" href="./login.html">Login</a>
-      <button id="logoutBtn" class="btn secondary" style="display:none;" type="button">Logout</button>
     </div>
 
     <section class="grid">
@@ -419,7 +396,7 @@
         <div class="book-content">
           <h2 class="book-title">1. Soulful Bollywood Melodies</h2>
           <p class="book-meta">Slow, expressive pieces</p>
-          <a class="btn" href="soulfulindex.html">Open <span class="arrow">→</span></a>
+          <a class="btn" href="soulfulindex.html">Open</a>
         </div>
         <div class="book-art">
           <img src="Soulful.jpg" alt="Soulful book cover">
@@ -430,7 +407,7 @@
         <div class="book-content">
           <h2 class="book-title">2. Peppy Bollywood Melodies</h2>
           <p class="book-meta">Upbeat, energetic tunes</p>
-          <a class="btn" href="peppyindex.html">Open <span class="arrow">→</span></a>
+          <a class="btn" href="peppyindex.html">Open</a>
         </div>
         <div class="book-art">
           <img src="peppy.jpg" alt="Peppy book cover">
@@ -441,7 +418,7 @@
         <div class="book-content">
           <h2 class="book-title">3. Romantic Bollywood Melodies</h2>
           <p class="book-meta">Warm, lyrical songs</p>
-          <a class="btn" href="romanticindex.html">Open <span class="arrow">→</span></a>
+          <a class="btn" href="romanticindex.html">Open</a>
         </div>
         <div class="book-art">
           <img src="romantic.jpg" alt="Romantic book cover">
@@ -452,7 +429,7 @@
         <div class="book-content">
           <h2 class="book-title">4. Classic Bollywood Melodies</h2>
           <p class="book-meta">Golden-era favorites</p>
-          <a class="btn" href="classicindex.html">Open <span class="arrow">→</span></a>
+          <a class="btn" href="classicindex.html">Open</a>
         </div>
         <div class="book-art">
           <img src="classic.jpg" alt="Classic book cover">
@@ -471,11 +448,10 @@
     async function renderAuthUI() {
       const { data: { session } } = await sb.auth.getSession();
 
+      const accountBar = document.getElementById("accountBar");
+      const welcomeText = document.getElementById("welcomeText");
+      const authRow = document.getElementById("authRow");
       const loginLink = document.getElementById("loginLink");
-      const logoutBtn = document.getElementById("logoutBtn");
-
-      const welcomeLine = document.getElementById("welcomeLine");
-      const quickLinks = document.getElementById("quickLinks");
 
       if (session && session.user) {
         const userId = session.user.id;
@@ -494,20 +470,16 @@
         }
 
         const displayName = (profile && profile.display_name) ? profile.display_name : "there";
+        welcomeText.textContent = `Welcome, ${displayName}`;
 
-        welcomeLine.textContent = `Welcome, ${displayName}`;
-        welcomeLine.style.display = "block";
+        // show account bar, hide login row
+        accountBar.style.display = "flex";
+        authRow.style.display = "none";
 
-        logoutBtn.style.display = "inline-flex";
-        loginLink.style.display = "none";
-
-        quickLinks.style.display = "flex";
       } else {
-        welcomeLine.style.display = "none";
-        quickLinks.style.display = "none";
-
-        logoutBtn.style.display = "none";
-        loginLink.style.display = "inline-flex";
+        accountBar.style.display = "none";
+        authRow.style.display = "flex";
+        if (loginLink) loginLink.style.display = "inline-flex";
       }
     }
 
@@ -523,7 +495,7 @@
     renderAuthUI();
     setTimeout(renderAuthUI, 800);
 
-    /* ===== Cursor glitter (gold + white, classy) ===== */
+    /* ===== Cursor glitter (purple/violet) ===== */
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if(prefersReduced) return;
@@ -560,7 +532,10 @@
             life: 34 + Math.random() * 30,
             size: 1.0 + Math.random() * 2.8,
             tw: Math.random() * Math.PI * 2,
-            alpha: 0.52 + Math.random() * 0.34
+            alpha: 0.52 + Math.random() * 0.34,
+
+            // violet tint variety
+            hue: Math.random() < 0.65 ? "violet" : "pink"
           });
         }
       }
@@ -597,25 +572,30 @@
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
 
-          // gold dot
+          const violet = `rgba(155, 110, 255, ${a})`;
+          const pink   = `rgba(255, 120, 160, ${a * 0.85})`;
+          const core   = `rgba(255, 255, 255, ${a * 0.55})`;
+          const dot = (p.hue === "pink") ? pink : violet;
+
+          // main dot
           ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 191, 47, ${a})`;
+          ctx.fillStyle = dot;
           ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
           ctx.fill();
 
           // white core
           ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 255, 255, ${a * 0.55})`;
+          ctx.fillStyle = core;
           ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
           ctx.fill();
 
-          // occasional sparkle cross
+          // sparkle cross
           if(Math.random() < 0.24){
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.tw * 0.35);
-            ctx.globalAlpha = a * 0.90;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${a})`;
+            ctx.globalAlpha = a * 0.92;
+            ctx.strokeStyle = `rgba(210, 195, 255, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
