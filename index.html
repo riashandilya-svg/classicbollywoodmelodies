@@ -19,7 +19,6 @@
       --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
       --btnText: #2b1140;
 
-      /* violet palette */
       --violet: 155, 110, 255;
       --violetDeep: 85, 55, 190;
       --pink: 255, 120, 160;
@@ -75,28 +74,38 @@
     }
     .banner-link:hover{ text-decoration: underline; }
 
-    /* ===== NEW: single-line account bar ===== */
-    .accountBarWrap{
-      max-width: 980px;
-      margin: 10px auto 0;
-      padding: 0 18px;
+    /* ===== NEW: account strip top-right ===== */
+    .accountStripWrap{
+      position: fixed;
+      right: 14px;
+      top: 74px; /* just under 64px banner */
+      z-index: 9999;
+      pointer-events: none; /* allow clicks only on inner strip */
     }
 
-    .accountBar{
-      display: none; /* only show when logged in */
+    .accountStrip{
+      pointer-events: auto;
+      display: none; /* visible only when logged in */
       align-items: center;
-      justify-content: center;
       gap: 10px;
-      flex-wrap: wrap; /* on small screens it wraps nicely */
+
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(155,110,255,0.22);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 55px rgba(22,10,35,0.12);
+      max-width: min(92vw, 720px);
     }
 
-    /* prettier welcome (no underline) */
+    /* shimmer welcome text */
     .welcomeText{
       font-family: "Cormorant Garamond", serif;
       font-weight: 700;
-      font-size: clamp(18px, 2.1vw, 26px);
+      font-size: 18px;
       letter-spacing: -0.01em;
       line-height: 1.1;
+      white-space: nowrap;
 
       background: linear-gradient(
         100deg,
@@ -112,10 +121,8 @@
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      filter: drop-shadow(0 0 16px rgba(var(--violet),0.18));
+      filter: drop-shadow(0 0 16px rgba(var(--violet),0.16));
       animation: shimmerViolet 6.8s ease-in-out infinite;
-      padding: 2px 4px;
-      white-space: nowrap;
     }
 
     @keyframes shimmerViolet{
@@ -123,103 +130,83 @@
       50%{ background-position: 100% 50%; }
     }
 
-    .accountActions{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
+    .stripSep{
+      width: 1px;
+      height: 18px;
+      background: rgba(155,110,255,0.20);
+      flex: 0 0 auto;
     }
 
-    .pill{
+    .stripLinks{
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 999px;
+      gap: 12px;
+      white-space: nowrap;
+      flex-wrap: nowrap;
+    }
+
+    .stripLink{
       text-decoration: none;
+      color: rgba(26,26,31,0.86);
       font-weight: 650;
       font-size: 13px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      transition: background .12s ease, transform .12s ease, filter .12s ease;
+    }
+    .stripLink:hover{
+      background: rgba(155,110,255,0.10);
+      transform: translateY(-1px);
+      filter: brightness(1.02);
+    }
 
-      border: 1px solid rgba(155,110,255,0.26);
-      background: rgba(255,255,255,0.66);
-      backdrop-filter: blur(10px);
+    .stripBtn{
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font: inherit;
       color: rgba(26,26,31,0.86);
-      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
-      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, border-color .12s ease;
-      user-select: none;
-    }
-
-    .pill:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-      box-shadow: 0 18px 55px rgba(22,10,35,0.12);
-      border-color: rgba(155,110,255,0.38);
-    }
-
-    .pill.primary{
-      border-color: rgba(155,110,255,0.40);
-      background: linear-gradient(135deg,
-        rgba(155,110,255,0.24),
-        rgba(255,120,160,0.18),
-        rgba(155,110,255,0.14)
-      );
-      color: #2b1140;
-    }
-
-    .pill.danger{
-      border-color: rgba(155,110,255,0.22);
-      background: rgba(255,255,255,0.72);
-    }
-
-    .pill .icon{
-      font-size: 16px;
-      line-height: 1;
-      margin-top: -1px;
-    }
-
-    /* login row when logged out */
-    .authRow{
-      margin: 12px 0 6px;
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-
-    .btn{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      text-decoration: none;
       font-weight: 650;
-      color: var(--btnText);
-      border: 1px solid rgba(155,110,255,0.30);
-      background:
-        linear-gradient(135deg,
-          rgba(255,120,160,0.26),
-          rgba(155,110,255,0.20),
-          rgba(255,90,210,0.14));
-      transition: transform 0.14s ease, filter 0.14s ease;
+      font-size: 13px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      transition: background .12s ease, transform .12s ease, filter .12s ease;
     }
-    .btn:hover{
+    .stripBtn:hover{
+      background: rgba(155,110,255,0.10);
       transform: translateY(-1px);
-      filter: brightness(1.03);
+      filter: brightness(1.02);
+    }
+
+    /* Mobile: make it centered and wrap */
+    @media (max-width: 680px){
+      .accountStripWrap{
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        top: 72px;
+      }
+      .accountStrip{
+        border-radius: 18px;
+        padding: 10px 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+      .stripSep{ display:none; }
     }
 
     main{
       max-width: 980px;
       margin: 0 auto;
-      padding: 14px 18px 70px; /* tighter */
+      padding: 44px 18px 56px;
       text-align: center;
     }
 
     h1{
       font-size: clamp(28px, 4.8vw, 54px);
       line-height: 1.06;
-      margin: 10px 0 10px;
+      margin: 18px 0 10px;
       letter-spacing: -0.02em;
     }
 
@@ -313,6 +300,28 @@
       font-size: 14px;
     }
 
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 650;
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.30);
+      background:
+        linear-gradient(135deg,
+          rgba(255,120,160,0.26),
+          rgba(155,110,255,0.20),
+          rgba(255,90,210,0.14));
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
     .book-art{
       width: 120px;
       height: 120px;
@@ -347,6 +356,31 @@
       }
     }
 
+    /* Footer */
+    footer{
+      max-width: 980px;
+      margin: 24px auto 0;
+      padding: 0 18px 26px;
+      text-align: center;
+      color: rgba(26,26,31,0.78);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    footer a{
+      color: rgba(26,26,31,0.92);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(155,110,255,0.30);
+    }
+    footer a:hover{ filter: brightness(1.02); }
+
+    .copyright{
+      margin-top: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(26,26,31,0.68);
+    }
+
     @media (prefers-reduced-motion: reduce){
       .welcomeText{ animation: none !important; }
       #glitter{ display:none !important; }
@@ -361,23 +395,15 @@
     <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
   </header>
 
-  <!-- Single-line account bar -->
-  <div class="accountBarWrap">
-    <div id="accountBar" class="accountBar" aria-label="Account actions">
+  <!-- top-right account strip -->
+  <div class="accountStripWrap">
+    <div id="accountStrip" class="accountStrip" aria-label="Account actions">
       <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
-
-      <div class="accountActions">
-        <a id="dashboardLink" class="pill primary" href="./dashboard.html" aria-label="Dashboard">
-          <span class="icon">🎵</span> <span>Dashboard</span>
-        </a>
-
-        <a id="verifyLink" class="pill" href="./verify-book.html" aria-label="Verify Book">
-          <span class="icon">📚</span> <span>Verify Book</span>
-        </a>
-
-        <button id="logoutBtn" class="pill danger" type="button" aria-label="Logout">
-          <span class="icon">↩️</span> <span>Logout</span>
-        </button>
+      <span class="stripSep" aria-hidden="true"></span>
+      <div class="stripLinks" aria-label="Quick actions">
+        <a id="dashboardLink" class="stripLink" href="./dashboard.html">Dashboard</a>
+        <a id="verifyLink" class="stripLink" href="./verify-book.html">Verify Book</a>
+        <button id="logoutBtn" class="stripBtn" type="button">Logout</button>
       </div>
     </div>
   </div>
@@ -386,8 +412,8 @@
     <h1>Pick a book</h1>
     <p class="sub">Choose a mood, then pick a song inside.</p>
 
-    <!-- Logged out: show only login -->
-    <div class="authRow" id="authRow">
+    <!-- Logged out: only login -->
+    <div id="authRow" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
       <a id="loginLink" class="btn" href="./login.html">Login</a>
     </div>
 
@@ -438,20 +464,29 @@
     </section>
   </main>
 
+  <footer>
+    Contact: <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a>
+    <div class="copyright">
+      © <span id="siteYear"></span> Ria Om Shandilya. All rights reserved.
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+    // Footer year
+    document.getElementById("siteYear").textContent = new Date().getFullYear();
+
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXqiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function renderAuthUI() {
       const { data: { session } } = await sb.auth.getSession();
 
-      const accountBar = document.getElementById("accountBar");
+      const strip = document.getElementById("accountStrip");
       const welcomeText = document.getElementById("welcomeText");
       const authRow = document.getElementById("authRow");
-      const loginLink = document.getElementById("loginLink");
 
       if (session && session.user) {
         const userId = session.user.id;
@@ -472,14 +507,11 @@
         const displayName = (profile && profile.display_name) ? profile.display_name : "there";
         welcomeText.textContent = `Welcome, ${displayName}`;
 
-        // show account bar, hide login row
-        accountBar.style.display = "flex";
+        strip.style.display = "flex";
         authRow.style.display = "none";
-
       } else {
-        accountBar.style.display = "none";
+        strip.style.display = "none";
         authRow.style.display = "flex";
-        if (loginLink) loginLink.style.display = "inline-flex";
       }
     }
 
@@ -488,10 +520,7 @@
       await renderAuthUI();
     });
 
-    sb.auth.onAuthStateChange(() => {
-      renderAuthUI();
-    });
-
+    sb.auth.onAuthStateChange(() => renderAuthUI());
     renderAuthUI();
     setTimeout(renderAuthUI, 800);
 
@@ -533,9 +562,7 @@
             size: 1.0 + Math.random() * 2.8,
             tw: Math.random() * Math.PI * 2,
             alpha: 0.52 + Math.random() * 0.34,
-
-            // violet tint variety
-            hue: Math.random() < 0.65 ? "violet" : "pink"
+            hue: Math.random() < 0.70 ? "violet" : "pink"
           });
         }
       }
@@ -577,25 +604,22 @@
           const core   = `rgba(255, 255, 255, ${a * 0.55})`;
           const dot = (p.hue === "pink") ? pink : violet;
 
-          // main dot
           ctx.beginPath();
           ctx.fillStyle = dot;
           ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
           ctx.fill();
 
-          // white core
           ctx.beginPath();
           ctx.fillStyle = core;
           ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
           ctx.fill();
 
-          // sparkle cross
           if(Math.random() < 0.24){
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.tw * 0.35);
             ctx.globalAlpha = a * 0.92;
-            ctx.strokeStyle = `rgba(210, 195, 255, ${a})`;
+            ctx.strokeStyle = `rgba(215, 200, 255, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
