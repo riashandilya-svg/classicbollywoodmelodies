@@ -6,7 +6,7 @@
   const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
   const ALL_SONG_KEYS = ["bundle:all_songs", "all_songs", "ALL_SONGS"];
 
-  const PRICE_RUPEES = 199;
+const PRICE_RUPEES = 19900; // paise
   const CURRENCY = "INR";
 
   function normalizeEmail(email) {
