@@ -133,17 +133,17 @@
       name: "Classic Bollywood Melodies",
       description: `Unlock: ${order.song_slug || productId}`,
       prefill: { email: session.user?.email || "" },
-      handler: async (response) => {
-        try {
-          const fresh = await getSessionOrThrow();
-          await verifyPayment({ productId, response });
+handler: async (response) => {
+    try {
+        const fresh = await getSessionOrThrow();
+        await verifyPayment({ productId, response });
 
-          alert("Payment verified. Reloading.");
-          window.location.reload();
-        } catch (e) {
-          alert(e?.message || "Verification error");
-        }
-      },
+        // ✅ Auto-reload without alert
+        window.location.reload();
+    } catch (e) {
+        alert(e?.message || "Verification error");
+    }
+},
     });
 
     rzp.open();
