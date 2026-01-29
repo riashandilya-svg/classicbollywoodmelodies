@@ -72,7 +72,7 @@
       body: { productId, currency },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        apikey: window.supabase.supabaseKey,
+        apikey: window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis',
       },
     });
 
@@ -90,14 +90,21 @@
   async function createOrder({ productId, currency = "INR" }) {
     const session = await getSessionOrThrow();
     
+    // Get the API key - try multiple methods
+    const apikey = window.supabase.supabaseKey || 
+                   window.supabase.supabaseUrl?.match(/https:\/\/([^.]+)/)?.[0] ||
+                   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
+    
+    console.log('[PAYWALL] Using API key:', apikey ? 'Found' : 'Missing');
+    
     const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
       body: { productId, currency },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        apikey: window.supabase.supabaseKey,
+        apikey: apikey,
       },
     });
-
+  
     if (error) {
       console.error("[PAYWALL] Create order error:", error);
       throw new Error(error.message || "Create order failed");
@@ -123,7 +130,7 @@
       },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        apikey: window.supabase.supabaseKey,
+        apikey: window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis',
       },
     });
 
@@ -184,7 +191,7 @@
       body: { code },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        apikey: window.supabase.supabaseKey,
+        apikey: window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis',
       },
     });
 
