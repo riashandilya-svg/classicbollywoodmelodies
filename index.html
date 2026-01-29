@@ -50,6 +50,7 @@
       mix-blend-mode: screen;
     }
 
+    /* Header / Banner */
     .banner{
       position: sticky;
       top: 0;
@@ -75,26 +76,24 @@
     }
     .banner-link:hover{ text-decoration: underline; }
 
-    /* ===== NEW: single-line account bar ===== */
-    .accountBarWrap{
-      max-width: 980px;
-      margin: 10px auto 0;
-      padding: 0 18px;
-    }
-
-    .accountBar{
-      display: none; /* only show when logged in */
-      align-items: center;
-      justify-content: center;
+    /* ===== Top-right account strip ===== */
+    .accountDock{
+      position: fixed;
+      top: 76px; /* below the sticky banner */
+      right: 16px;
+      z-index: 10000;
+      display: none; /* shown only when logged in */
       gap: 10px;
-      flex-wrap: wrap; /* on small screens it wraps nicely */
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: min(760px, calc(100vw - 32px));
     }
 
-    /* prettier welcome (no underline) */
     .welcomeText{
       font-family: "Cormorant Garamond", serif;
       font-weight: 700;
-      font-size: clamp(18px, 2.1vw, 26px);
+      font-size: clamp(16px, 1.7vw, 22px);
       letter-spacing: -0.01em;
       line-height: 1.1;
 
@@ -123,62 +122,55 @@
       50%{ background-position: 100% 50%; }
     }
 
-    .accountActions{
+    .actionStrip{
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
+      overflow: hidden;
+      border-radius: 999px;
+      border: 1px solid rgba(155,110,255,0.26);
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
     }
 
-    .pill{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      text-decoration: none;
+    .stripItem{
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 10px 14px;
       font-weight: 650;
       font-size: 13px;
-
-      border: 1px solid rgba(155,110,255,0.26);
-      background: rgba(255,255,255,0.66);
-      backdrop-filter: blur(10px);
       color: rgba(26,26,31,0.86);
-      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
-      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, border-color .12s ease;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: background .12s ease, filter .12s ease;
       user-select: none;
+      white-space: nowrap;
     }
 
-    .pill:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-      box-shadow: 0 18px 55px rgba(22,10,35,0.12);
-      border-color: rgba(155,110,255,0.38);
+    .stripItem:hover{
+      background: rgba(155,110,255,0.10);
+      filter: brightness(1.02);
     }
 
-    .pill.primary{
-      border-color: rgba(155,110,255,0.40);
-      background: linear-gradient(135deg,
-        rgba(155,110,255,0.24),
-        rgba(255,120,160,0.18),
-        rgba(155,110,255,0.14)
-      );
+    .stripItem.primary{
       color: #2b1140;
+      background: linear-gradient(135deg,
+        rgba(155,110,255,0.20),
+        rgba(255,120,160,0.14),
+        rgba(155,110,255,0.10)
+      );
     }
 
-    .pill.danger{
-      border-color: rgba(155,110,255,0.22);
-      background: rgba(255,255,255,0.72);
+    .stripDivider{
+      width: 1px;
+      align-self: stretch;
+      background: rgba(155,110,255,0.18);
     }
 
-    .pill .icon{
-      font-size: 16px;
-      line-height: 1;
-      margin-top: -1px;
-    }
-
-    /* login row when logged out */
+    /* Logged out: login row */
     .authRow{
       margin: 12px 0 6px;
       display:flex;
@@ -212,7 +204,7 @@
     main{
       max-width: 980px;
       margin: 0 auto;
-      padding: 14px 18px 70px; /* tighter */
+      padding: 14px 18px 60px;
       text-align: center;
     }
 
@@ -239,6 +231,15 @@
 
     @media (max-width: 760px){
       .grid{ grid-template-columns: 1fr; }
+      .accountDock{
+        right: 12px;
+        left: 12px;
+        top: 72px;
+        justify-content: center;
+      }
+      .welcomeText{ text-align: center; width: 100%; }
+      .actionStrip{ width: 100%; justify-content: center; }
+      .stripItem{ flex: 1; justify-content: center; }
     }
 
     .card{
@@ -347,6 +348,25 @@
       }
     }
 
+    /* Footer */
+    footer{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 18px 18px 28px;
+      text-align: center;
+      color: rgba(26,26,31,0.62);
+      font-size: 13px;
+    }
+
+    footer a{
+      color: rgba(26,26,31,0.76);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(155,110,255,0.22);
+    }
+    footer a:hover{
+      border-bottom-color: rgba(155,110,255,0.45);
+    }
+
     @media (prefers-reduced-motion: reduce){
       .welcomeText{ animation: none !important; }
       #glitter{ display:none !important; }
@@ -361,24 +381,16 @@
     <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
   </header>
 
-  <!-- Single-line account bar -->
-  <div class="accountBarWrap">
-    <div id="accountBar" class="accountBar" aria-label="Account actions">
-      <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
+  <!-- Top-right account strip (only when logged in) -->
+  <div id="accountDock" class="accountDock" aria-label="Account actions">
+    <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
 
-      <div class="accountActions">
-        <a id="dashboardLink" class="pill primary" href="./dashboard.html" aria-label="Dashboard">
-          <span class="icon">🎵</span> <span>Dashboard</span>
-        </a>
-
-        <a id="verifyLink" class="pill" href="./verify-book.html" aria-label="Verify Book">
-          <span class="icon">📚</span> <span>Verify Book</span>
-        </a>
-
-        <button id="logoutBtn" class="pill danger" type="button" aria-label="Logout">
-          <span class="icon">↩️</span> <span>Logout</span>
-        </button>
-      </div>
+    <div class="actionStrip" role="navigation" aria-label="Account navigation">
+      <a id="dashboardLink" class="stripItem primary" href="./dashboard.html">Dashboard</a>
+      <div class="stripDivider" aria-hidden="true"></div>
+      <a id="verifyLink" class="stripItem" href="./verify-book.html">Verify Book</a>
+      <div class="stripDivider" aria-hidden="true"></div>
+      <button id="logoutBtn" class="stripItem" type="button">Logout</button>
     </div>
   </div>
 
@@ -438,6 +450,13 @@
     </section>
   </main>
 
+  <footer>
+    <div>© <span id="year"></span> Ria Om Shandilya. All rights reserved.</div>
+    <div style="margin-top:6px;">
+      Contact: <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a>
+    </div>
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -445,10 +464,15 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    function setYear() {
+      const el = document.getElementById("year");
+      if (el) el.textContent = new Date().getFullYear();
+    }
+
     async function renderAuthUI() {
       const { data: { session } } = await sb.auth.getSession();
 
-      const accountBar = document.getElementById("accountBar");
+      const accountDock = document.getElementById("accountDock");
       const welcomeText = document.getElementById("welcomeText");
       const authRow = document.getElementById("authRow");
       const loginLink = document.getElementById("loginLink");
@@ -472,12 +496,11 @@
         const displayName = (profile && profile.display_name) ? profile.display_name : "there";
         welcomeText.textContent = `Welcome, ${displayName}`;
 
-        // show account bar, hide login row
-        accountBar.style.display = "flex";
+        accountDock.style.display = "flex";
         authRow.style.display = "none";
 
       } else {
-        accountBar.style.display = "none";
+        accountDock.style.display = "none";
         authRow.style.display = "flex";
         if (loginLink) loginLink.style.display = "inline-flex";
       }
@@ -492,6 +515,7 @@
       renderAuthUI();
     });
 
+    setYear();
     renderAuthUI();
     setTimeout(renderAuthUI, 800);
 
@@ -533,8 +557,6 @@
             size: 1.0 + Math.random() * 2.8,
             tw: Math.random() * Math.PI * 2,
             alpha: 0.52 + Math.random() * 0.34,
-
-            // violet tint variety
             hue: Math.random() < 0.65 ? "violet" : "pink"
           });
         }
@@ -577,19 +599,16 @@
           const core   = `rgba(255, 255, 255, ${a * 0.55})`;
           const dot = (p.hue === "pink") ? pink : violet;
 
-          // main dot
           ctx.beginPath();
           ctx.fillStyle = dot;
           ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
           ctx.fill();
 
-          // white core
           ctx.beginPath();
           ctx.fillStyle = core;
           ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
           ctx.fill();
 
-          // sparkle cross
           if(Math.random() < 0.24){
             ctx.save();
             ctx.translate(p.x, p.y);
