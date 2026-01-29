@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Book Code - Classic Bollywood Melodies</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+      text-transform: uppercase;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .message {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+    
+    .books-owned {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .books-owned h3 {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .book-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #667eea;
+      color: white;
+      border-radius: 20px;
+      font-size: 12px;
+      margin: 4px;
+      text-transform: capitalize;
+    }
+    
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    .example {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📚 Verify Book Code</h1>
+    <p class="subtitle">Enter the unique code from your physical book</p>
+    
+    <form id="verifyForm">
+      <div class="form-group">
+        <label for="bookCode">Book Code</label>
+        <input 
+          type="text" 
+          id="bookCode" 
+          name="bookCode" 
+          placeholder="SOULFUL-A7K9M2"
+          required
+          autocomplete="off"
+        />
+        <p class="example">Example: SOULFUL-A7K9M2 or PEPPY-Q3L8P5</p>
+      </div>
+      
+      <button type="submit" id="submitBtn">Verify Code</button>
+    </form>
+    
+    <div id="message" class="message"></div>
+    
+    <div id="booksOwned" class="books-owned" style="display: none;">
+      <h3>Your Books:</h3>
+      <div id="booksList"></div>
+    </div>
+    
+    <a href="/" class="back-link">← Back to Home</a>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
+  <script src="/classicbollywoodmelodies/js/paywall.js"></script>
+
+  <script>
+    const form = document.getElementById('verifyForm');
+    const codeInput = document.getElementById('bookCode');
+    const submitBtn = document.getElementById('submitBtn');
+    const messageDiv = document.getElementById('message');
+    const booksOwnedDiv = document.getElementById('booksOwned');
+    const booksListDiv = document.getElementById('booksList');
+
+    // Load user's books on page load
+    async function loadUserBooks() {
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) {
+          window.location.href = '/classicbollywoodmelodies/auth/login.html';
+          return;
+        }
+
+        const { data: profile, error } = await window.supabase
+          .from('profiles')
+          .select('books_owned, is_book_owner')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (profile?.books_owned && profile.books_owned.length > 0) {
+          booksOwnedDiv.style.display = 'block';
+          booksListDiv.innerHTML = profile.books_owned
+            .map(book => `<span class="book-badge">${book}</span>`)
+            .join('');
+        }
+      } catch (error) {
+        console.error('Error loading books:', error);
+      }
+    }
+
+    // Verify code on form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const code = codeInput.value.trim().toUpperCase();
+      if (!code) {
+        showMessage('Please enter a code', 'error');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying...';
+      messageDiv.style.display = 'none';
+
+      try {
+        const result = await window.verifyBookCode(code);
+        
+        showMessage(`✓ Success! You now own: ${result.book_name}`, 'success');
+        codeInput.value = '';
+        
+        // Update books display
+        setTimeout(() => {
+          loadUserBooks();
+        }, 500);
+
+      } catch (error) {
+        showMessage(error.message || 'Invalid or already used code', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Verify Code';
+      }
+    });
+
+    function showMessage(text, type) {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+    }
+
+    // Load books on page load
+    loadUserBooks();
+  </script>
+</body>
+</html>
