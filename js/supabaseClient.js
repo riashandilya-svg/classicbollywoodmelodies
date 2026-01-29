@@ -1,26 +1,26 @@
-// /classicbollywoodmelodies/js/supabaseClient.js
+// classicbollywoodmelodies/js/supabaseClient.js
 (function () {
+  // Supabase CDN must be loaded BEFORE this file:
+  // <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    console.error("Supabase CDN not loaded correctly. window.supabase.createClient is missing.");
+    return;
+  }
+
+  // Preserve the CDN namespace (library) safely
+  window.supabaseLib = window.supabase;
+
   const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-  const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY_HERE"; // Settings → API → anon public
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
 
-  function loadSupabaseUMD() {
-    return new Promise((resolve, reject) => {
-      // If the library is already present
-      if (window.supabase?.createClient) return resolve(true);
+  const client = window.supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      s.onload = () => resolve(true);
-      s.onerror = () => reject(new Error("Failed to load supabase-js"));
-      document.head.appendChild(s);
-    });
-  }
+  // Make paywall code happy (it expects window.supabase.auth...)
+  window.supabase = client;
 
-  async function init() {
-    await loadSupabaseUMD();
-    window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log("[SUPABASE] ready:", !!window.supabase?.auth);
-  }
+  // Optional alias (if any other code uses window.sb)
+  window.sb = client;
 
-  init().catch((e) => console.error("[SUPABASE] init failed:", e));
+  console.log("Supabase client ready:", client);
 })();
