@@ -67,7 +67,7 @@ window.startRazorpayCheckout = async function startRazorpayCheckout({ productId 
   // 2) TEMP: choose currency + amount (we will replace with real pricing later)
   // IMPORTANT: Razorpay expects INR amounts in paise.
   const currency = "INR";
-  const amount = 19900; // ₹199.00 (paise)
+const amount = 199; // rupees (backend converts to paise)
 
   // 3) Ask our Edge Function to create a Razorpay order
   const res = await fetch(
