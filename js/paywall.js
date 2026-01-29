@@ -1,13 +1,7 @@
 // /classicbollywoodmelodies/js/paywall.js
 (() => {
-  const SUPABASE_FUNCTIONS_BASE =
-    "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
-
-  const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
-  const ALL_SONG_KEYS = ["bundle:all_songs", "all_songs", "ALL_SONGS"];
-
-  const PRICE_RUPEES = 19900; // paise
-  const CURRENCY = "INR";
+  const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
+  const OWNER_EMAILS = ["riashandilya@gmail.com"];
 
   function normalizeEmail(email) {
     return (email || "").trim().toLowerCase();
@@ -17,11 +11,6 @@
     if (!window.supabase || !window.supabase.auth || !window.supabase.from) {
       throw new Error("Supabase client missing");
     }
-  }
-
-  function getApiKey() {
-    // Works for supabase-js v2
-    return window.supabase?.supabaseKey;
   }
 
   async function loadRazorpay() {
@@ -42,6 +31,7 @@
     return data.session;
   }
 
+  // ✅ NEW: Check if user owns a song via purchases table
   async function userHasAccess(productId, session) {
     productId = (productId || "").trim();
     if (!productId) return false;
@@ -52,33 +42,56 @@
 
     const userId = session.user.id;
 
+    // Check purchases table for this song
     const { data, error } = await window.supabase
-      .from("entitlements")
-      .select("product_id")
-      .eq("user_id", userId);
+      .from("purchases")
+      .select("song_id")
+      .eq("user_id", userId)
+      .eq("status", "paid");
 
-    if (error) return false;
+    if (error) {
+      console.error("[PAYWALL] Error checking purchases:", error);
+      return false;
+    }
 
-    const owned = (data || []).map(r => (r.product_id || "").trim());
-    const hasBundle = owned.some(p => ALL_SONG_KEYS.includes(p));
-    const hasSong = owned.includes(productId);
+    const ownedSongs = (data || []).map(r => (r.song_id || "").trim());
+    const hasSong = ownedSongs.includes(productId);
 
     console.log("[PAYWALL] needed:", productId);
-    console.log("[PAYWALL] owned:", owned);
-    console.log("[PAYWALL] hasBundle:", hasBundle, "hasSong:", hasSong);
+    console.log("[PAYWALL] owned songs:", ownedSongs);
+    console.log("[PAYWALL] hasSong:", hasSong);
 
-    return hasBundle || hasSong;
+    return hasSong;
   }
 
-  async function createOrder({ productId }) {
+  // ✅ NEW: Get pricing from backend
+  async function getPricing({ productId, currency = "INR" }) {
+    const session = await getSessionOrThrow();
+    
+    const { data, error } = await window.supabase.functions.invoke("get-pricing", {
+      body: { productId, currency },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: window.supabase.supabaseKey,
+      },
+    });
+
+    if (error) {
+      console.error("[PAYWALL] Get pricing error:", error);
+      throw new Error(error.message || "Failed to get pricing");
+    }
+    if (!data) {
+      throw new Error("Pricing API returned no data");
+    }
+    return data;
+  }
+
+  // ✅ UPDATED: Create order with dynamic pricing
+  async function createOrder({ productId, currency = "INR" }) {
     const session = await getSessionOrThrow();
     
     const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
-      body: {
-        productId,
-        amount: PRICE_RUPEES,
-        currency: CURRENCY,
-      },
+      body: { productId, currency },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
         apikey: window.supabase.supabaseKey,
@@ -95,12 +108,15 @@
     return data;
   }
 
-  async function verifyPayment({ productId, response }) {
+  // ✅ UPDATED: Verify payment with amount and currency
+  async function verifyPayment({ productId, response, amount, currency }) {
     const session = await getSessionOrThrow();
     
     const { data, error } = await window.supabase.functions.invoke("verify-razorpay-payment", {
       body: {
         productId,
+        amount,
+        currency,
         razorpay_order_id: response.razorpay_order_id,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_signature: response.razorpay_signature,
@@ -118,37 +134,68 @@
     return data;
   }
 
-  async function startRazorpayCheckout({ productId }) {
+  // ✅ UPDATED: Razorpay checkout with dynamic pricing
+  async function startRazorpayCheckout({ productId, currency = "INR" }) {
     assertSupabase();
     await loadRazorpay();
 
     const session = await getSessionOrThrow();
-    const order = await createOrder({ productId });
+    const order = await createOrder({ productId, currency });
+
+    const isBundle = productId === "pack:5";
+    const description = isBundle 
+      ? "5-Song Pack" 
+      : `Unlock: ${productId.replace('song:', '')}`;
 
     const rzp = new window.Razorpay({
-      key: order.key_id,
-      order_id: order.razorpay_order_id,
+      key: order.keyId,
+      order_id: order.orderId,
       amount: order.amount,
       currency: order.currency,
       name: "Classic Bollywood Melodies",
-      description: `Unlock: ${order.song_slug || productId}`,
+      description: description,
       prefill: { email: session.user?.email || "" },
-handler: async (response) => {
-    try {
-        const fresh = await getSessionOrThrow();
-        await verifyPayment({ productId, response });
+      handler: async (response) => {
+        try {
+          const fresh = await getSessionOrThrow();
+          await verifyPayment({ 
+            productId, 
+            response,
+            amount: order.amount,
+            currency: order.currency
+          });
 
-        // ✅ Auto-reload without alert
-        window.location.reload();
-    } catch (e) {
-        alert(e?.message || "Verification error");
-    }
-},
+          // ✅ Auto-reload without alert
+          window.location.reload();
+        } catch (e) {
+          alert(e?.message || "Verification error");
+        }
+      },
     });
 
     rzp.open();
   }
 
+  // ✅ NEW: Verify book code
+  async function verifyBookCode(code) {
+    const session = await getSessionOrThrow();
+    
+    const { data, error } = await window.supabase.functions.invoke("verify-book-code", {
+      body: { code },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: window.supabase.supabaseKey,
+      },
+    });
+
+    if (error) {
+      console.error("[PAYWALL] Verify book code error:", error);
+      throw new Error(error.message || "Code verification failed");
+    }
+    return data;
+  }
+
+  // ✅ UPDATED: Show paywall with bundle option
   async function showPaywall({ productId, title, body }) {
     assertSupabase();
 
@@ -159,12 +206,6 @@ handler: async (response) => {
     // default locked
     appEl.style.display = "none";
     paywallEl.style.display = "block";
-
-    paywallEl.innerHTML = `
-      <h3>${title || "Locked"}</h3>
-      <p>${body || "Buy to unlock"}</p>
-      <button id="buyBtn" type="button">Buy</button>
-    `;
 
     try {
       const { data } = await window.supabase.auth.getSession();
@@ -178,12 +219,49 @@ handler: async (response) => {
         appEl.style.display = "block";
         return;
       }
-    } catch (_) {}
 
-    const buyBtn = document.getElementById("buyBtn");
-    buyBtn.onclick = () => startRazorpayCheckout({ productId });
+      // ✅ Get pricing info
+      const pricing = await getPricing({ productId, currency: "INR" });
+      
+      const priceDisplay = `₹${(pricing.price / 100).toFixed(0)}`;
+      
+      let bundleButton = "";
+      if (pricing.bundleAvailable && pricing.bundlePrice) {
+        const bundleDisplay = `₹${(pricing.bundlePrice / 100).toFixed(0)}`;
+        bundleButton = `
+          <button id="bundleBtn" type="button" style="margin-top: 10px; background: #4CAF50;">
+            Buy 5-Song Pack for ${bundleDisplay} (Save!)
+          </button>
+        `;
+      }
+
+      paywallEl.innerHTML = `
+        <h3>${title || "Locked"}</h3>
+        <p>${body || "Buy to unlock"}</p>
+        <button id="buyBtn" type="button">Buy for ${priceDisplay}</button>
+        ${bundleButton}
+      `;
+
+      const buyBtn = document.getElementById("buyBtn");
+      buyBtn.onclick = () => startRazorpayCheckout({ productId, currency: "INR" });
+
+      const bundleBtn = document.getElementById("bundleBtn");
+      if (bundleBtn) {
+        bundleBtn.onclick = () => startRazorpayCheckout({ productId: "pack:5", currency: "INR" });
+      }
+
+    } catch (err) {
+      console.error("[PAYWALL] Error:", err);
+      paywallEl.innerHTML = `
+        <h3>Error</h3>
+        <p>Please refresh the page.</p>
+      `;
+    }
   }
 
+  // ✅ Export functions
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
+  window.verifyBookCode = verifyBookCode;
+  window.getPricing = getPricing;
 })();
