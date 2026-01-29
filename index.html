@@ -327,10 +327,13 @@
   <main>
     <h1>Pick a book</h1>
     <p class="sub">Choose a mood, then pick a song inside.</p>
-    <div id="authBox" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+
+<div id="authBox" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
   <span id="userBox" style="display:none; padding:12px 14px; border-radius:14px; border:1px solid rgba(140,120,160,0.18); background:rgba(255,255,255,0.55);"></span>
 
   <a id="loginLink" class="btn" href="./login.html">Login</a>
+  <a id="dashboardLink" class="btn" href="./dashboard.html" style="display:none;">🎵 Dashboard</a>
+  <a id="verifyLink" class="btn" href="./verify-book.html" style="display:none;">📚 Verify Book</a>
   <button id="logoutBtn" class="btn secondary" style="display:none;" type="button">Logout</button>
 </div>
 
@@ -399,34 +402,44 @@
     const loginLink = document.getElementById("loginLink");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    if (session && session.user) {
-      const userId = session.user.id;
+// 👇 START COPYING HERE 👇
+if (session && session.user) {
+  const userId = session.user.id;
 
-      // Get profile info
-      const { data: profile, error } = await sb
-        .from("profiles")
-        .select("display_name, setup_completed")
-        .eq("id", userId)
-        .single();
+  // Get profile info
+  const { data: profile, error } = await sb
+    .from("profiles")
+    .select("display_name, setup_completed")
+    .eq("id", userId)
+    .single();
 
-      if (error) console.log("profile fetch error:", error);
+  if (error) console.log("profile fetch error:", error);
 
-      // If setup not completed, redirect once
-      if (profile && profile.setup_completed === false) {
-        window.location.href = "./setup.html";
-        return;
-      }
+  // If setup not completed, redirect once
+  if (profile && profile.setup_completed === false) {
+    window.location.href = "./setup.html";
+    return;
+  }
 
-      const displayName = (profile && profile.display_name) ? profile.display_name : "there";
-      userBox.textContent = `Welcome, ${displayName}`;
-      userBox.style.display = "inline-flex";
-      logoutBtn.style.display = "inline-flex";
-      loginLink.style.display = "none";
+  const displayName = (profile && profile.display_name) ? profile.display_name : "there";
+  userBox.textContent = `Welcome, ${displayName}`;
+  userBox.style.display = "inline-flex";
+  logoutBtn.style.display = "inline-flex";
+  loginLink.style.display = "none";
+  
+  // Show dashboard and verify book links when logged in
+  document.getElementById("dashboardLink").style.display = "inline-flex";
+  document.getElementById("verifyLink").style.display = "inline-flex";
+
     } else {
-      userBox.style.display = "none";
-      logoutBtn.style.display = "none";
-      loginLink.style.display = "inline-flex";
-    }
+  userBox.style.display = "none";
+  logoutBtn.style.display = "none";
+  loginLink.style.display = "inline-flex";
+  
+  // Hide dashboard and verify book links when logged out
+  document.getElementById("dashboardLink").style.display = "none";
+  document.getElementById("verifyLink").style.display = "none";
+}
   }
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
