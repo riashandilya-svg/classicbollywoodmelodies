@@ -81,6 +81,7 @@
       },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
+        apikey: window.supabase.supabaseKey,
       },
     });
 
@@ -106,6 +107,7 @@
       },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
+        apikey: window.supabase.supabaseKey,
       },
     });
 
