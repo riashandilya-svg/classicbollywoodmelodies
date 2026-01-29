@@ -49,27 +49,146 @@
       border-bottom: 1px solid rgba(140,120,160,0.18);
     }
 
- .banner-link{
-  font-family: "Cormorant Garamond", serif;
-  font-weight: 600;
-  font-size: 22px;
-  letter-spacing: 0.7px;
+    .banner-link{
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+    .banner-link:hover{ text-decoration: underline; }
 
-  color: inherit;
-  text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 12px;
-}
+    /* ===== NEW: Welcome ribbon (between banner and h1) ===== */
+    .welcome-wrap{
+      max-width: 980px;
+      margin: 14px auto 0;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-.banner-link:hover{
-  text-decoration: underline;
-}
+    .welcome-ribbon{
+      display: none; /* shown only when logged in */
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(155,110,255,0.22);
+      background: rgba(255,255,255,0.68);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
+      position: relative;
+      overflow: hidden;
+      width: fit-content;
+      max-width: 100%;
+    }
 
+    .welcome-ribbon::before{
+      content:"";
+      position:absolute;
+      inset:-60px -80px auto auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%,
+        rgba(255,120,160,0.36),
+        rgba(155,110,255,0.24),
+        rgba(255,90,210,0.14),
+        transparent 62%);
+      pointer-events:none;
+    }
+
+    .welcome-ribbon > *{ position: relative; z-index: 1; }
+
+    .welcome-title{
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .welcome-name{
+      font-weight: 700;
+      color: rgba(43,17,64,0.92);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: min(360px, 60vw);
+    }
+
+    /* ===== NEW: Quick links pill (Dashboard + Verify) ===== */
+    .quicklinks{
+      position: fixed;
+      right: 16px;
+      top: 80px;               /* below banner */
+      z-index: 9998;
+      display: none;           /* shown only when logged in */
+      gap: 8px;
+      align-items: center;
+      padding: 10px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(140,120,160,0.18);
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 40px rgba(22,10,35,0.10);
+    }
+
+    .ql-label{
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(26,26,31,0.66);
+      padding: 0 4px 0 6px;
+      white-space: nowrap;
+    }
+
+    .ql-link{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 650;
+      font-size: 12.5px;
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.26);
+      background:
+        linear-gradient(135deg,
+          rgba(255,120,160,0.22),
+          rgba(155,110,255,0.18),
+          rgba(255,90,210,0.12));
+      transition: transform 0.14s ease, filter 0.14s ease;
+      white-space: nowrap;
+    }
+    .ql-link:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    @media (max-width: 760px){
+      .quicklinks{
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        top: 76px;
+        flex-wrap: wrap;
+        justify-content: center;
+        border-radius: 18px;
+        padding: 10px 12px;
+      }
+      .ql-label{ width: 100%; text-align: center; padding: 0; }
+    }
 
     main{
       max-width: 980px;
       margin: 0 auto;
-      padding: 44px 18px 70px;
+      padding: 22px 18px 70px; /* was 44px top; reduced because ribbon adds space */
       text-align: center;
     }
 
@@ -116,7 +235,6 @@
       box-shadow: 0 24px 55px rgba(22, 10, 35, 0.13);
     }
 
-    /* Default blobs (will be overridden per theme) */
     .card::before{
       content:"";
       position:absolute;
@@ -148,10 +266,7 @@
       pointer-events: none;
     }
 
-    .card > *{
-      position: relative;
-      z-index: 1;
-    }
+    .card > *{ position: relative; z-index: 1; }
 
     .book-title{
       margin: 0 0 6px;
@@ -196,7 +311,6 @@
       margin-top: -1px;
     }
 
-    /* ===== Book layout + optional image ===== */
     .card.book{
       display: flex;
       align-items: center;
@@ -226,129 +340,79 @@
       display: block;
     }
 
-  @media (max-width: 520px){
-  .card.book{ flex-direction: column; align-items: stretch; }
-  .book-art{
-    width: 100%;
-    height: auto;              /* change */
-    aspect-ratio: 2 / 3;      /* add */
-    border-radius: 18px;
-  }
-  .book-art img{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;   /* add */
-  }
-}
-
-
-    /* ===== Theme variables ===== */
-    .card.book{
-      --a1: rgba(155,110,255,0.28);
-      --a2: rgba(255,120,160,0.24);
-      --btn-bg: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20), rgba(255,90,210,0.14));
-      --btn-border: rgba(155,110,255,0.30);
-      --btn-text: #2b1140;
-      --card-border: rgba(140, 120, 160, 0.18);
+    @media (max-width: 520px){
+      .card.book{ flex-direction: column; align-items: stretch; }
+      .book-art{
+        width: 100%;
+        height: auto;
+        aspect-ratio: 2 / 3;
+        border-radius: 18px;
+      }
+      .book-art img{
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
     }
 
-    .card.book{
-      border-color: var(--card-border);
+    /* ===== NEW: Auth row (Login / Logout only) ===== */
+    .authRow{
+      margin: 14px 0 6px;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
     }
 
-    .card.book:hover{
-      border-color: var(--btn-border);
-    }
-
-    .card.book::before{
-      background: radial-gradient(circle at 30% 30%,
-        var(--a1),
-        var(--a2),
-        transparent 62%);
-    }
-
-    .card.book::after{
-      background: radial-gradient(circle at 60% 40%,
-        var(--a2),
-        transparent 62%);
-    }
-
-    .card.book .btn{
-      background: var(--btn-bg);
-      border-color: var(--btn-border);
-      color: var(--btn-text);
-    }
-
-    /* Soulful: Royal Blue */
-    .card.soulful{
-      --a1: rgba(20, 70, 255, 0.38);
-      --a2: rgba(60, 170, 255, 0.22);
-      --btn-bg: linear-gradient(135deg, rgba(20,70,255,0.34), rgba(60,170,255,0.22));
-      --btn-border: rgba(20,70,255,0.38);
-      --btn-text: #07143a;
-    }
-
-    /* Romantic: Red */
-    .card.romantic{
-      --a1: rgba(235, 50, 70, 0.38);
-      --a2: rgba(255, 140, 140, 0.22);
-      --btn-bg: linear-gradient(135deg, rgba(235,50,70,0.34), rgba(255,140,140,0.22));
-      --btn-border: rgba(235,50,70,0.38);
-      --btn-text: #3a0b12;
-    }
-
-    /* Peppy: Black + Yellow */
-    .card.peppy{
-      --a1: rgba(0, 0, 0, 0.40);
-      --a2: rgba(255, 210, 0, 0.28);
-      --btn-bg: linear-gradient(135deg, rgba(0,0,0,0.92), rgba(255,210,0,0.92));
-      --btn-border: rgba(0,0,0,0.40);
-      --btn-text: #111;
-    }
-
-    /* Classic: Light Blue */
-    .card.classic{
-      --a1: rgba(120, 205, 255, 0.40);
-      --a2: rgba(190, 240, 255, 0.25);
-      --btn-bg: linear-gradient(135deg, rgba(120,205,255,0.34), rgba(190,240,255,0.22));
-      --btn-border: rgba(120,205,255,0.40);
-      --btn-text: #05304a;
+    /* make logout look slightly calmer */
+    .btn.secondary{
+      background: rgba(255,255,255,0.75);
+      border-color: rgba(140,120,160,0.20);
+      color: rgba(26,26,31,0.82);
     }
   </style>
 </head>
 
 <body>
   <header class="banner">
-  <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
-</header>
+    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+  </header>
 
+  <!-- NEW: Welcome ribbon lives here -->
+  <div class="welcome-wrap">
+    <div id="welcomeRibbon" class="welcome-ribbon" aria-live="polite">
+      <span class="welcome-title">Welcome</span>
+      <span class="welcome-name" id="userBox"></span>
+    </div>
+  </div>
+
+  <!-- NEW: Quick links pill (Dashboard + Verify Book) -->
+  <div id="quickLinks" class="quicklinks" aria-label="Quick links">
+    <span class="ql-label">Quick links</span>
+    <a id="dashboardLink" class="ql-link" href="./dashboard.html">🎵 Dashboard</a>
+    <a id="verifyLink" class="ql-link" href="./verify-book.html">📚 Verify Book</a>
+  </div>
 
   <main>
     <h1>Pick a book</h1>
     <p class="sub">Choose a mood, then pick a song inside.</p>
 
-<div id="authBox" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-  <span id="userBox" style="display:none; padding:12px 14px; border-radius:14px; border:1px solid rgba(140,120,160,0.18); background:rgba(255,255,255,0.55);"></span>
-
-  <a id="loginLink" class="btn" href="./login.html">Login</a>
-  <a id="dashboardLink" class="btn" href="./dashboard.html" style="display:none;">🎵 Dashboard</a>
-  <a id="verifyLink" class="btn" href="./verify-book.html" style="display:none;">📚 Verify Book</a>
-  <button id="logoutBtn" class="btn secondary" style="display:none;" type="button">Logout</button>
-</div>
+    <!-- Auth row now only has Login / Logout -->
+    <div class="authRow" id="authBox">
+      <a id="loginLink" class="btn" href="./login.html">Login</a>
+      <button id="logoutBtn" class="btn secondary" style="display:none;" type="button">Logout</button>
+    </div>
 
     <section class="grid">
-
       <div class="card book soulful">
         <div class="book-content">
           <h2 class="book-title">1. Soulful Bollywood Melodies</h2>
           <p class="book-meta">Slow, expressive pieces</p>
-<a class="btn" href="soulfulindex.html">Open <span class="arrow">→</span></a>
+          <a class="btn" href="soulfulindex.html">Open <span class="arrow">→</span></a>
         </div>
-        
         <div class="book-art">
-<img src="Soulful.jpg" alt="Soulful book cover">
-
+          <img src="Soulful.jpg" alt="Soulful book cover">
         </div>
       </div>
 
@@ -356,7 +420,7 @@
         <div class="book-content">
           <h2 class="book-title">2. Peppy Bollywood Melodies</h2>
           <p class="book-meta">Upbeat, energetic tunes</p>
-<a class="btn" href="peppyindex.html">Open <span class="arrow">→</span></a>
+          <a class="btn" href="peppyindex.html">Open <span class="arrow">→</span></a>
         </div>
         <div class="book-art">
           <img src="peppy.jpg" alt="Peppy book cover">
@@ -367,8 +431,7 @@
         <div class="book-content">
           <h2 class="book-title">3. Romantic Bollywood Melodies</h2>
           <p class="book-meta">Warm, lyrical songs</p>
-<a class="btn" href="romanticindex.html">Open <span class="arrow">→</span></a>
-
+          <a class="btn" href="romanticindex.html">Open <span class="arrow">→</span></a>
         </div>
         <div class="book-art">
           <img src="romantic.jpg" alt="Romantic book cover">
@@ -385,75 +448,80 @@
           <img src="classic.jpg" alt="Classic book cover">
         </div>
       </div>
-
     </section>
   </main>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  async function renderAuthUI() {
-    const { data: { session } } = await sb.auth.getSession();
+    async function renderAuthUI() {
+      const { data: { session } } = await sb.auth.getSession();
 
-    const userBox = document.getElementById("userBox");
-    const loginLink = document.getElementById("loginLink");
-    const logoutBtn = document.getElementById("logoutBtn");
+      const loginLink = document.getElementById("loginLink");
+      const logoutBtn = document.getElementById("logoutBtn");
 
-// 👇 START COPYING HERE 👇
-if (session && session.user) {
-  const userId = session.user.id;
+      const welcomeRibbon = document.getElementById("welcomeRibbon");
+      const userBox = document.getElementById("userBox");
 
-  // Get profile info
-  const { data: profile, error } = await sb
-    .from("profiles")
-    .select("display_name, setup_completed")
-    .eq("id", userId)
-    .single();
+      const quickLinks = document.getElementById("quickLinks");
+      const dashboardLink = document.getElementById("dashboardLink");
+      const verifyLink = document.getElementById("verifyLink");
 
-  if (error) console.log("profile fetch error:", error);
+      if (session && session.user) {
+        const userId = session.user.id;
 
-  // If setup not completed, redirect once
-  if (profile && profile.setup_completed === false) {
-    window.location.href = "./setup.html";
-    return;
-  }
+        const { data: profile, error } = await sb
+          .from("profiles")
+          .select("display_name, setup_completed")
+          .eq("id", userId)
+          .single();
 
-  const displayName = (profile && profile.display_name) ? profile.display_name : "there";
-  userBox.textContent = `Welcome, ${displayName}`;
-  userBox.style.display = "inline-flex";
-  logoutBtn.style.display = "inline-flex";
-  loginLink.style.display = "none";
-  
-  // Show dashboard and verify book links when logged in
-  document.getElementById("dashboardLink").style.display = "inline-flex";
-  document.getElementById("verifyLink").style.display = "inline-flex";
+        if (error) console.log("profile fetch error:", error);
 
-    } else {
-  userBox.style.display = "none";
-  logoutBtn.style.display = "none";
-  loginLink.style.display = "inline-flex";
-  
-  // Hide dashboard and verify book links when logged out
-  document.getElementById("dashboardLink").style.display = "none";
-  document.getElementById("verifyLink").style.display = "none";
-}
-  }
+        if (profile && profile.setup_completed === false) {
+          window.location.href = "./setup.html";
+          return;
+        }
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-    await renderAuthUI();
-  });
+        const displayName = (profile && profile.display_name) ? profile.display_name : "there";
 
-  sb.auth.onAuthStateChange(() => {
+        // Welcome ribbon (between banner and title)
+        userBox.textContent = displayName;
+        welcomeRibbon.style.display = "inline-flex";
+
+        // Auth buttons
+        logoutBtn.style.display = "inline-flex";
+        loginLink.style.display = "none";
+
+        // Quick links pill
+        quickLinks.style.display = "flex";
+        dashboardLink.style.display = "inline-flex";
+        verifyLink.style.display = "inline-flex";
+
+      } else {
+        welcomeRibbon.style.display = "none";
+        quickLinks.style.display = "none";
+
+        logoutBtn.style.display = "none";
+        loginLink.style.display = "inline-flex";
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      await renderAuthUI();
+    });
+
+    sb.auth.onAuthStateChange(() => {
+      renderAuthUI();
+    });
+
     renderAuthUI();
-  });
-
-  renderAuthUI();
-  setTimeout(renderAuthUI, 800);
-</script>
-
+    setTimeout(renderAuthUI, 800);
+  </script>
 </body>
 </html>
