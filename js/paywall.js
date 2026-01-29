@@ -55,42 +55,34 @@ function loadRazorpayCheckout() {
   });
 }
 window.startRazorpayCheckout = async function startRazorpayCheckout({ productId }) {
-  // 0) Make sure Razorpay Checkout JS is loaded
+  // 0) Load Razorpay Checkout
   await loadRazorpayCheckout();
 
-  // 1) Get logged-in session token
+  // 1) Get logged-in session
   const { data, error } = await window.supabase.auth.getSession();
   if (error) throw error;
+
   const token = data?.session?.access_token;
   const email = data?.session?.user?.email;
   if (!token) throw new Error("Not logged in");
 
-  // 2) TEMP: choose currency + amount (we will replace with real pricing later)
-  // IMPORTANT: Razorpay expects INR amounts in paise.
+  // 2) Pricing (temporary)
   const currency = "INR";
-const amount = 199; // rupees (backend converts to paise)
+  const amount = 199; // rupees
 
-// 3) Ask our Edge Function to create a Razorpay order
-const payload = { access_token: token, productId, currency, amount };
+  // 3) Create Razorpay order
+  const payload = { access_token: token, productId, currency, amount };
 
-const res = await fetch(
-  "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/create-razorpay-order",
-  {
-    method: "POST",
-    headers: {
-      // keep it "simple" to avoid preflight headaches
-      "Content-Type": "text/plain;charset=UTF-8",
-    },
-    body: JSON.stringify(payload),
-  }
-);
-
-const order = await res.json();
-if (!res.ok) {
-  console.error("create-order failed:", order);
-  throw new Error(order?.error || order?.message || "Create order failed");
-}
-
+  const res = await fetch(
+    "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/create-razorpay-order",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=UTF-8",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   const order = await res.json();
   if (!res.ok) {
@@ -98,7 +90,7 @@ if (!res.ok) {
     throw new Error(order?.error || "Create order failed");
   }
 
-  // 4) Open Razorpay popup
+  // 4) Open Razorpay
   const options = {
     key: order.key_id,
     order_id: order.razorpay_order_id,
@@ -106,53 +98,47 @@ if (!res.ok) {
     currency: order.currency,
     name: "Classic Bollywood Melodies",
     description: `Unlock: ${order.song_slug}`,
-    prefill: {
-      email: email || "",
-    },
+    prefill: { email: email || "" },
+
     handler: async function (response) {
       try {
-        // response has: razorpay_payment_id, razorpay_order_id, razorpay_signature
-        const { data, error } = await window.supabase.auth.getSession();
-        if (error) throw error;
+        const { data } = await window.supabase.auth.getSession();
         const token = data?.session?.access_token;
         if (!token) throw new Error("Not logged in");
-    
-        const payload = {
-          access_token: token, // <-- moved into body (avoids CORS preflight)
+
+        const verifyPayload = {
+          access_token: token,
           productId,
           razorpay_order_id: response.razorpay_order_id,
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_signature: response.razorpay_signature,
         };
-        
+
         const verifyRes = await fetch(
           "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/verify-razorpay-payment",
           {
             method: "POST",
             headers: {
-              "Content-Type": "text/plain;charset=UTF-8", // <-- avoids preflight
+              "Content-Type": "text/plain;charset=UTF-8",
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(verifyPayload),
           }
         );
-        
-    
+
         const verifyJson = await verifyRes.json();
         if (!verifyRes.ok) {
           console.error("verify failed:", verifyJson);
-          alert("Payment verification failed. Please contact support.");
+          alert("Payment verification failed.");
           return;
         }
-    
+
         alert("✅ Payment verified. Unlocking now...");
-    
-        // simplest unlock: reload page so showPaywall runs again and reads entitlements
         window.location.reload();
       } catch (err) {
         console.error(err);
         alert(err.message || "Verification error");
       }
-    },    
+    },
   };
 
   const rzp = new window.Razorpay(options);
