@@ -75,10 +75,11 @@
   async function createOrder({ token, productId }) {
     const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/create-razorpay-order`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+     headers: {
+  Authorization: `Bearer ${token}`,
+  apikey: window.supabase.supabaseKey,
+  "Content-Type": "application/json",
+},
       body: JSON.stringify({
         productId,
         amount: PRICE_RUPEES,
@@ -98,9 +99,12 @@
     const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/verify-razorpay-payment`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+   headers: {
+  Authorization: `Bearer ${token}`,
+  apikey: window.supabase.supabaseKey,
+  "Content-Type": "application/json",
+},
+
       body: JSON.stringify({
         productId,
         razorpay_order_id: response.razorpay_order_id,
