@@ -2769,52 +2769,38 @@ holdEl.innerHTML =
 loadSongMidi();
 </script>
 
-
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-      window.location.replace("/classicbollywoodmelodies/login.html");
-    }
-  }
-
-  // First load
-  await requireLogin();
-
-  // When coming back via Back button
-  window.addEventListener("pageshow", requireLogin);
-</script>
-
-
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-      window.location.replace("/classicbollywoodmelodies/login.html");
-    }
-  }
-
-  await requireLogin();
-  window.addEventListener("pageshow", requireLogin);
-</script>
-
 <!-- 1) Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- 2) Your Supabase client (creates window.supabase client instance) -->
+<!-- 2) Your Supabase client -->
 <script src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
 
-<!-- 3) Paywall logic (creates window.showPaywall + window.startRazorpayCheckout) -->
+<!-- 3) Paywall logic -->
 <script src="/classicbollywoodmelodies/js/paywall.js"></script>
 
-<!-- 4) Call paywall for THIS song -->
+<!-- 4) Login check -->
+<script type="module">
+  async function requireLogin() {
+    const { data } = await window.supabase.auth.getSession();
+    if (!data.session) {
+      window.location.replace("/classicbollywoodmelodies/login.html");
+    }
+  }
+
+  await requireLogin();
+  window.addEventListener("pageshow", requireLogin);
+</script>
+
+<!-- 5) Call paywall for THIS song -->
 <script>
   window.showPaywall({
-    productId: "song:haiapna",
+    productId: "song:aajkal",  // ← CHANGE THIS FOR EACH SONG!
     title: "This song is locked",
     body: "Please buy to unlock this lesson."
   });
 </script>
 
+</body>
+</html>
 </body>
 </html>
