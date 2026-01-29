@@ -42,6 +42,73 @@ async function userHasAccess(productId, session) {
 
   return hasBundle || hasSong;
 }
+function loadRazorpayCheckout() {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) return resolve(true);
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => reject(new Error("Failed to load Razorpay Checkout"));
+    document.head.appendChild(script);
+  });
+}
+window.startRazorpayCheckout = async function startRazorpayCheckout({ productId }) {
+  // 0) Make sure Razorpay Checkout JS is loaded
+  await loadRazorpayCheckout();
+
+  // 1) Get logged-in session token
+  const { data, error } = await window.supabase.auth.getSession();
+  if (error) throw error;
+  const token = data?.session?.access_token;
+  const email = data?.session?.user?.email;
+  if (!token) throw new Error("Not logged in");
+
+  // 2) TEMP: choose currency + amount (we will replace with real pricing later)
+  // IMPORTANT: Razorpay expects INR amounts in paise.
+  const currency = "INR";
+  const amount = 19900; // ₹199.00 (paise)
+
+  // 3) Ask our Edge Function to create a Razorpay order
+  const res = await fetch(
+    "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/create-razorpay-order",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ productId, currency, amount }),
+    }
+  );
+
+  const order = await res.json();
+  if (!res.ok) {
+    console.error("create-order failed:", order);
+    throw new Error(order?.error || "Create order failed");
+  }
+
+  // 4) Open Razorpay popup
+  const options = {
+    key: order.key_id,
+    order_id: order.razorpay_order_id,
+    amount: order.amount,
+    currency: order.currency,
+    name: "Classic Bollywood Melodies",
+    description: `Unlock: ${order.song_slug}`,
+    prefill: {
+      email: email || "",
+    },
+    handler: function (response) {
+      // This is NOT verified yet. We will verify server-side next step.
+      console.log("Razorpay handler response:", response);
+      alert("Payment completed. Next step: server verification + auto-unlock.");
+    },
+  };
+
+  const rzp = new window.Razorpay(options);
+  rzp.open();
+};
 
 export async function showPaywall(options = {}) {
   const paywallEl = document.getElementById("paywall");
