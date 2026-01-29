@@ -165,22 +165,27 @@ async function userHasAccess(productId, session) {
       name: "Classic Bollywood Melodies",
       description: description,
       prefill: { email: session.user?.email || "" },
-      handler: async (response) => {
-        try {
-          const fresh = await getSessionOrThrow();
-          await verifyPayment({ 
-            productId, 
-            response,
-            amount: order.amount,
-            currency: order.currency
-          });
-
-          // ✅ Auto-reload without alert
-          window.location.reload();
-        } catch (e) {
-          alert(e?.message || "Verification error");
-        }
-      },
+ handler: async (response) => {
+  console.log('[PAYWALL] Payment completed, verifying...', response);
+  try {
+    const fresh = await getSessionOrThrow();
+    console.log('[PAYWALL] Session obtained:', fresh.user.id);
+    
+    const result = await verifyPayment({ 
+      productId, 
+      response,
+      amount: order.amount,
+      currency: order.currency
+    });
+    
+    console.log('[PAYWALL] Verification result:', result);
+    alert('Payment verified! Reloading...');
+    window.location.reload();
+  } catch (e) {
+    console.error('[PAYWALL] Verification error:', e);
+    alert('Error: ' + (e?.message || "Verification failed"));
+  }
+},
     });
 
     rzp.open();
