@@ -299,10 +299,10 @@ async function showPaywall({ productId, title, body }) {
       };
     }
 
-    const bundleBtn = document.getElementById("bundleBtn");
-    if (bundleBtn) {
-      bundleBtn.onclick = () => startRazorpayCheckout({ productId: "pack:5", currency: "INR" });
-    }
+  const bundleBtn = document.getElementById("bundleBtn");
+if (bundleBtn) {
+  bundleBtn.onclick = () => showBundleExplanation();
+}
 
   } catch (err) {
     console.error("[PAYWALL] Error:", err);
@@ -330,6 +330,95 @@ async function redeemCredit(productId) {
   }
   return data;
 }
+
+// ✅ NEW: Show bundle explanation modal
+  function showBundleExplanation() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    `;
+    
+    modal.innerHTML = `
+      <div style="
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        max-width: 500px;
+        text-align: center;
+      ">
+        <h2 style="margin: 0 0 20px; color: #333;">🎁 5-Song Pack</h2>
+        <p style="font-size: 18px; margin: 20px 0; color: #666;">
+          Buy this pack and get <strong>5 credits</strong>
+        </p>
+        <p style="font-size: 14px; margin: 20px 0; color: #666;">
+          Use 1 credit to unlock any song you want.<br>
+          No need to choose now - pick songs as you browse!
+        </p>
+        <div style="
+          background: #f5f5f5;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        ">
+          <p style="margin: 0; font-size: 24px; color: #4CAF50; font-weight: bold;">
+            ₹550 only!
+          </p>
+          <p style="margin: 10px 0 0; font-size: 14px; color: #999;">
+            (That's ₹110 per song - Save ₹200!)
+          </p>
+        </div>
+        <p style="font-size: 13px; color: #999; margin: 20px 0;">
+          After purchase, you'll see "Use Credit" buttons on locked songs
+        </p>
+        <button id="confirmBundle" style="
+          background: #4CAF50;
+          color: white;
+          border: none;
+          padding: 15px 40px;
+          font-size: 16px;
+          border-radius: 8px;
+          cursor: pointer;
+          margin-right: 10px;
+        ">Buy Now</button>
+        <button id="cancelBundle" style="
+          background: #ccc;
+          color: #333;
+          border: none;
+          padding: 15px 40px;
+          font-size: 16px;
+          border-radius: 8px;
+          cursor: pointer;
+        ">Cancel</button>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('confirmBundle').onclick = () => {
+      document.body.removeChild(modal);
+      startRazorpayCheckout({ productId: "pack:5", currency: "INR" });
+    };
+    
+    document.getElementById('cancelBundle').onclick = () => {
+      document.body.removeChild(modal);
+    };
+    
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        document.body.removeChild(modal);
+      }
+    };
+  }
+  
   // ✅ Export functions
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
