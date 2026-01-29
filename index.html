@@ -40,6 +40,7 @@
         var(--bg);
     }
 
+    /* Cursor glitter canvas */
     #glitter{
       position: fixed;
       inset: 0;
@@ -58,13 +59,12 @@
       border-bottom: 1px solid rgba(140,120,160,0.18);
     }
 
-    /* Grid ensures:
-       - center title stays centered in viewport
-       - account sits on far right
-       - no overlap, ever */
+    /* DESKTOP/TABLET HEADER LAYOUT
+       - 3 columns: spacer | centered title | right account
+       - prevents overlap by design */
     .navGrid{
       display: grid;
-      grid-template-columns: 1fr auto 1fr; /* left spacer, center title, right account */
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
       min-height: 64px;
       padding: 8px 12px;
@@ -75,6 +75,7 @@
       grid-column: 2;
       justify-self: center;
       text-align: center;
+      min-width: 0;
     }
 
     .banner-link{
@@ -92,18 +93,13 @@
 
     .accountDock{
       grid-column: 3;
-      justify-self: end;         /* absolute right */
-      display: none;             /* only when logged in */
-      align-items: center;
-      gap: 10px;
-      max-width: 100%;
+      justify-self: end;     /* absolute right edge of header content */
+      display: none;         /* show only when logged in */
       min-width: 0;
+      max-width: 100%;
     }
 
-    /* Layout rule:
-       - Wide screens: welcome + strip on same line
-       - Smaller screens: welcome above strip (two lines)
-       Also: never overlap center title because grid prevents it. */
+    /* Wide: Welcome + strip on SAME line */
     .accountLayout{
       display: flex;
       align-items: center;
@@ -138,7 +134,7 @@
       animation: shimmerViolet 6.8s ease-in-out infinite;
 
       padding: 2px 2px;
-      white-space: nowrap;  /* stays one line unless we intentionally stack via media query */
+      white-space: nowrap;
       flex: 0 0 auto;
     }
 
@@ -196,40 +192,67 @@
       background: rgba(155,110,255,0.18);
     }
 
-    /* ===== Responsive rule you asked for =====
-       When the screen gets tighter, stack:
-       Welcome (top) + strip (below).
-       Still stays on the right, never overlaps title. */
-    @media (max-width: 880px){
+    /* MID screens:
+       welcome goes ABOVE strip, but still on the right side */
+    @media (max-width: 900px){
+      .accountLayout{
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+    }
+
+    /* ===== MOBILE FIX (this is the important part) =====
+       On small screens the header becomes TWO ROWS:
+       - Row 1: centered title
+       - Row 2: account section full width under it (welcome above strip)
+       This guarantees the strip is visible and never "stuck" to the side offscreen. */
+    @media (max-width: 640px){
       .navGrid{
-        grid-template-columns: 1fr auto 1fr;
-        padding: 10px 12px;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px 12px;
+      }
+
+      .navTitle{
+        grid-column: 1;
+        grid-row: 1;
+        justify-self: center;
+      }
+
+      .accountDock{
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: stretch;
+        width: 100%;
       }
 
       .accountLayout{
+        width: 100%;
+        align-items: center;
+        justify-content: center;
         flex-direction: column;
-        align-items: flex-end; /* keep right aligned */
-        gap: 6px;
+        gap: 8px;
       }
 
       .welcomeText{
-        white-space: nowrap;
-      }
-    }
-
-    /* Very small screens: let the strip use available width on right side */
-    @media (max-width: 520px){
-      .navGrid{
-        padding: 10px 10px;
+        text-align: center;
       }
 
       .actionStrip{
-        width: auto;
-        max-width: 100%;
+        width: 100%;
+      }
+
+      .stripItem{
+        flex: 1;
+        justify-content: center;
+        padding: 11px 10px;
       }
     }
 
-    /* Logged out: login row in content */
+    /* Login row (logged out) */
     .authRow{
       margin: 12px 0 6px;
       display:flex;
@@ -549,7 +572,7 @@
         const displayName = (profile && profile.display_name) ? profile.display_name : "there";
         welcomeText.textContent = `Welcome, ${displayName}`;
 
-        accountDock.style.display = "flex";
+        accountDock.style.display = "block";
         authRow.style.display = "none";
       } else {
         accountDock.style.display = "none";
