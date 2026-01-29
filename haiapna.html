@@ -2798,15 +2798,23 @@ loadSongMidi();
   window.addEventListener("pageshow", requireLogin);
 </script>
 
-<script type="module">
-  import { showPaywall } from "/classicbollywoodmelodies/js/paywall.js";
+<!-- Supabase client -->
+<script src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
 
-  showPaywall({
+<!-- Paywall logic -->
+<script src="/classicbollywoodmelodies/js/paywall.js"></script>
+
+<!-- Call paywall -->
+<script>
+  console.log("paywall.js loaded?", typeof window.showPaywall);
+
+  window.showPaywall({
     productId: "song:haiapna",
     title: "This song is locked",
     body: "Please buy to unlock this lesson."
   });
 </script>
+
 
 </body>
 </html>
