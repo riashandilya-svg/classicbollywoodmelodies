@@ -121,7 +121,7 @@ async function userHasAccess(productId, session) {
     try {
       console.log('[PAYWALL] Calling verify with:', { productId, amount, currency, response });
       
-      const result = await window.supabase.supabase.functions.invoke('verify-razorpay-payment', {
+      const result = await window.supabase.functions.invoke('verify-razorpay-payment', {
         body: {
           razorpay_order_id: response.razorpay_order_id,
           razorpay_payment_id: response.razorpay_payment_id,
