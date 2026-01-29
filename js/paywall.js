@@ -107,22 +107,25 @@ window.startRazorpayCheckout = async function startRazorpayCheckout({ productId 
         const token = data?.session?.access_token;
         if (!token) throw new Error("Not logged in");
     
+        const payload = {
+          access_token: token, // <-- moved into body (avoids CORS preflight)
+          productId,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+        };
+        
         const verifyRes = await fetch(
           "https://lyqpxcilniqzurevetae.supabase.co/functions/v1/verify-razorpay-payment",
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
+              "Content-Type": "text/plain;charset=UTF-8", // <-- avoids preflight
             },
-            body: JSON.stringify({
-              productId,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
+            body: JSON.stringify(payload),
           }
         );
+        
     
         const verifyJson = await verifyRes.json();
         if (!verifyRes.ok) {
