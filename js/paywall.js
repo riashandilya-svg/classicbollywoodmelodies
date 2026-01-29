@@ -70,57 +70,42 @@
     return hasBundle || hasSong;
   }
 
-  async function createOrder({ token, productId }) {
-    const apiKey = getApiKey();
+async function createOrder({ productId }) {
+  const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
+    body: {
+      productId,
+      amount: PRICE_RUPEES,
+      currency: CURRENCY,
+    },
+  });
 
-    const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/create-razorpay-order`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        productId,
-        amount: PRICE_RUPEES,
-        currency: CURRENCY,
-      }),
-    });
+  if (error) throw new Error(error.message || "Create order failed");
+  return data;
+}
 
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json?.message || json?.error || "Create order failed");
-    return json;
-  }
 
-  async function verifyPayment({ token, productId, response }) {
-    const apiKey = getApiKey();
+async function verifyPayment({ productId, response }) {
+  const { data, error } = await window.supabase.functions.invoke("verify-razorpay-payment", {
+    body: {
+      productId,
+      razorpay_order_id: response.razorpay_order_id,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature,
+    },
+  });
 
-    const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/verify-razorpay-payment`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        productId,
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_signature: response.razorpay_signature,
-      }),
-    });
+  if (error) throw new Error(error.message || "Payment verification failed");
+  return data;
+}
 
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json?.message || json?.error || "Payment verification failed");
-    return json;
-  }
 
   async function startRazorpayCheckout({ productId }) {
     assertSupabase();
     await loadRazorpay();
 
     const session = await getSessionOrThrow();
-    const order = await createOrder({ token: session.access_token, productId });
+    const order = await createOrder({ productId });
+
 
     const rzp = new window.Razorpay({
       key: order.key_id,
@@ -133,11 +118,8 @@
       handler: async (response) => {
         try {
           const fresh = await getSessionOrThrow();
-          await verifyPayment({
-            token: fresh.access_token,
-            productId,
-            response,
-          });
+          await verifyPayment({ productId, response });
+
           alert("Payment verified. Reloading.");
           window.location.reload();
         } catch (e) {
