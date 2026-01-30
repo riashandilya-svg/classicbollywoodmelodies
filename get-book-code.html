@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Your Book Code - Ria Om Shandilya</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --primary: #9b6eff;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        var(--bg);
+    }
+
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .banner-link {
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+
+    .banner-link:hover {
+      text-decoration: underline;
+    }
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 44px 18px 70px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 40px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.2;
+      margin: 0 0 12px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin: 0 0 32px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+      color: #2b1140;
+      font-weight: 650;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .success-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+    }
+
+    .code-display {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 3px;
+      margin: 20px 0;
+      padding: 20px;
+      background: white;
+      border-radius: 12px;
+      border: 2px dashed var(--primary);
+    }
+
+    .info-text {
+      color: var(--success);
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 12px 0;
+    }
+
+    .error-text {
+      color: var(--error);
+      font-size: 15px;
+      margin: 16px 0;
+    }
+
+    .instruction-box {
+      background: rgba(255, 200, 100, 0.1);
+      border: 1px solid rgba(255, 200, 100, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+
+    .instruction-box h3 {
+      color: #d97706;
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    .instruction-box ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .instruction-box li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+  </header>
+
+  <main>
+    <div class="card">
+      <h1>📖 Welcome Book Owner!</h1>
+      <p class="subtitle">Get your unique verification code and unlock exclusive benefits</p>
+
+      <div id="authCheck" class="loading">
+        <div class="spinner"></div>
+        <p>Checking your account...</p>
+      </div>
+
+      <div id="codeGenerator" class="hidden">
+        <div id="messageArea"></div>
+
+        <div id="selectBookForm">
+          <p style="color: var(--text); line-height: 1.7; margin-bottom: 24px;">
+            Thank you for purchasing our book! To unlock your book owner benefits and exclusive discounted pricing, 
+            we'll generate a unique verification code just for you.
+          </p>
+
+          <div class="form-group">
+            <label for="bookType">Which book did you purchase?</label>
+            <select id="bookType">
+              <option value="">-- Select your book --</option>
+              <option value="soulful">Soulful Bollywood Melodies</option>
+              <option value="peppy">Peppy Bollywood Melodies</option>
+              <option value="romantic">Romantic Bollywood Melodies</option>
+              <option value="classic">Classic Bollywood Melodies</option>
+            </select>
+          </div>
+
+          <button class="btn" id="generateBtn" onclick="generateCode()">
+            Generate My Code
+          </button>
+        </div>
+
+        <div id="codeResult" class="hidden">
+          <div class="success-box">
+            <p class="info-text">✅ <strong>Your unique verification code:</strong></p>
+            <div class="code-display" id="codeDisplay"></div>
+            <p class="info-text">📝 Write this code down or take a screenshot!</p>
+          </div>
+
+          <div class="instruction-box">
+            <h3>🎯 Next Steps:</h3>
+            <ol>
+              <li><strong>Save your code</strong> - You'll need it to verify your book ownership</li>
+              <li><strong>Click the button below</strong> to go to the verification page</li>
+              <li><strong>Enter this code</strong> on the verification page</li>
+              <li><strong>Upload a photo</strong> of your book to complete verification</li>
+              <li><strong>Enjoy discounted pricing</strong> on all songs!</li>
+            </ol>
+          </div>
+
+          <button class="btn" onclick="goToVerification()">
+            Continue to Verification →
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let generatedCode = '';
+
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        
+        const authCheck = document.getElementById('authCheck');
+        const codeGenerator = document.getElementById('codeGenerator');
+
+        if (error) {
+          console.error('Auth error:', error);
+          authCheck.innerHTML = `
+            <p style="color: var(--error);">Error checking authentication. Please try again.</p>
+            <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
+              Go to Login
+            </a>
+          `;
+          return;
+        }
+
+        if (!session) {
+          authCheck.innerHTML = `
+            <p style="color: var(--error);">You must be logged in to get your verification code.</p>
+            <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
+              Go to Login
+            </a>
+          `;
+          return;
+        }
+
+        authCheck.classList.add('hidden');
+        codeGenerator.classList.remove('hidden');
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        document.getElementById('authCheck').innerHTML = `
+          <p style="color: var(--error);">An error occurred. Please refresh the page.</p>
+        `;
+      }
+    }
+
+    // Generate unique code
+    function generateUniqueCode(bookType) {
+      const prefix = bookType.toUpperCase().substring(0, 4);
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars like O, 0, I, 1
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return `${prefix}-${code}`;
+    }
+
+    async function generateCode() {
+      const bookType = document.getElementById('bookType').value;
+      const btn = document.getElementById('generateBtn');
+      
+      if (!bookType) {
+        showMessage('Please select which book you purchased', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Generating your code...';
+
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) {
+          throw new Error('Not authenticated');
+        }
+
+        const userId = session.user.id;
+
+        // Check if user already has a code for this book
+        const { data: existingCode, error: checkError } = await window.supabase
+          .from('book_verification_codes')
+          .select('code')
+          .eq('used_by_user_id', userId)
+          .eq('book_name', bookType)
+          .eq('is_used', true)
+          .maybeSingle();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking existing code:', checkError);
+        }
+
+        if (existingCode) {
+          showMessage('You have already verified this book. Redirecting to dashboard...', 'error');
+          setTimeout(() => {
+            window.location.href = './dashboard.html';
+          }, 2000);
+          return;
+        }
+
+        // Generate unique code
+        let code = generateUniqueCode(bookType);
+        let attempts = 0;
+        let codeExists = true;
+
+        // Keep generating until we get a unique code
+        while (codeExists && attempts < 10) {
+          const { data: checkCode } = await window.supabase
+            .from('book_verification_codes')
+            .select('code')
+            .eq('code', code)
+            .maybeSingle();
+          
+          if (!checkCode) {
+            codeExists = false;
+          } else {
+            code = generateUniqueCode(bookType);
+            attempts++;
+          }
+        }
+
+        if (attempts >= 10) {
+          throw new Error('Could not generate unique code. Please try again.');
+        }
+
+        // Insert the new code into database
+        const { data: insertData, error: insertError } = await window.supabase
+          .from('book_verification_codes')
+          .insert({
+            code: code,
+            book_name: bookType,
+            is_used: false,
+            created_at: new Date().toISOString()
+          })
+          .select();
+
+        if (insertError) {
+          console.error('Error inserting code:', insertError);
+          throw new Error('Failed to generate code. Please try again.');
+        }
+
+        console.log('✅ Code generated:', code);
+
+        // Show the code to user
+        generatedCode = code;
+        document.getElementById('codeDisplay').textContent = code;
+        document.getElementById('selectBookForm').classList.add('hidden');
+        document.getElementById('codeResult').classList.remove('hidden');
+
+      } catch (error) {
+        console.error('❌ Error:', error);
+        showMessage(error.message || 'Failed to generate code. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Generate My Code';
+      }
+    }
+
+    function goToVerification() {
+      window.location.href = './verify-book.html';
+    }
+
+    function showMessage(text, type) {
+      const messageArea = document.getElementById('messageArea');
+      const className = type === 'error' ? 'error-text' : 'info-text';
+      messageArea.innerHTML = `<p class="${className}">${text}</p>`;
+    }
+
+    // Run on page load
+    checkAuth();
+  </script>
+</body>
+</html>
