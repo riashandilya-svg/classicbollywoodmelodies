@@ -244,7 +244,7 @@
     // Try book credits first (new system)
     if (credits.bookCredits > 0) {
       try {
-        const { data, error } = await window.supabase.functions.invoke("redeem-credits", {
+const { data, error } = await window.supabase.functions.invoke("redeem-book-credit", {
           body: { productId },
           headers: {
             Authorization: `Bearer ${session.access_token}`,
