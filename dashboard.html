@@ -76,6 +76,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+        position: relative;
       background: rgba(255,255,255,0.72);
       backdrop-filter: blur(12px);
       border: 1px solid var(--border);
@@ -97,6 +98,19 @@
     .banner .banner-link:hover{
       text-decoration: underline;
     }
+/* NEW: small avatar in the top banner (right side) */
+#bannerAvatar{
+  position: absolute;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  border: 1px solid rgba(155,110,255,0.25);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
+  background: rgba(155,110,255,0.08);
+}
 
     /* Header card */
     .header{
@@ -192,64 +206,6 @@ margin: 6px 0 0;
   position: relative;
   transform: translateX(-8px);  /* move left; try -8px or -16px */
 }
-/* --- Banner avatar (top right) --- */
-.banner{
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative; /* NEW */
-}
-
-#bannerAvatar{
-  position: absolute;
-  right: 14px;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  object-fit: cover;
-  border: 1px solid rgba(155,110,255,0.25);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
-  background: rgba(155,110,255,0.08);
-}
-
-/* --- Hover-only controls on big avatar --- */
-#changeAvatarBtn,
-#removeAvatarBtn{
-  opacity: 0;
-  transform: translateY(2px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.avatar-wrap:hover #changeAvatarBtn,
-.avatar-wrap:hover #removeAvatarBtn{
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Keep pencil where it is */
-#changeAvatarBtn{
-  position: absolute;
-  right: 2px;
-  bottom: 2px;
-}
-
-/* NEW: trash button next to pencil */
-#removeAvatarBtn{
-  position: absolute;
-  left: 2px;
-  bottom: 2px;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.10);
-  background: white;
-  cursor: pointer;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
-}
 
 
 /* BIG CIRCLE */
@@ -264,11 +220,39 @@ margin: 6px 0 0;
   background: rgba(155,110,255,0.08);
 }
 
+/* NEW: show avatar buttons ONLY on hover */
+#changeAvatarBtn,
+#removeAvatarBtn{
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
 
+.avatar-wrap:hover #changeAvatarBtn,
+.avatar-wrap:hover #removeAvatarBtn{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+    
 /* pencil button on the avatar */
 #changeAvatarBtn{
   position: absolute;
   right: 4px;
+  bottom: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+}
+
+    /* NEW: trash button (bottom-left of avatar) */
+#removeAvatarBtn{
+  position: absolute;
+  left: 4px;
   bottom: 4px;
   width: 32px;
   height: 32px;
@@ -655,15 +639,16 @@ margin: 6px 0 0;
 </div>
 
 <div class="avatar-slot">
- <div class="avatar-wrap">
-  <img id="userAvatar" alt="Profile photo" />
+  <div class="avatar-wrap">
+    <img id="userAvatar" alt="Profile photo" />
 
-  <button id="changeAvatarBtn" type="button" title="Change photo">✏️</button>
+    <button id="changeAvatarBtn" type="button" title="Change photo">✏️</button>
 
-  <!-- NEW: remove avatar (reset to default) -->
-  <button id="removeAvatarBtn" type="button" title="Remove photo">🗑️</button>
+    <!-- NEW: remove/reset avatar -->
+    <button id="removeAvatarBtn" type="button" title="Reset photo">🗑️</button>
 
-  <input id="avatarInput" type="file" accept="image/*" />
+    <input id="avatarInput" type="file" accept="image/*" />
+  </div>
 </div>
 
 
