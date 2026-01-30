@@ -485,8 +485,12 @@
           throw new Error('This code has already been used.');
         }
 
-    verifiedCode = code;
+verifiedCode = code;
 verifiedBookType = codeData.book_name;
+
+// Store in browser so it persists on refresh
+sessionStorage.setItem('verifiedCode', code);
+sessionStorage.setItem('verifiedBookType', codeData.book_name);
 
 // Store in browser so it persists on refresh
 sessionStorage.setItem('verifiedCode', code);
@@ -719,6 +723,10 @@ sessionStorage.setItem('verifiedBookType', codeData.book_name);
         submitBtn.textContent = '✓ Verified!';
 
     // Clear the stored code since verification is complete
+sessionStorage.removeItem('verifiedCode');
+sessionStorage.removeItem('verifiedBookType');
+
+// Clear the stored code since verification is complete
 sessionStorage.removeItem('verifiedCode');
 sessionStorage.removeItem('verifiedBookType');
 
