@@ -34,8 +34,8 @@ const BOOK_NAMES = {
 // Book cover images mapping
 const BOOK_COVERS = {
   soulful: 'Soulful.jpg',
-  peppy: 'Peppy.jpg',
-  romantic: 'Romantic.jpg',
+  peppy: 'peppy.jpg',
+  romantic: 'romantic.jpg',
   classic: 'classic.jpg'
 };
 
@@ -208,33 +208,50 @@ async function loadBookStatus(userId) {
             const allBooks = ['soulful', 'peppy', 'romantic', 'classic'];
             const notOwnedBooks = allBooks.filter(book => !ownedBooks.includes(book));
             
-            const bookCards = ownedBooks.map(book => `
-                <div style="
-                    display: inline-block;
-                    margin: 8px;
-                    padding: 12px;
-                    border: 2px solid rgba(40,167,69,0.3);
-                    border-radius: 16px;
-                    background: rgba(40,167,69,0.08);
-                    text-align: center;
-                    min-width: 140px;
-                ">
-                    <img src="${BOOK_COVERS[book]}" alt="${BOOK_NAMES[book]}" style="
-                        width: 100px;
-                        height: 140px;
-                        object-fit: cover;
-                        border-radius: 8px;
-                        margin-bottom: 8px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                    ">
-                    <div style="font-size: 13px; font-weight: 600; color: #2b1140;">
-                        ${BOOK_NAMES[book]}
-                    </div>
-                    <div style="font-size: 11px; color: #059669; margin-top: 4px;">
-                        ✓ In Collection
-                    </div>
-                </div>
-            `).join('');
+     const bookCards = ownedBooks.map(book => `
+  <div style="
+      display: inline-block;
+      margin: 8px;
+      padding: 12px;
+      border: 2px solid rgba(40,167,69,0.3);
+      border-radius: 16px;
+      background: rgba(40,167,69,0.08);
+      text-align: center;
+      min-width: 140px;
+      position: relative;
+  ">
+      <img src="${BOOK_COVERS[book]}" alt="${BOOK_NAMES[book]}" style="
+          width: 100px;
+          height: 140px;
+          object-fit: cover;
+          border-radius: 8px;
+          margin-bottom: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      ">
+      <div style="font-size: 13px; font-weight: 600; color: #2b1140;">
+          ${BOOK_NAMES[book]}
+      </div>
+      <div style="font-size: 11px; color: #059669; margin-top: 4px;">
+          ✓ In Collection
+      </div>
+
+      <button onclick="removeBookFromCollection('${book}')" style="
+          margin-top: 10px;
+          padding: 6px 12px;
+          border: 1px solid rgba(220,38,38,0.25);
+          background: white;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 700;
+          color: #b91c1c;
+          transition: all 0.2s;
+      " onmouseover="this.style.background='rgba(220,38,38,0.06)'" onmouseout="this.style.background='white'">
+          Remove
+      </button>
+  </div>
+`).join('');
+
             
             const creditBadge = bookCredits > 0 
                 ? `<div style="margin-top: 15px; padding: 12px; background: rgba(255,200,100,0.15); border: 1px solid rgba(255,200,100,0.3); border-radius: 12px;">
@@ -328,6 +345,50 @@ async function addBookToCollection(bookType) {
         console.error('Error adding book:', error);
         alert('Failed to add book. Please try again.');
     }
+}
+
+// Remove book from collection
+async function removeBookFromCollection(bookType) {
+  try {
+    const { data: { user } } = await window.supabase.auth.getUser();
+    if (!user) return;
+
+    const ok = confirm(`Remove "${BOOK_NAMES[bookType] || bookType}" from your collection?`);
+    if (!ok) return;
+
+    const { data: profile, error: fetchError } = await window.supabase
+      .from('profiles')
+      .select('books_owned')
+      .eq('id', user.id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const currentBooks = profile?.books_owned || [];
+    if (!currentBooks.includes(bookType)) {
+      alert('That book is not in your collection.');
+      return;
+    }
+
+    const updatedBooks = currentBooks.filter(b => b !== bookType);
+    const isBookOwner = updatedBooks.length > 0;
+
+    const { error: updateError } = await window.supabase
+      .from('profiles')
+      .update({
+        books_owned: updatedBooks,
+        is_book_owner: isBookOwner
+      })
+      .eq('id', user.id);
+
+    if (updateError) throw updateError;
+
+    alert('Removed from your collection.');
+    await loadBookStatus(user.id);
+  } catch (error) {
+    console.error('Error removing book:', error);
+    alert('Failed to remove book. Please try again.');
+  }
 }
 
 // Load songs with progress
