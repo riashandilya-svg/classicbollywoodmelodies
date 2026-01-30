@@ -188,6 +188,40 @@
       margin: 0;
       font-size: 14px;
       color: var(--text);
+      line-height: 1.5;
+    }
+
+    .asterisk {
+      color: #d97706;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 2px;
+    }
+
+    .asterisk:hover {
+      text-decoration: underline;
+    }
+
+    .terms-notice {
+      background: rgba(155, 110, 255, 0.05);
+      border: 1px solid rgba(155, 110, 255, 0.2);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .terms-notice a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .terms-notice a:hover {
+      text-decoration: underline;
     }
 
     .btn {
@@ -213,23 +247,18 @@
       cursor: not-allowed;
     }
 
-    .message {
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      font-size: 15px;
-    }
-
-    .message.success {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+    .success-text {
       color: var(--success);
+      font-size: 15px;
+      margin: 16px 0;
+      line-height: 1.6;
     }
 
-    .message.error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+    .error-text {
       color: var(--error);
+      font-size: 15px;
+      margin: 16px 0;
+      line-height: 1.6;
     }
 
     .loading {
@@ -274,18 +303,22 @@
       font-weight: 600;
     }
 
-    .verified-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+    .verified-info {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid var(--success);
+      padding: 14px 18px;
       border-radius: 8px;
+      margin-bottom: 24px;
+      font-size: 15px;
       color: var(--success);
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 10px;
+      font-weight: 500;
+    }
+
+    .friendly-text {
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.7;
+      margin: 20px 0;
     }
   </style>
 </head>
@@ -305,7 +338,7 @@
       </div>
 
       <div id="verificationForm" class="hidden">
-        <div id="message"></div>
+        <div id="messageArea"></div>
 
         <!-- STEP 1: Book Code Verification -->
         <div id="codeStep">
@@ -331,6 +364,11 @@
         <form id="bookForm" class="hidden">
           <div id="verifiedCodeDisplay"></div>
 
+          <p class="friendly-text">
+            Great! Now let's make it official. Please upload a quick photo showing you have the physical book. 
+            It can be anything – the cover, a page, or even you holding it. This just helps us confirm you're a real book owner! 📸
+          </p>
+
           <div class="form-group">
             <label>Upload a photo of your book</label>
             <span class="hint">Any photo showing you have the physical book</span>
@@ -346,12 +384,12 @@
 
           <div class="bonus-section">
             <h3>🎁 Bonus: Get 1 Free Song!</h3>
-            <p>Upload a short video of you using the book and get 1 free song credit instantly!</p>
+            <p>Upload a short video of you enjoying the book and get 1 free song credit instantly!<a href="./video-consent-terms.html" class="asterisk" target="_blank">*</a></p>
           </div>
 
           <div class="form-group">
             <label>Upload a video (Optional)</label>
-            <span class="hint">Show yourself using the book - totally optional!</span>
+            <span class="hint">Show yourself using the book – it's totally optional but gets you a free song!</span>
             <div class="file-input-wrapper">
               <input type="file" id="videoInput" accept="video/*">
               <label for="videoInput" class="file-input-label" id="videoLabel">
@@ -360,6 +398,10 @@
               </label>
             </div>
             <div id="videoName" class="file-name"></div>
+          </div>
+
+          <div class="terms-notice">
+            📹 Uploading a video? Please take a moment to <a href="./video-consent-terms.html" target="_blank">read our video usage terms</a>
           </div>
 
           <button type="submit" class="btn" id="submitBtn">
@@ -465,12 +507,12 @@
         };
 
         document.getElementById('verifiedCodeDisplay').innerHTML = `
-          <div class="verified-badge">
-            ✓ Code Verified: ${bookNames[verifiedBookType]}
+          <div class="verified-info">
+            ✓ Code Verified: ${bookNames[verifiedBookType] || verifiedBookType}
           </div>
         `;
 
-        showMessage(`Code verified! Now upload your book photo.`, 'success');
+        showMessage(`Perfect! Your code is verified. Now let's complete the process with a quick photo.`, 'success');
 
       } catch (error) {
         console.error('❌ Error:', error);
@@ -556,25 +598,28 @@
         console.log('✅ Photo uploaded successfully');
 
         // ============================================
-        // STEP 2: Mark Code as Used
+        // STEP 2: Mark Code as Used (FIXED!)
         // ============================================
         updateProgress('Marking code as used...');
         
-        const { error: codeUpdateError } = await window.supabase
+        console.log('🔄 Updating code in database:', verifiedCode);
+        
+        const { data: updateData, error: codeUpdateError } = await window.supabase
           .from('book_verification_codes')
           .update({ 
             is_used: true,
             used_by_user_id: userId,
             used_at: new Date().toISOString()
           })
-          .eq('code', verifiedCode);
+          .eq('code', verifiedCode)
+          .select();
 
         if (codeUpdateError) {
           console.error('❌ Code update error:', codeUpdateError);
-          throw new Error('Failed to mark code as used');
+          throw new Error(`Failed to mark code as used: ${codeUpdateError.message}`);
         }
 
-        console.log('✅ Code marked as used');
+        console.log('✅ Code marked as used:', updateData);
 
         // ============================================
         // STEP 3: Update Profile - Mark as Book Owner
@@ -700,9 +745,9 @@
         // ============================================
         updateProgress('');
         
-        let successMessage = '✅ Book verified successfully! You now get discounted pricing.';
+        let successMessage = '🎉 Congratulations! Your book is verified and you now have access to exclusive book owner pricing.';
         if (videoUploaded) {
-          successMessage += ' 🎁 Bonus: 1 free song credit added to your account!';
+          successMessage += ' Plus, we've added 1 free song credit to your account as a thank you for sharing your video! 🎁';
         }
         
         showMessage(successMessage, 'success');
@@ -725,10 +770,9 @@
     });
 
     function showMessage(text, type) {
-      const messageDiv = document.getElementById('message');
-      messageDiv.className = `message ${type}`;
-      messageDiv.textContent = text;
-      messageDiv.style.display = 'block';
+      const messageArea = document.getElementById('messageArea');
+      const className = type === 'success' ? 'success-text' : 'error-text';
+      messageArea.innerHTML = `<p class="${className}">${text}</p>`;
     }
 
     checkAuth();
