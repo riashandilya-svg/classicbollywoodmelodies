@@ -372,14 +372,40 @@
 
         const userId = session.user.id;
 
-        // Check if user already has a code for this book
-        const { data: existingCode, error: checkError } = await window.supabase
-          .from('book_verification_codes')
-          .select('code')
-          .eq('used_by_user_id', userId)
-          .eq('book_name', bookType)
-          .eq('is_used', true)
-          .maybeSingle();
+ // Check if user has EVER verified ANY book
+const { data: userProfile, error: profileError } = await window.supabase
+  .from('profiles')
+  .select('is_book_owner')
+  .eq('id', userId)
+  .single();
+
+if (profileError) {
+  console.error('Error checking profile:', profileError);
+}
+
+// If they already verified a book, redirect them
+if (userProfile && userProfile.is_book_owner === true) {
+  showMessage('You have already verified a book! Redirecting to dashboard...', 'error');
+  setTimeout(() => {
+    window.location.href = './dashboard.html';
+  }, 2000);
+  return;
+}
+
+// Check if user already generated a code (but hasn't used it yet)
+const { data: existingUnusedCode, error: unusedCheckError } = await window.supabase
+  .from('book_verification_codes')
+  .select('code, book_name')
+  .eq('generated_by_user_id', userId)
+  .eq('is_used', false)
+  .maybeSingle();
+
+if (existingUnusedCode) {
+  showMessage('You already have an unused code. Please use that code first!', 'error');
+  btn.disabled = false;
+  btn.textContent = 'Generate My Code';
+  return;
+}
 
         if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking existing code:', checkError);
@@ -418,16 +444,17 @@
           throw new Error('Could not generate unique code. Please try again.');
         }
 
-        // Insert the new code into database
-        const { data: insertData, error: insertError } = await window.supabase
-          .from('book_verification_codes')
-          .insert({
-            code: code,
-            book_name: bookType,
-            is_used: false,
-            created_at: new Date().toISOString()
-          })
-          .select();
+   // Insert the new code into database
+const { data: insertData, error: insertError } = await window.supabase
+  .from('book_verification_codes')
+  .insert({
+    code: code,
+    book_name: bookType,
+    is_used: false,
+    generated_by_user_id: userId,
+    created_at: new Date().toISOString()
+  })
+  .select();
 
         if (insertError) {
           console.error('Error inserting code:', insertError);
