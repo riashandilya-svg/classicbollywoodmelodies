@@ -443,7 +443,7 @@
           <div class="actionStrip" role="navigation" aria-label="Account navigation">
             <a class="stripItem primary" href="./dashboard.html">Dashboard</a>
             <div class="stripDivider" aria-hidden="true"></div>
-            <a class="stripItem" href="./verify-book.html">Verify Book</a>
+<a id="verifyBookLink" class="stripItem" href="./verify-book.html" style="display: none;">Verify Book</a>
             <div class="stripDivider" aria-hidden="true"></div>
             <a class="stripItem" href="./pricing.html">Pricing</a>
             <div class="stripDivider" aria-hidden="true"></div>
@@ -540,11 +540,11 @@
           const userId = session.user.id;
 
           // FIXED: Changed from "profile" to "profiles"
-          const { data: prof, error } = await sb
-            .from("profiles")
-            .select("display_name, setup_completed")
-            .eq("id", userId)
-            .single();
+   const { data: prof, error } = await sb
+  .from("profiles")
+  .select("display_name, setup_completed, is_book_owner")
+  .eq("id", userId)
+  .single();
 
           if (error) {
             console.log("profile fetch error:", error);
@@ -563,6 +563,15 @@
 
           accountDock.style.display = "block";
           authRow.style.display = "none";
+          // Show or hide Verify Book link based on is_book_owner status
+const verifyBookLink = document.getElementById("verifyBookLink");
+if (verifyBookLink) {
+  if (prof && prof.is_book_owner === true) {
+    verifyBookLink.style.display = "none"; // Hide if already verified
+  } else {
+    verifyBookLink.style.display = "inline-flex"; // Show if not verified
+  }
+}
         } else {
           accountDock.style.display = "none";
           authRow.style.display = "flex";
