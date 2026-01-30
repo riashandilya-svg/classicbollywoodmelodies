@@ -90,6 +90,8 @@ async function initDashboard() {
     .select('display_name, is_book_owner')
     .eq('id', user.id)
     .maybeSingle();
+console.log('🔍 Profile data:', profile);
+console.log('📚 is_book_owner:', profile?.is_book_owner);
 
         const displayName = profile?.display_name || user.email.split('@')[0];
 // Welcome text (gold line under the title)
@@ -102,14 +104,18 @@ setupAvatarUpload(user.id);
 
 // Show or hide Verify Book link based on is_book_owner status
 const verifyBookLink = document.getElementById('verifyBookLink');
+console.log('🔗 Verify Book Link element:', verifyBookLink);
+console.log('✅ Should hide?', profile?.is_book_owner === true);
+
 if (verifyBookLink) {
   if (profile && profile.is_book_owner === true) {
+    console.log('🚫 Hiding Verify Book button');
     verifyBookLink.style.display = 'none'; // Hide if already verified
   } else {
+    console.log('✅ Showing Verify Book button');
     verifyBookLink.style.display = 'inline-flex'; // Show if not verified
   }
 }
-
 // Optional: you can keep userEmail empty or hide it
 const userEmailEl = document.getElementById('userEmail');
 if (userEmailEl) userEmailEl.textContent = '';
