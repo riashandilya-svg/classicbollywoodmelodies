@@ -540,15 +540,15 @@
           const userId = session.user.id;
 
           // FIXED: Changed from "profile" to "profiles"
-   const { data: prof, error } = await sb
+const { data: prof, error } = await sb
   .from("profiles")
   .select("display_name, setup_completed, is_book_owner")
   .eq("id", userId)
-  .single();
+  .maybeSingle();
 
-          if (error) {
-            console.log("profile fetch error:", error);
-          }
+   if (error && error.code !== 'PGRST116') {
+  console.log("profile fetch error:", error);
+}
 
           if (prof && prof.setup_completed === false) {
             window.location.href = "./setup.html";
