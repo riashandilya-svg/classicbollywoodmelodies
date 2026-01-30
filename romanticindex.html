@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -40,27 +40,225 @@
         var(--bg);
     }
 
+    /* Cursor glitter canvas (red/pink) */
+    #glitter{
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    /* Sticky banner (updated layout like your model) */
     .banner{
       position: sticky;
       top: 0;
       z-index: 9999;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
       background: rgba(255,255,255,0.78);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(230,20,55,0.14);
     }
 
-    .banner a{
+    .navGrid{
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      min-height: 64px;
+      padding: 8px 12px;
+      gap: 12px;
+    }
+
+    .navTitle{
+      grid-column: 2;
+      justify-self: center;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .banner-link{
       text-decoration: none;
       color: inherit;
       font-family: "Cormorant Garamond", serif;
       font-weight: 600;
       font-size: 22px;
       letter-spacing: 0.7px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .banner-link:hover{ text-decoration: underline; }
+
+    .accountDock{
+      grid-column: 3;
+      justify-self: end;
+      display: none;
+      min-width: 0;
+      max-width: 46vw;
+    }
+
+    .accountLayout{
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .welcomeText{
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+
+      background: linear-gradient(
+        110deg,
+        rgba(230, 20, 55, 0.98) 0%,
+        rgba(255, 95, 125, 0.92) 30%,
+        rgba(255,255,255,0.92) 50%,
+        rgba(255, 95, 125, 0.92) 70%,
+        rgba(230, 20, 55, 0.98) 100%
+      );
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 16px rgba(255, 95, 125, 0.22));
+      animation: shimmerRose 6.8s ease-in-out infinite;
+
+      padding: 2px 2px;
+      white-space: nowrap;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 0 1 auto;
+    }
+
+    @keyframes shimmerRose{
+      0%,100%{ background-position: 0% 50%; }
+      50%{ background-position: 100% 50%; }
+    }
+
+    .actionStrip{
+      display: inline-flex;
+      align-items: center;
+      overflow: hidden;
+      border-radius: 999px;
+      border: 1px solid rgba(230, 20, 55, 0.24);
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(35, 10, 18, 0.10);
+      max-width: 100%;
+      flex: 0 0 auto;
+      cursor: none; /* glitter cursor */
+    }
+
+    .stripItem{
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 10px 14px;
+      font-weight: 750;
+      font-size: 13px;
+      color: rgba(26,26,31,0.86);
+      text-decoration: none;
+      cursor: none; /* glitter cursor */
+      display: inline-flex;
+      align-items: center;
+      user-select: none;
+      white-space: nowrap;
+      transition: background .12s ease, filter .12s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stripItem:hover{
+      background: rgba(255, 95, 125, 0.12);
+      filter: brightness(1.02);
+    }
+
+    .stripItem.primary{
+      color: rgba(26,26,31,0.92);
+      background: linear-gradient(135deg,
+        rgba(230, 20, 55, 0.14),
+        rgba(255, 95, 125, 0.12),
+        rgba(230, 20, 55, 0.08)
+      );
+    }
+
+    .stripDivider{
+      width: 1px;
+      align-self: stretch;
+      background: rgba(230, 20, 55, 0.16);
+    }
+
+    /* Shine sweep on strip items */
+    .stripItem::before{
+      content:"";
+      position:absolute;
+      inset:-40% -60%;
+      background: linear-gradient(120deg,
+        transparent 35%,
+        rgba(255,255,255,0.40) 48%,
+        transparent 60%
+      );
+      transform: translateX(-40%) rotate(10deg);
+      opacity: 0;
+      pointer-events:none;
+    }
+    .stripItem:hover::before{
+      opacity: 1;
+      animation: stripShine 0.9s ease forwards;
+    }
+    @keyframes stripShine{
+      to { transform: translateX(40%) rotate(10deg); }
+    }
+
+    /* Move account below title earlier so it never overlaps */
+    @media (max-width: 1100px){
+      .navGrid{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        padding: 10px 12px 12px;
+      }
+
+      .navTitle{
+        grid-column: 1;
+        grid-row: 1;
+        justify-self: center;
+      }
+
+      .accountDock{
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: stretch;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .accountLayout{
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .welcomeText{
+        max-width: 92vw;
+        text-align: center;
+      }
+
+      .actionStrip{
+        width: 100%;
+      }
+
+      .stripItem{
+        flex: 1;
+        justify-content: center;
+        padding: 11px 10px;
+      }
     }
 
     main{
@@ -133,6 +331,15 @@
       color: rgba(26,26,31,0.70);
       border-top: 1px solid rgba(230,20,55,0.12);
       background: rgba(255,255,255,0.78);
+    }
+
+    /* Logged out row (kept in hero area) */
+    .authRow{
+      margin: 14px 0 6px;
+      display:flex;
+      gap:10px;
+      justify-content:flex-start;
+      flex-wrap:wrap;
     }
 
     /* ===== Songs grid ===== */
@@ -222,11 +429,36 @@
       border: 1px solid rgba(230,20,55,0.25);
       background: var(--btnBg);
       transition: transform 0.14s ease, filter 0.14s ease;
+      cursor: none; /* glitter cursor */
+      position: relative;
+      overflow: hidden;
     }
 
     .btn:hover{
       transform: translateY(-1px);
       filter: brightness(1.02);
+    }
+
+    /* Shine sweep on .btn */
+    .btn::before{
+      content:"";
+      position:absolute;
+      inset:-40% -60%;
+      background: linear-gradient(120deg,
+        transparent 35%,
+        rgba(255,255,255,0.40) 48%,
+        transparent 60%
+      );
+      transform: translateX(-40%) rotate(10deg);
+      opacity: 0;
+      pointer-events:none;
+    }
+    .btn:hover::before{
+      opacity: 1;
+      animation: btnShine 0.9s ease forwards;
+    }
+    @keyframes btnShine{
+      to { transform: translateX(40%) rotate(10deg); }
     }
 
     .arrow{
@@ -262,14 +494,39 @@
       filter: grayscale(0.15);
       opacity: 0.85;
     }
+
+    @media (prefers-reduced-motion: reduce){
+      .welcomeText{ animation: none !important; }
+      #glitter{ display:none !important; }
+    }
   </style>
 </head>
 
 <body>
-<header class="banner">
-  <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
-</header>
+  <canvas id="glitter" aria-hidden="true"></canvas>
 
+  <header class="banner">
+    <div class="navGrid">
+      <div class="navTitle">
+        <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+      </div>
+
+      <!-- Logged-in account dock (Dashboard / Verify / Logout) -->
+      <div id="accountDock" class="accountDock" aria-label="Account actions">
+        <div class="accountLayout">
+          <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
+
+          <div class="actionStrip" role="navigation" aria-label="Account navigation">
+            <a id="dashboardLink" class="stripItem primary" href="./dashboard.html" style="display:none;">Dashboard</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <a id="verifyLink" class="stripItem" href="./verify-book.html" style="display:none;">Verify Book</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <button id="logoutBtn" class="stripItem" style="display:none;" type="button">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
   <main>
     <div class="layout">
@@ -278,14 +535,11 @@
         <div class="hero">
           <h1>Romantic Melodies</h1>
           <p class="sub">Pick a song to open its practice page.</p>
-        <div id="authBox" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:flex-start; flex-wrap:wrap;">
-          <span id="userBox" style="display:none; padding:12px 14px; border-radius:14px; border:1px solid rgba(80,170,230,0.22); background:rgba(255,255,255,0.55);"></span>
 
-          <a id="loginLink" class="btn" href="./login.html">Login</a>
-          <a id="dashboardLink" class="btn" href="./dashboard.html" style="display:none;">🎵 Dashboard</a>
-          <a id="verifyLink" class="btn" href="./verify-book.html" style="display:none;">📚 Verify Book</a>
-          <button id="logoutBtn" class="btn" style="display:none;" type="button">Logout</button>
-        </div>
+          <!-- Logged-out login button stays here -->
+          <div class="authRow" id="authRow">
+            <a id="loginLink" class="btn" href="./login.html">Login</a>
+          </div>
         </div>
 
         <section class="grid">
@@ -307,7 +561,6 @@
             <a class="btn" href="piyubole.html">Open <span class="arrow">→</span></a>
           </div>
 
-          <!-- 4 more slots (for your future 7 total songs) -->
           <div class="card">
             <h2 class="song-title">Raat Kali Ek Khwaab Mei Aayi</h2>
             <p class="song-meta">Practice mode + falling notes</p>
@@ -332,23 +585,20 @@
             <a class="btn" href="palpalharpal.html">Open <span class="arrow">→</span></a>
           </div>
 
-            <div class="card placeholder">
+          <div class="card placeholder">
             <h2 class="song-title">Coming soon</h2>
             <p class="song-meta">Add your next song file</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
 
-            <div class="card placeholder">
+          <div class="card placeholder">
             <h2 class="song-title">Coming soon</h2>
             <p class="song-meta">Add your next song file</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
-
-          
         </section>
 
         <div class="footer">
-          <!-- Change this if you want it to point somewhere else -->
           <a class="back" href="/classicbollywoodmelodies/index.html">← Back to books</a>
         </div>
       </div>
@@ -356,79 +606,193 @@
       <!-- Right: optional cover image -->
       <aside class="side">
         <div class="cover">
-          <!-- Put an image at /romanticmelodies/romantic.jpg if you want -->
           <img src="romantic.jpg" alt="Romantic Melodies cover" onerror="this.style.display='none'">
           <div class="cover-caption">Romantic Melodies</div>
         </div>
       </aside>
     </div>
   </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  async function renderAuthUI() {
-    const { data: { session } } = await sb.auth.getSession();
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const userBox = document.getElementById("userBox");
-    const loginLink = document.getElementById("loginLink");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const dashboardLink = document.getElementById("dashboardLink");
-    const verifyLink = document.getElementById("verifyLink");
+    async function renderAuthUI() {
+      const { data: { session } } = await sb.auth.getSession();
 
-    if (session && session.user) {
-      const userId = session.user.id;
+      const accountDock = document.getElementById("accountDock");
+      const welcomeText = document.getElementById("welcomeText");
 
-      // Get profile info
-      const { data: profile, error } = await sb
-        .from("profiles")
-        .select("display_name, setup_completed")
-        .eq("id", userId)
-        .single();
+      const authRow = document.getElementById("authRow");
+      const loginLink = document.getElementById("loginLink");
 
-      if (error) console.log("profile fetch error:", error);
+      const logoutBtn = document.getElementById("logoutBtn");
+      const dashboardLink = document.getElementById("dashboardLink");
+      const verifyLink = document.getElementById("verifyLink");
 
-      // If setup not completed, redirect once
-      if (profile && profile.setup_completed === false) {
-        window.location.href = "./setup.html";
-        return;
+      if (session && session.user) {
+        const userId = session.user.id;
+
+        const { data: profile, error } = await sb
+          .from("profiles")
+          .select("display_name, setup_completed")
+          .eq("id", userId)
+          .single();
+
+        if (error) console.log("profile fetch error:", error);
+
+        if (profile && profile.setup_completed === false) {
+          window.location.href = "./setup.html";
+          return;
+        }
+
+        const displayName = (profile && profile.display_name) ? String(profile.display_name).trim() : "";
+        welcomeText.textContent = displayName ? `Welcome, ${displayName}` : "Welcome";
+
+        accountDock.style.display = "block";
+        dashboardLink.style.display = "inline-flex";
+        verifyLink.style.display = "inline-flex";
+        logoutBtn.style.display = "inline-flex";
+
+        authRow.style.display = "none";
+        if (loginLink) loginLink.style.display = "none";
+      } else {
+        accountDock.style.display = "none";
+        dashboardLink.style.display = "none";
+        verifyLink.style.display = "none";
+        logoutBtn.style.display = "none";
+        welcomeText.textContent = "";
+
+        authRow.style.display = "flex";
+        if (loginLink) loginLink.style.display = "inline-flex";
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      await renderAuthUI();
+    });
+
+    sb.auth.onAuthStateChange(() => {
+      renderAuthUI();
+    });
+
+    renderAuthUI();
+    setTimeout(renderAuthUI, 800);
+  </script>
+
+  <script>
+    /* ===== Cursor glitter (red/pink) ===== */
+    (function(){
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(prefersReduced) return;
+
+      const canvas = document.getElementById('glitter');
+      const ctx = canvas.getContext('2d', { alpha: true });
+
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize, { passive:true });
+      resize();
+
+      const particles = [];
+      const MAX = 320;
+
+      function addSpark(x, y, intensity=1){
+        const count = Math.floor(7 * intensity);
+        for(let i=0;i<count;i++){
+          if(particles.length > MAX) particles.shift();
+          const angle = Math.random() * Math.PI * 2;
+          const speed = (0.30 + Math.random() * 2.0) * intensity;
+
+          particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 0.20,
+            life: 34 + Math.random() * 30,
+            size: 1.0 + Math.random() * 2.8,
+            tw: Math.random() * Math.PI * 2,
+            alpha: 0.52 + Math.random() * 0.34,
+            hot: Math.random() < 0.65
+          });
+        }
       }
 
-      const displayName = (profile && profile.display_name) ? profile.display_name : "there";
-      userBox.textContent = `Welcome, ${displayName}`;
-      userBox.style.display = "inline-flex";
-      logoutBtn.style.display = "inline-flex";
-      loginLink.style.display = "none";
-      
-      // Show dashboard and verify book links when logged in
-      dashboardLink.style.display = "inline-flex";
-      verifyLink.style.display = "inline-flex";
-    } else {
-      userBox.style.display = "none";
-      logoutBtn.style.display = "none";
-      loginLink.style.display = "inline-flex";
-      
-      // Hide dashboard and verify book links when logged out
-      dashboardLink.style.display = "none";
-      verifyLink.style.display = "none";
-    }
-  }
+      let last = { x: window.innerWidth/2, y: window.innerHeight/2 };
+      window.addEventListener('pointermove', (e) => {
+        const dx = e.clientX - last.x;
+        const dy = e.clientY - last.y;
+        const d = Math.min(34, Math.hypot(dx, dy));
+        const intensity = Math.max(0.75, d / 16);
+        addSpark(e.clientX, e.clientY, intensity);
+        last = { x: e.clientX, y: e.clientY };
+      }, { passive: true });
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await sb.auth.signOut();
-    await renderAuthUI();
-  });
+      window.addEventListener('pointerdown', (e) => addSpark(e.clientX, e.clientY, 1.9), { passive: true });
 
-  sb.auth.onAuthStateChange(() => {
-    renderAuthUI();
-  });
+      function tick(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  renderAuthUI();
-  setTimeout(renderAuthUI, 800);
-</script>
+        for(let i=particles.length-1;i>=0;i--){
+          const p = particles[i];
+          p.life -= 1;
+          if(p.life <= 0){ particles.splice(i,1); continue; }
+
+          p.vx *= 0.986;
+          p.vy *= 0.986;
+          p.vy += 0.018;
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          p.tw += 0.22;
+          const twinkle = 0.62 + Math.sin(p.tw) * 0.38;
+          const fade = Math.min(1, p.life / 44);
+          const a = p.alpha * fade * twinkle;
+
+          const rose = `rgba(255, 95, 125, ${a})`;
+          const red  = `rgba(230, 20, 55, ${a * 0.92})`;
+          const core = `rgba(255, 255, 255, ${a * 0.55})`;
+          const dot = p.hot ? red : rose;
+
+          ctx.beginPath();
+          ctx.fillStyle = dot;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.fillStyle = core;
+          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
+          ctx.fill();
+
+          if(Math.random() < 0.24){
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.tw * 0.35);
+            ctx.globalAlpha = a * 0.92;
+            ctx.strokeStyle = `rgba(255, 210, 220, ${a})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
+            ctx.moveTo(0, -p.size*2.2); ctx.lineTo(0, p.size*2.2);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+      tick();
+    })();
+  </script>
 
 </body>
 </html>
