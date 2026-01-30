@@ -889,23 +889,26 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
         tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
         return;
       }
-
-      tbody.innerHTML = allUsers.map(user => `
-        <tr>
-          <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
-          <td><strong>${user.display_name || 'N/A'}</strong></td>
-          <td>${user.email || 'N/A'}</td>
-          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
-          <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
-          <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
-          <td>${new Date(user.created_at).toLocaleDateString()}</td>
-          <td>
-            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>
-              🗑️ Delete
-            </button>
-          </td>
-        </tr>
-      `).join('');
+    
+      tbody.innerHTML = allUsers.map(user => {
+        const isAdmin = ADMIN_EMAILS.includes(user.email);
+        const deleteButton = isAdmin 
+          ? '<span class="badge badge-warning">ADMIN</span>'
+          : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+        
+        return `
+          <tr>
+            <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
+            <td><strong>${user.display_name || 'N/A'}</strong></td>
+            <td>${user.email || 'N/A'}</td>
+            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+            <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+            <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>${deleteButton}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function filterUsers() {
@@ -921,23 +924,26 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
         tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match your search</p></td></tr>';
         return;
       }
-
-      tbody.innerHTML = filtered.map(user => `
-        <tr>
-          <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
-          <td><strong>${user.display_name || 'N/A'}</strong></td>
-          <td>${user.email || 'N/A'}</td>
-          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
-          <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
-          <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
-          <td>${new Date(user.created_at).toLocaleDateString()}</td>
-          <td>
-            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>
-              🗑️ Delete
-            </button>
-          </td>
-        </tr>
-      `).join('');
+    
+      tbody.innerHTML = filtered.map(user => {
+        const isAdmin = ADMIN_EMAILS.includes(user.email);
+        const deleteButton = isAdmin 
+          ? '<span class="badge badge-warning">ADMIN</span>'
+          : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+        
+        return `
+          <tr>
+            <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
+            <td><strong>${user.display_name || 'N/A'}</strong></td>
+            <td>${user.email || 'N/A'}</td>
+            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+            <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+            <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>${deleteButton}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     // Load verification codes
@@ -1168,6 +1174,12 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
 
     // Delete user modal functions
     function openDeleteModal(user) {
+      // Check if user is an admin
+      if (ADMIN_EMAILS.includes(user.email)) {
+        alert('⛔ Cannot delete admin accounts!\n\nAdmin emails are protected and cannot be deleted.');
+        return;
+      }
+      
       userToDelete = user;
       document.getElementById('deleteUserName').textContent = user.display_name || 'Unknown';
       document.getElementById('deleteUserId').textContent = user.id;
@@ -1180,7 +1192,6 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
       
       document.getElementById('deleteModal').classList.remove('hidden');
     }
-
     function closeDeleteModal() {
       document.getElementById('deleteModal').classList.add('hidden');
       userToDelete = null;
