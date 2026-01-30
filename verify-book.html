@@ -356,7 +356,7 @@
           <div style="background: rgba(155, 110, 255, 0.05); border: 1px solid rgba(155, 110, 255, 0.2); border-radius: 10px; padding: 16px; margin: 16px 0; font-size: 14px; line-height: 1.6;">
             <p style="margin: 0 0 8px; font-weight: 600; color: var(--primary);">📱 Don't have your code handy?</p>
             <p style="margin: 0 0 8px;">• <strong>Scan the QR code</strong> provided inside your physical book to get your unique code</p>
-            <p style="margin: 0;">• <strong>Book doesn't have a QR code?</strong> Email us at <a href="mailto:riaomshandilya@gmail.com" style="color: var(--primary); text-decoration: none; font-weight: 600;">riaomshandilya@gmail.com</a> with a photo of your purchase receipt and we'll give you access</p>
+            <p style="margin: 0;">• <strong>Book doesn't have a QR code?</strong> Email us at <a href="/cdn-cgi/l/email-protection#f3819a929c9e809b929d979a9f8a92b3949e929a9fdd909c9e" style="color: var(--primary); text-decoration: none; font-weight: 600;"><span class="__cf_email__" data-cfemail="07756e66686a746f6669636e6b7e6647606a666e6b2964686a">[email&#160;protected]</span></a> with a photo of your purchase receipt and we'll give you access</p>
           </div>
           
           <button type="button" class="btn" id="verifyCodeBtn">
@@ -417,7 +417,7 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
@@ -636,45 +636,71 @@
             if (!videoError) {
               videoUploaded = true;
               
-              updateProgress('Adding bonus credit...');
+              updateProgress('Checking bonus eligibility...');
               
-              const { data: existingCredits, error: fetchCreditsError } = await window.supabase
-                .from('user_credits')
-                .select('balance')
-                .eq('user_id', userId)
-                .maybeSingle();
+              const { data: profileData, error: profileCheckError } = await window.supabase
+                .from('profiles')
+                .select('video_bonus_claimed')
+                .eq('id', userId)
+                .single();
 
-              if (fetchCreditsError) {
-                throw new Error('Could not check credits balance');
+              if (profileCheckError) {
+                throw new Error('Could not check bonus eligibility');
               }
 
-              if (existingCredits) {
-                const newBalance = existingCredits.balance + 1;
+              if (!profileData.video_bonus_claimed) {
+                updateProgress('Adding bonus credit...');
                 
-                const { error: updateCreditsError } = await window.supabase
+                const { data: existingCredits, error: fetchCreditsError } = await window.supabase
                   .from('user_credits')
-                  .update({ 
-                    balance: newBalance,
-                    updated_at: new Date().toISOString()
-                  })
-                  .eq('user_id', userId);
+                  .select('balance')
+                  .eq('user_id', userId)
+                  .maybeSingle();
 
-                if (updateCreditsError) {
-                  throw new Error('Could not update credits');
+                if (fetchCreditsError) {
+                  throw new Error('Could not check credits balance');
+                }
+
+                if (existingCredits) {
+                  const newBalance = existingCredits.balance + 1;
+                  
+                  const { error: updateCreditsError } = await window.supabase
+                    .from('user_credits')
+                    .update({ 
+                      balance: newBalance,
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('user_id', userId);
+
+                  if (updateCreditsError) {
+                    throw new Error('Could not update credits');
+                  }
+                } else {
+                  const { error: insertCreditsError } = await window.supabase
+                    .from('user_credits')
+                    .insert({ 
+                      user_id: userId,
+                      balance: 1,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString()
+                    });
+
+                  if (insertCreditsError) {
+                    throw new Error('Could not create credits record');
+                  }
+                }
+
+                const { error: markBonusError } = await window.supabase
+                  .from('profiles')
+                  .update({ video_bonus_claimed: true })
+                  .eq('id', userId);
+
+                if (markBonusError) {
+                  console.error('Could not mark bonus as claimed:', markBonusError);
                 }
               } else {
-                const { error: insertCreditsError } = await window.supabase
-                  .from('user_credits')
-                  .insert({ 
-                    user_id: userId,
-                    balance: 1,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                  });
-
-                if (insertCreditsError) {
-                  throw new Error('Could not create credits record');
-                }
+                console.log('User already claimed video bonus previously');
+                videoUploaded = false;
               }
             }
           } catch (videoError) {
@@ -687,6 +713,8 @@
         let successMessage = '🎉 Congratulations! Your book is verified and you now have access to exclusive book owner pricing.';
         if (videoUploaded) {
           successMessage += ' Plus, we have added 1 free song credit to your account as a thank you for sharing your video! 🎁';
+        } else if (videoFile) {
+          successMessage += ' Your video was uploaded successfully. (Note: The bonus credit is a one-time reward that you have already claimed previously.)';
         }
         
         showMessage(successMessage, 'success');
@@ -706,12 +734,4 @@
     });
 
     function showMessage(text, type) {
-      const messageArea = document.getElementById('messageArea');
-      const className = type === 'success' ? 'success-text' : 'error-text';
-      messageArea.innerHTML = '<p class="' + className + '">' + text + '</p>';
-    }
-
-    checkAuth();
-  </script>
-</body>
-</html>
+      const messageA
