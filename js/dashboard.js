@@ -33,10 +33,10 @@ const BOOK_NAMES = {
 
 // Book cover images mapping
 const BOOK_COVERS = {
-    'soulful': 'https://m.media-amazon.com/images/I/71gqaLE+vJL._SY466_.jpg',
-    'peppy': 'https://m.media-amazon.com/images/I/71EMe3FhqEL._SY466_.jpg',
-    'romantic': 'https://m.media-amazon.com/images/I/71W8yn5NQNL._SY466_.jpg',
-    'classic': 'https://m.media-amazon.com/images/I/71rT7Yvo-8L._SY466_.jpg'
+  soulful: 'Soulful.jpg',
+  peppy: 'Peppy.jpg',
+  romantic: 'Romantic.jpg',
+  classic: 'classic.jpg'
 };
 
 // Song to Book category mapping
