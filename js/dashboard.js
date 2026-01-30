@@ -97,12 +97,12 @@ const welcomeEl = document.getElementById('welcomeText');
 if (welcomeEl) {
   welcomeEl.textContent = displayName ? `Welcome, ${displayName}` : 'Welcome';
 }
+await loadProfileAvatar(user.id);
+setupAvatarUpload(user.id);
 
 // Optional: you can keep userEmail empty or hide it
 const userEmailEl = document.getElementById('userEmail');
 if (userEmailEl) userEmailEl.textContent = '';
-
-        setAvatar(DEFAULT_AVATAR);
 
         // Load all dashboard data
         await Promise.all([
@@ -116,6 +116,97 @@ if (userEmailEl) userEmailEl.textContent = '';
         console.error('Dashboard init error:', error);
         alert('Failed to load dashboard. Please refresh the page.');
     }
+}
+async function loadProfileAvatar(userId) {
+  try {
+    const { data: profile, error } = await window.supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single();
+
+    if (error) throw error;
+
+    // If user uploaded an avatar, use it. Otherwise default.
+const saved = profile?.avatar_url;
+setAvatar(saved ? `${saved}?v=${Date.now()}` : DEFAULT_AVATAR);
+
+  } catch (err) {
+    console.error('Error loading avatar:', err);
+    setAvatar(DEFAULT_AVATAR);
+  }
+}
+
+function setupAvatarUpload(userId) {
+  const btn = document.getElementById('changeAvatarBtn');
+  const input = document.getElementById('avatarInput');
+
+  if (!btn || !input) return;
+
+  btn.addEventListener('click', () => input.click());
+
+  input.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Basic checks
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file.');
+      input.value = '';
+      return;
+    }
+
+    const maxMB = 3;
+    if (file.size > maxMB * 1024 * 1024) {
+      alert(`Please upload an image smaller than ${maxMB}MB.`);
+      input.value = '';
+      return;
+    }
+
+    try {
+      // Instant preview
+      const previewUrl = URL.createObjectURL(file);
+      setAvatar(previewUrl);
+
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const filePath = `${userId}/avatar.${ext}`; // overwrite each time
+
+      // Upload to Storage
+      const { error: uploadError } = await window.supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Public URL (bucket is public)
+      const { data: publicData } = window.supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+const baseUrl = publicData?.publicUrl;
+const publicUrl = baseUrl ? `${baseUrl}?v=${Date.now()}` : null;
+
+      if (!publicUrl) throw new Error('Could not get public URL');
+
+      // Save URL in profiles
+      const { error: updateError } = await window.supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      // Use final URL (not blob)
+      setAvatar(publicUrl);
+      alert('Profile photo updated!');
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+      alert('Failed to upload profile photo. Please try again.');
+      setAvatar(DEFAULT_AVATAR);
+    } finally {
+      input.value = '';
+    }
+  });
 }
 
 // ✅ UPDATED: Load statistics with both credit types
