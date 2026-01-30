@@ -1,668 +1,431 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Dashboard - Classic Bollywood Melodies</title>
-
-  <!-- Fonts (same vibe as your theme) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root{
-      --bg: #ffffff;
-      --surface: rgba(255,255,255,0.82);
-      --surface2: rgba(255,255,255,0.68);
-      --text: #1A1A1F;
-      --muted: rgba(26,26,31,0.70);
-      --border: rgba(140, 120, 160, 0.18);
-      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
-      --shadowHover: 0 24px 55px rgba(22, 10, 35, 0.13);
-
-      --accent1: rgba(255,120,160,0.28);
-      --accent2: rgba(155,110,255,0.26);
-      --accent3: rgba(255,80,90,0.16);
-      --accent4: rgba(255,90,210,0.14);
-
-      --brand: #2b1140;
-      --primaryBorder: rgba(155,110,255,0.30);
-
-      --radius: 22px;
-      --radiusSm: 16px;
-    }
-
-    *{ box-sizing: border-box; }
-    html,body{ height: 100%; }
-
-    body{
-      margin: 0;
-      min-height: 100vh;
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-
-      background:
-        radial-gradient(900px 520px at 20% 0%, var(--accent1), transparent 60%),
-        radial-gradient(900px 520px at 85% 10%, var(--accent2), transparent 62%),
-        radial-gradient(780px 480px at 50% 80%, var(--accent3), transparent 60%),
-        radial-gradient(520px 320px at 35% 55%, var(--accent4), transparent 60%),
-        var(--bg);
-
-      padding: 26px 18px 70px;
-      overflow-x: hidden;
-    }
-
-    /* cursor glitter canvas */
-    #glitter{
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
-      pointer-events: none;
-      mix-blend-mode: screen;
-    }
-
-    .container{
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    /* Top banner */
-    .banner{
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
-    }
-
-    .banner .banner-link{
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: 22px;
-      letter-spacing: 0.7px;
-      color: inherit;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 12px;
-    }
-
-    .banner .banner-link:hover{
-      text-decoration: underline;
-    }
-
-    /* Header card */
-    .header{
-      margin-top: 18px;
-      border-radius: var(--radius);
-      padding: 22px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .header::before{
-      content:"";
-      position:absolute;
-      inset:-80px -90px auto auto;
-      width: 250px;
-      height: 250px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%,
-        rgba(255,120,160,0.40),
-        rgba(155,110,255,0.28),
-        rgba(255,90,210,0.18),
-        transparent 62%);
-      pointer-events:none;
-    }
-
-    .header > *{ position: relative; z-index: 1; }
-
-    .header h1{
-      margin: 0 0 6px;
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: clamp(30px, 4vw, 44px);
-      letter-spacing: -0.02em;
-    }
-
-    .header .sub{
-      margin: 0;
-      color: var(--muted);
-      font-size: 14.5px;
-      line-height: 1.6;
-    }
-
-    .header .user-email{
-      margin-top: 10px;
-      display: inline-flex;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.55);
-      font-size: 13px;
-      color: rgba(26,26,31,0.78);
-    }
-
-    /* Stats */
-    .stats-grid{
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin: 16px 0 18px;
-    }
-
-    @media (max-width: 980px){
-      .stats-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 520px){
-      .stats-grid{ grid-template-columns: 1fr; }
-    }
-
-    .stat-card{
-      border-radius: var(--radius);
-      padding: 18px 16px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-      position: relative;
-      overflow: hidden;
-      min-height: 110px;
-    }
-
-    .stat-card:hover{
-      transform: translateY(-2px);
-      box-shadow: var(--shadowHover);
-      border-color: var(--primaryBorder);
-    }
-
-    .stat-card::before{
-      content:"";
-      position:absolute;
-      left:-120px;
-      bottom:-140px;
-      width: 260px;
-      height: 260px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 60% 40%,
-        rgba(255,80,90,0.20),
-        rgba(255,120,160,0.16),
-        transparent 62%);
-      pointer-events:none;
-      opacity: .9;
-    }
-
-    .stat-card > *{ position: relative; z-index: 1; }
-
-    .stat-card .number{
-      font-size: 40px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
-      color: #2b1140;
-    }
-
-    .stat-card .label{
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(26,26,31,0.70);
-      font-weight: 700;
-    }
-
-    /* Credits card special gradient */
-    .stat-card.credits{
-      background:
-        linear-gradient(135deg,
-          rgba(255,120,160,0.30),
-          rgba(155,110,255,0.22),
-          rgba(255,90,210,0.16));
-      border-color: rgba(155,110,255,0.30);
-    }
-    .stat-card.credits .number,
-    .stat-card.credits .label{
-      color: #2b1140;
-    }
-
-    /* Sections */
-    .section{
-      border-radius: var(--radius);
-      padding: 20px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-
-    .section:hover{
-      border-color: rgba(155,110,255,0.26);
-    }
-
-    .section h2{
-      margin: 0 0 14px;
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: 26px;
-      letter-spacing: -0.01em;
-    }
-
-    .section .section-sub{
-      margin: -6px 0 14px;
-      color: var(--muted);
-      font-size: 13.5px;
-    }
-
-    /* Song list & items */
-    .song-list{ display: grid; gap: 12px; }
-
-    .song-item{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(140,120,160,0.16);
-      background: rgba(255,255,255,0.62);
-      box-shadow: 0 10px 26px rgba(22,10,35,0.06);
-      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .song-item:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 18px 40px rgba(22,10,35,0.10);
-      border-color: rgba(155,110,255,0.28);
-    }
-
-    .song-item::before{
-      content:"";
-      position:absolute;
-      inset:-70px -80px auto auto;
-      width: 220px;
-      height: 220px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%,
-        rgba(155,110,255,0.22),
-        rgba(255,120,160,0.18),
-        transparent 62%);
-      pointer-events:none;
-      opacity:.9;
-    }
-    .song-item > *{ position: relative; z-index: 1; }
-
-    .song-info{ flex: 1; min-width: 0; }
-    .song-title{
-      font-weight: 800;
-      color: rgba(26,26,31,0.92);
-      margin-bottom: 4px;
-      font-size: 16px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-meta{
-      font-size: 13px;
-      color: rgba(26,26,31,0.66);
-      line-height: 1.45;
-    }
-
-    .song-actions{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      flex: 0 0 auto;
-    }
-
-    .progress-selector{
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .progress-btn{
-      padding: 8px 12px;
-      border: 1px solid rgba(155,110,255,0.22);
-      background: rgba(255,255,255,0.70);
-      border-radius: 999px;
-      cursor: pointer;
-      font-size: 11.5px;
-      transition: transform 0.14s ease, filter 0.14s ease, border-color 0.14s ease;
-      text-transform: uppercase;
-      font-weight: 800;
-      color: rgba(43,17,64,0.86);
-      backdrop-filter: blur(10px);
-      white-space: nowrap;
-    }
-
-    .progress-btn:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.02);
-      border-color: rgba(155,110,255,0.36);
-    }
-
-    .progress-btn.active{
-      border-color: rgba(155,110,255,0.40);
-      background:
-        linear-gradient(135deg,
-          rgba(255,120,160,0.26),
-          rgba(155,110,255,0.20),
-          rgba(255,90,210,0.14));
-      color: #2b1140;
-    }
-
-    .progress-btn.not_started.active{
-      background: linear-gradient(135deg, rgba(108,117,125,0.20), rgba(108,117,125,0.12));
-      border-color: rgba(108,117,125,0.32);
-      color: rgba(26,26,31,0.82);
-    }
-    .progress-btn.in_progress.active{
-      background: linear-gradient(135deg, rgba(255,193,7,0.24), rgba(255,193,7,0.12));
-      border-color: rgba(255,193,7,0.36);
-      color: rgba(26,26,31,0.86);
-    }
-    .progress-btn.completed.active{
-      background: linear-gradient(135deg, rgba(40,167,69,0.22), rgba(40,167,69,0.12));
-      border-color: rgba(40,167,69,0.36);
-      color: rgba(26,26,31,0.86);
-    }
-
-    .play-btn{
-      padding: 10px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(155,110,255,0.30);
-      background:
-        linear-gradient(135deg,
-          rgba(255,120,160,0.26),
-          rgba(155,110,255,0.20),
-          rgba(255,90,210,0.14));
-      cursor: pointer;
-      font-weight: 900;
-      color: var(--brand);
-      transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
-      white-space: nowrap;
-    }
-
-    .play-btn:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-      box-shadow: 0 18px 44px rgba(22,10,35,0.12);
-    }
-
-    /* Purchases */
-    .purchase-item{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(140,120,160,0.16);
-      background: rgba(255,255,255,0.62);
-      box-shadow: 0 10px 26px rgba(22,10,35,0.06);
-    }
-
-    .purchase-date{
-      font-size: 13px;
-      color: rgba(26,26,31,0.64);
-    }
-    .purchase-amount{
-      font-weight: 900;
-      color: rgba(43,17,64,0.92);
-    }
-
-    .book-badge{
-      display: inline-flex;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      margin: 6px 6px 0 0;
-      border: 1px solid rgba(40,167,69,0.28);
-      background: linear-gradient(135deg, rgba(40,167,69,0.18), rgba(40,167,69,0.10));
-      color: rgba(26,26,31,0.86);
-      backdrop-filter: blur(10px);
-    }
-
-    .empty-state{
-      text-align: center;
-      padding: 44px 18px;
-      color: rgba(26,26,31,0.60);
-    }
-
-    .empty-state-icon{
-      font-size: 56px;
-      margin-bottom: 10px;
-    }
-
-    .loading{
-      text-align: center;
-      padding: 26px;
-      color: rgba(43,17,64,0.80);
-      font-weight: 700;
-    }
-
-    /* Mobile layout for song items */
-    @media (max-width: 820px){
-      .song-item{
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .song-actions{
-        width: 100%;
-        justify-content: space-between;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-      .progress-selector{
-        justify-content: flex-start;
-      }
-      .play-btn{
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- glitter cursor canvas -->
-  <canvas id="glitter" aria-hidden="true"></canvas>
-
-  <div class="container">
-    <header class="banner">
-      <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/" target="_blank" rel="noopener">
-        Ria Om Shandilya
-      </a>
-    </header>
-
-    <div class="header">
-      <h1>🎵 My Dashboard</h1>
-      <p class="sub">Track your songs, progress, and purchases.</p>
-      <div class="user-email" id="userEmail">Loading...</div>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="number" id="totalSongs">0</div>
-        <div class="label">Total Songs</div>
-      </div>
-      <div class="stat-card">
-        <div class="number" id="completedSongs">0</div>
-        <div class="label">Completed</div>
-      </div>
-      <div class="stat-card">
-        <div class="number" id="inProgressSongs">0</div>
-        <div class="label">In Progress</div>
-      </div>
-      <div class="stat-card credits">
-        <div class="number" id="creditsRemaining">0</div>
-        <div class="label">Credits Remaining</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Book Verification Status</h2>
-      <p class="section-sub">Your verified books show up here.</p>
-      <div id="bookStatus">
-        <div class="loading">Loading...</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>My Songs</h2>
-      <p class="section-sub">Update progress or jump into practice.</p>
-      <div id="songsList">
-        <div class="loading">Loading your songs...</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Purchase History</h2>
-      <p class="section-sub">Your credit purchases and dates.</p>
-      <div id="purchaseHistory">
-        <div class="loading">Loading purchases...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <script>
-    // Initialize Supabase client
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('✅ Supabase initialized:', window.supabase);
-  </script>
-  
-  <script src="js/dashboard.js"></script>
-  
-  <!-- Glitter cursor (copied behavior, minimal + classy) -->
-  <script>
-    (function(){
-      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      const canvas = document.getElementById('glitter');
-      const ctx = canvas.getContext('2d', { alpha: true });
-
-      function resize(){
-        canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
-        canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
-        canvas.style.width = window.innerWidth + 'px';
-        canvas.style.height = window.innerHeight + 'px';
-        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-      }
-      window.addEventListener('resize', resize);
-      resize();
-
-      const particles = [];
-      const MAX = 320;
-
-      function addSpark(x, y, intensity=1){
-        if(prefersReduced) return;
-
-        const count = Math.floor(7 * intensity);
-        for(let i=0;i<count;i++){
-          if(particles.length > MAX) particles.shift();
-
-          const angle = Math.random() * Math.PI * 2;
-          const speed = (0.30 + Math.random() * 2.0) * intensity;
-
-          particles.push({
-            x, y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 0.20,
-            life: 34 + Math.random() * 30,
-            size: 1.0 + Math.random() * 2.8,
-            tw: Math.random() * Math.PI * 2,
-            alpha: 0.52 + Math.random() * 0.34
-          });
+// Song ID to Display Name mapping
+const SONG_NAMES = {
+    'song:badeacche': 'Bade Achhe Lagte Hain',
+    'song:kalho': 'Kal Ho Naa Ho',
+    'song:haiapna': 'Hai Apna Dil Toh Awaara',
+    'song:ekladki': 'Ek Ladki Bheegi Bhaagi Si',
+    'song:gulaabi': 'Gulaabi Aankhen',
+    'song:chookar': 'Chookar Mere Mann Ko',
+    'song:aaogejab': 'Aaoge Jab Tum Sajna',
+    'song:jashnebahaara': 'Jashn-e-Bahaara',
+    'song:goregore': 'Gore Gore Mukhde Pe',
+    'song:darling': 'Darling',
+    'song:allahkebande': 'Allah Ke Bande',
+    'song:palpalharpal': 'Pal Pal Har Pal',
+    'song:zoobiedoobie': 'Zoobie Doobie',
+    'song:meresaamne': 'Mere Saamne Wali Khidki',
+    'song:jaanekahan': 'Jaane Kahan Gaye Woh Din',
+    'song:aajkal': 'Aaj Kal Tere Mere Pyaar Ke Charche',
+    'song:aehairate': 'Ae Hairate Aashiqui',
+    'song:piyubole': 'Piyu Bole',
+    'song:raatkali': 'Raat Kali Ek Khwaab Mein Aayi',
+    'song:khwaabho': 'Khwaabho Ke Parindey',
+    'song:kaisipaheli': 'Kaisi Paheli Zindagani'
+};
+
+// Book name mapping
+const BOOK_NAMES = {
+    'soulful': 'Soulful Bollywood Melodies',
+    'peppy': 'Peppy Bollywood Melodies',
+    'romantic': 'Romantic Bollywood Melodies',
+    'classic': 'Classic Bollywood Melodies'
+};
+
+// Song to Book category mapping
+const SONG_CATEGORIES = {
+    'song:meresaamne': 'romantic',
+    'song:jaanekahan': 'peppy',
+    'song:aajkal': 'romantic',
+    'song:aehairate': 'soulful',
+    'song:piyubole': 'romantic',
+    'song:raatkali': 'romantic',
+    'song:khwaabho': 'romantic',
+    'song:kaisipaheli': 'peppy',
+    'song:jashnebahaara': 'soulful',
+    'song:goregore': 'peppy',
+    'song:darling': 'peppy',
+    'song:allahkebande': 'soulful',
+    'song:badeacche': 'romantic',
+    'song:kalho': 'classic',
+    'song:palpalharpal': 'peppy',
+    'song:zoobiedoobie': 'peppy',
+    'song:ekladki': 'classic',
+    'song:haiapna': 'classic',
+    'song:gulaabi': 'classic',
+    'song:chookar': 'classic',
+    'song:aaogejab': 'classic'
+};
+
+// Wait for Supabase to be ready
+async function initDashboard() {
+    try {
+        // Check if user is logged in
+        const { data: { user }, error } = await window.supabase.auth.getUser();
+        
+        if (error || !user) {
+            window.location.href = '/'; // Redirect to home if not logged in
+            return;
         }
-      }
 
-      let last = { x: window.innerWidth/2, y: window.innerHeight/2 };
-      window.addEventListener('pointermove', (e) => {
-        const dx = e.clientX - last.x;
-        const dy = e.clientY - last.y;
-        const d = Math.min(34, Math.hypot(dx, dy));
-        const intensity = Math.max(0.75, d / 16);
-        addSpark(e.clientX, e.clientY, intensity);
-        last = { x: e.clientX, y: e.clientY };
-      }, { passive: true });
+        // Get user's display name
+        const { data: profile } = await window.supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', user.id)
+            .single();
 
-      window.addEventListener('pointerdown', (e) => addSpark(e.clientX, e.clientY, 1.9), { passive: true });
+        const displayName = profile?.display_name || user.email.split('@')[0];
+        document.getElementById('userEmail').textContent = `👋 ${displayName}`;
 
-      function tick(){
-        ctx.clearRect(0,0,canvas.width,canvas.height);
+        // Load all dashboard data
+        await Promise.all([
+            loadStats(user.id),
+            loadBookStatus(user.id),
+            loadSongs(user.id),
+            loadPurchaseHistory(user.id)
+        ]);
 
-        for(let i=particles.length-1;i>=0;i--){
-          const p = particles[i];
-          p.life -= 1;
-          if(p.life <= 0){ particles.splice(i,1); continue; }
+    } catch (error) {
+        console.error('Dashboard init error:', error);
+        alert('Failed to load dashboard. Please refresh the page.');
+    }
+}
 
-          p.vx *= 0.986;
-          p.vy *= 0.986;
-          p.vy += 0.018;
+// ✅ UPDATED: Load statistics with both credit types
+async function loadStats(userId) {
+    try {
+        // Get total songs purchased
+        const { data: purchases, error: purchasesError } = await window.supabase
+            .from('purchases')
+            .select('song_id, credits_remaining')
+            .eq('user_id', userId)
+            .eq('status', 'paid');
 
-          p.x += p.vx;
-          p.y += p.vy;
+        if (purchasesError) throw purchasesError;
 
-          p.tw += 0.22;
-          const twinkle = 0.62 + Math.sin(p.tw) * 0.38;
-          const fade = Math.min(1, p.life / 44);
-          const a = p.alpha * fade * twinkle;
+        // Count unique songs (exclude pack:5 and bundle_credits)
+        const uniqueSongs = new Set(
+            purchases
+                .filter(p => p.song_id !== 'bundle_credits' && p.song_id !== 'pack:5')
+                .map(p => p.song_id)
+        );
 
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 191, 47, ${a})`;
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-          ctx.fill();
+        // Calculate bundle credits (from purchases table)
+        const bundleCredits = purchases
+            .filter(p => p.credits_remaining > 0)
+            .reduce((sum, p) => sum + p.credits_remaining, 0);
 
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 255, 255, ${a * 0.55})`;
-          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
-          ctx.fill();
+        // ✅ NEW: Get book bonus credits (from user_credits table)
+        const { data: bookCreditsData } = await window.supabase
+            .from('user_credits')
+            .select('balance')
+            .eq('user_id', userId)
+            .single();
 
-          if(Math.random() < 0.24){
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.tw * 0.35);
-            ctx.globalAlpha = a * 0.90;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${a})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
-            ctx.moveTo(0, -p.size*2.2); ctx.lineTo(0, p.size*2.2);
-            ctx.stroke();
-            ctx.restore();
-          }
+        const bookCredits = bookCreditsData?.balance || 0;
+
+        // Total credits = bundle + book bonus
+        const totalCredits = bundleCredits + bookCredits;
+
+        // Get progress data
+        const { data: progress, error: progressError } = await window.supabase
+            .from('song_progress')
+            .select('status')
+            .eq('user_id', userId);
+
+        if (progressError) throw progressError;
+
+        const completed = progress.filter(p => p.status === 'completed').length;
+        const inProgress = progress.filter(p => p.status === 'in_progress').length;
+
+        // Update UI
+        document.getElementById('totalSongs').textContent = uniqueSongs.size;
+        document.getElementById('completedSongs').textContent = completed;
+        document.getElementById('inProgressSongs').textContent = inProgress;
+        
+        // ✅ Show total credits with breakdown on hover
+        const creditsEl = document.getElementById('creditsRemaining');
+        creditsEl.textContent = totalCredits;
+        
+        if (bundleCredits > 0 || bookCredits > 0) {
+            creditsEl.title = `Bundle: ${bundleCredits} | Book Bonus: ${bookCredits}`;
         }
-        requestAnimationFrame(tick);
-      }
-      tick();
-    })();
-  </script>
-</body>
-</html>
+
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// ✅ UPDATED: Load book verification status with better display
+async function loadBookStatus(userId) {
+    try {
+        const { data: profile, error } = await window.supabase
+            .from('profiles')
+            .select('is_book_owner, books_owned')
+            .eq('id', userId)
+            .single();
+
+        if (error) throw error;
+
+        // Also check for book bonus credits
+        const { data: creditsData } = await window.supabase
+            .from('user_credits')
+            .select('balance')
+            .eq('user_id', userId)
+            .single();
+
+        const bookCredits = creditsData?.balance || 0;
+
+        const container = document.getElementById('bookStatus');
+
+        if (!profile.is_book_owner || !profile.books_owned || profile.books_owned.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📖</div>
+                    <p>You haven't verified any books yet.</p>
+                    <a href="verify-book.html" style="
+                        display: inline-block;
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+                        color: #2b1140;
+                        font-weight: 700;
+                        border-radius: 14px;
+                        text-decoration: none;
+                        margin-top: 10px;
+                    ">Verify Your Book</a>
+                </div>
+            `;
+        } else {
+            const badges = profile.books_owned
+                .map(book => `<span class="book-badge">✓ ${BOOK_NAMES[book] || book}</span>`)
+                .join('');
+            
+            const creditBadge = bookCredits > 0 
+                ? `<div style="margin-top: 15px; padding: 12px; background: rgba(255,200,100,0.15); border: 1px solid rgba(255,200,100,0.3); border-radius: 12px;">
+                     <strong>🎁 Book Bonus Credits: ${bookCredits}</strong>
+                     <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">
+                       Earned from video reviews
+                     </div>
+                   </div>`
+                : '';
+
+            container.innerHTML = `
+                <div style="padding: 20px;">
+                    <p style="margin-bottom: 15px; color: #666;">You own these books and get discounted pricing:</p>
+                    ${badges}
+                    ${creditBadge}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading book status:', error);
+        document.getElementById('bookStatus').innerHTML = '<p style="color: red;">Error loading book status</p>';
+    }
+}
+
+// Load songs with progress
+async function loadSongs(userId) {
+    try {
+        // Get all purchased songs
+        const { data: purchases, error: purchasesError } = await window.supabase
+            .from('purchases')
+            .select('song_id, created_at')
+            .eq('user_id', userId)
+            .eq('status', 'paid')
+            .neq('song_id', 'bundle_credits')
+            .neq('song_id', 'pack:5')
+            .order('created_at', { ascending: false });
+
+        if (purchasesError) throw purchasesError;
+
+        // Get progress for all songs
+        const { data: progressData, error: progressError } = await window.supabase
+            .from('song_progress')
+            .select('song_id, status')
+            .eq('user_id', userId);
+
+        if (progressError) throw progressError;
+
+        // Create progress map
+        const progressMap = {};
+        progressData.forEach(p => {
+            progressMap[p.song_id] = p.status;
+        });
+
+        const container = document.getElementById('songsList');
+
+        if (purchases.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎵</div>
+                    <p>You haven't purchased any songs yet.</p>
+                    <a href="/" style="
+                        display: inline-block;
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+                        color: #2b1140;
+                        font-weight: 700;
+                        border-radius: 14px;
+                        text-decoration: none;
+                        margin-top: 10px;
+                    ">Browse Songs</a>
+                </div>
+            `;
+            return;
+        }
+
+        // Render songs
+        container.innerHTML = purchases.map(purchase => {
+            const songId = purchase.song_id;
+            const songName = SONG_NAMES[songId] || songId.replace('song:', '');
+            const category = SONG_CATEGORIES[songId];
+            const bookName = category ? BOOK_NAMES[category] : 'Unknown Book';
+            const currentStatus = progressMap[songId] || 'not_started';
+            const purchaseDate = new Date(purchase.created_at).toLocaleDateString();
+
+            return `
+                <div class="song-item" data-song-id="${songId}">
+                    <div class="song-info">
+                        <div class="song-title">${songName}</div>
+                        <div class="song-meta">From: ${bookName} • Purchased: ${purchaseDate}</div>
+                    </div>
+                    <div class="song-actions">
+                        <div class="progress-selector">
+                            <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}" 
+                                    onclick="updateProgress('${songId}', 'not_started')">
+                                Not Started
+                            </button>
+                            <button class="progress-btn in_progress ${currentStatus === 'in_progress' ? 'active' : ''}" 
+                                    onclick="updateProgress('${songId}', 'in_progress')">
+                                In Progress
+                            </button>
+                            <button class="progress-btn completed ${currentStatus === 'completed' ? 'active' : ''}" 
+                                    onclick="updateProgress('${songId}', 'completed')">
+                                Completed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading songs:', error);
+        document.getElementById('songsList').innerHTML = '<p style="color: red;">Error loading songs</p>';
+    }
+}
+
+// Update song progress
+async function updateProgress(songId, newStatus) {
+    try {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if (!user) return;
+
+        const updateData = {
+            user_id: user.id,
+            song_id: songId,
+            status: newStatus,
+            updated_at: new Date().toISOString()
+        };
+
+        if (newStatus === 'in_progress' && !updateData.started_at) {
+            updateData.started_at = new Date().toISOString();
+        }
+
+        if (newStatus === 'completed') {
+            updateData.completed_at = new Date().toISOString();
+        }
+
+        // Upsert (insert or update)
+        const { error } = await window.supabase
+            .from('song_progress')
+            .upsert(updateData, { onConflict: 'user_id,song_id' });
+
+        if (error) throw error;
+
+        // Update UI
+        const songItem = document.querySelector(`[data-song-id="${songId}"]`);
+        const buttons = songItem.querySelectorAll('.progress-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.toLowerCase().replace(' ', '_') === newStatus) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Reload stats
+        await loadStats(user.id);
+
+    } catch (error) {
+        console.error('Error updating progress:', error);
+        alert('Failed to update progress. Please try again.');
+    }
+}
+
+// ✅ UPDATED: Load purchase history (exclude pack:5 from individual display)
+async function loadPurchaseHistory(userId) {
+    try {
+        const { data: purchases, error } = await window.supabase
+            .from('purchases')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'paid')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const container = document.getElementById('purchaseHistory');
+
+        if (purchases.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">💳</div>
+                    <p>No purchases yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = purchases.map(purchase => {
+            const date = new Date(purchase.created_at).toLocaleDateString();
+            const amount = purchase.amount > 0 
+                ? `${purchase.currency} ${(purchase.amount / 100).toFixed(2)}`
+                : 'FREE';
+            
+            let displayName = '';
+            let badge = '';
+            
+            if (purchase.song_id === 'bundle_credits' || purchase.song_id === 'pack:5') {
+                displayName = '5-Song Bundle';
+                badge = `<span style="font-size: 12px; color: #10b981;">✓ ${purchase.credits_remaining || 5} credits</span>`;
+            } else if (purchase.provider === 'credit_redemption' || purchase.provider === 'book_bonus_redemption') {
+                displayName = SONG_NAMES[purchase.song_id] || purchase.song_id.replace('song:', '');
+                badge = `<span style="font-size: 12px; color: #f59e0b;">🎁 Redeemed with credit</span>`;
+            } else {
+                displayName = SONG_NAMES[purchase.song_id] || purchase.song_id.replace('song:', '');
+            }
+
+            return `
+                <div class="purchase-item">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 5px;">${displayName}</div>
+                        ${badge ? `<div style="margin-bottom: 4px;">${badge}</div>` : ''}
+                        <div class="purchase-date">${date}</div>
+                    </div>
+                    <div class="purchase-amount">${amount}</div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading purchase history:', error);
+        document.getElementById('purchaseHistory').innerHTML = '<p style="color: red;">Error loading purchases</p>';
+    }
+}
+
+// Initialize when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboard);
+} else {
+    initDashboard();
+}
