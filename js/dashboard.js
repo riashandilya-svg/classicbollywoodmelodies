@@ -63,6 +63,15 @@ const SONG_CATEGORIES = {
     'song:chookar': 'classic',
     'song:aaogejab': 'classic'
 };
+const DEFAULT_AVATAR = 'default-avatar.png';
+
+function setAvatar(src) {
+  const img = document.getElementById('userAvatar');
+  if (!img) return;
+
+  img.src = src || DEFAULT_AVATAR;
+  img.onerror = () => { img.src = DEFAULT_AVATAR; };
+}
 
 // Wait for Supabase to be ready
 async function initDashboard() {
@@ -84,6 +93,7 @@ async function initDashboard() {
 
         const displayName = profile?.display_name || user.email.split('@')[0];
         document.getElementById('userEmail').textContent = `👋 ${displayName}`;
+        setAvatar(DEFAULT_AVATAR);
 
         // Load all dashboard data
         await Promise.all([
