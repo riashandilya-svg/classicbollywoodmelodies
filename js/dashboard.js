@@ -169,7 +169,7 @@ function setupAvatarUpload(userId) {
       setAvatar(previewUrl);
 
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const filePath = `${userId}/avatar.${ext}`; // overwrite each time
+const filePath = `${userId}/avatar-${Date.now()}.${ext}`; // unique each upload
 
       // Upload to Storage
       const { error: uploadError } = await window.supabase.storage
@@ -183,10 +183,9 @@ function setupAvatarUpload(userId) {
         .from('avatars')
         .getPublicUrl(filePath);
 
-const baseUrl = publicData?.publicUrl;
-const publicUrl = baseUrl ? `${baseUrl}?v=${Date.now()}` : null;
+const publicUrl = publicData?.publicUrl || null;
+if (!publicUrl) throw new Error('Could not get public URL');
 
-      if (!publicUrl) throw new Error('Could not get public URL');
 
       // Save URL in profiles
       const { error: updateError } = await window.supabase
@@ -197,7 +196,8 @@ const publicUrl = baseUrl ? `${baseUrl}?v=${Date.now()}` : null;
       if (updateError) throw updateError;
 
       // Use final URL (not blob)
-      setAvatar(publicUrl);
+setAvatar(`${publicUrl}?v=${Date.now()}`);
+
       alert('Profile photo updated!');
     } catch (err) {
       console.error('Avatar upload failed:', err);
