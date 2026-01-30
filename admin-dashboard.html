@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Ria Om Shandilya</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --primary: #9b6eff;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        var(--bg);
+    }
+
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .banner-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .banner-link {
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+
+    .admin-badge {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(251, 146, 60, 0.2));
+      color: var(--error);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .banner-link:hover {
+      text-decoration: underline;
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px 70px;
+    }
+
+    .header {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.2;
+      margin: 0 0 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      border-radius: 12px;
+      background: white;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--muted);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab:hover {
+      background: rgba(155, 110, 255, 0.05);
+      border-color: var(--primary);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+      color: #2b1140;
+      border-color: var(--primary);
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 32px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      margin-bottom: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .refresh-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(155, 110, 255, 0.05);
+      transform: translateY(-1px);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 4px 0 0;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th {
+      background: rgba(155, 110, 255, 0.08);
+      padding: 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover {
+      background: rgba(155, 110, 255, 0.02);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .badge-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+    }
+
+    .delete-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--error);
+      background: white;
+      color: var(--error);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+      margin-bottom: 24px;
+    }
+
+    .modal-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: var(--error);
+    }
+
+    .modal-subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .warning-box {
+      background: rgba(239, 68, 68, 0.08);
+      border: 2px solid var(--error);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+
+    .warning-box h3 {
+      color: var(--error);
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    .warning-box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--text);
+    }
+
+    .warning-box li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    .confirmation-text {
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 20px 0;
+    }
+
+    .confirmation-step {
+      background: rgba(155, 110, 255, 0.05);
+      border-left: 3px solid var(--primary);
+      padding: 16px 20px;
+      margin: 16px 0;
+      border-radius: 8px;
+    }
+
+    .step-number {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 18px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 650;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-cancel:hover {
+      background: rgba(155, 110, 255, 0.05);
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .code-display {
+      font-family: 'Courier New', monospace;
+      background: rgba(155, 110, 255, 0.05);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .banner {
+        flex-direction: column;
+        height: auto;
+        padding: 12px 16px;
+        gap: 8px;
+      }
+
+      main {
+        padding: 20px 16px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 13px;
+      }
+
+      th, td {
+        padding: 12px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <div class="banner-left">
+      <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+      <span class="admin-badge">⚡ ADMIN</span>
+    </div>
+    <button class="refresh-btn" onclick="location.reload()">↻ Refresh All</button>
+  </header>
+
+  <main>
+    <div class="header">
+      <h1>🎛️ Admin Dashboard</h1>
+      <p class="subtitle">Manage users, track codes, and monitor purchases</p>
+    </div>
+
+    <div id="authCheck" class="loading">
+      <div class="spinner"></div>
+      <p>Verifying admin access...</p>
+    </div>
+
+    <div id="adminContent" class="hidden">
+      <!-- Statistics Overview -->
+      <div class="card">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-box">
+            <div class="stat-value" id="totalUsers">-</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="bookOwners">-</div>
+            <div class="stat-label">Book Owners</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="codesUsed">-</div>
+            <div class="stat-label">Codes Used</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalPurchases">-</div>
+            <div class="stat-label">Total Purchases</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('users')">👥 All Users</button>
+        <button class="tab" onclick="switchTab('codes')">🎫 Book Codes</button>
+        <button class="tab" onclick="switchTab('purchases')">💳 Purchases</button>
+        <button class="tab" onclick="switchTab('bundles')">📦 Bundles</button>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="usersTab" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">👥 All Users</h2>
+            <button class="refresh-btn" onclick="loadUsers()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="userSearch" placeholder="Search by name or email..." onkeyup="filterUsers()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Book Owner</th>
+                  <th>Setup Complete</th>
+                  <th>Books Owned</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr>
+                  <td colspan="7" class="loading">
+                    <div class="spinner"></div>
+                    Loading users...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Codes Tab -->
+      <div id="codesTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🎫 Book Verification Codes</h2>
+            <button class="refresh-btn" onclick="loadCodes()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="codeSearch" placeholder="Search by code or book name..." onkeyup="filterCodes()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Book</th>
+                  <th>Status</th>
+                  <th>Used By</th>
+                  <th>Generated At</th>
+                  <th>Used At</th>
+                </tr>
+              </thead>
+              <tbody id="codesTableBody">
+                <tr>
+                  <td colspan="6" class="loading">
+                    <div class="spinner"></div>
+                    Loading codes...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchases Tab -->
+      <div id="purchasesTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💳 All Purchases</h2>
+            <button class="refresh-btn" onclick="loadPurchases()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by user email or song ID..." onkeyup="filterPurchases()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>User Email</th>
+                  <th>Song ID</th>
+                  <th>Amount</th>
+                  <th>Credits Remaining</th>
+                  <th>Purchase Date</th>
+                </tr>
+              </thead>
+              <tbody id="purchasesTableBody">
+                <tr>
+                  <td colspan="5" class="loading">
+                    <div class="spinner"></div>
+                    Loading purchases...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bundles Tab -->
+      <div id="bundlesTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📦 Bundle Credits Usage</h2>
+            <button class="refresh-btn" onclick="loadBundles()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="bundleSearch" placeholder="Search by user email..." onkeyup="filterBundles()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>User Email</th>
+                  <th>Credits Remaining</th>
+                  <th>Purchase Date</th>
+                </tr>
+              </thead>
+              <tbody id="bundlesTableBody">
+                <tr>
+                  <td colspan="3" class="loading">
+                    <div class="spinner"></div>
+                    Loading bundles...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Delete User Modal -->
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">⚠️ Delete User Account</h2>
+        <p class="modal-subtitle">This action cannot be undone</p>
+      </div>
+
+      <div id="confirmStep1" class="confirmation-step">
+        <p class="step-number">Step 1 of 3</p>
+        <p class="confirmation-text">
+          You are about to permanently delete the user: <strong id="deleteUserName"></strong> (<span id="deleteUserEmail"></span>)
+        </p>
+        <div class="warning-box">
+          <h3>⚠️ This will permanently delete:</h3>
+          <ul>
+            <li>User account and profile data</li>
+            <li>All purchase history</li>
+            <li>All song downloads</li>
+            <li>Book verification status</li>
+            <li>Credit balances</li>
+          </ul>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmStep2()">Continue to Step 2</button>
+        </div>
+      </div>
+
+      <div id="confirmStep2" class="confirmation-step hidden">
+        <p class="step-number">Step 2 of 3</p>
+        <p class="confirmation-text">
+          Are you absolutely sure you want to delete this user?<br>
+          <strong>This will erase all their data permanently.</strong>
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn btn-danger" onclick="confirmStep3()">Yes, Continue to Step 3</button>
+        </div>
+      </div>
+
+      <div id="confirmStep3" class="confirmation-step hidden">
+        <p class="step-number">Step 3 of 3 - FINAL CONFIRMATION</p>
+        <p class="confirmation-text">
+          <strong style="color: var(--error); font-size: 18px;">LAST CHANCE TO CANCEL!</strong><br><br>
+          This is your final warning. Once you click "DELETE FOREVER", the user and all their data will be permanently erased from the database.
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel - Don't Delete</button>
+          <button class="btn btn-danger" id="finalDeleteBtn" onclick="deleteUserForever()">DELETE FOREVER</button>
+        </div>
+      </div>
+
+      <div id="deletingStep" class="confirmation-step hidden">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Deleting user and all associated data...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // IMPORTANT: Add your admin email here
+    const ADMIN_EMAIL = "riaomshandilya@gmail.com"; // CHANGE THIS TO YOUR EMAIL
+
+    let allUsers = [];
+    let allCodes = [];
+    let allPurchases = [];
+    let allBundles = [];
+    let userToDelete = null;
+
+    // Check if current user is admin
+    async function checkAdminAccess() {
+      try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        
+        const authCheck = document.getElementById('authCheck');
+        const adminContent = document.getElementById('adminContent');
+
+        if (error || !session) {
+          authCheck.innerHTML = '<p style="color: var(--error); font-size: 18px;">Access Denied: Not logged in</p>';
+          return;
+        }
+
+        const userEmail = session.user.email;
+
+        if (userEmail !== ADMIN_EMAIL) {
+          authCheck.innerHTML = '<p style="color: var(--error); font-size: 18px;">⛔ Access Denied: You are not an admin</p>';
+          return;
+        }
+
+        // Admin verified
+        authCheck.classList.add('hidden');
+        adminContent.classList.remove('hidden');
+        
+        // Load all data
+        loadStats();
+        loadUsers();
+        loadCodes();
+        loadPurchases();
+        loadBundles();
+
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('authCheck').innerHTML = '<p style="color: var(--error);">An error occurred</p>';
+      }
+    }
+
+    // Load statistics
+    async function loadStats() {
+      try {
+        // Total users
+        const { count: totalUsers } = await window.supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        
+        document.getElementById('totalUsers').textContent = totalUsers || 0;
+
+        // Book owners
+        const { count: bookOwners } = await window.supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_book_owner', true);
+        
+        document.getElementById('bookOwners').textContent = bookOwners || 0;
+
+        // Codes used
+        const { count: codesUsed } = await window.supabase
+          .from('book_verification_codes')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_used', true);
+        
+        document.getElementById('codesUsed').textContent = codesUsed || 0;
+
+        // Total purchases
+        const { count: totalPurchases } = await window.supabase
+          .from('purchases')
+          .select('*', { count: 'exact', head: true });
+        
+        document.getElementById('totalPurchases').textContent = totalPurchases || 0;
+
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Load all users
+    async function loadUsers() {
+      try {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '<tr><td colspan="7" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
+
+        const { data: profiles, error: profilesError } = await window.supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (profilesError) throw profilesError;
+
+        // Get emails from auth.users
+        const { data: { users }, error: usersError } = await window.supabase.auth.admin.listUsers();
+
+        if (usersError) {
+          console.error('Could not fetch user emails:', usersError);
+        }
+
+        // Merge profile data with email data
+        allUsers = profiles.map(profile => {
+          const authUser = users?.find(u => u.id === profile.id);
+          return {
+            ...profile,
+            email: authUser?.email || 'N/A'
+          };
+        });
+
+        renderUsers();
+
+      } catch (error) {
+        console.error('Error loading users:', error);
+        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7" style="color: var(--error); text-align: center; padding: 40px;">Error loading users</td></tr>';
+      }
+    }
+
+    function renderUsers() {
+      const tbody = document.getElementById('usersTableBody');
+      
+      if (allUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = allUsers.map(user => `
+        <tr>
+          <td><strong>${user.display_name || 'N/A'}</strong></td>
+          <td>${user.email}</td>
+          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+          <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
+          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>
+            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user)})'>
+              🗑️ Delete
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterUsers() {
+      const search = document.getElementById('userSearch').value.toLowerCase();
+      const filtered = allUsers.filter(user => 
+        (user.display_name?.toLowerCase().includes(search)) ||
+        (user.email?.toLowerCase().includes(search))
+      );
+      
+      const tbody = document.getElementById('usersTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match your search</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(user => `
+        <tr>
+          <td><strong>${user.display_name || 'N/A'}</strong></td>
+          <td>${user.email}</td>
+          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
+          <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
+          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>
+            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user)})'>
+              🗑️ Delete
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Load verification codes
+    async function loadCodes() {
+      try {
+        const tbody = document.getElementById('codesTableBody');
+        tbody.innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading codes...</td></tr>';
+
+        const { data: codes, error } = await window.supabase
+          .from('book_verification_codes')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Get user emails for used codes
+        const userIds = codes.filter(c => c.used_by_user_id).map(c => c.used_by_user_id);
+        const { data: { users } } = await window.supabase.auth.admin.listUsers();
+
+        allCodes = codes.map(code => {
+          const user = users?.find(u => u.id === code.used_by_user_id);
+          return {
+            ...code,
+            user_email: user?.email || 'N/A'
+          };
+        });
+
+        renderCodes();
+
+      } catch (error) {
+        console.error('Error loading codes:', error);
+        document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="6" style="color: var(--error); text-align: center; padding: 40px;">Error loading codes</td></tr>';
+      }
+    }
+
+    function renderCodes() {
+      const tbody = document.getElementById('codesTableBody');
+      
+      if (allCodes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🎫</div><p>No codes found</p></td></tr>';
+        return;
+      }
+
+      const bookNames = {
+        'soulful': 'Soulful',
+        'peppy': 'Peppy',
+        'romantic': 'Romantic',
+        'classic': 'Classic'
+      };
+
+      tbody.innerHTML = allCodes.map(code => `
+        <tr>
+          <td><span class="code-display">${code.code}</span></td>
+          <td>${bookNames[code.book_name] || code.book_name}</td>
+          <td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td>
+          <td>${code.is_used ? code.user_email : '-'}</td>
+          <td>${new Date(code.created_at).toLocaleString()}</td>
+          <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterCodes() {
+      const search = document.getElementById('codeSearch').value.toLowerCase();
+      const filtered = allCodes.filter(code => 
+        code.code.toLowerCase().includes(search) ||
+        code.book_name.toLowerCase().includes(search)
+      );
+      
+      const tbody = document.getElementById('codesTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🔍</div><p>No codes match your search</p></td></tr>';
+        return;
+      }
+
+      const bookNames = {
+        'soulful': 'Soulful',
+        'peppy': 'Peppy',
+        'romantic': 'Romantic',
+        'classic': 'Classic'
+      };
+
+      tbody.innerHTML = filtered.map(code => `
+        <tr>
+          <td><span class="code-display">${code.code}</span></td>
+          <td>${bookNames[code.book_name] || code.book_name}</td>
+          <td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td>
+          <td>${code.is_used ? code.user_email : '-'}</td>
+          <td>${new Date(code.created_at).toLocaleString()}</td>
+          <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Load purchases
+    async function loadPurchases() {
+      try {
+        const tbody = document.getElementById('purchasesTableBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
+
+        const { data: purchases, error } = await window.supabase
+          .from('purchases')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Get user emails
+        const { data: { users } } = await window.supabase.auth.admin.listUsers();
+
+        allPurchases = purchases.map(purchase => {
+          const user = users?.find(u => u.id === purchase.user_id);
+          return {
+            ...purchase,
+            user_email: user?.email || 'N/A'
+          };
+        });
+
+        renderPurchases();
+
+      } catch (error) {
+        console.error('Error loading purchases:', error);
+        document.getElementById('purchasesTableBody').innerHTML = '<tr><td colspan="5" style="color: var(--error); text-align: center; padding: 40px;">Error loading purchases</td></tr>';
+      }
+    }
+
+    function renderPurchases() {
+      const tbody = document.getElementById('purchasesTableBody');
+      
+      if (allPurchases.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">💳</div><p>No purchases found</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = allPurchases.map(purchase => `
+        <tr>
+          <td>${purchase.user_email}</td>
+          <td><span class="code-display">${purchase.song_id}</span></td>
+          <td>₹${purchase.amount || 'N/A'}</td>
+          <td>${purchase.credits_remaining !== null ? purchase.credits_remaining : 'N/A'}</td>
+          <td>${new Date(purchase.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterPurchases() {
+      const search = document.getElementById('purchaseSearch').value.toLowerCase();
+      const filtered = allPurchases.filter(purchase => 
+        purchase.user_email.toLowerCase().includes(search) ||
+        purchase.song_id.toLowerCase().includes(search)
+      );
+      
+      const tbody = document.getElementById('purchasesTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">🔍</div><p>No purchases match your search</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(purchase => `
+        <tr>
+          <td>${purchase.user_email}</td>
+          <td><span class="code-display">${purchase.song_id}</span></td>
+          <td>₹${purchase.amount || 'N/A'}</td>
+          <td>${purchase.credits_remaining !== null ? purchase.credits_remaining : 'N/A'}</td>
+          <td>${new Date(purchase.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Load bundles
+    async function loadBundles() {
+      try {
+        const tbody = document.getElementById('bundlesTableBody');
+        tbody.innerHTML = '<tr><td colspan="3" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
+
+        const { data: bundles, error } = await window.supabase
+          .from('purchases')
+          .select('*')
+          .eq('song_id', 'bundle_credits')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Get user emails
+        const { data: { users } } = await window.supabase.auth.admin.listUsers();
+
+        allBundles = bundles.map(bundle => {
+          const user = users?.find(u => u.id === bundle.user_id);
+          return {
+            ...bundle,
+            user_email: user?.email || 'N/A'
+          };
+        });
+
+        renderBundles();
+
+      } catch (error) {
+        console.error('Error loading bundles:', error);
+        document.getElementById('bundlesTableBody').innerHTML = '<tr><td colspan="3" style="color: var(--error); text-align: center; padding: 40px;">Error loading bundles</td></tr>';
+      }
+    }
+
+    function renderBundles() {
+      const tbody = document.getElementById('bundlesTableBody');
+      
+      if (allBundles.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundle purchases found</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = allBundles.map(bundle => `
+        <tr>
+          <td>${bundle.user_email}</td>
+          <td><span class="badge badge-success">${bundle.credits_remaining || 0}</span></td>
+          <td>${new Date(bundle.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterBundles() {
+      const search = document.getElementById('bundleSearch').value.toLowerCase();
+      const filtered = allBundles.filter(bundle => 
+        bundle.user_email.toLowerCase().includes(search)
+      );
+      
+      const tbody = document.getElementById('bundlesTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">🔍</div><p>No bundles match your search</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(bundle => `
+        <tr>
+          <td>${bundle.user_email}</td>
+          <td><span class="badge badge-success">${bundle.credits_remaining || 0}</span></td>
+          <td>${new Date(bundle.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+
+      // Show selected tab
+      document.getElementById(tabName + 'Tab').classList.remove('hidden');
+    }
+
+    // Delete user modal functions
+    function openDeleteModal(user) {
+      userToDelete = user;
+      document.getElementById('deleteUserName').textContent = user.display_name || 'Unknown';
+      document.getElementById('deleteUserEmail').textContent = user.email;
+      
+      // Reset to step 1
+      document.getElementById('confirmStep1').classList.remove('hidden');
+      document.getElementById('confirmStep2').classList.add('hidden');
+      document.getElementById('confirmStep3').classList.add('hidden');
+      document.getElementById('deletingStep').classList.add('hidden');
+      
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.add('hidden');
+      userToDelete = null;
+    }
+
+    function confirmStep2() {
+      document.getElementById('confirmStep1').classList.add('hidden');
+      document.getElementById('confirmStep2').classList.remove('hidden');
+    }
+
+    function confirmStep3() {
+      document.getElementById('confirmStep2').classList.add('hidden');
+      document.getElementById('confirmStep3').classList.remove('hidden');
+    }
+
+    async function deleteUserForever() {
+      if (!userToDelete) return;
+
+      document.getElementById('confirmStep3').classList.add('hidden');
+      document.getElementById('deletingStep').classList.remove('hidden');
+
+      try {
+        const userId = userToDelete.id;
+
+        // Delete from purchases
+        await window.supabase
+          .from('purchases')
+          .delete()
+          .eq('user_id', userId);
+
+        // Delete from user_credits
+        await window.supabase
+          .from('user_credits')
+          .delete()
+          .eq('user_id', userId);
+
+        // Update book_verification_codes (set used_by_user_id to null)
+        await window.supabase
+          .from('book_verification_codes')
+          .update({ used_by_user_id: null })
+          .eq('used_by_user_id', userId);
+
+        // Delete from profiles
+        await window.supabase
+          .from('profiles')
+          .delete()
+          .eq('id', userId);
+
+        // Delete from auth.users (requires admin API)
+        const { error: authError } = await window.supabase.auth.admin.deleteUser(userId);
+
+        if (authError) {
+          console.error('Error deleting auth user:', authError);
+          alert('User data deleted but auth account may still exist. Error: ' + authError.message);
+        } else {
+          alert('✅ User permanently deleted successfully!');
+        }
+
+        closeDeleteModal();
+        
+        // Reload data
+        loadStats();
+        loadUsers();
+        loadCodes();
+        loadPurchases();
+        loadBundles();
+
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('❌ Error deleting user: ' + error.message);
+        closeDeleteModal();
+      }
+    }
+
+    // Initialize
+    checkAdminAccess();
+  </script>
+</body>
+</html>
