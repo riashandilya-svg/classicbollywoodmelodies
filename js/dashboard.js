@@ -31,6 +31,14 @@ const BOOK_NAMES = {
     'classic': 'Classic Bollywood Melodies'
 };
 
+// Book cover images mapping
+const BOOK_COVERS = {
+    'soulful': 'https://m.media-amazon.com/images/I/71gqaLE+vJL._SY466_.jpg',
+    'peppy': 'https://m.media-amazon.com/images/I/71EMe3FhqEL._SY466_.jpg',
+    'romantic': 'https://m.media-amazon.com/images/I/71W8yn5NQNL._SY466_.jpg',
+    'classic': 'https://m.media-amazon.com/images/I/71rT7Yvo-8L._SY466_.jpg'
+};
+
 // Song to Book category mapping
 const SONG_CATEGORIES = {
     'song:meresaamne': 'romantic',
@@ -156,12 +164,12 @@ async function loadStats(userId) {
     }
 }
 
-// ✅ UPDATED: Load book verification status with better display
+// ✅ UPDATED: Load book verification status with images and add-to-collection feature
 async function loadBookStatus(userId) {
     try {
         const { data: profile, error } = await window.supabase
             .from('profiles')
-            .select('is_book_owner, books_owned')
+            .select('is_book_owner, books_owned, video_bonus_claimed')
             .eq('id', userId)
             .single();
 
@@ -182,7 +190,7 @@ async function loadBookStatus(userId) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">📖</div>
-                    <p>You haven't verified any books yet.</p>
+                    <p>You have not verified any books yet.</p>
                     <a href="verify-book.html" style="
                         display: inline-block;
                         padding: 12px 24px;
@@ -196,9 +204,37 @@ async function loadBookStatus(userId) {
                 </div>
             `;
         } else {
-            const badges = profile.books_owned
-                .map(book => `<span class="book-badge">✓ ${BOOK_NAMES[book] || book}</span>`)
-                .join('');
+            const ownedBooks = profile.books_owned || [];
+            const allBooks = ['soulful', 'peppy', 'romantic', 'classic'];
+            const notOwnedBooks = allBooks.filter(book => !ownedBooks.includes(book));
+            
+            const bookCards = ownedBooks.map(book => `
+                <div style="
+                    display: inline-block;
+                    margin: 8px;
+                    padding: 12px;
+                    border: 2px solid rgba(40,167,69,0.3);
+                    border-radius: 16px;
+                    background: rgba(40,167,69,0.08);
+                    text-align: center;
+                    min-width: 140px;
+                ">
+                    <img src="${BOOK_COVERS[book]}" alt="${BOOK_NAMES[book]}" style="
+                        width: 100px;
+                        height: 140px;
+                        object-fit: cover;
+                        border-radius: 8px;
+                        margin-bottom: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    ">
+                    <div style="font-size: 13px; font-weight: 600; color: #2b1140;">
+                        ${BOOK_NAMES[book]}
+                    </div>
+                    <div style="font-size: 11px; color: #059669; margin-top: 4px;">
+                        ✓ In Collection
+                    </div>
+                </div>
+            `).join('');
             
             const creditBadge = bookCredits > 0 
                 ? `<div style="margin-top: 15px; padding: 12px; background: rgba(255,200,100,0.15); border: 1px solid rgba(255,200,100,0.3); border-radius: 12px;">
@@ -209,17 +245,88 @@ async function loadBookStatus(userId) {
                    </div>`
                 : '';
 
+            const addBookSection = notOwnedBooks.length > 0 
+                ? `<div style="margin-top: 20px; padding: 16px; background: rgba(155,110,255,0.05); border: 1px solid rgba(155,110,255,0.2); border-radius: 12px;">
+                     <div style="font-weight: 600; margin-bottom: 10px; color: #2b1140;">
+                       📚 Got another book? Add it to your collection:
+                     </div>
+                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                       ${notOwnedBooks.map(book => `
+                         <button onclick="addBookToCollection('${book}')" style="
+                           padding: 8px 16px;
+                           border: 1px solid rgba(155,110,255,0.3);
+                           background: white;
+                           border-radius: 999px;
+                           cursor: pointer;
+                           font-size: 13px;
+                           font-weight: 600;
+                           color: #2b1140;
+                           transition: all 0.2s;
+                         " onmouseover="this.style.background='rgba(155,110,255,0.1)'" onmouseout="this.style.background='white'">
+                           + ${BOOK_NAMES[book]}
+                         </button>
+                       `).join('')}
+                     </div>
+                     <div style="font-size: 12px; color: var(--muted); margin-top: 8px;">
+                       Note: This just adds the book to your collection. You already have discounted pricing!
+                     </div>
+                   </div>`
+                : '';
+
             container.innerHTML = `
                 <div style="padding: 20px;">
-                    <p style="margin-bottom: 15px; color: #666;">You own these books and get discounted pricing:</p>
-                    ${badges}
+                    <p style="margin-bottom: 15px; color: #666; font-weight: 600;">Your Book Collection:</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start;">
+                        ${bookCards}
+                    </div>
                     ${creditBadge}
+                    ${addBookSection}
                 </div>
             `;
         }
     } catch (error) {
         console.error('Error loading book status:', error);
         document.getElementById('bookStatus').innerHTML = '<p style="color: red;">Error loading book status</p>';
+    }
+}
+
+// Add book to collection (no verification needed)
+async function addBookToCollection(bookType) {
+    try {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await window.supabase
+            .from('profiles')
+            .select('books_owned')
+            .eq('id', user.id)
+            .single();
+
+        const currentBooks = profile?.books_owned || [];
+        
+        if (currentBooks.includes(bookType)) {
+            alert('You already have this book in your collection!');
+            return;
+        }
+
+        const updatedBooks = [...currentBooks, bookType];
+
+        const { error } = await window.supabase
+            .from('profiles')
+            .update({ 
+                books_owned: updatedBooks,
+                is_book_owner: true
+            })
+            .eq('id', user.id);
+
+        if (error) throw error;
+
+        alert('Book added to your collection! 📚');
+        await loadBookStatus(user.id);
+
+    } catch (error) {
+        console.error('Error adding book:', error);
+        alert('Failed to add book. Please try again.');
     }
 }
 
