@@ -58,7 +58,6 @@ const SONG_CATEGORIES = {
 
 // Wait for Supabase to be ready
 async function initDashboard() {
-
     try {
         // Check if user is logged in
         const { data: { user }, error } = await window.supabase.auth.getUser();
@@ -68,15 +67,15 @@ async function initDashboard() {
             return;
         }
 
-// Get user's display name
-const { data: profile } = await window.supabase
-    .from('profiles')
-    .select('display_name')
-    .eq('id', user.id)
-    .single();
+        // Get user's display name
+        const { data: profile } = await window.supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', user.id)
+            .single();
 
-const displayName = profile?.display_name || user.email.split('@')[0];
-document.getElementById('userEmail').textContent = `👋 ${displayName}`;
+        const displayName = profile?.display_name || user.email.split('@')[0];
+        document.getElementById('userEmail').textContent = `👋 ${displayName}`;
 
         // Load all dashboard data
         await Promise.all([
@@ -92,7 +91,7 @@ document.getElementById('userEmail').textContent = `👋 ${displayName}`;
     }
 }
 
-// Load statistics
+// ✅ UPDATED: Load statistics with both credit types
 async function loadStats(userId) {
     try {
         // Get total songs purchased
@@ -104,17 +103,29 @@ async function loadStats(userId) {
 
         if (purchasesError) throw purchasesError;
 
-        // Count unique songs (exclude bundle_credits)
+        // Count unique songs (exclude pack:5 and bundle_credits)
         const uniqueSongs = new Set(
             purchases
-                .filter(p => p.song_id !== 'bundle_credits')
+                .filter(p => p.song_id !== 'bundle_credits' && p.song_id !== 'pack:5')
                 .map(p => p.song_id)
         );
 
-        // Calculate total credits
-        const totalCredits = purchases
+        // Calculate bundle credits (from purchases table)
+        const bundleCredits = purchases
             .filter(p => p.credits_remaining > 0)
             .reduce((sum, p) => sum + p.credits_remaining, 0);
+
+        // ✅ NEW: Get book bonus credits (from user_credits table)
+        const { data: bookCreditsData } = await window.supabase
+            .from('user_credits')
+            .select('balance')
+            .eq('user_id', userId)
+            .single();
+
+        const bookCredits = bookCreditsData?.balance || 0;
+
+        // Total credits = bundle + book bonus
+        const totalCredits = bundleCredits + bookCredits;
 
         // Get progress data
         const { data: progress, error: progressError } = await window.supabase
@@ -131,14 +142,21 @@ async function loadStats(userId) {
         document.getElementById('totalSongs').textContent = uniqueSongs.size;
         document.getElementById('completedSongs').textContent = completed;
         document.getElementById('inProgressSongs').textContent = inProgress;
-        document.getElementById('creditsRemaining').textContent = totalCredits;
+        
+        // ✅ Show total credits with breakdown on hover
+        const creditsEl = document.getElementById('creditsRemaining');
+        creditsEl.textContent = totalCredits;
+        
+        if (bundleCredits > 0 || bookCredits > 0) {
+            creditsEl.title = `Bundle: ${bundleCredits} | Book Bonus: ${bookCredits}`;
+        }
 
     } catch (error) {
         console.error('Error loading stats:', error);
     }
 }
 
-// Load book verification status
+// ✅ UPDATED: Load book verification status with better display
 async function loadBookStatus(userId) {
     try {
         const { data: profile, error } = await window.supabase
@@ -149,24 +167,53 @@ async function loadBookStatus(userId) {
 
         if (error) throw error;
 
+        // Also check for book bonus credits
+        const { data: creditsData } = await window.supabase
+            .from('user_credits')
+            .select('balance')
+            .eq('user_id', userId)
+            .single();
+
+        const bookCredits = creditsData?.balance || 0;
+
         const container = document.getElementById('bookStatus');
 
         if (!profile.is_book_owner || !profile.books_owned || profile.books_owned.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">📖</div>
-                    <p>You haven't verified any book codes yet.</p>
-                    <a href="verify-book.html" class="cta-btn">Verify Book Code</a>
+                    <p>You haven't verified any books yet.</p>
+                    <a href="verify-book.html" style="
+                        display: inline-block;
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+                        color: #2b1140;
+                        font-weight: 700;
+                        border-radius: 14px;
+                        text-decoration: none;
+                        margin-top: 10px;
+                    ">Verify Your Book</a>
                 </div>
             `;
         } else {
-const badges = profile.books_owned
-    .map(book => `<span class="book-badge">✓ ${BOOK_NAMES[book] || book}</span>`)
-    .join('');
+            const badges = profile.books_owned
+                .map(book => `<span class="book-badge">✓ ${BOOK_NAMES[book] || book}</span>`)
+                .join('');
+            
+            const creditBadge = bookCredits > 0 
+                ? `<div style="margin-top: 15px; padding: 12px; background: rgba(255,200,100,0.15); border: 1px solid rgba(255,200,100,0.3); border-radius: 12px;">
+                     <strong>🎁 Book Bonus Credits: ${bookCredits}</strong>
+                     <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">
+                       Earned from video reviews
+                     </div>
+                   </div>`
+                : '';
+
             container.innerHTML = `
                 <div style="padding: 20px;">
                     <p style="margin-bottom: 15px; color: #666;">You own these books and get discounted pricing:</p>
                     ${badges}
+                    ${creditBadge}
                 </div>
             `;
         }
@@ -186,6 +233,7 @@ async function loadSongs(userId) {
             .eq('user_id', userId)
             .eq('status', 'paid')
             .neq('song_id', 'bundle_credits')
+            .neq('song_id', 'pack:5')
             .order('created_at', { ascending: false });
 
         if (purchasesError) throw purchasesError;
@@ -211,46 +259,55 @@ async function loadSongs(userId) {
                 <div class="empty-state">
                     <div class="empty-state-icon">🎵</div>
                     <p>You haven't purchased any songs yet.</p>
-                    <a href="/" class="cta-btn">Browse Songs</a>
+                    <a href="/" style="
+                        display: inline-block;
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+                        color: #2b1140;
+                        font-weight: 700;
+                        border-radius: 14px;
+                        text-decoration: none;
+                        margin-top: 10px;
+                    ">Browse Songs</a>
                 </div>
             `;
             return;
         }
 
-// Render songs
-container.innerHTML = purchases.map(purchase => {
-    const songId = purchase.song_id;
-    const songName = SONG_NAMES[songId] || songId.replace('song:', '');
-    const category = SONG_CATEGORIES[songId];
-    const bookName = category ? BOOK_NAMES[category] : 'Unknown Book';
-    const currentStatus = progressMap[songId] || 'not_started';
-    const purchaseDate = new Date(purchase.created_at).toLocaleDateString();
+        // Render songs
+        container.innerHTML = purchases.map(purchase => {
+            const songId = purchase.song_id;
+            const songName = SONG_NAMES[songId] || songId.replace('song:', '');
+            const category = SONG_CATEGORIES[songId];
+            const bookName = category ? BOOK_NAMES[category] : 'Unknown Book';
+            const currentStatus = progressMap[songId] || 'not_started';
+            const purchaseDate = new Date(purchase.created_at).toLocaleDateString();
 
-    return `
-        <div class="song-item" data-song-id="${songId}">
-            <div class="song-info">
-                <div class="song-title">${songName}</div>
-                <div class="song-meta">From: ${bookName} • Purchased: ${purchaseDate}</div>
-            </div>
-            <div class="song-actions">
-                <div class="progress-selector">
-                    <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}" 
-                            onclick="updateProgress('${songId}', 'not_started')">
-                        Not Started
-                    </button>
-                    <button class="progress-btn in_progress ${currentStatus === 'in_progress' ? 'active' : ''}" 
-                            onclick="updateProgress('${songId}', 'in_progress')">
-                        In Progress
-                    </button>
-                    <button class="progress-btn completed ${currentStatus === 'completed' ? 'active' : ''}" 
-                            onclick="updateProgress('${songId}', 'completed')">
-                        Completed
-                    </button>
+            return `
+                <div class="song-item" data-song-id="${songId}">
+                    <div class="song-info">
+                        <div class="song-title">${songName}</div>
+                        <div class="song-meta">From: ${bookName} • Purchased: ${purchaseDate}</div>
+                    </div>
+                    <div class="song-actions">
+                        <div class="progress-selector">
+                            <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}" 
+                                    onclick="updateProgress('${songId}', 'not_started')">
+                                Not Started
+                            </button>
+                            <button class="progress-btn in_progress ${currentStatus === 'in_progress' ? 'active' : ''}" 
+                                    onclick="updateProgress('${songId}', 'in_progress')">
+                                In Progress
+                            </button>
+                            <button class="progress-btn completed ${currentStatus === 'completed' ? 'active' : ''}" 
+                                    onclick="updateProgress('${songId}', 'completed')">
+                                Completed
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    `;
-}).join('');
+            `;
+        }).join('');
 
     } catch (error) {
         console.error('Error loading songs:', error);
@@ -305,7 +362,7 @@ async function updateProgress(songId, newStatus) {
     }
 }
 
-// Load purchase history
+// ✅ UPDATED: Load purchase history (exclude pack:5 from individual display)
 async function loadPurchaseHistory(userId) {
     try {
         const { data: purchases, error } = await window.supabase
@@ -331,15 +388,28 @@ async function loadPurchaseHistory(userId) {
 
         container.innerHTML = purchases.map(purchase => {
             const date = new Date(purchase.created_at).toLocaleDateString();
-            const amount = `${purchase.currency} ${(purchase.amount / 100).toFixed(2)}`;
-            const isBundletext = purchase.song_id === 'bundle_credits' ? '(5-Song Bundle)' : '';
-const songName = purchase.song_id === 'bundle_credits' 
-    ? 'Bundle Credits' 
-    : (SONG_NAMES[purchase.song_id] || purchase.song_id.replace('song:', ''));
+            const amount = purchase.amount > 0 
+                ? `${purchase.currency} ${(purchase.amount / 100).toFixed(2)}`
+                : 'FREE';
+            
+            let displayName = '';
+            let badge = '';
+            
+            if (purchase.song_id === 'bundle_credits' || purchase.song_id === 'pack:5') {
+                displayName = '5-Song Bundle';
+                badge = `<span style="font-size: 12px; color: #10b981;">✓ ${purchase.credits_remaining || 5} credits</span>`;
+            } else if (purchase.provider === 'credit_redemption' || purchase.provider === 'book_bonus_redemption') {
+                displayName = SONG_NAMES[purchase.song_id] || purchase.song_id.replace('song:', '');
+                badge = `<span style="font-size: 12px; color: #f59e0b;">🎁 Redeemed with credit</span>`;
+            } else {
+                displayName = SONG_NAMES[purchase.song_id] || purchase.song_id.replace('song:', '');
+            }
+
             return `
                 <div class="purchase-item">
                     <div>
-                        <div style="font-weight: 600; margin-bottom: 5px;">${songName} ${isBundletext}</div>
+                        <div style="font-weight: 600; margin-bottom: 5px;">${displayName}</div>
+                        ${badge ? `<div style="margin-bottom: 4px;">${badge}</div>` : ''}
                         <div class="purchase-date">${date}</div>
                     </div>
                     <div class="purchase-amount">${amount}</div>
