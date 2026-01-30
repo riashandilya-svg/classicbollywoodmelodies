@@ -85,11 +85,11 @@ async function initDashboard() {
         }
 
         // Get user's display name
-        const { data: profile } = await window.supabase
-            .from('profiles')
-            .select('display_name')
-            .eq('id', user.id)
-            .single();
+    const { data: profile } = await window.supabase
+    .from('profiles')
+    .select('display_name, is_book_owner')
+    .eq('id', user.id)
+    .maybeSingle();
 
         const displayName = profile?.display_name || user.email.split('@')[0];
 // Welcome text (gold line under the title)
@@ -99,6 +99,16 @@ if (welcomeEl) {
 }
 await loadProfileAvatar(user.id);
 setupAvatarUpload(user.id);
+
+// Show or hide Verify Book link based on is_book_owner status
+const verifyBookLink = document.getElementById('verifyBookLink');
+if (verifyBookLink) {
+  if (profile && profile.is_book_owner === true) {
+    verifyBookLink.style.display = 'none'; // Hide if already verified
+  } else {
+    verifyBookLink.style.display = 'inline-flex'; // Show if not verified
+  }
+}
 
 // Optional: you can keep userEmail empty or hide it
 const userEmailEl = document.getElementById('userEmail');
