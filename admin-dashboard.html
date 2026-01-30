@@ -1198,58 +1198,58 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
 
     async function deleteUserForever() {
       if (!userToDelete) return;
-
+    
       document.getElementById('confirmStep3').classList.add('hidden');
       document.getElementById('deletingStep').classList.remove('hidden');
-
+    
       try {
         const userId = userToDelete.id;
-
-        // Delete from purchases
-        const { error: purchasesError } = await window.supabase
-          .from('purchases')
-          .delete()
-          .eq('user_id', userId);
-
-        if (purchasesError) console.error('Error deleting purchases:', purchasesError);
-
-        // Delete from user_credits
-        const { error: creditsError } = await window.supabase
-          .from('user_credits')
-          .delete()
-          .eq('user_id', userId);
-
-        if (creditsError) console.error('Error deleting credits:', creditsError);
-
-        // Update book_verification_codes (set used_by_user_id to null)
-        const { error: codesError } = await window.supabase
+    
+        // Delete from database tables first
+        await window.supabase.from('purchases').delete().eq('user_id', userId);
+        await window.supabase.from('user_credits').delete().eq('user_id', userId);
+        await window.supabase.from('entitlements').delete().eq('user_id', userId);
+        await window.supabase.from('payment_orders').delete().eq('user_id', userId);
+        await window.supabase.from('progress').delete().eq('user_id', userId);
+        await window.supabase.from('song_progress').delete().eq('user_id', userId);
+        
+        await window.supabase
           .from('book_verification_codes')
           .update({ used_by_user_id: null, is_used: false, used_at: null })
           .eq('used_by_user_id', userId);
-
-        if (codesError) console.error('Error updating codes:', codesError);
-
-        // Delete from profiles
-        const { error: profileError } = await window.supabase
-          .from('profiles')
-          .delete()
-          .eq('id', userId);
-
-        if (profileError) {
-          throw new Error('Failed to delete profile: ' + profileError.message);
-        }
-
-        alert('✅ User profile and data deleted successfully!\n\nNote: The auth account cannot be deleted with the anon key. You may need to manually delete it from the Supabase dashboard.');
-
-        closeDeleteModal();
+    
+        await window.supabase.from('profiles').delete().eq('id', userId);
+    
+        // Delete from auth using Edge Function
+        const { data: { session } } = await window.supabase.auth.getSession();
         
-        // Reload data
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/delete-user`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId }),
+          }
+        );
+    
+        const result = await response.json();
+    
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to delete user from auth');
+        }
+    
+        alert('✅ User completely deleted from all tables and authentication!');
+    
+        closeDeleteModal();
         loadStats();
         loadUsers();
         loadCodes();
         loadPurchases();
         loadBundles();
-
+    
       } catch (error) {
         console.error('Error deleting user:', error);
         alert('❌ Error deleting user: ' + error.message);
