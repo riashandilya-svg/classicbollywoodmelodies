@@ -14,12 +14,12 @@ const SONG_NAMES = {
     'song:palpalharpal': 'Pal Pal Har Pal',
     'song:zoobiedoobie': 'Zoobie Doobie',
     'song:meresaamne': 'Mere Saamne Wali Khidki',
-    'song:jaanekahan': 'Jaane Kahan Gaye Woh Din',
+    'song:jaanekahan': 'Jaane Kahan Mera Jigar Gaya Ji',
     'song:aajkal': 'Aaj Kal Tere Mere Pyaar Ke Charche',
     'song:aehairate': 'Ae Hairate Aashiqui',
     'song:piyubole': 'Piyu Bole',
     'song:raatkali': 'Raat Kali Ek Khwaab Mein Aayi',
-    'song:khwaabho': 'Khwaabho Ke Parindey',
+    'song:khwaabho': 'Khwaab ho Tum Ya Koi Haqeeqat',
     'song:kaisipaheli': 'Kaisi Paheli Zindagani'
 };
 
