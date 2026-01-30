@@ -1,773 +1,374 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Book - Ria Om Shandilya</title>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
   
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --bg: #ffffff;
-      --surface: rgba(255,255,255,0.82);
-      --text: #1A1A1F;
-      --muted: rgba(26,26,31,0.70);
-      --border: rgba(140, 120, 160, 0.18);
-      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
-      --primary: #9b6eff;
-      --success: #10b981;
-      --error: #ef4444;
-    }
+  window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    * { box-sizing: border-box; }
+  let photoFile = null;
+  let videoFile = null;
+  let verifiedCode = null;
+  let verifiedBookType = null;
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, sans-serif;
-      background:
-        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
-        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
-        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
-        var(--bg);
-    }
+  async function checkAuth() {
+    try {
+      const { data: { session }, error } = await window.supabase.auth.getSession();
+      
+      const authCheck = document.getElementById('authCheck');
+      const verificationForm = document.getElementById('verificationForm');
 
-    .banner {
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .banner-link {
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 600;
-      font-size: 22px;
-      letter-spacing: 0.7px;
-      color: inherit;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 12px;
-    }
-
-    .banner-link:hover {
-      text-decoration: underline;
-    }
-
-    main {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 44px 18px 70px;
-    }
-
-    .card {
-      background: var(--surface);
-      border-radius: 22px;
-      padding: 32px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-    }
-
-    h1 {
-      font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.2;
-      margin: 0 0 12px;
-      text-align: center;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: var(--muted);
-      margin: 0 0 32px;
-      font-size: 16px;
-    }
-
-    .form-group {
-      margin-bottom: 24px;
-    }
-
-    label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 8px;
-      font-size: 15px;
-    }
-
-    .hint {
-      display: block;
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    input[type="text"],
-    select,
-    input[type="file"] {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font-size: 16px;
-      font-family: inherit;
-      background: white;
-    }
-
-    input[type="text"]:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .file-input-wrapper {
-      position: relative;
-      overflow: hidden;
-      display: inline-block;
-      width: 100%;
-    }
-
-    .file-input-wrapper input[type="file"] {
-      position: absolute;
-      left: -9999px;
-    }
-
-    .file-input-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 16px;
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: white;
-    }
-
-    .file-input-label:hover {
-      border-color: var(--primary);
-      background: rgba(155, 110, 255, 0.05);
-    }
-
-    .file-input-label.has-file {
-      border-color: var(--success);
-      background: rgba(16, 185, 129, 0.05);
-    }
-
-    .file-name {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 8px;
-    }
-
-    .bonus-section {
-      background: rgba(255, 200, 100, 0.1);
-      border: 1px solid rgba(255, 200, 100, 0.3);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .bonus-section h3 {
-      margin: 0 0 8px;
-      font-size: 18px;
-      color: #d97706;
-    }
-
-    .bonus-section p {
-      margin: 0;
-      font-size: 14px;
-      color: var(--text);
-      line-height: 1.5;
-    }
-
-    .asterisk {
-      color: #d97706;
-      text-decoration: none;
-      font-weight: bold;
-      cursor: pointer;
-      margin-left: 2px;
-    }
-
-    .asterisk:hover {
-      text-decoration: underline;
-    }
-
-    .terms-notice {
-      background: rgba(155, 110, 255, 0.05);
-      border: 1px solid rgba(155, 110, 255, 0.2);
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .terms-notice a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .terms-notice a:hover {
-      text-decoration: underline;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
-      color: #2b1140;
-      font-weight: 650;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      filter: brightness(1.05);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .success-text {
-      color: var(--success);
-      font-size: 15px;
-      margin: 16px 0;
-      line-height: 1.6;
-    }
-
-    .error-text {
-      color: var(--error);
-      font-size: 15px;
-      margin: 16px 0;
-      line-height: 1.6;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: var(--muted);
-    }
-
-    .spinner {
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--primary);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .progress-detail {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .code-input-group {
-      position: relative;
-    }
-
-    .code-input-group input {
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 600;
-    }
-
-    .verified-info {
-      background: rgba(16, 185, 129, 0.08);
-      border-left: 3px solid var(--success);
-      padding: 14px 18px;
-      border-radius: 8px;
-      margin-bottom: 24px;
-      font-size: 15px;
-      color: var(--success);
-      font-weight: 500;
-    }
-
-    .friendly-text {
-      color: var(--text);
-      font-size: 15px;
-      line-height: 1.7;
-      margin: 20px 0;
-    }
-  </style>
-</head>
-<body>
-  <header class="banner">
-    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
-  </header>
-
-  <main>
-    <div class="card">
-      <h1>📚 Verify Your Book</h1>
-      <p class="subtitle">Enter your unique book code to get started</p>
-
-      <div id="authCheck" class="loading">
-        <div class="spinner"></div>
-        <p>Checking authentication...</p>
-      </div>
-
-      <div id="verificationForm" class="hidden">
-        <div id="messageArea"></div>
-
-        <div id="codeStep">
-          <div class="form-group code-input-group">
-            <label for="bookCode">Enter Your Book Code</label>
-            <span class="hint">Find this code printed inside your physical book</span>
-            <input 
-              type="text" 
-              id="bookCode" 
-              placeholder="SOULFUL-ABC123"
-              maxlength="15"
-              style="text-transform: uppercase;"
-            >
-          </div>
-          
-          <button type="button" class="btn" id="verifyCodeBtn">
-            Verify Code
-          </button>
-          <div id="codeProgress" class="progress-detail"></div>
-        </div>
-
-        <form id="bookForm" class="hidden">
-          <div id="verifiedCodeDisplay"></div>
-
-          <p class="friendly-text">
-            Great! Now let's make it official. Please upload a quick photo showing you have the physical book. 
-            It can be anything – the cover, a page, or even you holding it. This just helps us confirm you're a real book owner! 📸
-          </p>
-
-          <div class="form-group">
-            <label>Upload a photo of your book</label>
-            <span class="hint">Any photo showing you have the physical book</span>
-            <div class="file-input-wrapper">
-              <input type="file" id="photoInput" accept="image/*" required>
-              <label for="photoInput" class="file-input-label" id="photoLabel">
-                <span>📸</span>
-                <span id="photoText">Choose photo...</span>
-              </label>
-            </div>
-            <div id="photoName" class="file-name"></div>
-          </div>
-
-          <div class="bonus-section">
-            <h3>🎁 Bonus: Get 1 Free Song!</h3>
-            <p>Upload a short video of you enjoying the book and get 1 free song credit instantly!<a href="./video-consent-terms.html" class="asterisk" target="_blank">*</a></p>
-          </div>
-
-          <div class="form-group">
-            <label>Upload a video (Optional)</label>
-            <span class="hint">Show yourself using the book – it's totally optional but gets you a free song!</span>
-            <div class="file-input-wrapper">
-              <input type="file" id="videoInput" accept="video/*">
-              <label for="videoInput" class="file-input-label" id="videoLabel">
-                <span>🎥</span>
-                <span id="videoText">Choose video... (optional)</span>
-              </label>
-            </div>
-            <div id="videoName" class="file-name"></div>
-          </div>
-
-          <div class="terms-notice">
-            📹 Uploading a video? Please take a moment to <a href="./video-consent-terms.html" target="_blank">read our video usage terms</a>
-          </div>
-
-          <button type="submit" class="btn" id="submitBtn">
-            Complete Verification & Unlock Discounts
-          </button>
-          <div id="progressDetail" class="progress-detail"></div>
-        </form>
-      </div>
-    </div>
-  </main>
-
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-    
-    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let photoFile = null;
-    let videoFile = null;
-    let verifiedCode = null;
-    let verifiedBookType = null;
-
-    async function checkAuth() {
-      try {
-        const { data: { session }, error } = await window.supabase.auth.getSession();
-        
-        const authCheck = document.getElementById('authCheck');
-        const verificationForm = document.getElementById('verificationForm');
-
-        if (error) {
-          console.error('Auth error:', error);
-          authCheck.innerHTML = '<p style="color: var(--error);">Error checking authentication. Please try again.</p><a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">Go to Login</a>';
-          return;
-        }
-
-        if (!session) {
-          authCheck.innerHTML = '<p style="color: var(--error);">You must be logged in to verify your book.</p><a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">Go to Login</a>';
-          return;
-        }
-
-        authCheck.classList.add('hidden');
-        verificationForm.classList.remove('hidden');
-      } catch (err) {
-        console.error('Unexpected error:', err);
-        const authCheck = document.getElementById('authCheck');
-        authCheck.innerHTML = '<p style="color: var(--error);">An error occurred. Please refresh the page.</p><a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">Go to Login</a>';
-      }
-    }
-
-    document.getElementById('verifyCodeBtn').addEventListener('click', async () => {
-      const codeInput = document.getElementById('bookCode');
-      const code = codeInput.value.trim().toUpperCase();
-      const btn = document.getElementById('verifyCodeBtn');
-      const progressDiv = document.getElementById('codeProgress');
-
-      if (!code) {
-        showMessage('Please enter your book code', 'error');
+      if (error) {
+        console.error('Auth error:', error);
+        authCheck.innerHTML = '<p style="color: var(--error);">Error checking authentication. Please try again.</p><a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">Go to Login</a>';
         return;
       }
 
-      btn.disabled = true;
-      btn.textContent = 'Checking code...';
-      progressDiv.textContent = 'Verifying with database...';
-
-      try {
-        const { data: { session } } = await window.supabase.auth.getSession();
-        if (!session) {
-          throw new Error('Not authenticated');
-        }
-
-        const { data: codeData, error: codeError } = await window.supabase
-          .from('book_verification_codes')
-          .select('*')
-          .eq('code', code)
-          .single();
-
-        if (codeError || !codeData) {
-          throw new Error('Invalid book code. Please check and try again.');
-        }
-
-        if (codeData.is_used) {
-          throw new Error('This code has already been used.');
-        }
-
-verifiedCode = code;
-verifiedBookType = codeData.book_name;
-
-// Store in browser so it persists on refresh
-sessionStorage.setItem('verifiedCode', code);
-sessionStorage.setItem('verifiedBookType', codeData.book_name);
-
-// Store in browser so it persists on refresh
-sessionStorage.setItem('verifiedCode', code);
-sessionStorage.setItem('verifiedBookType', codeData.book_name);
-
-        document.getElementById('codeStep').classList.add('hidden');
-        document.getElementById('bookForm').classList.remove('hidden');
-        
-        const bookNames = {
-          'soulful': 'Soulful Bollywood Melodies',
-          'peppy': 'Peppy Bollywood Melodies',
-          'romantic': 'Romantic Bollywood Melodies',
-          'classic': 'Classic Bollywood Melodies'
-        };
-
-        document.getElementById('verifiedCodeDisplay').innerHTML = '<div class="verified-info">✓ Code Verified: ' + (bookNames[verifiedBookType] || verifiedBookType) + '</div>';
-
-        showMessage('Perfect! Your code is verified. Now lets complete the process with a quick photo.', 'success');
-
-      } catch (error) {
-        console.error('Error:', error);
-        showMessage(error.message || 'Failed to verify code', 'error');
-        btn.disabled = false;
-        btn.textContent = 'Verify Code';
-        progressDiv.textContent = '';
+      if (!session) {
+        authCheck.innerHTML = '<p style="color: var(--error);">You must be logged in to verify your book.</p><a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">Go to Login</a>';
+        return;
       }
-    });
 
-    document.getElementById('photoInput').addEventListener('change', (e) => {
-      photoFile = e.target.files[0];
-      if (photoFile) {
-        document.getElementById('photoLabel').classList.add('has-file');
-        document.getElementById('photoText').textContent = '✓ Photo selected';
-        document.getElementById('photoName').textContent = photoFile.name;
+      authCheck.classList.add('hidden');
+      verificationForm.classList.remove('hidden');
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      const authCheck = document.getElementById('authCheck');
+      authCheck.innerHTML = '<p style="color: var(--error);">An error occurred. Please refresh the page.</p><a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">Go to Login</a>';
+    }
+  }
+
+  document.getElementById('verifyCodeBtn').addEventListener('click', async () => {
+    const codeInput = document.getElementById('bookCode');
+    const code = codeInput.value.trim().toUpperCase();
+    const btn = document.getElementById('verifyCodeBtn');
+    const progressDiv = document.getElementById('codeProgress');
+
+    if (!code) {
+      showMessage('Please enter your book code', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Checking code...';
+    progressDiv.textContent = 'Verifying with database...';
+
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
       }
-    });
 
-    document.getElementById('videoInput').addEventListener('change', (e) => {
-      videoFile = e.target.files[0];
+      const { data: codeData, error: codeError } = await window.supabase
+        .from('book_verification_codes')
+        .select('*')
+        .eq('code', code)
+        .single();
+
+      if (codeError || !codeData) {
+        throw new Error('Invalid book code. Please check and try again.');
+      }
+
+      if (codeData.is_used) {
+        throw new Error('This code has already been used.');
+      }
+
+      verifiedCode = code;
+      verifiedBookType = codeData.book_name;
+
+      // Store in browser so it persists on refresh
+      sessionStorage.setItem('verifiedCode', code);
+      sessionStorage.setItem('verifiedBookType', codeData.book_name);
+
+      document.getElementById('codeStep').classList.add('hidden');
+      document.getElementById('bookForm').classList.remove('hidden');
+      
+      const bookNames = {
+        'soulful': 'Soulful Bollywood Melodies',
+        'peppy': 'Peppy Bollywood Melodies',
+        'romantic': 'Romantic Bollywood Melodies',
+        'classic': 'Classic Bollywood Melodies'
+      };
+
+      document.getElementById('verifiedCodeDisplay').innerHTML = '<div class="verified-info">✓ Code Verified: ' + (bookNames[verifiedBookType] || verifiedBookType) + '</div>';
+
+      showMessage('Perfect! Your code is verified. Now lets complete the process with a quick photo.', 'success');
+
+    } catch (error) {
+      console.error('Error:', error);
+      showMessage(error.message || 'Failed to verify code', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Verify Code';
+      progressDiv.textContent = '';
+    }
+  });
+
+  document.getElementById('photoInput').addEventListener('change', (e) => {
+    photoFile = e.target.files[0];
+    if (photoFile) {
+      document.getElementById('photoLabel').classList.add('has-file');
+      document.getElementById('photoText').textContent = '✓ Photo selected';
+      document.getElementById('photoName').textContent = photoFile.name;
+    }
+  });
+
+  document.getElementById('videoInput').addEventListener('change', (e) => {
+    videoFile = e.target.files[0];
+    if (videoFile) {
+      document.getElementById('videoLabel').classList.add('has-file');
+      document.getElementById('videoText').textContent = '✓ Video selected';
+      document.getElementById('videoName').textContent = videoFile.name;
+    }
+  });
+
+  function updateProgress(message) {
+    document.getElementById('progressDetail').textContent = message;
+  }
+
+  document.getElementById('bookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!verifiedCode || !verifiedBookType) {
+      showMessage('Please verify your book code first', 'error');
+      return;
+    }
+
+    if (!photoFile) {
+      showMessage('Please upload a photo of your book', 'error');
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+    updateProgress('Starting verification...');
+
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+      
+      const userId = session.user.id;
+      console.log('✅ User ID:', userId);
+
+      updateProgress('Uploading photo...');
+      const photoExt = photoFile.name.split('.').pop();
+      const photoPath = userId + '/book-' + verifiedBookType + '-' + Date.now() + '.' + photoExt;
+      
+      const { data: photoData, error: photoError } = await window.supabase.storage
+        .from('book-verifications')
+        .upload(photoPath, photoFile);
+
+      if (photoError) {
+        console.error('❌ Photo upload error:', photoError);
+        throw new Error('Photo upload failed: ' + photoError.message);
+      }
+      console.log('✅ Photo uploaded');
+
+      updateProgress('Marking code as used...');
+      
+      const { data: updateData, error: codeUpdateError } = await window.supabase
+        .from('book_verification_codes')
+        .update({ 
+          is_used: true,
+          used_by_user_id: userId,
+          used_at: new Date().toISOString()
+        })
+        .eq('code', verifiedCode)
+        .select();
+
+      if (codeUpdateError) {
+        console.error('❌ Code update error:', codeUpdateError);
+        throw new Error('Failed to mark code as used: ' + codeUpdateError.message);
+      }
+      console.log('✅ Code marked as used');
+
+      updateProgress('Updating your account...');
+      
+      const { data: currentProfile, error: fetchError } = await window.supabase
+        .from('profiles')
+        .select('books_owned')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('❌ Profile fetch error:', fetchError);
+        throw new Error('Could not fetch profile');
+      }
+
+      const existingBooks = currentProfile?.books_owned || [];
+      const updatedBooks = existingBooks.includes(verifiedBookType) 
+        ? existingBooks 
+        : existingBooks.concat([verifiedBookType]);
+
+      console.log('📚 Updating books from', existingBooks, 'to', updatedBooks);
+
+      const { error: profileError } = await window.supabase
+        .from('profiles')
+        .update({ 
+          is_book_owner: true,
+          books_owned: updatedBooks
+        })
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error('❌ Profile update error:', profileError);
+        throw new Error('Failed to update profile: ' + profileError.message);
+      }
+      console.log('✅ Profile updated - is_book_owner set to true');
+
+      let videoUploaded = false;
       if (videoFile) {
-        document.getElementById('videoLabel').classList.add('has-file');
-        document.getElementById('videoText').textContent = '✓ Video selected';
-        document.getElementById('videoName').textContent = videoFile.name;
-      }
-    });
+        try {
+          updateProgress('Uploading video...');
+          const videoExt = videoFile.name.split('.').pop();
+          const videoPath = userId + '/video-' + verifiedBookType + '-' + Date.now() + '.' + videoExt;
+          
+          const { data: videoData, error: videoError } = await window.supabase.storage
+            .from('book-videos')
+            .upload(videoPath, videoFile);
 
-    function updateProgress(message) {
-      document.getElementById('progressDetail').textContent = message;
-    }
-
-    document.getElementById('bookForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (!verifiedCode || !verifiedBookType) {
-        showMessage('Please verify your book code first', 'error');
-        return;
-      }
-
-      if (!photoFile) {
-        showMessage('Please upload a photo of your book', 'error');
-        return;
-      }
-
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Processing...';
-      updateProgress('Starting verification...');
-
-      try {
-        const { data: { session } } = await window.supabase.auth.getSession();
-        if (!session) {
-          throw new Error('Not authenticated');
-        }
-        
-        const userId = session.user.id;
-
-        updateProgress('Uploading photo...');
-        const photoExt = photoFile.name.split('.').pop();
-        const photoPath = userId + '/book-' + verifiedBookType + '-' + Date.now() + '.' + photoExt;
-        
-        const { data: photoData, error: photoError } = await window.supabase.storage
-          .from('book-verifications')
-          .upload(photoPath, photoFile);
-
-        if (photoError) {
-          throw new Error('Photo upload failed: ' + photoError.message);
-        }
-
-        updateProgress('Marking code as used...');
-        
-        const { data: updateData, error: codeUpdateError } = await window.supabase
-          .from('book_verification_codes')
-          .update({ 
-            is_used: true,
-            used_by_user_id: userId,
-            used_at: new Date().toISOString()
-          })
-          .eq('code', verifiedCode)
-          .select();
-
-        if (codeUpdateError) {
-          throw new Error('Failed to mark code as used: ' + codeUpdateError.message);
-        }
-
-        updateProgress('Updating your account...');
-        
-        const { data: currentProfile, error: fetchError } = await window.supabase
-          .from('profiles')
-          .select('books_owned')
-          .eq('id', userId)
-          .single();
-
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          throw new Error('Could not fetch profile');
-        }
-
-        const existingBooks = currentProfile?.books_owned || [];
-        const updatedBooks = existingBooks.includes(verifiedBookType) 
-          ? existingBooks 
-          : existingBooks.concat([verifiedBookType]);
-
-        const { error: profileError } = await window.supabase
-          .from('profiles')
-          .update({ 
-            is_book_owner: true,
-            books_owned: updatedBooks
-          })
-          .eq('id', userId);
-
-        if (profileError) {
-          throw new Error('Failed to update profile: ' + profileError.message);
-        }
-
-        let videoUploaded = false;
-        if (videoFile) {
-          try {
-            updateProgress('Uploading video...');
-            const videoExt = videoFile.name.split('.').pop();
-            const videoPath = userId + '/video-' + verifiedBookType + '-' + Date.now() + '.' + videoExt;
+          if (!videoError) {
+            console.log('✅ Video uploaded');
             
-            const { data: videoData, error: videoError } = await window.supabase.storage
-              .from('book-videos')
-              .upload(videoPath, videoFile);
+            updateProgress('Checking bonus eligibility...');
+            
+            const { data: profileData, error: profileCheckError } = await window.supabase
+              .from('profiles')
+              .select('video_bonus_claimed')
+              .eq('id', userId)
+              .maybeSingle();
 
-            if (!videoError) {
-              videoUploaded = true;
-              
-              updateProgress('Checking bonus eligibility...');
-              
-              const { data: profileData, error: profileCheckError } = await window.supabase
-                .from('profiles')
-                .select('video_bonus_claimed')
-                .eq('id', userId)
-                .single();
+            if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+              console.error('⚠️ Bonus check error:', profileCheckError);
+            }
 
-              if (profileCheckError) {
-                throw new Error('Could not check bonus eligibility');
+            if (!profileData?.video_bonus_claimed) {
+              updateProgress('Adding bonus credit...');
+              
+              const { data: existingCredits, error: fetchCreditsError } = await window.supabase
+                .from('user_credits')
+                .select('balance')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+              if (fetchCreditsError && fetchCreditsError.code !== 'PGRST116') {
+                console.error('⚠️ Credits fetch error:', fetchCreditsError);
               }
 
-              if (!profileData.video_bonus_claimed) {
-                updateProgress('Adding bonus credit...');
+              if (existingCredits) {
+                const newBalance = existingCredits.balance + 1;
                 
-                const { data: existingCredits, error: fetchCreditsError } = await window.supabase
+                const { error: updateCreditsError } = await window.supabase
                   .from('user_credits')
-                  .select('balance')
-                  .eq('user_id', userId)
-                  .maybeSingle();
+                  .update({ 
+                    balance: newBalance,
+                    updated_at: new Date().toISOString()
+                  })
+                  .eq('user_id', userId);
 
-                if (fetchCreditsError) {
-                  throw new Error('Could not check credits balance');
-                }
-
-                if (existingCredits) {
-                  const newBalance = existingCredits.balance + 1;
-                  
-                  const { error: updateCreditsError } = await window.supabase
-                    .from('user_credits')
-                    .update({ 
-                      balance: newBalance,
-                      updated_at: new Date().toISOString()
-                    })
-                    .eq('user_id', userId);
-
-                  if (updateCreditsError) {
-                    throw new Error('Could not update credits');
-                  }
+                if (updateCreditsError) {
+                  console.error('⚠️ Credits update error:', updateCreditsError);
                 } else {
-                  const { error: insertCreditsError } = await window.supabase
-                    .from('user_credits')
-                    .insert({ 
-                      user_id: userId,
-                      balance: 1,
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString()
-                    });
-
-                  if (insertCreditsError) {
-                    throw new Error('Could not create credits record');
-                  }
-                }
-
-                const { error: markBonusError } = await window.supabase
-                  .from('profiles')
-                  .update({ video_bonus_claimed: true })
-                  .eq('id', userId);
-
-                if (markBonusError) {
-                  console.error('Could not mark bonus as claimed:', markBonusError);
+                  console.log('✅ Credits updated to', newBalance);
                 }
               } else {
-                console.log('User already claimed video bonus previously');
-                videoUploaded = false;
+                const { error: insertCreditsError } = await window.supabase
+                  .from('user_credits')
+                  .insert({ 
+                    user_id: userId,
+                    balance: 1,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                  });
+
+                if (insertCreditsError) {
+                  console.error('⚠️ Credits insert error:', insertCreditsError);
+                } else {
+                  console.log('✅ Credits created: 1');
+                }
               }
+
+              const { error: markBonusError } = await window.supabase
+                .from('profiles')
+                .update({ video_bonus_claimed: true })
+                .eq('id', userId);
+
+              if (markBonusError) {
+                console.error('⚠️ Bonus mark error:', markBonusError);
+              } else {
+                videoUploaded = true;
+                console.log('✅ Bonus marked as claimed');
+              }
+            } else {
+              console.log('ℹ️ User already claimed video bonus');
             }
-          } catch (videoError) {
-            console.error('Video processing error:', videoError);
+          } else {
+            console.error('⚠️ Video upload error:', videoError);
           }
+        } catch (videoError) {
+          console.error('⚠️ Video processing error:', videoError);
         }
-
-        updateProgress('');
-        
-        let successMessage = '🎉 Congratulations! Your book is verified and you now have access to exclusive book owner pricing.';
-        if (videoUploaded) {
-          successMessage += ' Plus, we have added 1 free song credit to your account as a thank you for sharing your video! 🎁';
-        } else if (videoFile) {
-          successMessage += ' Your video was uploaded successfully. (Note: The bonus credit is a one-time reward that you have already claimed previously.)';
-        }
-        
-        showMessage(successMessage, 'success');
-        submitBtn.textContent = '✓ Verified!';
-
-    // Clear the stored code since verification is complete
-sessionStorage.removeItem('verifiedCode');
-sessionStorage.removeItem('verifiedBookType');
-
-// Clear the stored code since verification is complete
-sessionStorage.removeItem('verifiedCode');
-sessionStorage.removeItem('verifiedBookType');
-
-setTimeout(() => {
-  window.location.href = './dashboard.html';
-}, 3000);
-      } catch (error) {
-        console.error('Error:', error);
-        showMessage(error.message || 'Verification failed. Please try again.', 'error');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Complete Verification & Unlock Discounts';
-        updateProgress('');
       }
-    });
 
-    function showMessage(text, type) {
-  const messageArea = document.getElementById('messageArea');
-  messageArea.className = type === 'error' ? 'error-text' : 'success-text';
-  messageArea.innerHTML = '<p>' + text + '</p>';
-}
+      updateProgress('');
+      
+      let successMessage = '🎉 Congratulations! Your book is verified and you now have access to exclusive book owner pricing.';
+      if (videoUploaded) {
+        successMessage += ' Plus, we have added 1 free song credit to your account as a thank you for sharing your video! 🎁';
+      } else if (videoFile) {
+        successMessage += ' Your video was uploaded successfully. (Note: The bonus credit is a one-time reward that you have already claimed previously.)';
+      }
+      
+      showMessage(successMessage, 'success');
+      submitBtn.textContent = '✓ Verified!';
 
-   checkAuth();
+      // Clear the stored code since verification is complete
+      sessionStorage.removeItem('verifiedCode');
+      sessionStorage.removeItem('verifiedBookType');
 
-// Check if we have a verified code from before (in case of page refresh)
-const savedCode = sessionStorage.getItem('verifiedCode');
-const savedBookType = sessionStorage.getItem('verifiedBookType');
-if (savedCode && savedBookType) {
-  verifiedCode = savedCode;
-  verifiedBookType = savedBookType;
-  
-  // Skip code step and show the form
-  document.getElementById('codeStep').classList.add('hidden');
-  document.getElementById('bookForm').classList.remove('hidden');
-  
-  const bookNames = {
-    'soulful': 'Soulful Bollywood Melodies',
-    'peppy': 'Peppy Bollywood Melodies',
-    'romantic': 'Romantic Bollywood Melodies',
-    'classic': 'Classic Bollywood Melodies'
-  };
-  
-  document.getElementById('verifiedCodeDisplay').innerHTML = '<div class="verified-info">✓ Code Verified: ' + (bookNames[savedBookType] || savedBookType) + '</div>';
-}
-    </script>
+      console.log('✅ Verification complete! Redirecting to homepage...');
+
+      setTimeout(() => {
+        window.location.href = 'https://riashandilya-svg.github.io/classicbollywoodmelodies/';
+      }, 3000);
+
+    } catch (error) {
+      console.error('❌ Error:', error);
+      showMessage(error.message || 'Verification failed. Please try again.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Complete Verification & Unlock Discounts';
+      updateProgress('');
+    }
+  });
+
+  function showMessage(text, type) {
+    const messageArea = document.getElementById('messageArea');
+    messageArea.className = type === 'error' ? 'error-text' : 'success-text';
+    messageArea.innerHTML = '<p>' + text + '</p>';
+  }
+
+  checkAuth();
+
+  // Check if we have a verified code from before (in case of page refresh)
+  const savedCode = sessionStorage.getItem('verifiedCode');
+  const savedBookType = sessionStorage.getItem('verifiedBookType');
+  if (savedCode && savedBookType) {
+    verifiedCode = savedCode;
+    verifiedBookType = savedBookType;
+    
+    // Skip code step and show the form
+    document.getElementById('codeStep').classList.add('hidden');
+    document.getElementById('bookForm').classList.remove('hidden');
+    
+    const bookNames = {
+      'soulful': 'Soulful Bollywood Melodies',
+      'peppy': 'Peppy Bollywood Melodies',
+      'romantic': 'Romantic Bollywood Melodies',
+      'classic': 'Classic Bollywood Melodies'
+    };
+    
+    document.getElementById('verifiedCodeDisplay').innerHTML = '<div class="verified-info">✓ Code Verified: ' + (bookNames[savedBookType] || savedBookType) + '</div>';
+  }
+</script>
