@@ -111,7 +111,9 @@
       margin-top: 4px;
     }
 
-    select, input[type="file"] {
+    input[type="text"],
+    select,
+    input[type="file"] {
       width: 100%;
       padding: 12px;
       border: 1px solid var(--border);
@@ -119,6 +121,12 @@
       font-size: 16px;
       font-family: inherit;
       background: white;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
     }
 
     .file-input-wrapper {
@@ -251,6 +259,34 @@
       margin-top: 8px;
       text-align: center;
     }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .code-input-group {
+      position: relative;
+    }
+
+    .code-input-group input {
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      color: var(--success);
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -261,27 +297,39 @@
   <main>
     <div class="card">
       <h1>📚 Verify Your Book</h1>
-      <p class="subtitle">Unlock discounted song prices instantly</p>
+      <p class="subtitle">Enter your unique book code to get started</p>
 
       <div id="authCheck" class="loading">
         <div class="spinner"></div>
         <p>Checking authentication...</p>
       </div>
 
-      <div id="verificationForm" style="display: none;">
+      <div id="verificationForm" class="hidden">
         <div id="message"></div>
 
-        <form id="bookForm">
-          <div class="form-group">
-            <label for="bookSelect">Which book do you have?</label>
-            <select id="bookSelect" required>
-              <option value="">Select a book...</option>
-              <option value="soulful">Soulful Bollywood Melodies</option>
-              <option value="peppy">Peppy Bollywood Melodies</option>
-              <option value="romantic">Romantic Bollywood Melodies</option>
-              <option value="classic">Classic Bollywood Melodies</option>
-            </select>
+        <!-- STEP 1: Book Code Verification -->
+        <div id="codeStep">
+          <div class="form-group code-input-group">
+            <label for="bookCode">Enter Your Book Code</label>
+            <span class="hint">Find this code printed inside your physical book</span>
+            <input 
+              type="text" 
+              id="bookCode" 
+              placeholder="SOULFUL-ABC123"
+              maxlength="15"
+              style="text-transform: uppercase;"
+            >
           </div>
+          
+          <button type="button" class="btn" id="verifyCodeBtn">
+            Verify Code
+          </button>
+          <div id="codeProgress" class="progress-detail"></div>
+        </div>
+
+        <!-- STEP 2: Upload Form (hidden until code verified) -->
+        <form id="bookForm" class="hidden">
+          <div id="verifiedCodeDisplay"></div>
 
           <div class="form-group">
             <label>Upload a photo of your book</label>
@@ -315,7 +363,7 @@
           </div>
 
           <button type="submit" class="btn" id="submitBtn">
-            Verify Book & Unlock Discounts
+            Complete Verification & Unlock Discounts
           </button>
           <div id="progressDetail" class="progress-detail"></div>
         </form>
@@ -332,6 +380,8 @@
 
     let photoFile = null;
     let videoFile = null;
+    let verifiedCode = null;
+    let verifiedBookType = null;
 
     // Check authentication
     async function checkAuth() {
@@ -351,8 +401,85 @@
       }
 
       authCheck.style.display = 'none';
-      verificationForm.style.display = 'block';
+      verificationForm.classList.remove('hidden');
     }
+
+    // Verify book code
+    document.getElementById('verifyCodeBtn').addEventListener('click', async () => {
+      const codeInput = document.getElementById('bookCode');
+      const code = codeInput.value.trim().toUpperCase();
+      const btn = document.getElementById('verifyCodeBtn');
+      const progressDiv = document.getElementById('codeProgress');
+
+      if (!code) {
+        showMessage('Please enter your book code', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Checking code...';
+      progressDiv.textContent = 'Verifying with database...';
+
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) {
+          throw new Error('Not authenticated');
+        }
+
+        console.log('🔍 Checking code:', code);
+
+        // Check if code exists and is unused
+        const { data: codeData, error: codeError } = await window.supabase
+          .from('book_verification_codes')
+          .select('*')
+          .eq('code', code)
+          .single();
+
+        if (codeError || !codeData) {
+          console.error('❌ Code not found:', codeError);
+          throw new Error('Invalid book code. Please check and try again.');
+        }
+
+        console.log('📋 Code found:', codeData);
+
+        if (codeData.is_used) {
+          throw new Error('This code has already been used.');
+        }
+
+        // Code is valid!
+        verifiedCode = code;
+        verifiedBookType = codeData.book_name;
+
+        console.log('✅ Code verified:', verifiedCode, 'Book:', verifiedBookType);
+
+        // Show success and hide code step
+        document.getElementById('codeStep').classList.add('hidden');
+        document.getElementById('bookForm').classList.remove('hidden');
+        
+        // Show which book they're verifying
+        const bookNames = {
+          'soulful': 'Soulful Bollywood Melodies',
+          'peppy': 'Peppy Bollywood Melodies',
+          'romantic': 'Romantic Bollywood Melodies',
+          'classic': 'Classic Bollywood Melodies'
+        };
+
+        document.getElementById('verifiedCodeDisplay').innerHTML = `
+          <div class="verified-badge">
+            ✓ Code Verified: ${bookNames[verifiedBookType]}
+          </div>
+        `;
+
+        showMessage(`Code verified! Now upload your book photo.`, 'success');
+
+      } catch (error) {
+        console.error('❌ Error:', error);
+        showMessage(error.message || 'Failed to verify code', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Verify Code';
+        progressDiv.textContent = '';
+      }
+    });
 
     // File input handlers
     document.getElementById('photoInput').addEventListener('change', (e) => {
@@ -378,16 +505,12 @@
       document.getElementById('progressDetail').textContent = message;
     }
 
-    // Form submission - FIXED VERSION
+    // Form submission
     document.getElementById('bookForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const bookId = document.getElementById('bookSelect').value;
-      const submitBtn = document.getElementById('submitBtn');
-      const messageDiv = document.getElementById('message');
-
-      if (!bookId) {
-        showMessage('Please select a book', 'error');
+      if (!verifiedCode || !verifiedBookType) {
+        showMessage('Please verify your book code first', 'error');
         return;
       }
 
@@ -396,6 +519,7 @@
         return;
       }
 
+      const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Processing...';
       updateProgress('Starting verification...');
@@ -408,14 +532,15 @@
         
         const userId = session.user.id;
         console.log('🔐 User ID:', userId);
-        console.log('📚 Book ID:', bookId);
+        console.log('📚 Book Type:', verifiedBookType);
+        console.log('🎫 Book Code:', verifiedCode);
 
         // ============================================
         // STEP 1: Upload Photo
         // ============================================
         updateProgress('Uploading photo...');
         const photoExt = photoFile.name.split('.').pop();
-        const photoPath = `${userId}/book-${bookId}-${Date.now()}.${photoExt}`;
+        const photoPath = `${userId}/book-${verifiedBookType}-${Date.now()}.${photoExt}`;
         
         console.log('📸 Uploading photo to:', photoPath);
         
@@ -431,11 +556,32 @@
         console.log('✅ Photo uploaded successfully');
 
         // ============================================
-        // STEP 2: Update Profile - Mark as Book Owner
+        // STEP 2: Mark Code as Used
         // ============================================
-        updateProgress('Verifying book ownership...');
+        updateProgress('Marking code as used...');
         
-        // First, get current profile to see if they already own other books
+        const { error: codeUpdateError } = await window.supabase
+          .from('book_verification_codes')
+          .update({ 
+            is_used: true,
+            used_by_user_id: userId,
+            used_at: new Date().toISOString()
+          })
+          .eq('code', verifiedCode);
+
+        if (codeUpdateError) {
+          console.error('❌ Code update error:', codeUpdateError);
+          throw new Error('Failed to mark code as used');
+        }
+
+        console.log('✅ Code marked as used');
+
+        // ============================================
+        // STEP 3: Update Profile - Mark as Book Owner
+        // ============================================
+        updateProgress('Updating your account...');
+        
+        // Get current profile
         const { data: currentProfile, error: fetchError } = await window.supabase
           .from('profiles')
           .select('books_owned')
@@ -447,11 +593,11 @@
           throw new Error('Could not fetch profile');
         }
 
-        // Add this book to their owned books (don't overwrite existing ones)
+        // Add this book to their owned books
         const existingBooks = currentProfile?.books_owned || [];
-        const updatedBooks = existingBooks.includes(bookId) 
+        const updatedBooks = existingBooks.includes(verifiedBookType) 
           ? existingBooks 
-          : [...existingBooks, bookId];
+          : [...existingBooks, verifiedBookType];
 
         console.log('📚 Updating books_owned:', updatedBooks);
 
@@ -471,14 +617,14 @@
         console.log('✅ Profile updated - book ownership verified');
 
         // ============================================
-        // STEP 3: Upload Video (if provided) and Give Credit
+        // STEP 4: Upload Video (if provided) and Give Credit
         // ============================================
         let videoUploaded = false;
         if (videoFile) {
           try {
             updateProgress('Uploading video...');
             const videoExt = videoFile.name.split('.').pop();
-            const videoPath = `${userId}/video-${bookId}-${Date.now()}.${videoExt}`;
+            const videoPath = `${userId}/video-${verifiedBookType}-${Date.now()}.${videoExt}`;
             
             console.log('🎥 Uploading video to:', videoPath);
             
@@ -492,19 +638,16 @@
               console.log('✅ Video uploaded successfully');
               videoUploaded = true;
               
-              // ============================================
-              // STEP 4: Add 1 Credit for Video Upload
-              // ============================================
+              // Add 1 Credit for Video Upload
               updateProgress('Adding bonus credit...');
               
               console.log('🎁 Adding bonus credit for video upload');
               
-              // Check if user already has a credits record
               const { data: existingCredits, error: fetchCreditsError } = await window.supabase
                 .from('user_credits')
                 .select('balance')
                 .eq('user_id', userId)
-                .maybeSingle(); // Use maybeSingle() to avoid error if no row exists
+                .maybeSingle();
 
               if (fetchCreditsError) {
                 console.error('❌ Error checking credits:', fetchCreditsError);
@@ -512,8 +655,6 @@
               }
 
               if (existingCredits) {
-                // User has credits, update balance
-                console.log('💰 Current balance:', existingCredits.balance);
                 const newBalance = existingCredits.balance + 1;
                 
                 const { error: updateCreditsError } = await window.supabase
@@ -531,9 +672,6 @@
                 
                 console.log('✅ Credits updated - new balance:', newBalance);
               } else {
-                // User doesn't have credits record, create one
-                console.log('🆕 Creating new credits record');
-                
                 const { error: insertCreditsError } = await window.supabase
                   .from('user_credits')
                   .insert({ 
@@ -581,7 +719,7 @@
         console.error('❌ Error:', error);
         showMessage(error.message || 'Verification failed. Please try again.', 'error');
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Verify Book & Unlock Discounts';
+        submitBtn.textContent = 'Complete Verification & Unlock Discounts';
         updateProgress('');
       }
     });
