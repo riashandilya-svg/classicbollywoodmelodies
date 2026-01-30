@@ -121,21 +121,32 @@ async function loadProfileAvatar(userId) {
   try {
     const { data: profile, error } = await window.supabase
       .from('profiles')
-      .select('avatar_url')
+      .select('avatar_path')
       .eq('id', userId)
       .single();
 
     if (error) throw error;
 
-    // If user uploaded an avatar, use it. Otherwise default.
-const saved = profile?.avatar_url;
-setAvatar(saved ? `${saved}?v=${Date.now()}` : DEFAULT_AVATAR);
+    const path = profile?.avatar_path;
+    if (!path) {
+      setAvatar(DEFAULT_AVATAR);
+      return;
+    }
 
+    // Create a signed URL (works with private bucket)
+    const { data: signed, error: signErr } = await window.supabase.storage
+      .from('avatars')
+      .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
+
+    if (signErr) throw signErr;
+
+    setAvatar(signed?.signedUrl || DEFAULT_AVATAR);
   } catch (err) {
     console.error('Error loading avatar:', err);
     setAvatar(DEFAULT_AVATAR);
   }
 }
+
 
 function setupAvatarUpload(userId) {
   const btn = document.getElementById('changeAvatarBtn');
@@ -168,38 +179,37 @@ function setupAvatarUpload(userId) {
       const previewUrl = URL.createObjectURL(file);
       setAvatar(previewUrl);
 
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-const filePath = `${userId}/avatar-${Date.now()}.${ext}`; // unique each upload
+     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+const filePath = `${userId}/avatar.${ext}`; // overwrite each time
 
-      // Upload to Storage
-      const { error: uploadError } = await window.supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
+const { error: uploadError } = await window.supabase.storage
+  .from('avatars')
+  .upload(filePath, file, {
+    upsert: true,
+    contentType: file.type,
+    cacheControl: '3600'
+  });
 
-      if (uploadError) throw uploadError;
+if (uploadError) throw uploadError;
 
-      // Public URL (bucket is public)
-      const { data: publicData } = window.supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+// Save *path* in profiles (not public URL)
+const { error: updateError } = await window.supabase
+  .from('profiles')
+  .update({ avatar_path: filePath })
+  .eq('id', userId);
 
-const publicUrl = publicData?.publicUrl || null;
-if (!publicUrl) throw new Error('Could not get public URL');
+if (updateError) throw updateError;
 
+// Get a signed URL and display it
+const { data: signed, error: signErr } = await window.supabase.storage
+  .from('avatars')
+  .createSignedUrl(filePath, 60 * 60 * 24 * 7);
 
-      // Save URL in profiles
-      const { error: updateError } = await window.supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', userId);
+if (signErr) throw signErr;
 
-      if (updateError) throw updateError;
-
-      // Use final URL (not blob)
-setAvatar(`${publicUrl}?v=${Date.now()}`);
-
-      alert('Profile photo updated!');
-    } catch (err) {
+setAvatar(signed?.signedUrl || DEFAULT_AVATAR);
+alert('Profile photo updated!');
+} catch (err) {
       console.error('Avatar upload failed:', err);
       alert('Failed to upload profile photo. Please try again.');
       setAvatar(DEFAULT_AVATAR);
