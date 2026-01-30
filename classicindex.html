@@ -118,17 +118,17 @@
 
       background: linear-gradient(
         110deg,
-        rgba(25, 105, 255, 0.98) 0%,
-        rgba(120, 205, 255, 0.92) 30%,
+        rgba(20, 90, 255, 0.98) 0%,
+        rgba(120, 205, 255, 0.92) 28%,
         rgba(255,255,255,0.92) 50%,
-        rgba(120, 205, 255, 0.92) 70%,
-        rgba(25, 105, 255, 0.98) 100%
+        rgba(120, 205, 255, 0.92) 72%,
+        rgba(20, 90, 255, 0.98) 100%
       );
       background-size: 220% 100%;
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      filter: drop-shadow(0 0 16px rgba(25, 105, 255, 0.18));
+      filter: drop-shadow(0 0 16px rgba(60, 140, 255, 0.22));
       animation: shimmerBlue 6.8s ease-in-out infinite;
 
       padding: 2px 2px;
@@ -149,7 +149,7 @@
       align-items: center;
       overflow: hidden;
       border-radius: 999px;
-      border: 1px solid rgba(80, 170, 230, 0.22);
+      border: 1px solid rgba(80, 170, 230, 0.24);
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(10px);
       box-shadow: 0 14px 40px rgba(8, 24, 40, 0.10);
@@ -178,14 +178,14 @@
     }
 
     .stripItem:hover{
-      background: rgba(120,205,255,0.14);
+      background: rgba(120,205,255,0.16);
       filter: brightness(1.02);
     }
 
     .stripItem.primary{
       color: rgba(11,26,36,0.92);
       background: linear-gradient(135deg,
-        rgba(25, 105, 255, 0.10),
+        rgba(20, 90, 255, 0.14),
         rgba(120,205,255,0.14),
         rgba(190,240,255,0.10)
       );
@@ -194,7 +194,7 @@
     .stripDivider{
       width: 1px;
       align-self: stretch;
-      background: rgba(80, 170, 230, 0.18);
+      background: rgba(80, 170, 230, 0.16);
     }
 
     /* Shine sweep on strip items */
@@ -373,6 +373,50 @@
       transform: translateY(-2px);
       border-color: rgba(80,170,230,0.30);
       box-shadow: 0 24px 55px rgba(8, 24, 40, 0.14);
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-80px -90px auto auto;
+      width: 230px;
+      height: 230px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%,
+        var(--a1),
+        var(--a2),
+        transparent 62%);
+      filter: blur(2px);
+      pointer-events: none;
+    }
+
+    .card::after{
+      content:"";
+      position:absolute;
+      left:-120px;
+      bottom:-140px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 60% 40%,
+        var(--a2),
+        transparent 62%);
+      pointer-events: none;
+    }
+
+    .card > *{ position: relative; z-index: 1; }
+
+    .song-title{
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .song-meta{
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .btn{
@@ -560,16 +604,75 @@
 
   <script>
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NT5116214)"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function renderAuthUI() {
+      const { data: { session } } = await sb.auth.getSession();
+
+      const accountDock = document.getElementById("accountDock");
+      const welcomeText = document.getElementById("welcomeText");
+
+      const authRow = document.getElementById("authRow");
+      const loginLink = document.getElementById("loginLink");
+
+      const logoutBtn = document.getElementById("logoutBtn");
+      const dashboardLink = document.getElementById("dashboardLink");
+      const verifyLink = document.getElementById("verifyLink");
+
+      if (session && session.user) {
+        const userId = session.user.id;
+
+        const { data: profile, error } = await sb
+          .from("profiles")
+          .select("display_name, setup_completed")
+          .eq("id", userId)
+          .single();
+
+        if (error) console.log("profile fetch error:", error);
+
+        if (profile && profile.setup_completed === false) {
+          window.location.href = "./setup.html";
+          return;
+        }
+
+        const displayName = (profile && profile.display_name) ? String(profile.display_name).trim() : "";
+        welcomeText.textContent = displayName ? `Welcome, ${displayName}` : "Welcome";
+
+        accountDock.style.display = "block";
+        dashboardLink.style.display = "inline-flex";
+        verifyLink.style.display = "inline-flex";
+        logoutBtn.style.display = "inline-flex";
+
+        authRow.style.display = "none";
+        if (loginLink) loginLink.style.display = "none";
+      } else {
+        accountDock.style.display = "none";
+        dashboardLink.style.display = "none";
+        verifyLink.style.display = "none";
+        logoutBtn.style.display = "none";
+        welcomeText.textContent = "";
+
+        authRow.style.display = "flex";
+        if (loginLink) loginLink.style.display = "inline-flex";
+      }
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      await renderAuthUI();
+    });
+
+    sb.auth.onAuthStateChange(() => {
+      renderAuthUI();
+    });
+
+    renderAuthUI();
+    setTimeout(renderAuthUI, 800);
   </script>
 
-  <!-- ✅ IMPORTANT:
-       Your Supabase JS in your original file is correct.
-       Paste YOUR ORIGINAL Supabase script block here (the full one),
-       because the anon key above got truncated by the chat window. -->
-
   <script>
-    /* ===== Cursor glitter (royal blue) ===== */
+    /* ===== Cursor glitter (royal blue-ish) ===== */
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if(prefersReduced) return;
@@ -606,7 +709,7 @@
             size: 1.0 + Math.random() * 2.8,
             tw: Math.random() * Math.PI * 2,
             alpha: 0.52 + Math.random() * 0.34,
-            deep: Math.random() < 0.6
+            deep: Math.random() < 0.65
           });
         }
       }
@@ -643,9 +746,8 @@
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
 
-          const royal = `rgba(25, 105, 255, ${a})`;
-          const sky   = `rgba(120, 205, 255, ${a * 0.90})`;
-          const ice   = `rgba(190, 240, 255, ${a * 0.80})`;
+          const royal = `rgba(20, 90, 255, ${a})`;
+          const sky   = `rgba(120, 205, 255, ${a * 0.88})`;
           const core  = `rgba(255, 255, 255, ${a * 0.55})`;
           const dot = p.deep ? royal : sky;
 
@@ -664,7 +766,7 @@
             ctx.translate(p.x, p.y);
             ctx.rotate(p.tw * 0.35);
             ctx.globalAlpha = a * 0.92;
-            ctx.strokeStyle = `rgba(220, 240, 255, ${a})`;
+            ctx.strokeStyle = `rgba(210, 235, 255, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
@@ -678,5 +780,6 @@
       tick();
     })();
   </script>
+
 </body>
 </html>
