@@ -284,6 +284,14 @@
         <div class="hero">
           <h1>Classic Bollywood Melodies</h1>
           <p class="sub">Pick a song to open its practice page.</p>
+        <div id="authBox" style="margin: 14px 0 6px; display:flex; gap:10px; justify-content:flex-start; flex-wrap:wrap;">
+          <span id="userBox" style="display:none; padding:12px 14px; border-radius:14px; border:1px solid rgba(80,170,230,0.22); background:rgba(255,255,255,0.55);"></span>
+
+          <a id="loginLink" class="btn" href="./login.html">Login</a>
+          <a id="dashboardLink" class="btn" href="./dashboard.html" style="display:none;">🎵 Dashboard</a>
+          <a id="verifyLink" class="btn" href="./verify-book.html" style="display:none;">📚 Verify Book</a>
+          <button id="logoutBtn" class="btn" style="display:none;" type="button">Logout</button>
+        </div>
         </div>
 
                      <section class="grid">
@@ -339,5 +347,72 @@
       </aside>
     </div>
   </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function renderAuthUI() {
+    const { data: { session } } = await sb.auth.getSession();
+
+    const userBox = document.getElementById("userBox");
+    const loginLink = document.getElementById("loginLink");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const dashboardLink = document.getElementById("dashboardLink");
+    const verifyLink = document.getElementById("verifyLink");
+
+    if (session && session.user) {
+      const userId = session.user.id;
+
+      // Get profile info
+      const { data: profile, error } = await sb
+        .from("profiles")
+        .select("display_name, setup_completed")
+        .eq("id", userId)
+        .single();
+
+      if (error) console.log("profile fetch error:", error);
+
+      // If setup not completed, redirect once
+      if (profile && profile.setup_completed === false) {
+        window.location.href = "./setup.html";
+        return;
+      }
+
+      const displayName = (profile && profile.display_name) ? profile.display_name : "there";
+      userBox.textContent = `Welcome, ${displayName}`;
+      userBox.style.display = "inline-flex";
+      logoutBtn.style.display = "inline-flex";
+      loginLink.style.display = "none";
+      
+      // Show dashboard and verify book links when logged in
+      dashboardLink.style.display = "inline-flex";
+      verifyLink.style.display = "inline-flex";
+    } else {
+      userBox.style.display = "none";
+      logoutBtn.style.display = "none";
+      loginLink.style.display = "inline-flex";
+      
+      // Hide dashboard and verify book links when logged out
+      dashboardLink.style.display = "none";
+      verifyLink.style.display = "none";
+    }
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    await renderAuthUI();
+  });
+
+  sb.auth.onAuthStateChange(() => {
+    renderAuthUI();
+  });
+
+  renderAuthUI();
+  setTimeout(renderAuthUI, 800);
+</script>
+
 </body>
 </html>
