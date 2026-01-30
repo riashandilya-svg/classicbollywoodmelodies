@@ -1,5 +1,65 @@
+// 👇 COPY FROM HERE 👇
+// Song ID to Display Name mapping
+const SONG_NAMES = {
+    'song:badeacche': 'Bade Achhe Lagte Hain',
+    'song:kalho': 'Kal Ho Naa Ho',
+    'song:haiapna': 'Hai Apna Dil Toh Awaara',
+    'song:ekladki': 'Ek Ladki Bheegi Bhaagi Si',
+    'song:gulaabi': 'Gulaabi Aankhen',
+    'song:chookar': 'Chookar Mere Mann Ko',
+    'song:aaogejab': 'Aaoge Jab Tum Sajna',
+    'song:jashnebahaara': 'Jashn-e-Bahaara',
+    'song:goregore': 'Gore Gore Mukhde Pe',
+    'song:darling': 'Darling',
+    'song:allahkebande': 'Allah Ke Bande',
+    'song:palpalharpal': 'Pal Pal Har Pal',
+    'song:zoobiedoobie': 'Zoobie Doobie',
+    'song:meresaamne': 'Mere Saamne Wali Khidki',
+    'song:jaanekahan': 'Jaane Kahan Gaye Woh Din',
+    'song:aajkal': 'Aaj Kal Tere Mere Pyaar Ke Charche',
+    'song:aehairate': 'Ae Hairate Aashiqui',
+    'song:piyubole': 'Piyu Bole',
+    'song:raatkali': 'Raat Kali Ek Khwaab Mein Aayi',
+    'song:khwaabho': 'Khwaabho Ke Parindey',
+    'song:kaisipaheli': 'Kaisi Paheli Zindagani'
+};
+
+// Book name mapping
+const BOOK_NAMES = {
+    'soulful': 'Soulful Bollywood Melodies',
+    'peppy': 'Peppy Bollywood Melodies',
+    'romantic': 'Romantic Bollywood Melodies',
+    'classic': 'Classic Bollywood Melodies'
+};
+
+// Song to Book category mapping
+const SONG_CATEGORIES = {
+    'song:meresaamne': 'romantic',
+    'song:jaanekahan': 'peppy',
+    'song:aajkal': 'romantic',
+    'song:aehairate': 'soulful',
+    'song:piyubole': 'romantic',
+    'song:raatkali': 'romantic',
+    'song:khwaabho': 'romantic',
+    'song:kaisipaheli': 'peppy',
+    'song:jashnebahaara': 'soulful',
+    'song:goregore': 'peppy',
+    'song:darling': 'peppy',
+    'song:allahkebande': 'soulful',
+    'song:badeacche': 'romantic',
+    'song:kalho': 'classic',
+    'song:palpalharpal': 'peppy',
+    'song:zoobiedoobie': 'peppy',
+    'song:ekladki': 'classic',
+    'song:haiapna': 'classic',
+    'song:gulaabi': 'classic',
+    'song:chookar': 'classic',
+    'song:aaogejab': 'classic'
+};
+
 // Wait for Supabase to be ready
 async function initDashboard() {
+
     try {
         // Check if user is logged in
         const { data: { user }, error } = await window.supabase.auth.getUser();
@@ -9,8 +69,15 @@ async function initDashboard() {
             return;
         }
 
-        // Display user email
-        document.getElementById('userEmail').textContent = user.email;
+// Get user's display name
+const { data: profile } = await window.supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single();
+
+const displayName = profile?.display_name || user.email.split('@')[0];
+document.getElementById('userEmail').textContent = `👋 ${displayName}`;
 
         // Load all dashboard data
         await Promise.all([
@@ -94,9 +161,9 @@ async function loadBookStatus(userId) {
                 </div>
             `;
         } else {
-            const badges = profile.books_owned
-                .map(book => `<span class="book-badge">✓ ${book}</span>`)
-                .join('');
+const badges = profile.books_owned
+    .map(book => `<span class="book-badge">✓ ${BOOK_NAMES[book] || book}</span>`)
+    .join('');
             container.innerHTML = `
                 <div style="padding: 20px;">
                     <p style="margin-bottom: 15px; color: #666;">You own these books and get discounted pricing:</p>
@@ -151,39 +218,40 @@ async function loadSongs(userId) {
             return;
         }
 
-        // Render songs
-        container.innerHTML = purchases.map(purchase => {
-            const songId = purchase.song_id;
-            const songName = songId.replace('song:', '').replace(/([A-Z])/g, ' $1').trim();
-            const currentStatus = progressMap[songId] || 'not_started';
-            const purchaseDate = new Date(purchase.created_at).toLocaleDateString();
+// Render songs
+container.innerHTML = purchases.map(purchase => {
+    const songId = purchase.song_id;
+    const songName = SONG_NAMES[songId] || songId.replace('song:', '');
+    const category = SONG_CATEGORIES[songId];
+    const bookName = category ? BOOK_NAMES[category] : 'Unknown Book';
+    const currentStatus = progressMap[songId] || 'not_started';
+    const purchaseDate = new Date(purchase.created_at).toLocaleDateString();
 
-            return `
-                <div class="song-item" data-song-id="${songId}">
-                    <div class="song-info">
-                        <div class="song-title">${songName}</div>
-                        <div class="song-meta">Purchased: ${purchaseDate}</div>
-                    </div>
-                    <div class="progress-selector">
-                        <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}" 
-                                onclick="updateProgress('${songId}', 'not_started')">
-                            Not Started
-                        </button>
-                        <button class="progress-btn in_progress ${currentStatus === 'in_progress' ? 'active' : ''}" 
-                                onclick="updateProgress('${songId}', 'in_progress')">
-                            In Progress
-                        </button>
-                        <button class="progress-btn completed ${currentStatus === 'completed' ? 'active' : ''}" 
-                                onclick="updateProgress('${songId}', 'completed')">
-                            Completed
-                        </button>
-                    </div>
-                    <button class="play-btn" onclick="playSong('${songId}')">
-                        ▶ Play
+    return `
+        <div class="song-item" data-song-id="${songId}">
+            <div class="song-info">
+                <div class="song-title">${songName}</div>
+                <div class="song-meta">From: ${bookName} • Purchased: ${purchaseDate}</div>
+            </div>
+            <div class="song-actions">
+                <div class="progress-selector">
+                    <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}" 
+                            onclick="updateProgress('${songId}', 'not_started')">
+                        Not Started
+                    </button>
+                    <button class="progress-btn in_progress ${currentStatus === 'in_progress' ? 'active' : ''}" 
+                            onclick="updateProgress('${songId}', 'in_progress')">
+                        In Progress
+                    </button>
+                    <button class="progress-btn completed ${currentStatus === 'completed' ? 'active' : ''}" 
+                            onclick="updateProgress('${songId}', 'completed')">
+                        Completed
                     </button>
                 </div>
-            `;
-        }).join('');
+            </div>
+        </div>
+    `;
+}).join('');
 
     } catch (error) {
         console.error('Error loading songs:', error);
@@ -236,12 +304,6 @@ async function updateProgress(songId, newStatus) {
         console.error('Error updating progress:', error);
         alert('Failed to update progress. Please try again.');
     }
-}
-
-// Play song (redirect to song page)
-function playSong(songId) {
-    const songSlug = songId.replace('song:', '');
-    window.location.href = `/${songSlug}.html`;
 }
 
 // Load purchase history
