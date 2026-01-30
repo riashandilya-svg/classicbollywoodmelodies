@@ -211,7 +211,7 @@
       : `Unlock: ${productId.replace('song:', '')}`;
 
     const rzp = new window.Razorpay({
-      key: order.keyId,
+key: order.key_id,
       order_id: order.orderId,
       amount: order.amount,
       currency: order.currency,
