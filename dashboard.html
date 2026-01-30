@@ -168,49 +168,29 @@ margin: 6px 0 0;
 }
 
 .header-top{
-  display: flex;
-  align-items: center;
-  justify-content: center;   /* center the whole group */
-  gap: 18px;
-}
-
-.header-text{
-  text-align: center;        /* center title + subtitle */
-  min-width: 0;
-}
-
-.welcomeText{
-  font-family: "Cormorant Garamond", serif;
-  font-weight: 700;
-  font-size: 25px;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-
-  display: block;
-  padding-top: 6px;            /* move it down a bit */
-  padding-bottom: 14px !important;
-  margin: 2px 0 0 !important;
-  
-  background: linear-gradient(
-    110deg,
-    rgba(212, 160, 40, 0.98) 0%,
-    rgba(255, 215, 120, 0.92) 28%,
-    rgba(255,255,255,0.92) 50%,
-    rgba(255, 215, 120, 0.92) 72%,
-    rgba(212, 160, 40, 0.98) 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 14px rgba(255, 200, 90, 0.18));
-  animation: shimmerGold 6.8s ease-in-out infinite;
-}
-
-    .avatar-wrap{
-  margin-left: 0;      /* IMPORTANT: don’t push it away */
   position: relative;
-  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;   /* centers the text block */
+  align-items: center;
+}
+
+/* keep text centered always */
+.header-text{
+  text-align: center;
+}
+
+/* avatar is taken out of normal flow, so it won't push the title */
+.avatar-slot{
+  position: absolute;
+  right: 18px;              /* distance from right edge */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* shift avatar slightly left from the right edge if you want */
+.avatar-wrap{
+  position: relative;
+  transform: translateX(-12px);  /* move left; try -8px or -16px */
 }
 
 
@@ -596,12 +576,14 @@ margin: 6px 0 0;
   <p class="sub">Track your songs, progress, and purchases.</p>
 </div>
 
-    <div class="avatar-wrap">
-      <img id="userAvatar" alt="Profile photo" />
-      <button id="changeAvatarBtn" type="button" title="Change photo">✏️</button>
-      <input id="avatarInput" type="file" accept="image/*" />
-    </div>
+<div class="avatar-slot">
+  <div class="avatar-wrap">
+    <img id="userAvatar" alt="Profile photo" />
+    <button id="changeAvatarBtn" type="button" title="Change photo">✏️</button>
+    <input id="avatarInput" type="file" accept="image/*" />
   </div>
+</div>
+
 
   <div class="user-email" id="userEmail">Loading...</div>
 </div>
