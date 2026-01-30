@@ -811,21 +811,30 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
     // Load statistics
     async function loadStats() {
       try {
-        // Total users
-        const { count: totalUsers } = await window.supabase
+        // Total users (excluding admins by checking email in profiles)
+        const { data: allProfiles } = await window.supabase
           .from('profiles')
-          .select('*', { count: 'exact', head: true });
+          .select('id, email');
         
-        document.getElementById('totalUsers').textContent = totalUsers || 0;
-
-        // Book owners
-        const { count: bookOwners } = await window.supabase
+        const nonAdminProfiles = allProfiles?.filter(p => !ADMIN_EMAILS.includes(p.email)) || [];
+        document.getElementById('totalUsers').textContent = nonAdminProfiles.length;
+    
+        // Book owners (excluding admins)
+        const nonAdminBookOwners = nonAdminProfiles.filter(p => {
+          // Need to check is_book_owner from the full profile data
+          const fullProfile = allProfiles.find(fp => fp.id === p.id);
+          return fullProfile?.is_book_owner === true;
+        });
+        
+        // Actually, let's just query again with the filter
+        const { data: bookOwnerProfiles } = await window.supabase
           .from('profiles')
-          .select('*', { count: 'exact', head: true })
+          .select('id, email')
           .eq('is_book_owner', true);
         
-        document.getElementById('bookOwners').textContent = bookOwners || 0;
-
+        const nonAdminBookOwnersFiltered = bookOwnerProfiles?.filter(p => !ADMIN_EMAILS.includes(p.email)) || [];
+        document.getElementById('bookOwners').textContent = nonAdminBookOwnersFiltered.length;
+    
         // Codes used
         const { count: codesUsed } = await window.supabase
           .from('book_verification_codes')
@@ -833,14 +842,17 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
           .eq('is_used', true);
         
         document.getElementById('codesUsed').textContent = codesUsed || 0;
-
-        // Total purchases
-        const { count: totalPurchases } = await window.supabase
-          .from('purchases')
-          .select('*', { count: 'exact', head: true });
+    
+        // Total purchases (excluding admins)
+        const adminUserIds = allProfiles?.filter(p => ADMIN_EMAILS.includes(p.email)).map(p => p.id) || [];
         
-        document.getElementById('totalPurchases').textContent = totalPurchases || 0;
-
+        const { data: allPurchases } = await window.supabase
+          .from('purchases')
+          .select('user_id');
+        
+        const nonAdminPurchases = allPurchases?.filter(p => !adminUserIds.includes(p.user_id)) || [];
+        document.getElementById('totalPurchases').textContent = nonAdminPurchases.length;
+    
       } catch (error) {
         console.error('Error loading stats:', error);
       }
