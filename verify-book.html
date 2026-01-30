@@ -491,8 +491,12 @@
           throw new Error('This code has already been used.');
         }
 
-        verifiedCode = code;
-        verifiedBookType = codeData.book_name;
+    verifiedCode = code;
+verifiedBookType = codeData.book_name;
+
+// Store in browser so it persists on refresh
+sessionStorage.setItem('verifiedCode', code);
+sessionStorage.setItem('verifiedBookType', codeData.book_name);
 
         document.getElementById('codeStep').classList.add('hidden');
         document.getElementById('bookForm').classList.remove('hidden');
@@ -720,10 +724,13 @@
         showMessage(successMessage, 'success');
         submitBtn.textContent = '✓ Verified!';
 
-        setTimeout(() => {
-          window.location.href = './dashboard.html';
-        }, 3000);
+    // Clear the stored code since verification is complete
+sessionStorage.removeItem('verifiedCode');
+sessionStorage.removeItem('verifiedBookType');
 
+setTimeout(() => {
+  window.location.href = './dashboard.html';
+}, 3000);
       } catch (error) {
         console.error('Error:', error);
         showMessage(error.message || 'Verification failed. Please try again.', 'error');
@@ -739,5 +746,26 @@
   messageArea.innerHTML = '<p>' + text + '</p>';
 }
 
-    checkAuth();
+   checkAuth();
+
+// Check if we have a verified code from before (in case of page refresh)
+const savedCode = sessionStorage.getItem('verifiedCode');
+const savedBookType = sessionStorage.getItem('verifiedBookType');
+if (savedCode && savedBookType) {
+  verifiedCode = savedCode;
+  verifiedBookType = savedBookType;
+  
+  // Skip code step and show the form
+  document.getElementById('codeStep').classList.add('hidden');
+  document.getElementById('bookForm').classList.remove('hidden');
+  
+  const bookNames = {
+    'soulful': 'Soulful Bollywood Melodies',
+    'peppy': 'Peppy Bollywood Melodies',
+    'romantic': 'Romantic Bollywood Melodies',
+    'classic': 'Classic Bollywood Melodies'
+  };
+  
+  document.getElementById('verifiedCodeDisplay').innerHTML = '<div class="verified-info">✓ Code Verified: ' + (bookNames[savedBookType] || savedBookType) + '</div>';
+}
     </script>
