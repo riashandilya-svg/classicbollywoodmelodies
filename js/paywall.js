@@ -1,7 +1,9 @@
 // /classicbollywoodmelodies/js/paywall.js
 (() => {
   const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
-  const OWNER_EMAILS = ["riashandilya@gmail.com"];
+  const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
+  const BUNDLE_PRODUCT_ID = "pack:5";
+  const CURRENCY_SYMBOLS = { INR: '₹', USD: '$' };
 
   function normalizeEmail(email) {
     return (email || "").trim().toLowerCase();
@@ -10,6 +12,17 @@
   function assertSupabase() {
     if (!window.supabase || !window.supabase.auth || !window.supabase.from) {
       throw new Error("Supabase client missing");
+    }
+  }
+
+  async function detectCurrency() {
+    try {
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+      return data.country_code === 'US' ? 'USD' : 'INR';
+    } catch (error) {
+      console.warn('Currency detection failed, defaulting to INR:', error);
+      return 'INR';
     }
   }
 
@@ -31,42 +44,93 @@
     return data.session;
   }
 
-  // ✅ NEW: Check if user owns a song via purchases table
-// ✅ Check if user owns a song via purchases OR has credits
-async function userHasAccess(productId, session) {
-  productId = (productId || "").trim();
-  if (!productId) return false;
-  if (!session?.user) return false;
+  // ✅ UPDATED: Check bundle + individual song purchases
+  async function userHasAccess(productId, session) {
+    productId = (productId || "").trim();
+    if (!productId) return false;
+    if (!session?.user) return false;
 
-  const email = normalizeEmail(session.user.email);
-  if (OWNER_EMAILS.includes(email)) return true;
+    const email = normalizeEmail(session.user.email);
+    if (OWNER_EMAILS.includes(email)) return true;
 
-  const userId = session.user.id;
+    const userId = session.user.id;
 
-  // Check purchases table for this song
-  const { data, error } = await window.supabase
-    .from("purchases")
-    .select("song_id, credits_remaining")
-    .eq("user_id", userId)
-    .eq("status", "paid");
+    // Check if they own the bundle (pack:5)
+    const { data: bundleData } = await window.supabase
+      .from("purchases")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("song_id", BUNDLE_PRODUCT_ID)
+      .eq("status", "paid")
+      .single();
 
-  if (error) {
-    console.error("[PAYWALL] Error checking purchases:", error);
+    if (bundleData) {
+      console.log("[PAYWALL] User has bundle pack");
+      return true;
+    }
+
+    // Check if they own this specific song
+    const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+    
+    const { data: songData } = await window.supabase
+      .from("purchases")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("song_slug", songSlug)
+      .eq("status", "paid")
+      .single();
+
+    if (songData) {
+      console.log("[PAYWALL] User owns this song");
+      return true;
+    }
+
+    console.log("[PAYWALL] User does not have access");
     return false;
   }
 
-  const ownedSongs = (data || []).map(r => (r.song_id || "").trim());
-  const hasSong = ownedSongs.includes(productId);
+  // ✅ NEW: Check ALL credits (bundle + book bonus)
+  async function checkAllCredits() {
+    try {
+      const session = await getSessionOrThrow();
+      const userId = session.user.id;
 
-  console.log("[PAYWALL] needed:", productId);
-  console.log("[PAYWALL] owned songs:", ownedSongs);
-  console.log("[PAYWALL] hasSong:", hasSong);
+      // Check bundle credits (existing system)
+      const { data: bundleData } = await window.supabase
+        .from("purchases")
+        .select("credits_remaining")
+        .eq("user_id", userId)
+        .eq("status", "paid")
+        .not("credits_remaining", "is", null)
+        .gt("credits_remaining", 0)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-  return hasSong;
-}
+      const bundleCredits = bundleData?.credits_remaining || 0;
 
-  // ✅ NEW: Get pricing from backend
-  async function getPricing({ productId, currency = "INR" }) {
+      // Check book bonus credits (new system)
+      const { data: bookData } = await window.supabase
+        .from('user_credits')
+        .select('balance')
+        .eq('user_id', userId)
+        .single();
+
+      const bookCredits = bookData?.balance || 0;
+
+      return {
+        bundleCredits,
+        bookCredits,
+        total: bundleCredits + bookCredits
+      };
+    } catch (error) {
+      console.error('Error checking credits:', error);
+      return { bundleCredits: 0, bookCredits: 0, total: 0 };
+    }
+  }
+
+  // ✅ UPDATED: Get pricing (now uses new edge function)
+  async function fetchPricing(productId, currency) {
     const session = await getSessionOrThrow();
     
     const { data, error } = await window.supabase.functions.invoke("get-pricing", {
@@ -78,25 +142,17 @@ async function userHasAccess(productId, session) {
     });
 
     if (error) {
-      console.error("[PAYWALL] Get pricing error:", error);
-      throw new Error(error.message || "Failed to get pricing");
-    }
-    if (!data) {
-      throw new Error("Pricing API returned no data");
+      console.error("[PAYWALL] Fetch pricing error:", error);
+      throw new Error(error.message || "Failed to fetch pricing");
     }
     return data;
   }
 
-  // ✅ UPDATED: Create order with dynamic pricing
+  // ✅ Keep existing createOrder
   async function createOrder({ productId, currency = "INR" }) {
     const session = await getSessionOrThrow();
     
-    // Get the API key - try multiple methods
-    const apikey = window.supabase.supabaseKey || 
-                   window.supabase.supabaseUrl?.match(/https:\/\/([^.]+)/)?.[0] ||
-                   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
-    
-    console.log('[PAYWALL] Using API key:', apikey ? 'Found' : 'Missing');
+    const apikey = window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
     
     const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
       body: { productId, currency },
@@ -105,7 +161,7 @@ async function userHasAccess(productId, session) {
         apikey: apikey,
       },
     });
-  
+
     if (error) {
       console.error("[PAYWALL] Create order error:", error);
       throw new Error(error.message || "Create order failed");
@@ -116,11 +172,9 @@ async function userHasAccess(productId, session) {
     return data;
   }
 
-  // ✅ UPDATED: Verify payment with amount and currency
+  // ✅ Keep existing verifyPayment
   async function verifyPayment({ productId, response, amount, currency }) {
     try {
-      console.log('[PAYWALL] Calling verify with:', { productId, amount, currency, response });
-      
       const result = await window.supabase.functions.invoke('verify-razorpay-payment', {
         body: {
           razorpay_order_id: response.razorpay_order_id,
@@ -131,14 +185,12 @@ async function userHasAccess(productId, session) {
           currency: currency
         }
       });
-  
-      console.log('[PAYWALL] Verify result:', result);
-  
+
       if (result.error) {
         console.error('[PAYWALL] Verify payment error:', result.error);
         throw new Error(result.error.message || 'Payment verification failed');
       }
-  
+
       return result.data;
     } catch (error) {
       console.error('[PAYWALL] Verify payment error:', error);
@@ -146,15 +198,14 @@ async function userHasAccess(productId, session) {
     }
   }
 
-  // ✅ UPDATED: Razorpay checkout with dynamic pricing
+  // ✅ Keep existing startRazorpayCheckout
   async function startRazorpayCheckout({ productId, currency = "INR" }) {
     assertSupabase();
     await loadRazorpay();
-
     const session = await getSessionOrThrow();
     const order = await createOrder({ productId, currency });
 
-    const isBundle = productId === "pack:5";
+    const isBundle = productId === BUNDLE_PRODUCT_ID;
     const description = isBundle 
       ? "5-Song Pack" 
       : `Unlock: ${productId.replace('song:', '')}`;
@@ -167,268 +218,212 @@ async function userHasAccess(productId, session) {
       name: "Classic Bollywood Melodies",
       description: description,
       prefill: { email: session.user?.email || "" },
-handler: async (response) => {
-  console.log('🎵 [PAYWALL] Payment completed, verifying...', response);
-  try {
-    const fresh = await getSessionOrThrow();
-    console.log('✅ [PAYWALL] Session obtained:', fresh.user.id);
-    
-    const result = await verifyPayment({ 
-      productId, 
-      response,
-      amount: order.amount,
-      currency: order.currency
+      handler: async (response) => {
+        try {
+          const fresh = await getSessionOrThrow();
+          await verifyPayment({ 
+            productId, 
+            response,
+            amount: order.amount,
+            currency: order.currency
+          });
+          window.location.reload();
+        } catch (e) {
+          alert(e?.message || "Verification error");
+        }
+      },
     });
-    
-    console.log('✅ [PAYWALL] Verification result:', result);
-    alert('Payment verified! Check console. Reloading...');
-    window.location.reload();
-  } catch (e) {
-    console.error('❌ [PAYWALL] Verification error:', e);
-    alert('ERROR: ' + (e?.message || JSON.stringify(e)));
-  }
-},
-    });
-
     rzp.open();
   }
 
-  // ✅ NEW: Verify book code
-  async function verifyBookCode(code) {
+  // ✅ NEW: Unified credit redemption (tries both systems)
+  async function redeemAnyCredit(productId) {
     const session = await getSessionOrThrow();
-    
-    const { data, error } = await window.supabase.functions.invoke("verify-book-code", {
-      body: { code },
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        apikey: window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis',
-      },
-    });
+    const credits = await checkAllCredits();
 
-    if (error) {
-      console.error("[PAYWALL] Verify book code error:", error);
-      throw new Error(error.message || "Code verification failed");
+    // Try book credits first (new system)
+    if (credits.bookCredits > 0) {
+      try {
+        const { data, error } = await window.supabase.functions.invoke("redeem-credits", {
+          body: { productId },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: window.supabase.supabaseKey,
+          },
+        });
+        if (error) throw error;
+        return { success: true, source: 'book_bonus' };
+      } catch (e) {
+        console.warn('[PAYWALL] Book credit failed, trying bundle credits:', e);
+      }
     }
-    return data;
+
+    // Fallback to bundle credits (old system)
+    if (credits.bundleCredits > 0) {
+      const { data, error } = await window.supabase.functions.invoke("redeem-credit", {
+        body: { productId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: window.supabase.supabaseKey,
+        },
+      });
+      if (error) throw error;
+      return { success: true, source: 'bundle' };
+    }
+
+    throw new Error("No credits available");
   }
 
-  // ✅ UPDATED: Show paywall with bundle option
-// ✅ UPDATED: Show paywall with bundle option and credit redemption
-async function showPaywall({ productId, title, body }) {
-  assertSupabase();
+  // ✅ UPDATED: Show paywall with merged credits display
+  async function showPaywall({ productId, title, body }) {
+    assertSupabase();
+    const paywallEl = document.getElementById("paywall");
+    const appEl = document.getElementById("app");
+    if (!paywallEl || !appEl) return;
 
-  const paywallEl = document.getElementById("paywall");
-  const appEl = document.getElementById("app");
-  if (!paywallEl || !appEl) return;
+    appEl.style.display = "none";
+    paywallEl.style.display = "block";
+    paywallEl.innerHTML = `<h3>Checking access...</h3><p>Please wait...</p>`;
 
-  // default locked
-  appEl.style.display = "none";
-  paywallEl.style.display = "block";
-
-  try {
-    const { data } = await window.supabase.auth.getSession();
-    const session = data?.session;
-
-    const allowed = await userHasAccess(productId, session);
-    console.log("[PAYWALL] allowed:", allowed);
-
-    if (allowed) {
-      paywallEl.style.display = "none";
-      appEl.style.display = "block";
-      return;
-    }
-
-    // ✅ Check for available credits
-    const userId = session?.user?.id;
-    let availableCredits = 0;
-    
-    if (userId) {
-      const { data: creditData } = await window.supabase
-        .from("purchases")
-        .select("credits_remaining")
-        .eq("user_id", userId)
-        .eq("status", "paid")
-        .not("credits_remaining", "is", null)
-        .gt("credits_remaining", 0)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+    try {
+      const { data } = await window.supabase.auth.getSession();
+      const session = data?.session;
+      const allowed = await userHasAccess(productId, session);
       
-      availableCredits = creditData?.credits_remaining || 0;
-    }
+      if (allowed) {
+        paywallEl.style.display = "none";
+        appEl.style.display = "block";
+        return;
+      }
 
-    // ✅ Get pricing info
-    const pricing = await getPricing({ productId, currency: "INR" });
-    
-    const priceDisplay = `₹${(pricing.price / 100).toFixed(0)}`;
-    
-    let bundleButton = "";
-    if (pricing.bundleAvailable && pricing.bundlePrice) {
-      const bundleDisplay = `₹${(pricing.bundlePrice / 100).toFixed(0)}`;
-      bundleButton = `
-        <button id="bundleBtn" type="button" style="margin-top: 10px; background: #4CAF50;">
-          Buy 5-Song Pack for ${bundleDisplay} (Save!)
-        </button>
+      const currency = await detectCurrency();
+      const currencySymbol = CURRENCY_SYMBOLS[currency];
+      
+      const [pricingData, credits] = await Promise.all([
+        fetchPricing(productId, currency),
+        checkAllCredits()
+      ]);
+
+      const { price, hasBooks, songsOwned, canUseCredits, bundleAvailable, bundlePrice } = pricingData;
+      
+      const priceDisplay = currency === 'INR' 
+        ? `${currencySymbol}${(price / 100).toFixed(0)}`
+        : `${currencySymbol}${(price / 100).toFixed(2)}`;
+      
+      const bundlePriceDisplay = bundlePrice && currency === 'INR'
+        ? `${currencySymbol}${(bundlePrice / 100).toFixed(0)}`
+        : bundlePrice ? `${currencySymbol}${(bundlePrice / 100).toFixed(2)}` : null;
+
+      let paywallHTML = `
+        <div style="max-width: 500px; margin: 0 auto; padding: 20px;">
+          <h3>${title || "Unlock This Song"}</h3>
+          <p>${body || "Purchase to access this exclusive content"}</p>
+          
+          <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+            <p style="margin: 0 0 5px 0;"><strong>Your Price:</strong> ${priceDisplay}</p>
+            <p style="margin: 0; font-size: 0.9em; color: #666;">
+              ${hasBooks ? `📚 Book owner pricing (${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned)` : `${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned`}
+            </p>
+          </div>
       `;
-    }
 
-    let creditButton = "";
-    if (availableCredits > 0) {
-      creditButton = `
-        <button id="creditBtn" type="button" style="margin-top: 10px; background: #FF9800;">
-          Use 1 Credit (${availableCredits} remaining)
-        </button>
+      // Show credit redemption if ANY credits available
+      if (canUseCredits && credits.total > 0) {
+        const creditTypes = [];
+        if (credits.bundleCredits > 0) creditTypes.push(`${credits.bundleCredits} bundle`);
+        if (credits.bookCredits > 0) creditTypes.push(`${credits.bookCredits} book bonus`);
+        
+        paywallHTML += `
+          <div style="margin: 20px 0;">
+            <button id="redeemBtn" type="button" style="
+              width: 100%;
+              padding: 12px;
+              background: #10b981;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 16px;
+              cursor: pointer;
+              margin-bottom: 10px;
+            ">
+              🎁 Unlock with 1 Credit (${creditTypes.join(' + ')})
+            </button>
+          </div>
+        `;
+      }
+
+      if (bundleAvailable && bundlePrice) {
+        paywallHTML += `
+          <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+            <h4 style="margin: 0 0 10px 0;">💎 Better Deal: 5-Song Bundle</h4>
+            <p style="margin: 0 0 10px 0; font-size: 0.9em;">Get 5 songs for ${bundlePriceDisplay} - Save money!</p>
+            <button id="bundleBtn" type="button" style="
+              width: 100%;
+              padding: 12px;
+              background: #f59e0b;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 16px;
+              cursor: pointer;
+            ">
+              Buy 5-Song Bundle ${bundlePriceDisplay}
+            </button>
+          </div>
+        `;
+      }
+
+      paywallHTML += `
+          <button id="buyBtn" type="button" style="
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+          ">
+            Buy This Song ${priceDisplay}
+          </button>
+        </div>
       `;
-    }
 
-    paywallEl.innerHTML = `
-      <h3>${title || "Locked"}</h3>
-      <p>${body || "Buy to unlock"}</p>
-      <button id="buyBtn" type="button">Buy for ${priceDisplay}</button>
-      ${creditButton}
-      ${bundleButton}
-    `;
+      paywallEl.innerHTML = paywallHTML;
 
-    const buyBtn = document.getElementById("buyBtn");
-    buyBtn.onclick = () => startRazorpayCheckout({ productId, currency: "INR" });
+      const buyBtn = document.getElementById("buyBtn");
+      buyBtn.onclick = () => startRazorpayCheckout({ productId, currency });
 
-    const creditBtn = document.getElementById("creditBtn");
-    if (creditBtn) {
-      creditBtn.onclick = async () => {
-        if (confirm(`Use 1 credit to unlock this song? (${availableCredits - 1} will remain)`)) {
+      const bundleBtn = document.getElementById("bundleBtn");
+      if (bundleBtn) {
+        bundleBtn.onclick = () => startRazorpayCheckout({ productId: BUNDLE_PRODUCT_ID, currency });
+      }
+
+      const redeemBtn = document.getElementById("redeemBtn");
+      if (redeemBtn) {
+        redeemBtn.onclick = async () => {
           try {
-            await redeemCredit(productId);
+            redeemBtn.disabled = true;
+            redeemBtn.textContent = "Redeeming...";
+            await redeemAnyCredit(productId);
             window.location.reload();
           } catch (e) {
-            alert(e.message || "Failed to redeem credit");
+            alert(e?.message || "Failed to redeem credit");
+            redeemBtn.disabled = false;
+            redeemBtn.textContent = `🎁 Unlock with 1 Credit`;
           }
-        }
-      };
-    }
-
-  const bundleBtn = document.getElementById("bundleBtn");
-if (bundleBtn) {
-  bundleBtn.onclick = () => showBundleExplanation();
-}
-
-  } catch (err) {
-    console.error("[PAYWALL] Error:", err);
-    paywallEl.innerHTML = `
-      <h3>Error</h3>
-      <p>Please refresh the page.</p>
-    `;
-  }
-}
-// ✅ NEW: Redeem a credit
-async function redeemCredit(productId) {
-  const session = await getSessionOrThrow();
-  
-  const { data, error } = await window.supabase.functions.invoke("redeem-credit", {
-    body: { productId },
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: window.supabase.supabaseKey,
-    },
-  });
-
-  if (error) {
-    console.error("[PAYWALL] Redeem credit error:", error);
-    throw new Error(error.message || "Failed to redeem credit");
-  }
-  return data;
-}
-
-// ✅ NEW: Show bundle explanation modal
-  function showBundleExplanation() {
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    `;
-    
-    modal.innerHTML = `
-      <div style="
-        background: white;
-        padding: 40px;
-        border-radius: 12px;
-        max-width: 500px;
-        text-align: center;
-      ">
-        <h2 style="margin: 0 0 20px; color: #333;">🎁 5-Song Pack</h2>
-        <p style="font-size: 18px; margin: 20px 0; color: #666;">
-          Buy this pack and get <strong>5 credits</strong>
-        </p>
-        <p style="font-size: 14px; margin: 20px 0; color: #666;">
-          Use 1 credit to unlock any song you want.<br>
-          No need to choose now - pick songs as you browse!
-        </p>
-        <div style="
-          background: #f5f5f5;
-          padding: 20px;
-          border-radius: 8px;
-          margin: 20px 0;
-        ">
-          <p style="margin: 0; font-size: 24px; color: #4CAF50; font-weight: bold;">
-            ₹550 only!
-          </p>
-          <p style="margin: 10px 0 0; font-size: 14px; color: #999;">
-            (That's ₹110 per song - Save ₹200!)
-          </p>
-        </div>
-        <p style="font-size: 13px; color: #999; margin: 20px 0;">
-          After purchase, you'll see "Use Credit" buttons on locked songs
-        </p>
-        <button id="confirmBundle" style="
-          background: #4CAF50;
-          color: white;
-          border: none;
-          padding: 15px 40px;
-          font-size: 16px;
-          border-radius: 8px;
-          cursor: pointer;
-          margin-right: 10px;
-        ">Buy Now</button>
-        <button id="cancelBundle" style="
-          background: #ccc;
-          color: #333;
-          border: none;
-          padding: 15px 40px;
-          font-size: 16px;
-          border-radius: 8px;
-          cursor: pointer;
-        ">Cancel</button>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    document.getElementById('confirmBundle').onclick = () => {
-      document.body.removeChild(modal);
-      startRazorpayCheckout({ productId: "pack:5", currency: "INR" });
-    };
-    
-    document.getElementById('cancelBundle').onclick = () => {
-      document.body.removeChild(modal);
-    };
-    
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        document.body.removeChild(modal);
+        };
       }
-    };
+
+    } catch (err) {
+      console.error("[PAYWALL] Error:", err);
+      paywallEl.innerHTML = `
+        <h3>Error</h3>
+        <p>Failed to load pricing information. Please refresh the page.</p>
+      `;
+    }
   }
-  
-  // ✅ Export functions
+
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
-  window.verifyBookCode = verifyBookCode;
-  window.getPricing = getPricing;
 })();
