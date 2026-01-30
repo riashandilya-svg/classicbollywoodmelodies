@@ -1,4 +1,3 @@
-// 👇 COPY FROM HERE 👇
 // Song ID to Display Name mapping
 const SONG_NAMES = {
     'song:badeacche': 'Bade Achhe Lagte Hain',
@@ -334,10 +333,9 @@ async function loadPurchaseHistory(userId) {
             const date = new Date(purchase.created_at).toLocaleDateString();
             const amount = `${purchase.currency} ${(purchase.amount / 100).toFixed(2)}`;
             const isBundletext = purchase.song_id === 'bundle_credits' ? '(5-Song Bundle)' : '';
-            const songName = purchase.song_id === 'bundle_credits' 
-                ? 'Bundle Credits' 
-                : purchase.song_id.replace('song:', '').replace(/([A-Z])/g, ' $1').trim();
-
+const songName = purchase.song_id === 'bundle_credits' 
+    ? 'Bundle Credits' 
+    : (SONG_NAMES[purchase.song_id] || purchase.song_id.replace('song:', ''));
             return `
                 <div class="purchase-item">
                     <div>
