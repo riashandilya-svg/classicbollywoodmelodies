@@ -763,7 +763,7 @@
     window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // IMPORTANT: Add your admin email here
-    const ADMIN_EMAIL = "riaomshandilya@gmail.com"; // CHANGE THIS TO YOUR EMAIL
+const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
 
     let allUsers = [];
     let allCodes = [];
@@ -786,10 +786,10 @@
 
         const userEmail = session.user.email;
 
-        if (userEmail !== ADMIN_EMAIL) {
-          authCheck.innerHTML = '<p style="color: var(--error); font-size: 18px;">⛔ Access Denied: You are not an admin</p>';
-          return;
-        }
+        if (!ADMIN_EMAILS.includes(userEmail)) {
+  authCheck.innerHTML = '<p style="color: var(--error); font-size: 18px;">⛔ Access Denied: You are not an admin</p>';
+  return;
+}
 
         // Admin verified
         authCheck.classList.add('hidden');
