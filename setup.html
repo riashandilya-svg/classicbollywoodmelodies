@@ -147,23 +147,24 @@
       font-size: 14px;
       font-family: inherit;
     }
-/* Fix: don’t apply full-width input styling to checkboxes */
-input[type="checkbox"]{
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  border-radius: 6px;
-  background: transparent;
-  box-shadow: none;
-  flex: 0 0 auto;
-}
-.bookPick{
-  align-items: flex-start;
-}
 
-.bookPick input[type="checkbox"]{
-  margin-top: 4px;
-}
+    input[type="checkbox"]{
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border-radius: 6px;
+      background: transparent;
+      box-shadow: none;
+      flex: 0 0 auto;
+    }
+
+    .bookPick{
+      align-items: flex-start;
+    }
+
+    .bookPick input[type="checkbox"]{
+      margin-top: 4px;
+    }
 
     textarea{ min-height: 90px; resize: vertical; }
 
@@ -287,6 +288,20 @@ input[type="checkbox"]{
       font-size: 13px;
       color: var(--muted);
     }
+
+    .warning-box{
+      background: rgba(255,200,100,0.12);
+      border: 1px solid rgba(255,200,100,0.35);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .warning-box strong{
+      color: #d97706;
+    }
   </style>
 </head>
 
@@ -296,8 +311,8 @@ input[type="checkbox"]{
   </header>
 
   <main>
-<h1>Let’s get you started</h1>
-<p class="sub">Answer a few quick questions so I can tailor your practice. Takes less than a minute! </p>
+    <h1>Let's get you started</h1>
+    <p class="sub">Answer a few quick questions so I can tailor your practice. Takes less than a minute!</p>
 
     <section class="card">
       <label for="name">Your name (What should I call you?)</label>
@@ -306,18 +321,17 @@ input[type="checkbox"]{
       <div class="grid">
         <div>
           <label for="age">Age bracket</label>
-  <select id="age">
-  <option value="">Select…</option>
-  <option value="5–7">5–7</option>
-  <option value="8–10">8–10</option>
-  <option value="11–12">11–12</option>
-  <option value="13–17">13–17</option>
-  <option value="18–24">18–24</option>
-  <option value="25–34">25–34</option>
-  <option value="35–44">35–44</option>
-  <option value="45+">45+</option>
-</select>
-
+          <select id="age">
+            <option value="">Select…</option>
+            <option value="5–7">5–7</option>
+            <option value="8–10">8–10</option>
+            <option value="11–12">11–12</option>
+            <option value="13–17">13–17</option>
+            <option value="18–24">18–24</option>
+            <option value="25–34">25–34</option>
+            <option value="35–44">35–44</option>
+            <option value="45+">45+</option>
+          </select>
         </div>
 
         <div>
@@ -371,7 +385,11 @@ input[type="checkbox"]{
         </label>
       </div>
 
-      <div class="hint">If you own at least one book, you’ll get the discounted “book owner” prices inside the app.</div>
+      <div class="warning-box">
+        <strong>⚠️ Important:</strong> Checking books here is just for tracking purposes. 
+        To get discounted pricing, you'll need to <strong>verify your book with a photo</strong> 
+        using the "Verify Book" button after setup.
+      </div>
 
       <label for="suggest" style="margin-top:16px;">Optional: what song would you like next?</label>
       <textarea id="suggest" placeholder="Type a song name (optional)"></textarea>
@@ -379,7 +397,7 @@ input[type="checkbox"]{
       <label class="checkRow">
         <input id="optin" type="checkbox" />
         <span>
-          Yes, keep me updated about new books and releases (about 4–5 emails per year, we don’t spam).
+          Yes, keep me updated about new books and releases (about 4–5 emails per year, we don't spam).
         </span>
       </label>
 
@@ -394,9 +412,8 @@ input[type="checkbox"]{
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-
-  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const msg = document.getElementById("msg");
@@ -404,10 +421,6 @@ input[type="checkbox"]{
 
     function getCheckedBooks() {
       return Array.from(document.querySelectorAll(".bookCheck:checked")).map(x => x.value);
-    }
-
-    function booksToIsBookOwner(books) {
-      return books.length > 0;
     }
 
     async function requireLogin() {
@@ -454,8 +467,9 @@ input[type="checkbox"]{
         return;
       }
 
-      // Simple rule: if they checked any book, treat as book owner for pricing.
-      const is_book_owner = booksToIsBookOwner(books_owned);
+      // ✅ FIXED: Do NOT set is_book_owner here!
+      // Only track which books they say they own
+      // Discounted pricing ONLY activated through photo verification
 
       saveBtn.disabled = true;
       msg.textContent = "Saving…";
@@ -466,10 +480,10 @@ input[type="checkbox"]{
           display_name,
           age_bracket: age_bracket || null,
           difficulty_level: difficulty_level || null,
-          books_owned,
+          books_owned,  // Just tracking - does NOT give discounts
           song_suggestion,
           marketing_opt_in,
-          is_book_owner,
+          // ❌ REMOVED: is_book_owner - only set by verification page
           setup_completed: true
         })
         .eq("id", user.id);
