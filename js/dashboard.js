@@ -92,7 +92,16 @@ async function initDashboard() {
             .single();
 
         const displayName = profile?.display_name || user.email.split('@')[0];
-        document.getElementById('userEmail').textContent = `👋 ${displayName}`;
+// Welcome text (gold line under the title)
+const welcomeEl = document.getElementById('welcomeText');
+if (welcomeEl) {
+  welcomeEl.textContent = displayName ? `Welcome, ${displayName}` : 'Welcome';
+}
+
+// Optional: you can keep userEmail empty or hide it
+const userEmailEl = document.getElementById('userEmail');
+if (userEmailEl) userEmailEl.textContent = '';
+
         setAvatar(DEFAULT_AVATAR);
 
         // Load all dashboard data
