@@ -464,6 +464,15 @@
       font-weight: 600;
     }
 
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      color: var(--error);
+    }
+
     @media (max-width: 768px) {
       .banner {
         flex-direction: column;
@@ -558,13 +567,14 @@
             <h2 class="card-title">👥 All Users</h2>
             <button class="refresh-btn" onclick="loadUsers()">↻ Refresh</button>
           </div>
-          <input type="text" class="search-box" id="userSearch" placeholder="Search by name or email..." onkeyup="filterUsers()">
+          <input type="text" class="search-box" id="userSearch" placeholder="Search by name, email, or user ID..." onkeyup="filterUsers()">
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
+                  <th>User ID</th>
                   <th>Name</th>
-                  <th>Email</th>
+                  <th>Email (from profile)</th>
                   <th>Book Owner</th>
                   <th>Setup Complete</th>
                   <th>Books Owned</th>
@@ -574,7 +584,7 @@
               </thead>
               <tbody id="usersTableBody">
                 <tr>
-                  <td colspan="7" class="loading">
+                  <td colspan="8" class="loading">
                     <div class="spinner"></div>
                     Loading users...
                   </td>
@@ -600,7 +610,7 @@
                   <th>Code</th>
                   <th>Book</th>
                   <th>Status</th>
-                  <th>Used By</th>
+                  <th>Used By (User ID)</th>
                   <th>Generated At</th>
                   <th>Used At</th>
                 </tr>
@@ -625,12 +635,12 @@
             <h2 class="card-title">💳 All Purchases</h2>
             <button class="refresh-btn" onclick="loadPurchases()">↻ Refresh</button>
           </div>
-          <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by user email or song ID..." onkeyup="filterPurchases()">
+          <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by user ID or song ID..." onkeyup="filterPurchases()">
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>User Email</th>
+                  <th>User ID</th>
                   <th>Song ID</th>
                   <th>Amount</th>
                   <th>Credits Remaining</th>
@@ -657,12 +667,12 @@
             <h2 class="card-title">📦 Bundle Credits Usage</h2>
             <button class="refresh-btn" onclick="loadBundles()">↻ Refresh</button>
           </div>
-          <input type="text" class="search-box" id="bundleSearch" placeholder="Search by user email..." onkeyup="filterBundles()">
+          <input type="text" class="search-box" id="bundleSearch" placeholder="Search by user ID..." onkeyup="filterBundles()">
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>User Email</th>
+                  <th>User ID</th>
                   <th>Credits Remaining</th>
                   <th>Purchase Date</th>
                 </tr>
@@ -693,12 +703,13 @@
       <div id="confirmStep1" class="confirmation-step">
         <p class="step-number">Step 1 of 3</p>
         <p class="confirmation-text">
-          You are about to permanently delete the user: <strong id="deleteUserName"></strong> (<span id="deleteUserEmail"></span>)
+          You are about to permanently delete the user: <strong id="deleteUserName"></strong>
+          <br>User ID: <span class="code-display" id="deleteUserId"></span>
         </p>
         <div class="warning-box">
           <h3>⚠️ This will permanently delete:</h3>
           <ul>
-            <li>User account and profile data</li>
+            <li>User profile data</li>
             <li>All purchase history</li>
             <li>All song downloads</li>
             <li>Book verification status</li>
@@ -839,7 +850,7 @@
     async function loadUsers() {
       try {
         const tbody = document.getElementById('usersTableBody');
-        tbody.innerHTML = '<tr><td colspan="7" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
 
         const { data: profiles, error: profilesError } = await window.supabase
           .from('profiles')
@@ -848,27 +859,14 @@
 
         if (profilesError) throw profilesError;
 
-        // Get emails from auth.users
-        const { data: { users }, error: usersError } = await window.supabase.auth.admin.listUsers();
+        allUsers = profiles || [];
 
-        if (usersError) {
-          console.error('Could not fetch user emails:', usersError);
-        }
-
-        // Merge profile data with email data
-        allUsers = profiles.map(profile => {
-          const authUser = users?.find(u => u.id === profile.id);
-          return {
-            ...profile,
-            email: authUser?.email || 'N/A'
-          };
-        });
-
+        console.log('Loaded users:', allUsers.length);
         renderUsers();
 
       } catch (error) {
         console.error('Error loading users:', error);
-        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7" style="color: var(--error); text-align: center; padding: 40px;">Error loading users</td></tr>';
+        document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="8"><div class="error-message">Error loading users: ${error.message}</div></td></tr>`;
       }
     }
 
@@ -876,20 +874,21 @@
       const tbody = document.getElementById('usersTableBody');
       
       if (allUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
         return;
       }
 
       tbody.innerHTML = allUsers.map(user => `
         <tr>
+          <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
           <td><strong>${user.display_name || 'N/A'}</strong></td>
-          <td>${user.email}</td>
+          <td>${user.email || 'N/A'}</td>
           <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
           <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
           <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
           <td>${new Date(user.created_at).toLocaleDateString()}</td>
           <td>
-            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user)})'>
+            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>
               🗑️ Delete
             </button>
           </td>
@@ -901,25 +900,27 @@
       const search = document.getElementById('userSearch').value.toLowerCase();
       const filtered = allUsers.filter(user => 
         (user.display_name?.toLowerCase().includes(search)) ||
-        (user.email?.toLowerCase().includes(search))
+        (user.email?.toLowerCase().includes(search)) ||
+        (user.id?.toLowerCase().includes(search))
       );
       
       const tbody = document.getElementById('usersTableBody');
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match your search</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match your search</p></td></tr>';
         return;
       }
 
       tbody.innerHTML = filtered.map(user => `
         <tr>
+          <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
           <td><strong>${user.display_name || 'N/A'}</strong></td>
-          <td>${user.email}</td>
+          <td>${user.email || 'N/A'}</td>
           <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
           <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
           <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
           <td>${new Date(user.created_at).toLocaleDateString()}</td>
           <td>
-            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user)})'>
+            <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>
               🗑️ Delete
             </button>
           </td>
@@ -940,23 +941,14 @@
 
         if (error) throw error;
 
-        // Get user emails for used codes
-        const userIds = codes.filter(c => c.used_by_user_id).map(c => c.used_by_user_id);
-        const { data: { users } } = await window.supabase.auth.admin.listUsers();
+        allCodes = codes || [];
 
-        allCodes = codes.map(code => {
-          const user = users?.find(u => u.id === code.used_by_user_id);
-          return {
-            ...code,
-            user_email: user?.email || 'N/A'
-          };
-        });
-
+        console.log('Loaded codes:', allCodes.length);
         renderCodes();
 
       } catch (error) {
         console.error('Error loading codes:', error);
-        document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="6" style="color: var(--error); text-align: center; padding: 40px;">Error loading codes</td></tr>';
+        document.getElementById('codesTableBody').innerHTML = `<tr><td colspan="6"><div class="error-message">Error loading codes: ${error.message}</div></td></tr>`;
       }
     }
 
@@ -980,7 +972,7 @@
           <td><span class="code-display">${code.code}</span></td>
           <td>${bookNames[code.book_name] || code.book_name}</td>
           <td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td>
-          <td>${code.is_used ? code.user_email : '-'}</td>
+          <td>${code.used_by_user_id ? '<span class="code-display">' + code.used_by_user_id.substring(0, 8) + '...</span>' : '-'}</td>
           <td>${new Date(code.created_at).toLocaleString()}</td>
           <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
         </tr>
@@ -1012,7 +1004,7 @@
           <td><span class="code-display">${code.code}</span></td>
           <td>${bookNames[code.book_name] || code.book_name}</td>
           <td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td>
-          <td>${code.is_used ? code.user_email : '-'}</td>
+          <td>${code.used_by_user_id ? '<span class="code-display">' + code.used_by_user_id.substring(0, 8) + '...</span>' : '-'}</td>
           <td>${new Date(code.created_at).toLocaleString()}</td>
           <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
         </tr>
@@ -1032,22 +1024,14 @@
 
         if (error) throw error;
 
-        // Get user emails
-        const { data: { users } } = await window.supabase.auth.admin.listUsers();
+        allPurchases = purchases || [];
 
-        allPurchases = purchases.map(purchase => {
-          const user = users?.find(u => u.id === purchase.user_id);
-          return {
-            ...purchase,
-            user_email: user?.email || 'N/A'
-          };
-        });
-
+        console.log('Loaded purchases:', allPurchases.length);
         renderPurchases();
 
       } catch (error) {
         console.error('Error loading purchases:', error);
-        document.getElementById('purchasesTableBody').innerHTML = '<tr><td colspan="5" style="color: var(--error); text-align: center; padding: 40px;">Error loading purchases</td></tr>';
+        document.getElementById('purchasesTableBody').innerHTML = `<tr><td colspan="5"><div class="error-message">Error loading purchases: ${error.message}</div></td></tr>`;
       }
     }
 
@@ -1061,7 +1045,7 @@
 
       tbody.innerHTML = allPurchases.map(purchase => `
         <tr>
-          <td>${purchase.user_email}</td>
+          <td><span class="code-display">${purchase.user_id.substring(0, 8)}...</span></td>
           <td><span class="code-display">${purchase.song_id}</span></td>
           <td>₹${purchase.amount || 'N/A'}</td>
           <td>${purchase.credits_remaining !== null ? purchase.credits_remaining : 'N/A'}</td>
@@ -1073,7 +1057,7 @@
     function filterPurchases() {
       const search = document.getElementById('purchaseSearch').value.toLowerCase();
       const filtered = allPurchases.filter(purchase => 
-        purchase.user_email.toLowerCase().includes(search) ||
+        purchase.user_id.toLowerCase().includes(search) ||
         purchase.song_id.toLowerCase().includes(search)
       );
       
@@ -1085,7 +1069,7 @@
 
       tbody.innerHTML = filtered.map(purchase => `
         <tr>
-          <td>${purchase.user_email}</td>
+          <td><span class="code-display">${purchase.user_id.substring(0, 8)}...</span></td>
           <td><span class="code-display">${purchase.song_id}</span></td>
           <td>₹${purchase.amount || 'N/A'}</td>
           <td>${purchase.credits_remaining !== null ? purchase.credits_remaining : 'N/A'}</td>
@@ -1108,22 +1092,14 @@
 
         if (error) throw error;
 
-        // Get user emails
-        const { data: { users } } = await window.supabase.auth.admin.listUsers();
+        allBundles = bundles || [];
 
-        allBundles = bundles.map(bundle => {
-          const user = users?.find(u => u.id === bundle.user_id);
-          return {
-            ...bundle,
-            user_email: user?.email || 'N/A'
-          };
-        });
-
+        console.log('Loaded bundles:', allBundles.length);
         renderBundles();
 
       } catch (error) {
         console.error('Error loading bundles:', error);
-        document.getElementById('bundlesTableBody').innerHTML = '<tr><td colspan="3" style="color: var(--error); text-align: center; padding: 40px;">Error loading bundles</td></tr>';
+        document.getElementById('bundlesTableBody').innerHTML = `<tr><td colspan="3"><div class="error-message">Error loading bundles: ${error.message}</div></td></tr>`;
       }
     }
 
@@ -1137,7 +1113,7 @@
 
       tbody.innerHTML = allBundles.map(bundle => `
         <tr>
-          <td>${bundle.user_email}</td>
+          <td><span class="code-display">${bundle.user_id.substring(0, 8)}...</span></td>
           <td><span class="badge badge-success">${bundle.credits_remaining || 0}</span></td>
           <td>${new Date(bundle.created_at).toLocaleString()}</td>
         </tr>
@@ -1147,7 +1123,7 @@
     function filterBundles() {
       const search = document.getElementById('bundleSearch').value.toLowerCase();
       const filtered = allBundles.filter(bundle => 
-        bundle.user_email.toLowerCase().includes(search)
+        bundle.user_id.toLowerCase().includes(search)
       );
       
       const tbody = document.getElementById('bundlesTableBody');
@@ -1158,7 +1134,7 @@
 
       tbody.innerHTML = filtered.map(bundle => `
         <tr>
-          <td>${bundle.user_email}</td>
+          <td><span class="code-display">${bundle.user_id.substring(0, 8)}...</span></td>
           <td><span class="badge badge-success">${bundle.credits_remaining || 0}</span></td>
           <td>${new Date(bundle.created_at).toLocaleString()}</td>
         </tr>
@@ -1182,7 +1158,7 @@
     function openDeleteModal(user) {
       userToDelete = user;
       document.getElementById('deleteUserName').textContent = user.display_name || 'Unknown';
-      document.getElementById('deleteUserEmail').textContent = user.email;
+      document.getElementById('deleteUserId').textContent = user.id;
       
       // Reset to step 1
       document.getElementById('confirmStep1').classList.remove('hidden');
@@ -1218,38 +1194,40 @@
         const userId = userToDelete.id;
 
         // Delete from purchases
-        await window.supabase
+        const { error: purchasesError } = await window.supabase
           .from('purchases')
           .delete()
           .eq('user_id', userId);
 
+        if (purchasesError) console.error('Error deleting purchases:', purchasesError);
+
         // Delete from user_credits
-        await window.supabase
+        const { error: creditsError } = await window.supabase
           .from('user_credits')
           .delete()
           .eq('user_id', userId);
 
+        if (creditsError) console.error('Error deleting credits:', creditsError);
+
         // Update book_verification_codes (set used_by_user_id to null)
-        await window.supabase
+        const { error: codesError } = await window.supabase
           .from('book_verification_codes')
-          .update({ used_by_user_id: null })
+          .update({ used_by_user_id: null, is_used: false, used_at: null })
           .eq('used_by_user_id', userId);
 
+        if (codesError) console.error('Error updating codes:', codesError);
+
         // Delete from profiles
-        await window.supabase
+        const { error: profileError } = await window.supabase
           .from('profiles')
           .delete()
           .eq('id', userId);
 
-        // Delete from auth.users (requires admin API)
-        const { error: authError } = await window.supabase.auth.admin.deleteUser(userId);
-
-        if (authError) {
-          console.error('Error deleting auth user:', authError);
-          alert('User data deleted but auth account may still exist. Error: ' + authError.message);
-        } else {
-          alert('✅ User permanently deleted successfully!');
+        if (profileError) {
+          throw new Error('Failed to delete profile: ' + profileError.message);
         }
+
+        alert('✅ User profile and data deleted successfully!\n\nNote: The auth account cannot be deleted with the anon key. You may need to manually delete it from the Supabase dashboard.');
 
         closeDeleteModal();
         
