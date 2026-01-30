@@ -334,7 +334,7 @@
 
       <div id="authCheck" class="loading">
         <div class="spinner"></div>
-        <p>Checking authentication...</p>
+        <p id="loadingText">Loading...</p>
       </div>
 
       <div id="verificationForm" class="hidden">
@@ -421,39 +421,78 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    // IMMEDIATE DIAGNOSTIC - Run this RIGHT AWAY
+    console.log('🚀 Script started');
     
-    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const loadingText = document.getElementById('loadingText');
+    loadingText.textContent = 'Script loaded...';
+    
+    // Check if Supabase library loaded
+    setTimeout(() => {
+      console.log('⏰ Checking Supabase availability');
+      loadingText.textContent = 'Checking Supabase library...';
+      
+      if (typeof supabase === 'undefined') {
+        console.error('❌ Supabase library not loaded!');
+        document.getElementById('authCheck').innerHTML = `
+          <p style="color: var(--error);">❌ Failed to load authentication library. Please refresh the page.</p>
+          <button onclick="location.reload()" class="btn" style="max-width: 200px; margin: 20px auto;">
+            Refresh Page
+          </button>
+        `;
+        return;
+      }
+      
+      console.log('✅ Supabase library loaded');
+      loadingText.textContent = 'Initializing authentication...';
+      
+      // Initialize Supabase
+      const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+      
+      try {
+        window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client created');
+        loadingText.textContent = 'Checking your login status...';
+        
+        // Now check auth
+        checkAuth();
+      } catch (err) {
+        console.error('❌ Failed to create Supabase client:', err);
+        document.getElementById('authCheck').innerHTML = `
+          <p style="color: var(--error);">❌ Failed to initialize. Please refresh the page.</p>
+          <button onclick="location.reload()" class="btn" style="max-width: 200px; margin: 20px auto;">
+            Refresh Page
+          </button>
+        `;
+      }
+    }, 100); // Give the script tag time to load
 
     let photoFile = null;
     let videoFile = null;
     let verifiedCode = null;
     let verifiedBookType = null;
 
-    // IMPROVED: Check authentication with timeout and better error handling
+    // Check authentication
     async function checkAuth() {
       const authCheck = document.getElementById('authCheck');
       const verificationForm = document.getElementById('verificationForm');
       
+      console.log('🔐 Starting auth check...');
+      loadingText.textContent = 'Verifying your session...';
+      
       try {
-        // Add a timeout to prevent infinite hanging
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Authentication check timed out')), 10000)
-        );
+        console.log('📞 Calling getSession()...');
+        const { data: { session }, error } = await window.supabase.auth.getSession();
         
-        const sessionPromise = window.supabase.auth.getSession();
-        
-        // Race between timeout and actual session check
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]);
+        console.log('📬 getSession() returned');
+        console.log('Session:', session);
+        console.log('Error:', error);
 
         if (error) {
-          console.error('Auth error:', error);
+          console.error('❌ Auth error:', error);
           authCheck.innerHTML = `
-            <p style="color: var(--error);">⚠️ Authentication error. Please try refreshing the page.</p>
+            <p style="color: var(--error);">⚠️ Authentication error: ${error.message}</p>
             <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
               Go to Login
             </a>
@@ -462,6 +501,7 @@
         }
 
         if (!session) {
+          console.log('ℹ️ No active session');
           authCheck.innerHTML = `
             <p style="color: var(--error);">🔒 You must be logged in to verify your book.</p>
             <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
@@ -471,15 +511,16 @@
           return;
         }
 
-        // Success - show the form
+        // Success!
+        console.log('✅ User authenticated:', session.user.email);
         authCheck.classList.add('hidden');
         verificationForm.classList.remove('hidden');
         
       } catch (err) {
-        console.error('Unexpected error during auth check:', err);
+        console.error('❌ Unexpected error during auth check:', err);
         authCheck.innerHTML = `
-          <p style="color: var(--error);">⚠️ ${err.message || 'Connection error. Please refresh the page.'}</p>
-          <button onclick="location.reload()" class="btn" style="max-width: 200px; margin: 20px auto;">
+          <p style="color: var(--error);">⚠️ Error: ${err.message}</p>
+          <button onclick="checkAuth()" class="btn" style="max-width: 200px; margin: 10px auto;">
             Retry
           </button>
           <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 10px auto;">
@@ -620,9 +661,7 @@
         console.log('📚 Book Type:', verifiedBookType);
         console.log('🎫 Book Code:', verifiedCode);
 
-        // ============================================
         // STEP 1: Upload Photo
-        // ============================================
         updateProgress('Uploading photo...');
         const photoExt = photoFile.name.split('.').pop();
         const photoPath = `${userId}/book-${verifiedBookType}-${Date.now()}.${photoExt}`;
@@ -640,9 +679,7 @@
         
         console.log('✅ Photo uploaded successfully');
 
-        // ============================================
         // STEP 2: Mark Code as Used
-        // ============================================
         updateProgress('Marking code as used...');
         
         console.log('🔄 Updating code in database:', verifiedCode);
@@ -664,12 +701,9 @@
 
         console.log('✅ Code marked as used:', updateData);
 
-        // ============================================
-        // STEP 3: Update Profile - Mark as Book Owner
-        // ============================================
+        // STEP 3: Update Profile
         updateProgress('Updating your account...');
         
-        // Get current profile
         const { data: currentProfile, error: fetchError } = await window.supabase
           .from('profiles')
           .select('books_owned')
@@ -681,7 +715,6 @@
           throw new Error('Could not fetch profile');
         }
 
-        // Add this book to their owned books
         const existingBooks = currentProfile?.books_owned || [];
         const updatedBooks = existingBooks.includes(verifiedBookType) 
           ? existingBooks 
@@ -702,11 +735,9 @@
           throw new Error(`Failed to update profile: ${profileError.message}`);
         }
 
-        console.log('✅ Profile updated - book ownership verified');
+        console.log('✅ Profile updated');
 
-        // ============================================
-        // STEP 4: Upload Video (if provided) and Give Credit
-        // ============================================
+        // STEP 4: Upload Video (optional)
         let videoUploaded = false;
         if (videoFile) {
           try {
@@ -726,10 +757,7 @@
               console.log('✅ Video uploaded successfully');
               videoUploaded = true;
               
-              // Add 1 Credit for Video Upload
               updateProgress('Adding bonus credit...');
-              
-              console.log('🎁 Adding bonus credit for video upload');
               
               const { data: existingCredits, error: fetchCreditsError } = await window.supabase
                 .from('user_credits')
@@ -758,7 +786,7 @@
                   throw new Error('Could not update credits');
                 }
                 
-                console.log('✅ Credits updated - new balance:', newBalance);
+                console.log('✅ Credits updated');
               } else {
                 const { error: insertCreditsError } = await window.supabase
                   .from('user_credits')
@@ -774,23 +802,20 @@
                   throw new Error('Could not create credits record');
                 }
                 
-                console.log('✅ Credits created - balance: 1');
+                console.log('✅ Credits created');
               }
             }
           } catch (videoError) {
             console.error('⚠️ Video processing error:', videoError);
-            // Continue anyway - photo verification succeeded
           }
         }
 
-        // ============================================
         // SUCCESS!
-        // ============================================
         updateProgress('');
         
         let successMessage = '🎉 Congratulations! Your book is verified and you now have access to exclusive book owner pricing.';
         if (videoUploaded) {
-          successMessage += ' Plus, we've added 1 free song credit to your account as a thank you for sharing your video! 🎁';
+          successMessage += ' Plus, we've added 1 free song credit to your account! 🎁';
         }
         
         showMessage(successMessage, 'success');
@@ -798,7 +823,6 @@
 
         console.log('🎉 Verification complete!');
 
-        // Redirect to dashboard after 3 seconds
         setTimeout(() => {
           window.location.href = './dashboard.html';
         }, 3000);
@@ -817,9 +841,6 @@
       const className = type === 'success' ? 'success-text' : 'error-text';
       messageArea.innerHTML = `<p class="${className}">${text}</p>`;
     }
-
-    // Start auth check immediately when page loads
-    checkAuth();
   </script>
 </body>
 </html>
