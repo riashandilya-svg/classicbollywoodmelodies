@@ -3,276 +3,449 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Book Code - Classic Bollywood Melodies</title>
+  <title>Verify Your Book - Ria Om Shandilya</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --primary: #9b6eff;
+      --success: #10b981;
+      --error: #ef4444;
     }
-    
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
       min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        var(--bg);
+    }
+
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
     }
-    
-    .container {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-    
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 28px;
-    }
-    
-    .subtitle {
-      color: #666;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #333;
+
+    .banner-link {
+      font-family: "Cormorant Garamond", serif;
       font-weight: 600;
-      font-size: 14px;
-    }
-    
-    input[type="text"] {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: border-color 0.3s;
-      text-transform: uppercase;
-    }
-    
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    
-    button {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .message {
-      margin-top: 20px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 14px;
-      display: none;
-    }
-    
-    .message.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-      display: block;
-    }
-    
-    .message.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-      display: block;
-    }
-    
-    .books-owned {
-      margin-top: 20px;
-      padding: 16px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-    
-    .books-owned h3 {
-      font-size: 16px;
-      color: #333;
-      margin-bottom: 10px;
-    }
-    
-    .book-badge {
-      display: inline-block;
-      padding: 6px 12px;
-      background: #667eea;
-      color: white;
-      border-radius: 20px;
-      font-size: 12px;
-      margin: 4px;
-      text-transform: capitalize;
-    }
-    
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
-      color: #667eea;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+      color: inherit;
       text-decoration: none;
-      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 12px;
     }
-    
-    .back-link:hover {
+
+    .banner-link:hover {
       text-decoration: underline;
     }
-    
-    .example {
-      font-size: 12px;
-      color: #999;
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 44px 18px 70px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 32px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.2;
+      margin: 0 0 12px;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin: 0 0 32px;
+      font-size: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .hint {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
       margin-top: 4px;
+    }
+
+    select, input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      left: -9999px;
+    }
+
+    .file-input-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .file-input-label:hover {
+      border-color: var(--primary);
+      background: rgba(155, 110, 255, 0.05);
+    }
+
+    .file-input-label.has-file {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .file-name {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .bonus-section {
+      background: rgba(255, 200, 100, 0.1);
+      border: 1px solid rgba(255, 200, 100, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .bonus-section h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #d97706;
+    }
+
+    .bonus-section p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+      color: #2b1140;
+      font-weight: 650;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .message {
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 15px;
+    }
+
+    .message.success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📚 Verify Book Code</h1>
-    <p class="subtitle">Enter the unique code from your physical book</p>
-    
-    <form id="verifyForm">
-      <div class="form-group">
-        <label for="bookCode">Book Code</label>
-        <input 
-          type="text" 
-          id="bookCode" 
-          name="bookCode" 
-          placeholder="SOULFUL-A7K9M2"
-          required
-          autocomplete="off"
-        />
-        <p class="example">Example: SOULFUL-A7K9M2 or PEPPY-Q3L8P5</p>
+  <header class="banner">
+    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+  </header>
+
+  <main>
+    <div class="card">
+      <h1>📚 Verify Your Book</h1>
+      <p class="subtitle">Unlock discounted song prices instantly</p>
+
+      <div id="authCheck" class="loading">
+        <div class="spinner"></div>
+        <p>Checking authentication...</p>
       </div>
-      
-      <button type="submit" id="submitBtn">Verify Code</button>
-    </form>
-    
-    <div id="message" class="message"></div>
-    
-    <div id="booksOwned" class="books-owned" style="display: none;">
-      <h3>Your Books:</h3>
-      <div id="booksList"></div>
+
+      <div id="verificationForm" style="display: none;">
+        <div id="message"></div>
+
+        <form id="bookForm">
+          <div class="form-group">
+            <label for="bookSelect">Which book do you have?</label>
+            <select id="bookSelect" required>
+              <option value="">Select a book...</option>
+              <option value="soulful">Soulful Bollywood Melodies</option>
+              <option value="peppy">Peppy Bollywood Melodies</option>
+              <option value="romantic">Romantic Bollywood Melodies</option>
+              <option value="classic">Classic Bollywood Melodies</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Upload a photo of your book</label>
+            <span class="hint">Any photo showing you have the physical book</span>
+            <div class="file-input-wrapper">
+              <input type="file" id="photoInput" accept="image/*" required>
+              <label for="photoInput" class="file-input-label" id="photoLabel">
+                <span>📸</span>
+                <span id="photoText">Choose photo...</span>
+              </label>
+            </div>
+            <div id="photoName" class="file-name"></div>
+          </div>
+
+          <div class="bonus-section">
+            <h3>🎁 Bonus: Get 1 Free Song!</h3>
+            <p>Upload a short video of you using the book and get 1 free song credit instantly!</p>
+          </div>
+
+          <div class="form-group">
+            <label>Upload a video (Optional)</label>
+            <span class="hint">Show yourself using the book - totally optional!</span>
+            <div class="file-input-wrapper">
+              <input type="file" id="videoInput" accept="video/*">
+              <label for="videoInput" class="file-input-label" id="videoLabel">
+                <span>🎥</span>
+                <span id="videoText">Choose video... (optional)</span>
+              </label>
+            </div>
+            <div id="videoName" class="file-name"></div>
+          </div>
+
+          <button type="submit" class="btn" id="submitBtn">
+            Verify Book & Unlock Discounts
+          </button>
+        </form>
+      </div>
     </div>
-    
-    <a href="/" class="back-link">← Back to Home</a>
-  </div>
+  </main>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-  <script src="/classicbollywoodmelodies/js/paywall.js"></script>
-
   <script>
-    const form = document.getElementById('verifyForm');
-    const codeInput = document.getElementById('bookCode');
-    const submitBtn = document.getElementById('submitBtn');
-    const messageDiv = document.getElementById('message');
-    const booksOwnedDiv = document.getElementById('booksOwned');
-    const booksListDiv = document.getElementById('booksList');
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Load user's books on page load
-    async function loadUserBooks() {
-      try {
-        const { data: { session } } = await window.supabase.auth.getSession();
-        if (!session) {
-          window.location.href = '/classicbollywoodmelodies/auth/login.html';
-          return;
-        }
+    let photoFile = null;
+    let videoFile = null;
 
-        const { data: profile, error } = await window.supabase
-          .from('profiles')
-          .select('books_owned, is_book_owner')
-          .eq('id', session.user.id)
-          .single();
+    // Check authentication
+    async function checkAuth() {
+      const { data: { session } } = await sb.auth.getSession();
+      
+      const authCheck = document.getElementById('authCheck');
+      const verificationForm = document.getElementById('verificationForm');
 
-        if (error) throw error;
-
-        if (profile?.books_owned && profile.books_owned.length > 0) {
-          booksOwnedDiv.style.display = 'block';
-          booksListDiv.innerHTML = profile.books_owned
-            .map(book => `<span class="book-badge">${book}</span>`)
-            .join('');
-        }
-      } catch (error) {
-        console.error('Error loading books:', error);
+      if (!session) {
+        authCheck.innerHTML = `
+          <p style="color: var(--error);">You must be logged in to verify your book.</p>
+          <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
+            Go to Login
+          </a>
+        `;
+        return;
       }
+
+      authCheck.style.display = 'none';
+      verificationForm.style.display = 'block';
     }
 
-    // Verify code on form submit
-    form.addEventListener('submit', async (e) => {
+    // File input handlers
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      photoFile = e.target.files[0];
+      if (photoFile) {
+        document.getElementById('photoLabel').classList.add('has-file');
+        document.getElementById('photoText').textContent = '✓ Photo selected';
+        document.getElementById('photoName').textContent = photoFile.name;
+      }
+    });
+
+    document.getElementById('videoInput').addEventListener('change', (e) => {
+      videoFile = e.target.files[0];
+      if (videoFile) {
+        document.getElementById('videoLabel').classList.add('has-file');
+        document.getElementById('videoText').textContent = '✓ Video selected';
+        document.getElementById('videoName').textContent = videoFile.name;
+      }
+    });
+
+    // Form submission
+    document.getElementById('bookForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      const code = codeInput.value.trim().toUpperCase();
-      if (!code) {
-        showMessage('Please enter a code', 'error');
+
+      const bookName = document.getElementById('bookSelect').value;
+      const submitBtn = document.getElementById('submitBtn');
+      const messageDiv = document.getElementById('message');
+
+      if (!bookName) {
+        showMessage('Please select a book', 'error');
+        return;
+      }
+
+      if (!photoFile) {
+        showMessage('Please upload a photo of your book', 'error');
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Verifying...';
-      messageDiv.style.display = 'none';
+      submitBtn.textContent = 'Uploading...';
 
       try {
-        const result = await window.verifyBookCode(code);
+        const { data: { session } } = await sb.auth.getSession();
+        const userId = session.user.id;
+
+        // Upload photo
+        const photoExt = photoFile.name.split('.').pop();
+        const photoPath = `${userId}/book-${bookName}-${Date.now()}.${photoExt}`;
         
-        showMessage(`✓ Success! You now own: ${result.book_name}`, 'success');
-        codeInput.value = '';
-        
-        // Update books display
+        const { error: photoError } = await sb.storage
+          .from('book-verifications')
+          .upload(photoPath, photoFile);
+
+        if (photoError) throw photoError;
+
+        // Upload video if provided
+        let videoPath = null;
+        if (videoFile) {
+          submitBtn.textContent = 'Uploading video...';
+          const videoExt = videoFile.name.split('.').pop();
+          videoPath = `${userId}/video-${bookName}-${Date.now()}.${videoExt}`;
+          
+          const { error: videoError } = await sb.storage
+            .from('book-videos')
+            .upload(videoPath, videoFile);
+
+          if (videoError) console.error('Video upload failed:', videoError);
+        }
+
+        // Process verification
+        submitBtn.textContent = 'Verifying...';
+        const { data, error } = await sb.functions.invoke('process-book-verification', {
+          body: { bookName, photoPath, videoPath }
+        });
+
+        if (error) throw error;
+
+        // Success!
+        showMessage(data.message, 'success');
+        submitBtn.textContent = '✓ Verified!';
+        submitBtn.disabled = true;
+
         setTimeout(() => {
-          loadUserBooks();
-        }, 500);
+          window.location.href = './index.html';
+        }, 3000);
 
       } catch (error) {
-        showMessage(error.message || 'Invalid or already used code', 'error');
-      } finally {
+        console.error('Error:', error);
+        showMessage(error.message || 'Verification failed. Please try again.', 'error');
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Verify Code';
+        submitBtn.textContent = 'Verify Book & Unlock Discounts';
       }
     });
 
     function showMessage(text, type) {
-      messageDiv.textContent = text;
+      const messageDiv = document.getElementById('message');
       messageDiv.className = `message ${type}`;
+      messageDiv.textContent = text;
       messageDiv.style.display = 'block';
     }
 
-    // Load books on page load
-    loadUserBooks();
+    checkAuth();
   </script>
 </body>
 </html>
