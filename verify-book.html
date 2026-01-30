@@ -431,18 +431,29 @@
     let verifiedCode = null;
     let verifiedBookType = null;
 
-    // Check authentication
+    // IMPROVED: Check authentication with timeout and better error handling
     async function checkAuth() {
+      const authCheck = document.getElementById('authCheck');
+      const verificationForm = document.getElementById('verificationForm');
+      
       try {
-        const { data: { session }, error } = await window.supabase.auth.getSession();
+        // Add a timeout to prevent infinite hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Authentication check timed out')), 10000)
+        );
         
-        const authCheck = document.getElementById('authCheck');
-        const verificationForm = document.getElementById('verificationForm');
+        const sessionPromise = window.supabase.auth.getSession();
+        
+        // Race between timeout and actual session check
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]);
 
         if (error) {
           console.error('Auth error:', error);
           authCheck.innerHTML = `
-            <p style="color: var(--error);">Error checking authentication. Please try again.</p>
+            <p style="color: var(--error);">⚠️ Authentication error. Please try refreshing the page.</p>
             <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
               Go to Login
             </a>
@@ -452,7 +463,7 @@
 
         if (!session) {
           authCheck.innerHTML = `
-            <p style="color: var(--error);">You must be logged in to verify your book.</p>
+            <p style="color: var(--error);">🔒 You must be logged in to verify your book.</p>
             <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
               Go to Login
             </a>
@@ -460,14 +471,18 @@
           return;
         }
 
+        // Success - show the form
         authCheck.classList.add('hidden');
         verificationForm.classList.remove('hidden');
+        
       } catch (err) {
-        console.error('Unexpected error:', err);
-        const authCheck = document.getElementById('authCheck');
+        console.error('Unexpected error during auth check:', err);
         authCheck.innerHTML = `
-          <p style="color: var(--error);">An error occurred. Please refresh the page.</p>
-          <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
+          <p style="color: var(--error);">⚠️ ${err.message || 'Connection error. Please refresh the page.'}</p>
+          <button onclick="location.reload()" class="btn" style="max-width: 200px; margin: 20px auto;">
+            Retry
+          </button>
+          <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 10px auto;">
             Go to Login
           </a>
         `;
@@ -626,7 +641,7 @@
         console.log('✅ Photo uploaded successfully');
 
         // ============================================
-        // STEP 2: Mark Code as Used (FIXED!)
+        // STEP 2: Mark Code as Used
         // ============================================
         updateProgress('Marking code as used...');
         
@@ -803,6 +818,7 @@
       messageArea.innerHTML = `<p class="${className}">${text}</p>`;
     }
 
+    // Start auth check immediately when page loads
     checkAuth();
   </script>
 </body>
