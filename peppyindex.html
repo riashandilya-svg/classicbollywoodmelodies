@@ -1,9 +1,10 @@
+<html>
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Classic Bollywood Melodies</title>
+  <title>Peppy Melodies</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,22 +12,18 @@
 
   <style>
     :root{
-      --bg: #ffffff;
+      --bg: #ffffff;                 /* ✅ white background */
+      --surface: rgba(255,255,255,0.86);
 
-      /* Classic theme */
-      --a1: rgba(120, 205, 255, 0.38);
-      --a2: rgba(190, 240, 255, 0.26);
+      --text: #1b1b1f;               /* soft near-black */
+      --muted: rgba(27,27,31,0.70);
 
-      --surface: rgba(255,255,255,0.84);
-      --text: #0b1a24;
-      --muted: rgba(11,26,36,0.68);
+      --border: rgba(190, 150, 35, 0.22); /* golden border */
+      --shadow: 0 18px 44px rgba(20, 18, 10, 0.12);
 
-      --border: rgba(80, 170, 230, 0.22);
-      --shadow: 0 18px 44px rgba(8, 24, 40, 0.10);
-
-      --btnText: #05304a;
-      --btnBorder: rgba(80, 170, 230, 0.34);
-      --btnBg: linear-gradient(135deg, rgba(120,205,255,0.34), rgba(190,240,255,0.22));
+      --btnText: #141316;
+      --btnBorder: rgba(190, 150, 35, 0.40);
+      --btnBg: linear-gradient(135deg, rgba(255, 214, 98, 0.95), rgba(190, 150, 35, 0.88));
     }
 
     *{ box-sizing: border-box; }
@@ -38,13 +35,13 @@
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 
       background:
-        radial-gradient(980px 520px at 10% 0%, var(--a1), transparent 60%),
-        radial-gradient(900px 520px at 92% 8%, var(--a2), transparent 62%),
-        radial-gradient(780px 480px at 50% 90%, rgba(120,205,255,0.18), transparent 60%),
+        radial-gradient(980px 520px at 10% 0%, rgba(255, 214, 98, 0.18), transparent 60%),
+        radial-gradient(900px 520px at 92% 8%, rgba(35, 35, 45, 0.10), transparent 62%),
+        radial-gradient(780px 480px at 50% 90%, rgba(255, 214, 98, 0.10), transparent 60%),
         var(--bg);
     }
 
-    /* Cursor glitter canvas (royal blue) */
+    /* Cursor glitter canvas (gold) */
     #glitter{
       position: fixed;
       inset: 0;
@@ -58,9 +55,9 @@
       position: sticky;
       top: 0;
       z-index: 9999;
-      background: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.78);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(80,170,230,0.20);
+      border-bottom: 1px solid rgba(190, 150, 35, 0.14);
     }
 
     .navGrid{
@@ -117,11 +114,11 @@
       line-height: 1.1;
 
       background: linear-gradient(
-        110deg,
+        120deg,
         rgba(255, 214, 98, 0.98) 0%,
-        rgba(190, 150, 35, 0.92) 28%,
+        rgba(190, 150, 35, 0.94) 28%,
         rgba(255,255,255,0.92) 50%,
-        rgba(190, 150, 35, 0.92) 72%,
+        rgba(190, 150, 35, 0.94) 70%,
         rgba(255, 214, 98, 0.98) 100%
       );
       background-size: 220% 100%;
@@ -149,10 +146,10 @@
       align-items: center;
       overflow: hidden;
       border-radius: 999px;
-      border: 1px solid rgba(80, 170, 230, 0.24);
+      border: 1px solid rgba(190, 150, 35, 0.30);
       background: rgba(255,255,255,0.70);
       backdrop-filter: blur(10px);
-      box-shadow: 0 14px 40px rgba(8, 24, 40, 0.10);
+      box-shadow: 0 14px 40px rgba(20, 18, 10, 0.10);
       max-width: 100%;
       flex: 0 0 auto;
       cursor: none; /* glitter cursor */
@@ -165,7 +162,7 @@
       padding: 10px 14px;
       font-weight: 750;
       font-size: 13px;
-      color: rgba(11,26,36,0.86);
+      color: rgba(27,27,31,0.86);
       text-decoration: none;
       cursor: none; /* glitter cursor */
       display: inline-flex;
@@ -178,23 +175,23 @@
     }
 
     .stripItem:hover{
-      background: rgba(120,205,255,0.16);
+      background: rgba(255, 214, 98, 0.12);
       filter: brightness(1.02);
     }
 
     .stripItem.primary{
-      color: rgba(11,26,36,0.92);
+      color: rgba(27,27,31,0.92);
       background: linear-gradient(135deg,
-        rgba(20, 90, 255, 0.14),
-        rgba(120,205,255,0.14),
-        rgba(190,240,255,0.10)
+        rgba(255, 214, 98, 0.20),
+        rgba(190, 150, 35, 0.14),
+        rgba(255, 214, 98, 0.10)
       );
     }
 
     .stripDivider{
       width: 1px;
       align-self: stretch;
-      background: rgba(80, 170, 230, 0.16);
+      background: rgba(190, 150, 35, 0.18);
     }
 
     /* Shine sweep on strip items */
@@ -204,7 +201,7 @@
       inset:-40% -60%;
       background: linear-gradient(120deg,
         transparent 35%,
-        rgba(255,255,255,0.40) 48%,
+        rgba(255,255,255,0.38) 48%,
         transparent 60%
       );
       transform: translateX(-40%) rotate(10deg);
@@ -316,9 +313,9 @@
     .cover{
       border-radius: 0px;
       overflow: hidden;
-      border: 1px solid rgba(80,170,230,0.22);
-      background: rgba(255,255,255,0.55);
-      box-shadow: 0 18px 44px rgba(8, 24, 40, 0.12);
+      border: 1px solid rgba(190, 150, 35, 0.18);
+      background: rgba(255,255,255,0.78);
+      box-shadow: var(--shadow);
     }
 
     .cover img{
@@ -326,14 +323,15 @@
       height: 360px;
       object-fit: contain;
       display: block;
+      background: rgba(255, 214, 98, 0.08);
     }
 
     .cover-caption{
       padding: 12px 14px 14px;
       font-size: 13px;
-      color: var(--muted);
-      border-top: 1px solid rgba(80,170,230,0.16);
-      background: rgba(255,255,255,0.72);
+      color: rgba(27,27,31,0.70);
+      border-top: 1px solid rgba(190, 150, 35, 0.12);
+      background: rgba(255,255,255,0.78);
     }
 
     /* Logged out row (kept in hero area) */
@@ -355,12 +353,13 @@
     @media (max-width: 760px){
       .grid{ grid-template-columns: 1fr; }
     }
+
     .grid, .card { min-width: 0; }
 
     .card{
       border-radius: 22px;
       padding: 20px;
-      border: 1px solid rgba(80,170,230,0.18);
+      border: 1px solid rgba(190, 150, 35, 0.16);
       background: var(--surface);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
@@ -371,8 +370,8 @@
 
     .card:hover{
       transform: translateY(-2px);
-      border-color: rgba(80,170,230,0.30);
-      box-shadow: 0 24px 55px rgba(8, 24, 40, 0.14);
+      border-color: rgba(190, 150, 35, 0.24);
+      box-shadow: 0 24px 55px rgba(20, 18, 10, 0.16);
     }
 
     .card::before{
@@ -383,8 +382,8 @@
       height: 230px;
       border-radius: 999px;
       background: radial-gradient(circle at 30% 30%,
-        var(--a1),
-        var(--a2),
+        rgba(255, 214, 98, 0.18),
+        rgba(35, 35, 45, 0.10),
         transparent 62%);
       filter: blur(2px);
       pointer-events: none;
@@ -399,7 +398,7 @@
       height: 260px;
       border-radius: 999px;
       background: radial-gradient(circle at 60% 40%,
-        var(--a2),
+        rgba(190, 150, 35, 0.12),
         transparent 62%);
       pointer-events: none;
     }
@@ -428,7 +427,7 @@
       text-decoration: none;
       font-weight: 750;
       color: var(--btnText);
-      border: 1px solid var(--btnBorder);
+      border: 1px solid rgba(190, 150, 35, 0.40);
       background: var(--btnBg);
       transition: transform 0.14s ease, filter 0.14s ease;
       cursor: none; /* glitter cursor */
@@ -438,7 +437,7 @@
 
     .btn:hover{
       transform: translateY(-1px);
-      filter: brightness(1.03);
+      filter: brightness(1.02);
     }
 
     /* Shine sweep on .btn */
@@ -480,24 +479,20 @@
     }
 
     .back{
-      color: rgba(11,26,36,0.70);
+      color: rgba(27,27,31,0.70);
       text-decoration: none;
       font-weight: 700;
       font-size: 14px;
     }
     .back:hover{ text-decoration: underline; }
 
-    .pill{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(80,170,230,0.18);
-      background: rgba(255,255,255,0.70);
-      color: rgba(11,26,36,0.70);
-      font-size: 13px;
-      font-weight: 650;
+    /* Optional: hidden placeholders for future songs */
+    .placeholder{
+      opacity: 0.55;
+    }
+    .placeholder .btn{
+      pointer-events: none;
+      opacity: 0.85;
     }
 
     @media (prefers-reduced-motion: reduce){
@@ -538,7 +533,7 @@
       <!-- Left: text + songs -->
       <div>
         <div class="hero">
-          <h1>Classic Bollywood Melodies</h1>
+          <h1>Peppy Melodies</h1>
           <p class="sub">Pick a song to open its practice page.</p>
 
           <!-- Logged-out login button stays here -->
@@ -549,39 +544,45 @@
 
         <section class="grid">
           <div class="card">
-            <h2 class="song-title">Ek Ladki Bheegi Bhaagi Si</h2>
+            <h2 class="song-title">Kaisi Paheli Zindagaani</h2>
             <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="/classicbollywoodmelodies/ekladki.html">Open <span class="arrow">→</span></a>
+            <a class="btn" href="kaisipaheli.html">Open <span class="arrow">→</span></a>
           </div>
 
           <div class="card">
-            <h2 class="song-title">Hai Apna Dil Toh Awaara</h2>
+            <h2 class="song-title">Jaane Kahan Mera Jigaar Gaya Ji</h2>
             <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="/classicbollywoodmelodies/haiapna.html">Open <span class="arrow">→</span></a>
+            <a class="btn" href="jaanekahan.html">Open <span class="arrow">→</span></a>
           </div>
 
           <div class="card">
-            <h2 class="song-title">Gulaabi Aankhen</h2>
+            <h2 class="song-title">Gore Gore Baanke Chorre</h2>
             <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="/classicbollywoodmelodies/gulaabi.html">Open <span class="arrow">→</span></a>
+            <a class="btn" href="goregore.html">Open <span class="arrow">→</span></a>
           </div>
 
           <div class="card">
-            <h2 class="song-title">Chookar Mere Mann Ko</h2>
+            <h2 class="song-title">Zoobie Doobie</h2>
             <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="/classicbollywoodmelodies/chookar.html">Open <span class="arrow">→</span></a>
+            <a class="btn" href="zoobiedoobie.html">Open <span class="arrow">→</span></a>
           </div>
 
           <div class="card">
-            <h2 class="song-title">Kal Ho Na Ho</h2>
+            <h2 class="song-title">Darling</h2>
             <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="/classicbollywoodmelodies/kalho.html">Open <span class="arrow">→</span></a>
+            <a class="btn" href="darling.html">Open <span class="arrow">→</span></a>
           </div>
 
-          <div class="card">
-            <h2 class="song-title">Aaoge Jab Tum Saajna</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="/classicbollywoodmelodies/aaogejab.html">Open <span class="arrow">→</span></a>
+          <div class="card placeholder">
+            <h2 class="song-title">Coming soon</h2>
+            <p class="song-meta">Add your next song file</p>
+            <a class="btn" href="#">Open <span class="arrow">→</span></a>
+          </div>
+
+          <div class="card placeholder">
+            <h2 class="song-title">Coming soon</h2>
+            <p class="song-meta">Add your next song file</p>
+            <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
         </section>
 
@@ -590,11 +591,11 @@
         </div>
       </div>
 
-      <!-- Right: cover image -->
+      <!-- Right: optional cover image -->
       <aside class="side">
         <div class="cover">
-          <img src="/classicbollywoodmelodies/classic.jpg" alt="Classic book cover">
-          <div class="cover-caption">Classic Bollywood Melodies</div>
+          <img src="peppy.jpg" alt="Peppy Melodies cover" onerror="this.style.display='none'">
+          <div class="cover-caption">Peppy Melodies</div>
         </div>
       </aside>
     </div>
@@ -639,7 +640,7 @@
         const displayName = (profile && profile.display_name) ? String(profile.display_name).trim() : "";
         welcomeText.textContent = displayName ? `Welcome, ${displayName}` : "Welcome";
 
-        accountDock.style.display = "flex";
+        accountDock.style.display = "block";
         dashboardLink.style.display = "inline-flex";
         verifyLink.style.display = "inline-flex";
         logoutBtn.style.display = "inline-flex";
@@ -672,7 +673,7 @@
   </script>
 
   <script>
-    /* ===== Cursor glitter (royal blue-ish) ===== */
+    /* ===== Cursor glitter (gold) ===== */
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if(prefersReduced) return;
@@ -709,7 +710,7 @@
             size: 1.0 + Math.random() * 2.8,
             tw: Math.random() * Math.PI * 2,
             alpha: 0.52 + Math.random() * 0.34,
-            deep: Math.random() < 0.65
+            warm: Math.random() < 0.7
           });
         }
       }
@@ -746,10 +747,10 @@
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
 
-          const royal = `rgba(20, 90, 255, ${a})`;
-          const sky   = `rgba(120, 205, 255, ${a * 0.88})`;
-          const core  = `rgba(255, 255, 255, ${a * 0.55})`;
-          const dot = p.deep ? royal : sky;
+          const gold   = `rgba(255, 214, 98, ${a})`;
+          const amber  = `rgba(190, 150, 35, ${a * 0.92})`;
+          const core   = `rgba(255, 255, 255, ${a * 0.55})`;
+          const dot = p.warm ? gold : amber;
 
           ctx.beginPath();
           ctx.fillStyle = dot;
@@ -766,7 +767,7 @@
             ctx.translate(p.x, p.y);
             ctx.rotate(p.tw * 0.35);
             ctx.globalAlpha = a * 0.92;
-            ctx.strokeStyle = `rgba(210, 235, 255, ${a})`;
+            ctx.strokeStyle = `rgba(255, 246, 210, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
@@ -780,6 +781,6 @@
       tick();
     })();
   </script>
-
 </body>
 </html>
+
