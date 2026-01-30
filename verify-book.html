@@ -433,23 +433,45 @@
 
     // Check authentication
     async function checkAuth() {
-      const { data: { session } } = await window.supabase.auth.getSession();
-      
-      const authCheck = document.getElementById('authCheck');
-      const verificationForm = document.getElementById('verificationForm');
+      try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        
+        const authCheck = document.getElementById('authCheck');
+        const verificationForm = document.getElementById('verificationForm');
 
-      if (!session) {
+        if (error) {
+          console.error('Auth error:', error);
+          authCheck.innerHTML = `
+            <p style="color: var(--error);">Error checking authentication. Please try again.</p>
+            <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
+              Go to Login
+            </a>
+          `;
+          return;
+        }
+
+        if (!session) {
+          authCheck.innerHTML = `
+            <p style="color: var(--error);">You must be logged in to verify your book.</p>
+            <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
+              Go to Login
+            </a>
+          `;
+          return;
+        }
+
+        authCheck.classList.add('hidden');
+        verificationForm.classList.remove('hidden');
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        const authCheck = document.getElementById('authCheck');
         authCheck.innerHTML = `
-          <p style="color: var(--error);">You must be logged in to verify your book.</p>
+          <p style="color: var(--error);">An error occurred. Please refresh the page.</p>
           <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
             Go to Login
           </a>
         `;
-        return;
       }
-
-      authCheck.style.display = 'none';
-      verificationForm.classList.remove('hidden');
     }
 
     // Verify book code
