@@ -1,9 +1,12 @@
 // /classicbollywoodmelodies/js/paywall.js
+// Updated with better error handling and API key consistency
+
 (() => {
   const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
   const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
   const BUNDLE_PRODUCT_ID = "pack:5";
   const CURRENCY_SYMBOLS = { INR: '₹', USD: '$' };
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
 
   function normalizeEmail(email) {
     return (email || "").trim().toLowerCase();
@@ -165,7 +168,7 @@
       body: { productId, currency },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        apikey: window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis',
+        apikey: SUPABASE_ANON_KEY,
       },
     });
 
@@ -179,13 +182,11 @@
   async function createOrder({ productId, currency = "INR" }) {
     const session = await getSessionOrThrow();
     
-    const apikey = window.supabase.supabaseKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
-    
     const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
       body: { productId, currency },
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        apikey: apikey,
+        apikey: SUPABASE_ANON_KEY,
       },
     });
 
@@ -201,7 +202,7 @@
     return data;
   }
 
-  // ✅ ULTIMATE FIX: Extract order ID with all possible field names
+  // ✅ Extract order ID with all possible field names
   function extractOrderId(orderData) {
     console.log("[PAYWALL] 🔍 Extracting order ID from:", orderData);
     console.log("[PAYWALL] 🔍 Available keys:", Object.keys(orderData));
@@ -231,32 +232,38 @@
         throw new Error("Missing order ID from payment");
       }
 
-      console.log('[PAYWALL] ✅ Verifying payment with params:', {
+      const verifyParams = {
         productId: productId,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_order_id: razorpayOrderId,
         razorpay_signature: response.razorpay_signature,
         currency: orderData.currency,
         amount: orderData.amount
-      });
+      };
+
+      console.log('[PAYWALL] ✅ Verifying payment with params:', verifyParams);
 
       const { data, error } = await window.supabase.functions.invoke('verify-razorpay-payment', {
-        body: {
-          productId: productId,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_order_id: razorpayOrderId,
-          razorpay_signature: response.razorpay_signature,
-          currency: orderData.currency,
-          amount: orderData.amount
-        },
+        body: verifyParams,
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          apikey: SUPABASE_ANON_KEY,
         }
       });
 
       if (error) {
         console.error('[PAYWALL] ❌ Verify payment error:', error);
+        console.error('[PAYWALL] ❌ Error details:', {
+          message: error.message,
+          context: error.context,
+          status: error.status
+        });
         throw new Error(error.message || 'Payment verification failed');
+      }
+
+      if (!data) {
+        console.error('[PAYWALL] ❌ No data returned from verification');
+        throw new Error('Edge Function returned a non-2xx status code');
       }
 
       console.log('[PAYWALL] ✅ Payment verified successfully!', data);
@@ -326,7 +333,7 @@
           body: { productId },
           headers: {
             Authorization: `Bearer ${session.access_token}`,
-            apikey: window.supabase.supabaseKey,
+            apikey: SUPABASE_ANON_KEY,
           },
         });
         if (error) throw error;
@@ -341,7 +348,7 @@
         body: { productId },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
-          apikey: window.supabase.supabaseKey,
+          apikey: SUPABASE_ANON_KEY,
         },
       });
       if (error) throw error;
