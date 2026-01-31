@@ -225,6 +225,7 @@
       letter-spacing: 0.5px;
       color: var(--text);
       border-bottom: 2px solid var(--border);
+      white-space: nowrap;
     }
 
     td {
@@ -473,6 +474,70 @@
       color: var(--error);
     }
 
+    /* User info block in purchases/bundles */
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .user-info .user-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .user-info .user-email {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Song tags */
+    .song-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .song-tag {
+      background: rgba(155, 110, 255, 0.08);
+      color: #5b2d8e;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Photo thumbnail */
+    .photo-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .photo-thumb:hover {
+      transform: scale(1.08);
+    }
+
+    /* Photo modal */
+    .photo-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      cursor: pointer;
+    }
+    .photo-modal-overlay img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 12px;
+      object-fit: contain;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
     @media (max-width: 768px) {
       .banner {
         flex-direction: column;
@@ -554,10 +619,10 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active" onclick="switchTab('users')">👥 All Users</button>
-        <button class="tab" onclick="switchTab('codes')">🎫 Book Codes</button>
-        <button class="tab" onclick="switchTab('purchases')">💳 Purchases</button>
-        <button class="tab" onclick="switchTab('bundles')">📦 Bundles</button>
+        <button class="tab active" onclick="switchTab('users', this)">👥 All Users</button>
+        <button class="tab" onclick="switchTab('codes', this)">🎫 Book Codes</button>
+        <button class="tab" onclick="switchTab('purchases', this)">💳 Purchases</button>
+        <button class="tab" onclick="switchTab('bundles', this)">📦 Bundles</button>
       </div>
 
       <!-- Users Tab -->
@@ -572,19 +637,20 @@
             <table>
               <thead>
                 <tr>
-                  <th>User ID</th>
-                  <th>Name</th>
-                  <th>Email (from profile)</th>
+                  <th>Name & Email</th>
                   <th>Book Owner</th>
-                  <th>Setup Complete</th>
                   <th>Books Owned</th>
+                  <th>Songs Purchased</th>
+                  <th>Bundle</th>
+                  <th>Photo</th>
+                  <th>Video</th>
                   <th>Joined</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="usersTableBody">
                 <tr>
-                  <td colspan="8" class="loading">
+                  <td colspan="9" class="loading">
                     <div class="spinner"></div>
                     Loading users...
                   </td>
@@ -610,7 +676,7 @@
                   <th>Code</th>
                   <th>Book</th>
                   <th>Status</th>
-                  <th>Used By (User ID)</th>
+                  <th>Used By</th>
                   <th>Generated At</th>
                   <th>Used At</th>
                 </tr>
@@ -635,12 +701,12 @@
             <h2 class="card-title">💳 All Purchases</h2>
             <button class="refresh-btn" onclick="loadPurchases()">↻ Refresh</button>
           </div>
-          <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by user ID or song ID..." onkeyup="filterPurchases()">
+          <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by name, email, or song ID..." onkeyup="filterPurchases()">
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>User ID</th>
+                  <th>Name & Email</th>
                   <th>Song ID</th>
                   <th>Amount</th>
                   <th>Credits Remaining</th>
@@ -667,12 +733,12 @@
             <h2 class="card-title">📦 Bundle Credits Usage</h2>
             <button class="refresh-btn" onclick="loadBundles()">↻ Refresh</button>
           </div>
-          <input type="text" class="search-box" id="bundleSearch" placeholder="Search by user ID..." onkeyup="filterBundles()">
+          <input type="text" class="search-box" id="bundleSearch" placeholder="Search by name or email..." onkeyup="filterBundles()">
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>User ID</th>
+                  <th>Name & Email</th>
                   <th>Credits Remaining</th>
                   <th>Purchase Date</th>
                 </tr>
@@ -704,7 +770,7 @@
         <p class="step-number">Step 1 of 3</p>
         <p class="confirmation-text">
           You are about to permanently delete the user: <strong id="deleteUserName"></strong>
-          <br>User ID: <span class="code-display" id="deleteUserId"></span>
+          <br>Email: <span class="code-display" id="deleteUserEmail"></span>
         </p>
         <div class="warning-box">
           <h3>⚠️ This will permanently delete:</h3>
@@ -755,6 +821,11 @@
     </div>
   </div>
 
+  <!-- Photo Lightbox Modal -->
+  <div id="photoModal" class="photo-modal-overlay hidden" onclick="closePhotoModal()">
+    <img id="photoModalImg" src="" alt="Book verification photo">
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
@@ -762,8 +833,7 @@
     
     window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // IMPORTANT: Add your admin email here
-const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
+    const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
 
     let allUsers = [];
     let allCodes = [];
@@ -771,11 +841,74 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
     let allBundles = [];
     let userToDelete = null;
 
-    // Check if current user is admin
+    // ─── Helper: build a name+email block ─────────────────
+    function userInfoHTML(name, email) {
+      return `<div class="user-info">
+                <span class="user-name">${name || 'N/A'}</span>
+                <span class="user-email">${email || 'N/A'}</span>
+              </div>`;
+    }
+
+    // ─── Helper: look up a profile by user_id ──────────────
+    function getProfile(userId) {
+      return allUsers.find(u => u.id === userId);
+    }
+
+    // ─── Helper: get purchased song IDs for a user ─────────
+    function getSongsForUser(userId) {
+      return allPurchases
+        .filter(p => p.user_id === userId && p.song_id !== 'bundle_credits')
+        .map(p => p.song_id);
+    }
+
+    // ─── Helper: check if user has a bundle ─────────────────
+    function hasBundleForUser(userId) {
+      return allBundles.some(b => b.user_id === userId);
+    }
+
+    // ─── Helper: get photo URL from storage ────────────────
+    async function getPhotoUrl(userId) {
+      try {
+        const { data: files } = await window.supabase.storage
+          .from('book-verifications')
+          .list(userId);
+        if (files && files.length > 0) {
+          const { data: { publicUrl } } = window.supabase.storage
+            .from('book-verifications')
+            .getPublicUrl(`${userId}/${files[0].name}`);
+          return publicUrl;
+        }
+      } catch (e) { /* no photo */ }
+      return null;
+    }
+
+    // ─── Helper: check if video exists in storage ──────────
+    async function hasVideo(userId) {
+      try {
+        const { data: files } = await window.supabase.storage
+          .from('book-videos')
+          .list(userId);
+        return files && files.length > 0;
+      } catch (e) { return false; }
+    }
+
+    // Cache for photos/videos so we only fetch once
+    let photoCache = {};   // userId -> url | null
+    let videoCache = {};   // userId -> true | false
+
+    async function fetchMediaForUser(userId) {
+      if (!(userId in photoCache)) {
+        photoCache[userId] = await getPhotoUrl(userId);
+      }
+      if (!(videoCache[userId] === undefined ? false : true) || !(userId in videoCache)) {
+        videoCache[userId] = await hasVideo(userId);
+      }
+    }
+
+    // ─── Auth check ─────────────────────────────────────────
     async function checkAdminAccess() {
       try {
         const { data: { session }, error } = await window.supabase.auth.getSession();
-        
         const authCheck = document.getElementById('authCheck');
         const adminContent = document.getElementById('adminContent');
 
@@ -784,414 +917,326 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
           return;
         }
 
-        const userEmail = session.user.email;
+        if (!ADMIN_EMAILS.includes(session.user.email)) {
+          authCheck.innerHTML = '<p style="color: var(--error); font-size: 18px;">⛔ Access Denied: You are not an admin</p>';
+          return;
+        }
 
-        if (!ADMIN_EMAILS.includes(userEmail)) {
-  authCheck.innerHTML = '<p style="color: var(--error); font-size: 18px;">⛔ Access Denied: You are not an admin</p>';
-  return;
-}
-
-        // Admin verified
         authCheck.classList.add('hidden');
         adminContent.classList.remove('hidden');
-        
-        // Load all data
+
+        // Load purchases & bundles first (needed by users tab)
+        await Promise.all([loadPurchasesData(), loadBundlesData()]);
         loadStats();
         loadUsers();
         loadCodes();
-        loadPurchases();
-        loadBundles();
-
+        renderPurchases();
+        renderBundles();
       } catch (err) {
         console.error('Error:', err);
         document.getElementById('authCheck').innerHTML = '<p style="color: var(--error);">An error occurred</p>';
       }
     }
 
-    // Load statistics
+    // ─── Stats ──────────────────────────────────────────────
     async function loadStats() {
       try {
-        // Total users (excluding admins by checking email in profiles)
-        const { data: allProfiles } = await window.supabase
-          .from('profiles')
-          .select('id, email');
-        
-        const nonAdminProfiles = allProfiles?.filter(p => !ADMIN_EMAILS.includes(p.email)) || [];
-        document.getElementById('totalUsers').textContent = nonAdminProfiles.length;
-    
-        // Book owners (excluding admins)
-        const nonAdminBookOwners = nonAdminProfiles.filter(p => {
-          // Need to check is_book_owner from the full profile data
-          const fullProfile = allProfiles.find(fp => fp.id === p.id);
-          return fullProfile?.is_book_owner === true;
-        });
-        
-        // Actually, let's just query again with the filter
-        const { data: bookOwnerProfiles } = await window.supabase
-          .from('profiles')
-          .select('id, email')
-          .eq('is_book_owner', true);
-        
-        const nonAdminBookOwnersFiltered = bookOwnerProfiles?.filter(p => !ADMIN_EMAILS.includes(p.email)) || [];
-        document.getElementById('bookOwners').textContent = nonAdminBookOwnersFiltered.length;
-    
-        // Codes used
+        const { data: allProfiles } = await window.supabase.from('profiles').select('id, email, is_book_owner');
+        const nonAdmin = allProfiles?.filter(p => !ADMIN_EMAILS.includes(p.email)) || [];
+        document.getElementById('totalUsers').textContent = nonAdmin.length;
+        document.getElementById('bookOwners').textContent = nonAdmin.filter(p => p.is_book_owner).length;
+
         const { count: codesUsed } = await window.supabase
-          .from('book_verification_codes')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_used', true);
-        
+          .from('book_verification_codes').select('*', { count: 'exact', head: true }).eq('is_used', true);
         document.getElementById('codesUsed').textContent = codesUsed || 0;
-    
-        // Total purchases (excluding admins)
-        const adminUserIds = allProfiles?.filter(p => ADMIN_EMAILS.includes(p.email)).map(p => p.id) || [];
-        
-        const { data: allPurchases } = await window.supabase
-          .from('purchases')
-          .select('user_id');
-        
-        const nonAdminPurchases = allPurchases?.filter(p => !adminUserIds.includes(p.user_id)) || [];
+
+        const adminIds = allProfiles?.filter(p => ADMIN_EMAILS.includes(p.email)).map(p => p.id) || [];
+        const nonAdminPurchases = allPurchases?.filter(p => !adminIds.includes(p.user_id)) || [];
         document.getElementById('totalPurchases').textContent = nonAdminPurchases.length;
-    
-      } catch (error) {
-        console.error('Error loading stats:', error);
-      }
+      } catch (e) { console.error('Stats error:', e); }
     }
 
-    // Load all users
+    // ─── Users ──────────────────────────────────────────────
     async function loadUsers() {
       try {
         const tbody = document.getElementById('usersTableBody');
-        tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
 
-        const { data: profiles, error: profilesError } = await window.supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (profilesError) throw profilesError;
-
+        const { data: profiles, error } = await window.supabase
+          .from('profiles').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
         allUsers = profiles || [];
 
-        console.log('Loaded users:', allUsers.length);
-        renderUsers();
-
-      } catch (error) {
-        console.error('Error loading users:', error);
-        document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="8"><div class="error-message">Error loading users: ${error.message}</div></td></tr>`;
+        // Prefetch media for all users
+        await Promise.all(allUsers.map(u => fetchMediaForUser(u.id)));
+        renderUsers(allUsers);
+      } catch (e) {
+        console.error('Error loading users:', e);
+        document.getElementById('usersTableBody').innerHTML =
+          `<tr><td colspan="9"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
 
-    function renderUsers() {
+    function renderUsers(list) {
       const tbody = document.getElementById('usersTableBody');
-      
-      if (allUsers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
         return;
       }
-    
-      tbody.innerHTML = allUsers.map(user => {
+
+      tbody.innerHTML = list.map(user => {
         const isAdmin = ADMIN_EMAILS.includes(user.email);
-        const deleteButton = isAdmin 
+        const songs = getSongsForUser(user.id);
+        const bundle = hasBundleForUser(user.id);
+        const photoUrl = photoCache[user.id] || null;
+        const hasVid = videoCache[user.id] || false;
+
+        const songsHTML = songs.length
+          ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>`
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+
+        const photoHTML = photoUrl
+          ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openPhotoModal('${photoUrl}')">`
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+
+        const deleteButton = isAdmin
           ? '<span class="badge badge-warning">ADMIN</span>'
           : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
-        
-        return `
-          <tr>
-            <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
-            <td><strong>${user.display_name || 'N/A'}</strong></td>
-            <td>${user.email || 'N/A'}</td>
-            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
-            <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
-            <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
-            <td>${new Date(user.created_at).toLocaleDateString()}</td>
-            <td>${deleteButton}</td>
-          </tr>
-        `;
+
+        return `<tr>
+          <td>${userInfoHTML(user.display_name, user.email)}</td>
+          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${user.books_owned && user.books_owned.length ? user.books_owned.join(', ') : 'None'}</td>
+          <td>${songsHTML}</td>
+          <td>${bundle ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${photoHTML}</td>
+          <td>${hasVid ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>${deleteButton}</td>
+        </tr>`;
       }).join('');
     }
 
     function filterUsers() {
-      const search = document.getElementById('userSearch').value.toLowerCase();
-      const filtered = allUsers.filter(user => 
-        (user.display_name?.toLowerCase().includes(search)) ||
-        (user.email?.toLowerCase().includes(search)) ||
-        (user.id?.toLowerCase().includes(search))
+      const q = document.getElementById('userSearch').value.toLowerCase();
+      const filtered = allUsers.filter(u =>
+        (u.display_name?.toLowerCase().includes(q)) ||
+        (u.email?.toLowerCase().includes(q)) ||
+        (u.id?.toLowerCase().includes(q))
       );
-      
-      const tbody = document.getElementById('usersTableBody');
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match your search</p></td></tr>';
+      if (!filtered.length) {
+        document.getElementById('usersTableBody').innerHTML =
+          '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match your search</p></td></tr>';
         return;
       }
-    
-      tbody.innerHTML = filtered.map(user => {
-        const isAdmin = ADMIN_EMAILS.includes(user.email);
-        const deleteButton = isAdmin 
-          ? '<span class="badge badge-warning">ADMIN</span>'
-          : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
-        
-        return `
-          <tr>
-            <td><span class="code-display">${user.id.substring(0, 8)}...</span></td>
-            <td><strong>${user.display_name || 'N/A'}</strong></td>
-            <td>${user.email || 'N/A'}</td>
-            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
-            <td>${user.setup_completed ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-warning">No</span>'}</td>
-            <td>${user.books_owned && user.books_owned.length > 0 ? user.books_owned.join(', ') : 'None'}</td>
-            <td>${new Date(user.created_at).toLocaleDateString()}</td>
-            <td>${deleteButton}</td>
-          </tr>
-        `;
-      }).join('');
+      renderUsers(filtered);
     }
 
-    // Load verification codes
+    // ─── Codes ──────────────────────────────────────────────
     async function loadCodes() {
       try {
         const tbody = document.getElementById('codesTableBody');
         tbody.innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading codes...</td></tr>';
 
         const { data: codes, error } = await window.supabase
-          .from('book_verification_codes')
-          .select('*')
-          .order('created_at', { ascending: false });
-
+          .from('book_verification_codes').select('*').order('created_at', { ascending: false });
         if (error) throw error;
-
         allCodes = codes || [];
-
-        console.log('Loaded codes:', allCodes.length);
-        renderCodes();
-
-      } catch (error) {
-        console.error('Error loading codes:', error);
-        document.getElementById('codesTableBody').innerHTML = `<tr><td colspan="6"><div class="error-message">Error loading codes: ${error.message}</div></td></tr>`;
+        renderCodes(allCodes);
+      } catch (e) {
+        console.error('Error loading codes:', e);
+        document.getElementById('codesTableBody').innerHTML =
+          `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
 
-    function renderCodes() {
+    function renderCodes(list) {
       const tbody = document.getElementById('codesTableBody');
-      
-      if (allCodes.length === 0) {
+      if (!list.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🎫</div><p>No codes found</p></td></tr>';
         return;
       }
+      const bookNames = { soulful:'Soulful', peppy:'Peppy', romantic:'Romantic', classic:'Classic' };
 
-      const bookNames = {
-        'soulful': 'Soulful',
-        'peppy': 'Peppy',
-        'romantic': 'Romantic',
-        'classic': 'Classic'
-      };
+      tbody.innerHTML = list.map(code => {
+        const profile = code.used_by_user_id ? getProfile(code.used_by_user_id) : null;
+        const usedByHTML = profile
+          ? userInfoHTML(profile.display_name, profile.email)
+          : (code.used_by_user_id ? `<span class="code-display">${code.used_by_user_id.substring(0,8)}...</span>` : '-');
 
-      tbody.innerHTML = allCodes.map(code => `
-        <tr>
+        return `<tr>
           <td><span class="code-display">${code.code}</span></td>
           <td>${bookNames[code.book_name] || code.book_name}</td>
           <td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td>
-          <td>${code.used_by_user_id ? '<span class="code-display">' + code.used_by_user_id.substring(0, 8) + '...</span>' : '-'}</td>
+          <td>${usedByHTML}</td>
           <td>${new Date(code.created_at).toLocaleString()}</td>
           <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('');
     }
 
     function filterCodes() {
-      const search = document.getElementById('codeSearch').value.toLowerCase();
-      const filtered = allCodes.filter(code => 
-        code.code.toLowerCase().includes(search) ||
-        code.book_name.toLowerCase().includes(search)
+      const q = document.getElementById('codeSearch').value.toLowerCase();
+      const filtered = allCodes.filter(c =>
+        c.code.toLowerCase().includes(q) || c.book_name.toLowerCase().includes(q)
       );
-      
-      const tbody = document.getElementById('codesTableBody');
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🔍</div><p>No codes match your search</p></td></tr>';
+      if (!filtered.length) {
+        document.getElementById('codesTableBody').innerHTML =
+          '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🔍</div><p>No codes match your search</p></td></tr>';
         return;
       }
-
-      const bookNames = {
-        'soulful': 'Soulful',
-        'peppy': 'Peppy',
-        'romantic': 'Romantic',
-        'classic': 'Classic'
-      };
-
-      tbody.innerHTML = filtered.map(code => `
-        <tr>
-          <td><span class="code-display">${code.code}</span></td>
-          <td>${bookNames[code.book_name] || code.book_name}</td>
-          <td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td>
-          <td>${code.used_by_user_id ? '<span class="code-display">' + code.used_by_user_id.substring(0, 8) + '...</span>' : '-'}</td>
-          <td>${new Date(code.created_at).toLocaleString()}</td>
-          <td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td>
-        </tr>
-      `).join('');
+      renderCodes(filtered);
     }
 
-    // Load purchases
+    // ─── Purchases (data + render split) ────────────────────
+    async function loadPurchasesData() {
+      const { data, error } = await window.supabase
+        .from('purchases').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      allPurchases = data || [];
+    }
+
     async function loadPurchases() {
       try {
-        const tbody = document.getElementById('purchasesTableBody');
-        tbody.innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
-
-        const { data: purchases, error } = await window.supabase
-          .from('purchases')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        allPurchases = purchases || [];
-
-        console.log('Loaded purchases:', allPurchases.length);
+        document.getElementById('purchasesTableBody').innerHTML =
+          '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
+        await loadPurchasesData();
         renderPurchases();
-
-      } catch (error) {
-        console.error('Error loading purchases:', error);
-        document.getElementById('purchasesTableBody').innerHTML = `<tr><td colspan="5"><div class="error-message">Error loading purchases: ${error.message}</div></td></tr>`;
+      } catch (e) {
+        console.error('Error:', e);
+        document.getElementById('purchasesTableBody').innerHTML =
+          `<tr><td colspan="5"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
 
-    function renderPurchases() {
+    function renderPurchases(list) {
+      const data = list || allPurchases;
       const tbody = document.getElementById('purchasesTableBody');
-      
-      if (allPurchases.length === 0) {
+      if (!data.length) {
         tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">💳</div><p>No purchases found</p></td></tr>';
         return;
       }
-
-      tbody.innerHTML = allPurchases.map(purchase => `
-        <tr>
-          <td><span class="code-display">${purchase.user_id.substring(0, 8)}...</span></td>
-          <td><span class="code-display">${purchase.song_id}</span></td>
-          <td>₹${purchase.amount || 'N/A'}</td>
-          <td>${purchase.credits_remaining !== null ? purchase.credits_remaining : 'N/A'}</td>
-          <td>${new Date(purchase.created_at).toLocaleString()}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = data.map(p => {
+        const profile = getProfile(p.user_id);
+        return `<tr>
+          <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
+          <td><span class="code-display">${p.song_id}</span></td>
+          <td>₹${p.amount || 'N/A'}</td>
+          <td>${p.credits_remaining !== null && p.credits_remaining !== undefined ? p.credits_remaining : 'N/A'}</td>
+          <td>${new Date(p.created_at).toLocaleString()}</td>
+        </tr>`;
+      }).join('');
     }
 
     function filterPurchases() {
-      const search = document.getElementById('purchaseSearch').value.toLowerCase();
-      const filtered = allPurchases.filter(purchase => 
-        purchase.user_id.toLowerCase().includes(search) ||
-        purchase.song_id.toLowerCase().includes(search)
-      );
-      
-      const tbody = document.getElementById('purchasesTableBody');
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">🔍</div><p>No purchases match your search</p></td></tr>';
+      const q = document.getElementById('purchaseSearch').value.toLowerCase();
+      const filtered = allPurchases.filter(p => {
+        const profile = getProfile(p.user_id);
+        return (
+          p.user_id.toLowerCase().includes(q) ||
+          p.song_id.toLowerCase().includes(q) ||
+          (profile?.display_name?.toLowerCase().includes(q)) ||
+          (profile?.email?.toLowerCase().includes(q))
+        );
+      });
+      if (!filtered.length) {
+        document.getElementById('purchasesTableBody').innerHTML =
+          '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">🔍</div><p>No purchases match your search</p></td></tr>';
         return;
       }
-
-      tbody.innerHTML = filtered.map(purchase => `
-        <tr>
-          <td><span class="code-display">${purchase.user_id.substring(0, 8)}...</span></td>
-          <td><span class="code-display">${purchase.song_id}</span></td>
-          <td>₹${purchase.amount || 'N/A'}</td>
-          <td>${purchase.credits_remaining !== null ? purchase.credits_remaining : 'N/A'}</td>
-          <td>${new Date(purchase.created_at).toLocaleString()}</td>
-        </tr>
-      `).join('');
+      renderPurchases(filtered);
     }
 
-    // Load bundles
+    // ─── Bundles (data + render split) ──────────────────────
+    async function loadBundlesData() {
+      const { data, error } = await window.supabase
+        .from('purchases').select('*').eq('song_id', 'bundle_credits').order('created_at', { ascending: false });
+      if (error) throw error;
+      allBundles = data || [];
+    }
+
     async function loadBundles() {
       try {
-        const tbody = document.getElementById('bundlesTableBody');
-        tbody.innerHTML = '<tr><td colspan="3" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
-
-        const { data: bundles, error } = await window.supabase
-          .from('purchases')
-          .select('*')
-          .eq('song_id', 'bundle_credits')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        allBundles = bundles || [];
-
-        console.log('Loaded bundles:', allBundles.length);
+        document.getElementById('bundlesTableBody').innerHTML =
+          '<tr><td colspan="3" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
+        await loadBundlesData();
         renderBundles();
-
-      } catch (error) {
-        console.error('Error loading bundles:', error);
-        document.getElementById('bundlesTableBody').innerHTML = `<tr><td colspan="3"><div class="error-message">Error loading bundles: ${error.message}</div></td></tr>`;
+      } catch (e) {
+        console.error('Error:', e);
+        document.getElementById('bundlesTableBody').innerHTML =
+          `<tr><td colspan="3"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
 
-    function renderBundles() {
+    function renderBundles(list) {
+      const data = list || allBundles;
       const tbody = document.getElementById('bundlesTableBody');
-      
-      if (allBundles.length === 0) {
+      if (!data.length) {
         tbody.innerHTML = '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundle purchases found</p></td></tr>';
         return;
       }
-
-      tbody.innerHTML = allBundles.map(bundle => `
-        <tr>
-          <td><span class="code-display">${bundle.user_id.substring(0, 8)}...</span></td>
-          <td><span class="badge badge-success">${bundle.credits_remaining || 0}</span></td>
-          <td>${new Date(bundle.created_at).toLocaleString()}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = data.map(b => {
+        const profile = getProfile(b.user_id);
+        return `<tr>
+          <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
+          <td><span class="badge badge-success">${b.credits_remaining || 0}</span></td>
+          <td>${new Date(b.created_at).toLocaleString()}</td>
+        </tr>`;
+      }).join('');
     }
 
     function filterBundles() {
-      const search = document.getElementById('bundleSearch').value.toLowerCase();
-      const filtered = allBundles.filter(bundle => 
-        bundle.user_id.toLowerCase().includes(search)
-      );
-      
-      const tbody = document.getElementById('bundlesTableBody');
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">🔍</div><p>No bundles match your search</p></td></tr>';
+      const q = document.getElementById('bundleSearch').value.toLowerCase();
+      const filtered = allBundles.filter(b => {
+        const profile = getProfile(b.user_id);
+        return (
+          b.user_id.toLowerCase().includes(q) ||
+          (profile?.display_name?.toLowerCase().includes(q)) ||
+          (profile?.email?.toLowerCase().includes(q))
+        );
+      });
+      if (!filtered.length) {
+        document.getElementById('bundlesTableBody').innerHTML =
+          '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">🔍</div><p>No bundles match your search</p></td></tr>';
         return;
       }
-
-      tbody.innerHTML = filtered.map(bundle => `
-        <tr>
-          <td><span class="code-display">${bundle.user_id.substring(0, 8)}...</span></td>
-          <td><span class="badge badge-success">${bundle.credits_remaining || 0}</span></td>
-          <td>${new Date(bundle.created_at).toLocaleString()}</td>
-        </tr>
-      `).join('');
+      renderBundles(filtered);
     }
 
-    // Tab switching
-    function switchTab(tabName) {
-      // Update tab buttons
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      event.target.classList.add('active');
-
-      // Hide all tab contents
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-
-      // Show selected tab
+    // ─── Tab switching ──────────────────────────────────────
+    function switchTab(tabName, btn) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
       document.getElementById(tabName + 'Tab').classList.remove('hidden');
     }
 
-    // Delete user modal functions
+    // ─── Photo lightbox ─────────────────────────────────────
+    function openPhotoModal(url) {
+      document.getElementById('photoModalImg').src = url;
+      document.getElementById('photoModal').classList.remove('hidden');
+    }
+    function closePhotoModal() {
+      document.getElementById('photoModal').classList.add('hidden');
+    }
+
+    // ─── Delete modal ───────────────────────────────────────
     function openDeleteModal(user) {
-      // Check if user is an admin
       if (ADMIN_EMAILS.includes(user.email)) {
         alert('⛔ Cannot delete admin accounts!\n\nAdmin emails are protected and cannot be deleted.');
         return;
       }
-      
       userToDelete = user;
       document.getElementById('deleteUserName').textContent = user.display_name || 'Unknown';
-      document.getElementById('deleteUserId').textContent = user.id;
-      
-      // Reset to step 1
+      document.getElementById('deleteUserEmail').textContent = user.email || 'N/A';
+
       document.getElementById('confirmStep1').classList.remove('hidden');
       document.getElementById('confirmStep2').classList.add('hidden');
       document.getElementById('confirmStep3').classList.add('hidden');
       document.getElementById('deletingStep').classList.add('hidden');
-      
       document.getElementById('deleteModal').classList.remove('hidden');
     }
+
     function closeDeleteModal() {
       document.getElementById('deleteModal').classList.add('hidden');
       userToDelete = null;
@@ -1209,66 +1254,61 @@ const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
 
     async function deleteUserForever() {
       if (!userToDelete) return;
-    
       document.getElementById('confirmStep3').classList.add('hidden');
       document.getElementById('deletingStep').classList.remove('hidden');
-    
+
       try {
         const userId = userToDelete.id;
-    
-        // Delete from database tables first
+
         await window.supabase.from('purchases').delete().eq('user_id', userId);
         await window.supabase.from('user_credits').delete().eq('user_id', userId);
         await window.supabase.from('entitlements').delete().eq('user_id', userId);
         await window.supabase.from('payment_orders').delete().eq('user_id', userId);
         await window.supabase.from('progress').delete().eq('user_id', userId);
         await window.supabase.from('song_progress').delete().eq('user_id', userId);
-        
-        await window.supabase
-          .from('book_verification_codes')
+
+        await window.supabase.from('book_verification_codes')
           .update({ used_by_user_id: null, is_used: false, used_at: null })
           .eq('used_by_user_id', userId);
-    
+
         await window.supabase.from('profiles').delete().eq('id', userId);
-    
-        // Delete from auth using Edge Function
+
+        // Delete from auth via Edge Function
         const { data: { session } } = await window.supabase.auth.getSession();
-        
-        const response = await fetch(
-          `${SUPABASE_URL}/functions/v1/delete-user`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ userId }),
-          }
-        );
-    
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId }),
+        });
+
         const result = await response.json();
-    
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to delete user from auth');
-        }
-    
-        alert('✅ User completely deleted from all tables and authentication!');
-    
+        if (!response.ok) throw new Error(result.error || 'Failed to delete auth user');
+
+        alert('✅ User completely deleted!');
         closeDeleteModal();
+
+        // Clear caches for this user
+        delete photoCache[userId];
+        delete videoCache[userId];
+
+        // Reload everything
+        await Promise.all([loadPurchasesData(), loadBundlesData()]);
         loadStats();
         loadUsers();
         loadCodes();
-        loadPurchases();
-        loadBundles();
-    
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        alert('❌ Error deleting user: ' + error.message);
+        renderPurchases();
+        renderBundles();
+      } catch (e) {
+        console.error('Delete error:', e);
+        alert('❌ Error: ' + e.message);
         closeDeleteModal();
       }
     }
 
-    // Initialize
+    // ─── Init ───────────────────────────────────────────────
     checkAdminAccess();
   </script>
 </body>
