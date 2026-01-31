@@ -1,5 +1,5 @@
 // /classicbollywoodmelodies/js/paywall.js
-// Updated with better error handling and API key consistency
+// 🚨 EMERGENCY FIX: Bundle purchases should NOT grant unlimited access
 
 (() => {
   const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
@@ -69,23 +69,11 @@
 
     const userId = session.user.id;
 
-    try {
-      const { data: bundleData, error: bundleError } = await window.supabase
-        .from("purchases")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("song_id", BUNDLE_PRODUCT_ID)
-        .eq("status", "paid")
-        .maybeSingle();
+    // 🚨 CRITICAL FIX: Bundle purchase should NOT grant unlimited access!
+    // The bundle only gives credits, not direct access to all songs
+    // We REMOVED the bundle check from here
 
-      if (bundleData && !bundleError) {
-        console.log("[PAYWALL] User has bundle pack");
-        return true;
-      }
-    } catch (e) {
-      console.warn("[PAYWALL] Bundle check error (ignoring):", e);
-    }
-
+    // ✅ CORRECT: Only check if user specifically owns THIS song
     try {
       const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
       
@@ -123,6 +111,7 @@
           .select("credits_remaining")
           .eq("user_id", userId)
           .eq("status", "paid")
+          .eq("song_id", BUNDLE_PRODUCT_ID)  // ✅ Check specifically for pack:5
           .not("credits_remaining", "is", null)
           .gt("credits_remaining", 0)
           .order("created_at", { ascending: false })
@@ -131,6 +120,7 @@
 
         if (bundleData && !error) {
           bundleCredits = bundleData.credits_remaining || 0;
+          console.log(`[PAYWALL] Bundle credits available: ${bundleCredits}`);
         }
       } catch (e) {
         console.warn('[PAYWALL] Bundle credits check error (ignoring):', e);
@@ -145,6 +135,7 @@
 
         if (bookData && !error) {
           bookCredits = bookData.balance || 0;
+          console.log(`[PAYWALL] Book credits available: ${bookCredits}`);
         }
       } catch (e) {
         console.warn('[PAYWALL] Book credits check error (ignoring):', e);
@@ -327,8 +318,13 @@
     const session = await getSessionOrThrow();
     const credits = await checkAllCredits();
 
+    console.log(`[PAYWALL] 🎁 Attempting to redeem credit for ${productId}`);
+    console.log(`[PAYWALL] 🎁 Available: ${credits.bundleCredits} bundle, ${credits.bookCredits} book`);
+
+    // Try book credits first
     if (credits.bookCredits > 0) {
       try {
+        console.log("[PAYWALL] 🎁 Trying book credit...");
         const { data, error } = await window.supabase.functions.invoke("redeem-book-credit", {
           body: { productId },
           headers: {
@@ -337,13 +333,16 @@
           },
         });
         if (error) throw error;
+        console.log("[PAYWALL] ✅ Book credit redeemed!");
         return { success: true, source: 'book_bonus' };
       } catch (e) {
         console.warn('[PAYWALL] Book credit failed, trying bundle credits:', e);
       }
     }
 
+    // Try bundle credits
     if (credits.bundleCredits > 0) {
+      console.log("[PAYWALL] 🎁 Trying bundle credit...");
       const { data, error } = await window.supabase.functions.invoke("redeem-credit", {
         body: { productId },
         headers: {
@@ -352,6 +351,7 @@
         },
       });
       if (error) throw error;
+      console.log("[PAYWALL] ✅ Bundle credit redeemed!");
       return { success: true, source: 'bundle' };
     }
 
@@ -374,11 +374,13 @@
       const allowed = await userHasAccess(productId, session);
       
       if (allowed) {
+        console.log("[PAYWALL] ✅ User has access, showing content");
         paywallEl.style.display = "none";
         appEl.style.display = "block";
         return;
       }
 
+      console.log("[PAYWALL] ❌ User does not have access, showing paywall");
       const currency = await detectCurrency();
       const currencySymbol = CURRENCY_SYMBOLS[currency];
       
