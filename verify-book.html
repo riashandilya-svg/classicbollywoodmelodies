@@ -353,6 +353,12 @@
             >
           </div>
           
+          <div style="background: rgba(155, 110, 255, 0.05); border: 1px solid rgba(155, 110, 255, 0.2); border-radius: 10px; padding: 16px; margin: 16px 0; font-size: 14px; line-height: 1.6;">
+            <p style="margin: 0 0 8px; font-weight: 600; color: var(--primary);">📱 Don't have your code handy?</p>
+            <p style="margin: 0 0 8px;">• <strong>Scan the QR code</strong> provided inside your physical book to get your unique code</p>
+            <p style="margin: 0;">• <strong>Book doesn't have a QR code?</strong> Email us at <a href="/cdn-cgi/l/email-protection#f3819a929c9e809b929d979a9f8a92b3949e929a9fdd909c9e" style="color: var(--primary); text-decoration: none; font-weight: 600;"><span class="__cf_email__" data-cfemail="07756e66686a746f6669636e6b7e6647606a666e6b2964686a">[email&#160;protected]</span></a> with a photo of your purchase receipt and we'll give you access</p>
+          </div>
+          
           <button type="button" class="btn" id="verifyCodeBtn">
             Verify Code
           </button>
@@ -441,6 +447,19 @@
           return;
         }
 
+        // Check if already verified (has completed verification)
+        const { data: profile } = await window.supabase
+          .from('profiles')
+          .select('is_book_owner')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile && profile.is_book_owner) {
+          authCheck.innerHTML = '<div style="text-align: center; padding: 40px;"><p style="color: var(--success); font-size: 18px; margin-bottom: 20px;">✅ You have already verified your book!</p><a href="./dashboard.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 0 auto;">Go to Dashboard</a></div>';
+          return;
+        }
+
+        // Not verified yet - show the form (even if they have unused codes)
         authCheck.classList.add('hidden');
         verificationForm.classList.remove('hidden');
       } catch (err) {
@@ -471,6 +490,7 @@
           throw new Error('Not authenticated');
         }
 
+        // Check if THIS SPECIFIC CODE exists and is unused
         const { data: codeData, error: codeError } = await window.supabase
           .from('book_verification_codes')
           .select('*')
@@ -482,15 +502,12 @@
         }
 
         if (codeData.is_used) {
-          throw new Error('This code has already been used.');
+          throw new Error('This code has already been used by someone else.');
         }
 
-    verifiedCode = code;
-verifiedBookType = codeData.book_name;
-
-// Store in browser so it persists on refresh
-sessionStorage.setItem('verifiedCode', code);
-sessionStorage.setItem('verifiedBookType', codeData.book_name);
+        // Code is valid and unused!
+        verifiedCode = code;
+        verifiedBookType = codeData.book_name;
 
         document.getElementById('codeStep').classList.add('hidden');
         document.getElementById('bookForm').classList.remove('hidden');
@@ -718,13 +735,10 @@ sessionStorage.setItem('verifiedBookType', codeData.book_name);
         showMessage(successMessage, 'success');
         submitBtn.textContent = '✓ Verified!';
 
-    // Clear the stored code since verification is complete
-sessionStorage.removeItem('verifiedCode');
-sessionStorage.removeItem('verifiedBookType');
+        setTimeout(() => {
+          window.location.href = './dashboard.html';
+        }, 3000);
 
-setTimeout(() => {
-  window.location.href = 'https://riashandilya-svg.github.io/classicbollywoodmelodies/';
-}, 3000);
       } catch (error) {
         console.error('Error:', error);
         showMessage(error.message || 'Verification failed. Please try again.', 'error');
@@ -733,7 +747,7 @@ setTimeout(() => {
         updateProgress('');
       }
     });
-
+    
     function showMessage(text, type) {
   const messageArea = document.getElementById('messageArea');
   messageArea.className = type === 'error' ? 'error-text' : 'success-text';
