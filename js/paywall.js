@@ -172,26 +172,51 @@
     return data;
   }
 
-  // ✅ Keep existing verifyPayment
+  // ✅ FIXED: Updated to match Edge Function's expected parameters
   async function verifyPayment({ productId, response, amount, currency }) {
     try {
-      const result = await window.supabase.functions.invoke('verify-razorpay-payment', {
+      const session = await getSessionOrThrow();
+      const userId = session.user.id;
+      
+      // Determine item_type and item_id
+      let itemType, itemId;
+      if (productId === BUNDLE_PRODUCT_ID) {
+        itemType = 'bundle';
+        itemId = productId;
+      } else {
+        itemType = 'song';
+        itemId = productId.startsWith('song:') ? productId.slice(5) : productId;
+      }
+
+      console.log('[PAYWALL] Verifying payment with params:', {
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_order_id: response.razorpay_order_id,
+        user_id: userId,
+        item_id: itemId,
+        item_type: itemType
+      });
+
+      const { data, error } = await window.supabase.functions.invoke('verify-razorpay-payment', {
         body: {
-          razorpay_order_id: response.razorpay_order_id,
           razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
           razorpay_signature: response.razorpay_signature,
-          productId: productId,
-          amount: amount,
-          currency: currency
+          user_id: userId,
+          item_id: itemId,
+          item_type: itemType
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
         }
       });
 
-      if (result.error) {
-        console.error('[PAYWALL] Verify payment error:', result.error);
-        throw new Error(result.error.message || 'Payment verification failed');
+      if (error) {
+        console.error('[PAYWALL] Verify payment error:', error);
+        throw new Error(error.message || 'Payment verification failed');
       }
 
-      return result.data;
+      console.log('[PAYWALL] Payment verified successfully:', data);
+      return data;
     } catch (error) {
       console.error('[PAYWALL] Verify payment error:', error);
       throw error;
@@ -211,7 +236,7 @@
       : `Unlock: ${productId.replace('song:', '')}`;
 
     const rzp = new window.Razorpay({
-key: order.key_id,
+      key: order.key_id,
       order_id: order.orderId,
       amount: order.amount,
       currency: order.currency,
@@ -244,7 +269,7 @@ key: order.key_id,
     // Try book credits first (new system)
     if (credits.bookCredits > 0) {
       try {
-const { data, error } = await window.supabase.functions.invoke("redeem-book-credit", {
+        const { data, error } = await window.supabase.functions.invoke("redeem-book-credit", {
           body: { productId },
           headers: {
             Authorization: `Bearer ${session.access_token}`,
