@@ -302,7 +302,6 @@
 
     let generatedCode = '';
 
-    // Check authentication
     async function checkAuth() {
       try {
         const { data: { session }, error } = await window.supabase.auth.getSession();
@@ -341,10 +340,9 @@
       }
     }
 
-    // Generate unique code
     function generateUniqueCode(bookType) {
       const prefix = bookType.toUpperCase().substring(0, 4);
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars like O, 0, I, 1
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let code = '';
       for (let i = 0; i < 6; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -353,124 +351,135 @@
     }
 
     async function generateCode() {
-  const bookType = document.getElementById('bookType').value;
-  const btn = document.getElementById('generateBtn');
-  
-  if (!bookType) {
-    showMessage('Please select which book you purchased', 'error');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Generating your code...';
-
-  try {
-    const { data: { session } } = await window.supabase.auth.getSession();
-    if (!session) {
-      throw new Error('Not authenticated');
-    }
-
-    const userId = session.user.id;
-
-    // Check if user has EVER verified ANY book
-    const { data: userProfile, error: profileError } = await window.supabase
-      .from('profiles')
-      .select('is_book_owner')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Error checking profile:', profileError);
-    }
-
-    // If they already verified a book, redirect them
-    if (userProfile && userProfile.is_book_owner === true) {
-      showMessage('You have already verified a book! Redirecting to dashboard...', 'error');
-      setTimeout(() => {
-        window.location.href = './dashboard.html';
-      }, 2000);
-      return;
-    }
-
-    // Check if user already generated a code (but hasn't used it yet)
-    const { data: existingUnusedCode, error: unusedCheckError } = await window.supabase
-      .from('book_verification_codes')
-      .select('code, book_name')
-      .eq('generated_by_user_id', userId)
-      .eq('is_used', false)
-      .maybeSingle();
-
-    if (unusedCheckError && unusedCheckError.code !== 'PGRST116') {
-      console.error('Error checking for unused codes:', unusedCheckError);
-    }
-
-    if (existingUnusedCode) {
-      showMessage('You already have an unused code. Please use that code first!', 'error');
-      btn.disabled = false;
-      btn.textContent = 'Generate My Code';
-      return;
-    }
-
-    // Generate unique code
-    let code = generateUniqueCode(bookType);
-    let attempts = 0;
-    let codeExists = true;
-
-    // Keep generating until we get a unique code
-    while (codeExists && attempts < 10) {
-      const { data: checkCode } = await window.supabase
-        .from('book_verification_codes')
-        .select('code')
-        .eq('code', code)
-        .maybeSingle();
+      const bookType = document.getElementById('bookType').value;
+      const btn = document.getElementById('generateBtn');
       
-      if (!checkCode) {
-        codeExists = false;
-      } else {
-        code = generateUniqueCode(bookType);
-        attempts++;
+      if (!bookType) {
+        showMessage('Please select which book you purchased', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Generating your code...';
+
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) {
+          throw new Error('Not authenticated');
+        }
+
+        const userId = session.user.id;
+
+        // Check if user has EVER verified ANY book
+        const { data: userProfile, error: profileError } = await window.supabase
+          .from('profiles')
+          .select('is_book_owner')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Error checking profile:', profileError);
+        }
+
+        // If they already verified a book, redirect them
+        if (userProfile && userProfile.is_book_owner === true) {
+          showMessage('You have already verified a book! Redirecting to dashboard...', 'error');
+          setTimeout(() => {
+            window.location.href = './dashboard.html';
+          }, 2000);
+          return;
+        }
+
+        // ✅ FIXED: Check for unused codes and DELETE them (user is starting over)
+        const { data: existingUnusedCodes, error: unusedCheckError } = await window.supabase
+          .from('book_verification_codes')
+          .select('id, code')
+          .eq('generated_by_user_id', userId)
+          .eq('is_used', false);
+
+        if (unusedCheckError && unusedCheckError.code !== 'PGRST116') {
+          console.error('Error checking for unused codes:', unusedCheckError);
+        }
+
+        // Delete any old unused codes (they're refreshing/starting over)
+        if (existingUnusedCodes && existingUnusedCodes.length > 0) {
+          console.log('🗑️ Deleting', existingUnusedCodes.length, 'old unused code(s)');
+          
+          const codeIds = existingUnusedCodes.map(c => c.id);
+          const { error: deleteError } = await window.supabase
+            .from('book_verification_codes')
+            .delete()
+            .in('id', codeIds);
+
+          if (deleteError) {
+            console.error('Error deleting old codes:', deleteError);
+            // Continue anyway
+          } else {
+            console.log('✅ Old unused codes deleted successfully');
+          }
+        }
+
+        // Generate unique code
+        let code = generateUniqueCode(bookType);
+        let attempts = 0;
+        let codeExists = true;
+
+        // Keep generating until we get a unique code
+        while (codeExists && attempts < 10) {
+          const { data: checkCode } = await window.supabase
+            .from('book_verification_codes')
+            .select('code')
+            .eq('code', code)
+            .maybeSingle();
+          
+          if (!checkCode) {
+            codeExists = false;
+          } else {
+            code = generateUniqueCode(bookType);
+            attempts++;
+          }
+        }
+
+        if (attempts >= 10) {
+          throw new Error('Could not generate unique code. Please try again.');
+        }
+
+        // Insert the new code into database
+        const { data: insertData, error: insertError } = await window.supabase
+          .from('book_verification_codes')
+          .insert({
+            code: code,
+            book_name: bookType,
+            is_used: false,
+            generated_by_user_id: userId,
+            created_at: new Date().toISOString()
+          })
+          .select();
+
+        if (insertError) {
+          console.error('Error inserting code:', insertError);
+          throw new Error('Failed to generate code. Please try again.');
+        }
+
+        console.log('✅ Code generated:', code);
+
+        // Show the code to user
+        generatedCode = code;
+        document.getElementById('codeDisplay').textContent = code;
+        document.getElementById('selectBookForm').classList.add('hidden');
+        document.getElementById('codeResult').classList.remove('hidden');
+
+      } catch (error) {
+        console.error('❌ Error:', error);
+        showMessage(error.message || 'Failed to generate code. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Generate My Code';
       }
     }
 
-    if (attempts >= 10) {
-      throw new Error('Could not generate unique code. Please try again.');
+    function goToVerification() {
+      window.location.href = 'https://riashandilya-svg.github.io/classicbollywoodmelodies/verify-book.html';
     }
-
-    // Insert the new code into database
-    const { data: insertData, error: insertError } = await window.supabase
-      .from('book_verification_codes')
-      .insert({
-        code: code,
-        book_name: bookType,
-        is_used: false,
-        generated_by_user_id: userId,
-        created_at: new Date().toISOString()
-      })
-      .select();
-
-    if (insertError) {
-      console.error('Error inserting code:', insertError);
-      throw new Error('Failed to generate code. Please try again.');
-    }
-
-    console.log('✅ Code generated:', code);
-
-    // Show the code to user
-    generatedCode = code;
-    document.getElementById('codeDisplay').textContent = code;
-    document.getElementById('selectBookForm').classList.add('hidden');
-    document.getElementById('codeResult').classList.remove('hidden');
-
-  } catch (error) {
-    console.error('❌ Error:', error);
-    showMessage(error.message || 'Failed to generate code. Please try again.', 'error');
-    btn.disabled = false;
-    btn.textContent = 'Generate My Code';
-  }
-}
-function goToVerification() {
-  window.location.href = 'https://riashandilya-svg.github.io/classicbollywoodmelodies/verify-book.html';
-}
 
     function showMessage(text, type) {
       const messageArea = document.getElementById('messageArea');
@@ -478,7 +487,6 @@ function goToVerification() {
       messageArea.innerHTML = `<p class="${className}">${text}</p>`;
     }
 
-    // Run on page load
     checkAuth();
   </script>
 </body>
