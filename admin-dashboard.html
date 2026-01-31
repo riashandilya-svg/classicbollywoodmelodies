@@ -513,16 +513,37 @@
       border: 1px solid var(--border);
       cursor: pointer;
       transition: transform 0.2s;
+      background: #eee;
     }
     .photo-thumb:hover {
       transform: scale(1.08);
     }
 
-    /* Photo modal */
-    .photo-modal-overlay {
+    /* Video play button */
+    .video-play-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(155, 110, 255, 0.1);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .video-play-btn:hover {
+      background: rgba(155, 110, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    /* Media modal (photo + video) */
+    .media-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.82);
       z-index: 20000;
       display: flex;
       align-items: center;
@@ -530,12 +551,45 @@
       padding: 20px;
       cursor: pointer;
     }
-    .photo-modal-overlay img {
+    .media-modal-overlay img {
       max-width: 90vw;
       max-height: 85vh;
       border-radius: 12px;
       object-fit: contain;
       box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    .media-modal-overlay video {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      background: #000;
+    }
+
+    /* Sort arrows on th */
+    th {
+      user-select: none;
+    }
+    th[data-sortable] {
+      cursor: pointer;
+    }
+    th[data-sortable]:hover {
+      background: rgba(155, 110, 255, 0.14);
+    }
+    .sort-arrow {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 11px;
+      opacity: 0.35;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    th[data-sortable].sort-asc .sort-arrow,
+    th[data-sortable].sort-desc .sort-arrow {
+      opacity: 1;
+      color: var(--primary);
+    }
+    th[data-sortable].sort-desc .sort-arrow {
+      transform: rotate(180deg);
     }
 
     @media (max-width: 768px) {
@@ -611,6 +665,10 @@
             <div class="stat-label">Codes Used</div>
           </div>
           <div class="stat-box">
+            <div class="stat-value" id="codesLeft" style="color: var(--warning);">-</div>
+            <div class="stat-label">Codes Left</div>
+          </div>
+          <div class="stat-box">
             <div class="stat-value" id="totalPurchases">-</div>
             <div class="stat-label">Total Purchases</div>
           </div>
@@ -637,14 +695,14 @@
             <table>
               <thead>
                 <tr>
-                  <th>Name & Email</th>
+                  <th data-sortable data-col="name" data-table="users">Name & Email <span class="sort-arrow">▲</span></th>
                   <th>Book Owner</th>
                   <th>Books Owned</th>
                   <th>Songs Purchased</th>
                   <th>Bundle</th>
                   <th>Photo</th>
                   <th>Video</th>
-                  <th>Joined</th>
+                  <th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -674,11 +732,11 @@
               <thead>
                 <tr>
                   <th>Code</th>
-                  <th>Book</th>
+                  <th data-sortable data-col="book" data-table="codes">Book <span class="sort-arrow">▲</span></th>
                   <th>Status</th>
                   <th>Used By</th>
-                  <th>Generated At</th>
-                  <th>Used At</th>
+                  <th data-sortable data-col="generated" data-table="codes" class="sort-desc">Generated At <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="used" data-table="codes">Used At <span class="sort-arrow">▲</span></th>
                 </tr>
               </thead>
               <tbody id="codesTableBody">
@@ -706,11 +764,11 @@
             <table>
               <thead>
                 <tr>
-                  <th>Name & Email</th>
-                  <th>Song ID</th>
-                  <th>Amount</th>
+                  <th data-sortable data-col="name" data-table="purchases">Name & Email <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="song" data-table="purchases">Song ID <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="amount" data-table="purchases">Amount <span class="sort-arrow">▲</span></th>
                   <th>Credits Remaining</th>
-                  <th>Purchase Date</th>
+                  <th data-sortable data-col="date" data-table="purchases" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
                 </tr>
               </thead>
               <tbody id="purchasesTableBody">
@@ -738,9 +796,9 @@
             <table>
               <thead>
                 <tr>
-                  <th>Name & Email</th>
-                  <th>Credits Remaining</th>
-                  <th>Purchase Date</th>
+                  <th data-sortable data-col="name" data-table="bundles">Name & Email <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="credits" data-table="bundles">Credits Remaining <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="date" data-table="bundles" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
                 </tr>
               </thead>
               <tbody id="bundlesTableBody">
@@ -821,9 +879,10 @@
     </div>
   </div>
 
-  <!-- Photo Lightbox Modal -->
-  <div id="photoModal" class="photo-modal-overlay hidden" onclick="closePhotoModal()">
-    <img id="photoModalImg" src="" alt="Book verification photo">
+  <!-- Media Lightbox Modal (photo + video) -->
+  <div id="mediaModal" class="media-modal-overlay hidden" onclick="closeMediaModal()">
+    <img id="mediaModalImg" src="" alt="Book verification photo" style="display:none;">
+    <video id="mediaModalVideo" controls autoplay style="display:none;" onclick="event.stopPropagation()"></video>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -866,42 +925,47 @@
       return allBundles.some(b => b.user_id === userId);
     }
 
-    // ─── Helper: get photo URL from storage ────────────────
+    // ─── Helper: get photo URL from storage (signed) ──────
     async function getPhotoUrl(userId) {
       try {
-        const { data: files } = await window.supabase.storage
+        const { data: files, error } = await window.supabase.storage
           .from('book-verifications')
           .list(userId);
-        if (files && files.length > 0) {
-          const { data: { publicUrl } } = window.supabase.storage
-            .from('book-verifications')
-            .getPublicUrl(`${userId}/${files[0].name}`);
-          return publicUrl;
-        }
-      } catch (e) { /* no photo */ }
-      return null;
+        if (error || !files || files.length === 0) return null;
+        // Use signed URL so it works even if bucket is not public
+        const { data, error: signErr } = await window.supabase.storage
+          .from('book-verifications')
+          .createSignedUrl(`${userId}/${files[0].name}`, 3600);
+        if (signErr || !data) return null;
+        return data.signedUrl;
+      } catch (e) { return null; }
     }
 
-    // ─── Helper: check if video exists in storage ──────────
-    async function hasVideo(userId) {
+    // ─── Helper: get video URL from storage (signed) ───────
+    async function getVideoUrl(userId) {
       try {
-        const { data: files } = await window.supabase.storage
+        const { data: files, error } = await window.supabase.storage
           .from('book-videos')
           .list(userId);
-        return files && files.length > 0;
-      } catch (e) { return false; }
+        if (error || !files || files.length === 0) return null;
+        const { data, error: signErr } = await window.supabase.storage
+          .from('book-videos')
+          .createSignedUrl(`${userId}/${files[0].name}`, 3600);
+        if (signErr || !data) return null;
+        return data.signedUrl;
+      } catch (e) { return null; }
     }
 
-    // Cache for photos/videos so we only fetch once
-    let photoCache = {};   // userId -> url | null
-    let videoCache = {};   // userId -> true | false
+    // Cache: userId -> url | null
+    let photoCache = {};
+    let videoCache = {};
 
     async function fetchMediaForUser(userId) {
       if (!(userId in photoCache)) {
         photoCache[userId] = await getPhotoUrl(userId);
       }
-      if (!(videoCache[userId] === undefined ? false : true) || !(userId in videoCache)) {
-        videoCache[userId] = await hasVideo(userId);
+      if (!(userId in videoCache)) {
+        videoCache[userId] = await getVideoUrl(userId);
       }
     }
 
@@ -930,8 +994,11 @@
         loadStats();
         loadUsers();
         loadCodes();
-        renderPurchases();
-        renderBundles();
+        updateSortHeaders('purchases');
+        renderPurchases(sortArray(allPurchases, 'purchases'));
+        updateSortHeaders('bundles');
+        renderBundles(sortArray(allBundles, 'bundles'));
+        initSortHeaders();
       } catch (err) {
         console.error('Error:', err);
         document.getElementById('authCheck').innerHTML = '<p style="color: var(--error);">An error occurred</p>';
@@ -946,9 +1013,16 @@
         document.getElementById('totalUsers').textContent = nonAdmin.length;
         document.getElementById('bookOwners').textContent = nonAdmin.filter(p => p.is_book_owner).length;
 
+        const { count: totalCodes } = await window.supabase
+          .from('book_verification_codes').select('*', { count: 'exact', head: true });
         const { count: codesUsed } = await window.supabase
           .from('book_verification_codes').select('*', { count: 'exact', head: true }).eq('is_used', true);
-        document.getElementById('codesUsed').textContent = codesUsed || 0;
+        const usedCount = codesUsed || 0;
+        const leftCount = (totalCodes || 0) - usedCount;
+        document.getElementById('codesUsed').textContent = usedCount;
+        document.getElementById('codesLeft').textContent = leftCount;
+        // Turn red if 2 or fewer left
+        document.getElementById('codesLeft').style.color = leftCount <= 2 ? 'var(--error)' : 'var(--warning)';
 
         const adminIds = allProfiles?.filter(p => ADMIN_EMAILS.includes(p.email)).map(p => p.id) || [];
         const nonAdminPurchases = allPurchases?.filter(p => !adminIds.includes(p.user_id)) || [];
@@ -969,7 +1043,8 @@
 
         // Prefetch media for all users
         await Promise.all(allUsers.map(u => fetchMediaForUser(u.id)));
-        renderUsers(allUsers);
+        updateSortHeaders('users');
+        renderUsers(sortArray(allUsers, 'users'));
       } catch (e) {
         console.error('Error loading users:', e);
         document.getElementById('usersTableBody').innerHTML =
@@ -989,14 +1064,18 @@
         const songs = getSongsForUser(user.id);
         const bundle = hasBundleForUser(user.id);
         const photoUrl = photoCache[user.id] || null;
-        const hasVid = videoCache[user.id] || false;
+        const videoUrl = videoCache[user.id] || null;
 
         const songsHTML = songs.length
           ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>`
           : '<span style="color: var(--muted); font-size: 13px;">None</span>';
 
         const photoHTML = photoUrl
-          ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openPhotoModal('${photoUrl}')">`
+          ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openMediaModal('photo','${photoUrl}')">`
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+
+        const videoHTML = videoUrl
+          ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>`
           : '<span style="color: var(--muted); font-size: 13px;">None</span>';
 
         const deleteButton = isAdmin
@@ -1010,7 +1089,7 @@
           <td>${songsHTML}</td>
           <td>${bundle ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
           <td>${photoHTML}</td>
-          <td>${hasVid ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${videoHTML}</td>
           <td>${new Date(user.created_at).toLocaleDateString()}</td>
           <td>${deleteButton}</td>
         </tr>`;
@@ -1042,7 +1121,8 @@
           .from('book_verification_codes').select('*').order('created_at', { ascending: false });
         if (error) throw error;
         allCodes = codes || [];
-        renderCodes(allCodes);
+        updateSortHeaders('codes');
+        renderCodes(sortArray(allCodes, 'codes'));
       } catch (e) {
         console.error('Error loading codes:', e);
         document.getElementById('codesTableBody').innerHTML =
@@ -1101,7 +1181,8 @@
         document.getElementById('purchasesTableBody').innerHTML =
           '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
         await loadPurchasesData();
-        renderPurchases();
+        updateSortHeaders('purchases');
+        renderPurchases(sortArray(allPurchases, 'purchases'));
       } catch (e) {
         console.error('Error:', e);
         document.getElementById('purchasesTableBody').innerHTML =
@@ -1160,7 +1241,8 @@
         document.getElementById('bundlesTableBody').innerHTML =
           '<tr><td colspan="3" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
         await loadBundlesData();
-        renderBundles();
+        updateSortHeaders('bundles');
+        renderBundles(sortArray(allBundles, 'bundles'));
       } catch (e) {
         console.error('Error:', e);
         document.getElementById('bundlesTableBody').innerHTML =
@@ -1211,13 +1293,114 @@
       document.getElementById(tabName + 'Tab').classList.remove('hidden');
     }
 
-    // ─── Photo lightbox ─────────────────────────────────────
-    function openPhotoModal(url) {
-      document.getElementById('photoModalImg').src = url;
-      document.getElementById('photoModal').classList.remove('hidden');
+    // ─── Media modal (photo + video) ───────────────────────
+    function openMediaModal(type, url) {
+      const overlay = document.getElementById('mediaModal');
+      const img = document.getElementById('mediaModalImg');
+      const vid = document.getElementById('mediaModalVideo');
+      if (type === 'photo') {
+        img.src = url;
+        img.style.display = 'block';
+        vid.style.display = 'none';
+        vid.pause();
+        vid.src = '';
+      } else {
+        vid.src = url;
+        vid.style.display = 'block';
+        img.style.display = 'none';
+        img.src = '';
+      }
+      overlay.classList.remove('hidden');
     }
-    function closePhotoModal() {
-      document.getElementById('photoModal').classList.add('hidden');
+    function closeMediaModal() {
+      document.getElementById('mediaModal').classList.add('hidden');
+      const vid = document.getElementById('mediaModalVideo');
+      vid.pause();
+      vid.src = '';
+    }
+
+    // ─── Sorting system ─────────────────────────────────────
+    // sortState: { users: {col, dir}, codes: {col, dir}, ... }
+    let sortState = {
+      users:     { col: 'joined',    dir: 'desc' },
+      codes:     { col: 'generated', dir: 'desc' },
+      purchases: { col: 'date',      dir: 'desc' },
+      bundles:   { col: 'date',      dir: 'desc' }
+    };
+
+    function getSortValue(item, table, col) {
+      const p = getProfile(item.user_id || item.id);
+      switch (table) {
+        case 'users':
+          if (col === 'name')   return (item.display_name || '').toLowerCase();
+          if (col === 'joined') return item.created_at || '';
+          break;
+        case 'codes':
+          if (col === 'book')      return (item.book_name || '').toLowerCase();
+          if (col === 'generated') return item.created_at || '';
+          if (col === 'used')      return item.used_at || '';
+          break;
+        case 'purchases':
+          if (col === 'name')   return (p?.display_name || '').toLowerCase();
+          if (col === 'song')   return (item.song_id || '').toLowerCase();
+          if (col === 'amount') return item.amount || 0;
+          if (col === 'date')   return item.created_at || '';
+          break;
+        case 'bundles':
+          if (col === 'name')    return (p?.display_name || '').toLowerCase();
+          if (col === 'credits') return item.credits_remaining || 0;
+          if (col === 'date')    return item.created_at || '';
+          break;
+      }
+      return '';
+    }
+
+    function sortArray(arr, table) {
+      const { col, dir } = sortState[table];
+      return [...arr].sort((a, b) => {
+        let va = getSortValue(a, table, col);
+        let vb = getSortValue(b, table, col);
+        let cmp = 0;
+        if (typeof va === 'number' && typeof vb === 'number') {
+          cmp = va - vb;
+        } else {
+          va = String(va); vb = String(vb);
+          cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        }
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    function updateSortHeaders(table) {
+      document.querySelectorAll(`th[data-table="${table}"]`).forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (th.dataset.col === sortState[table].col) {
+          th.classList.add('sort-' + sortState[table].dir);
+        }
+      });
+    }
+
+    // Click handler delegation — attached once after DOM ready
+    function initSortHeaders() {
+      document.querySelectorAll('th[data-sortable]').forEach(th => {
+        th.addEventListener('click', () => {
+          const table = th.dataset.table;
+          const col   = th.dataset.col;
+          if (sortState[table].col === col) {
+            sortState[table].dir = sortState[table].dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortState[table] = { col, dir: 'asc' };
+          }
+          updateSortHeaders(table);
+          // Re-render the right table
+          switch (table) {
+            case 'users':     renderUsers(sortArray(allUsers, 'users'));         break;
+            case 'codes':     renderCodes(sortArray(allCodes, 'codes'));         break;
+            case 'purchases': renderPurchases(sortArray(allPurchases, 'purchases')); break;
+            case 'bundles':   renderBundles(sortArray(allBundles, 'bundles'));   break;
+          }
+        });
+      });
     }
 
     // ─── Delete modal ───────────────────────────────────────
@@ -1299,8 +1482,8 @@
         loadStats();
         loadUsers();
         loadCodes();
-        renderPurchases();
-        renderBundles();
+        renderPurchases(sortArray(allPurchases, 'purchases'));
+        renderBundles(sortArray(allBundles, 'bundles'));
       } catch (e) {
         console.error('Delete error:', e);
         alert('❌ Error: ' + e.message);
