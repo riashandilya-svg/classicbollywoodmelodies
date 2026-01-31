@@ -197,21 +197,38 @@
       throw new Error("Edge Function returned a non-2xx status code");
     }
     
-    console.log("[PAYWALL] Order created:", data);
+    console.log("[PAYWALL] ✅ Order created successfully:", data);
     return data;
   }
 
-  // ✅ CRITICAL FIX: Handle both orderId and order_id field names
+  // ✅ ULTIMATE FIX: Extract order ID with all possible field names
+  function extractOrderId(orderData) {
+    console.log("[PAYWALL] 🔍 Extracting order ID from:", orderData);
+    console.log("[PAYWALL] 🔍 Available keys:", Object.keys(orderData));
+    
+    // Try all possible field names
+    const orderId = orderData.razorpay_order_id || 
+                    orderData.order_id || 
+                    orderData.orderId || 
+                    orderData.id ||
+                    orderData.razorpayOrderId;
+    
+    console.log("[PAYWALL] 🔍 Extracted order ID:", orderId);
+    return orderId;
+  }
+
   async function verifyPayment({ productId, response, orderData }) {
     try {
       const session = await getSessionOrThrow();
       const userId = session.user.id;
       
-      // Extract order_id from the orderData - handle both snake_case and camelCase
-      const razorpayOrderId = orderData.order_id || orderData.orderId || orderData.id;
+      // Extract order_id using our helper function
+      const razorpayOrderId = extractOrderId(orderData);
       
       if (!razorpayOrderId) {
-        console.error("[PAYWALL] No order ID found in orderData:", orderData);
+        console.error("[PAYWALL] ❌ No order ID found!");
+        console.error("[PAYWALL] ❌ orderData was:", orderData);
+        console.error("[PAYWALL] ❌ Available keys:", Object.keys(orderData));
         throw new Error("Missing order ID from payment");
       }
       
@@ -224,7 +241,7 @@
         itemId = productId.startsWith('song:') ? productId.slice(5) : productId;
       }
 
-      console.log('[PAYWALL] Verifying payment with params:', {
+      console.log('[PAYWALL] ✅ Verifying payment with params:', {
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_order_id: razorpayOrderId,
         razorpay_signature: response.razorpay_signature,
@@ -248,19 +265,18 @@
       });
 
       if (error) {
-        console.error('[PAYWALL] Verify payment error:', error);
+        console.error('[PAYWALL] ❌ Verify payment error:', error);
         throw new Error(error.message || 'Payment verification failed');
       }
 
-      console.log('[PAYWALL] Payment verified successfully:', data);
+      console.log('[PAYWALL] ✅ Payment verified successfully!', data);
       return data;
     } catch (error) {
-      console.error('[PAYWALL] Verify payment error:', error);
+      console.error('[PAYWALL] ❌ Verify payment error:', error);
       throw error;
     }
   }
 
-  // ✅ CRITICAL FIX: Pass entire orderData object
   async function startRazorpayCheckout({ productId, currency = "INR" }) {
     assertSupabase();
     await loadRazorpay();
@@ -272,8 +288,16 @@
       ? "5-Song Pack" 
       : `Unlock: ${productId.replace('song:', '')}`;
 
-    // Extract the Razorpay order_id - handle both formats
-    const razorpayOrderId = orderData.order_id || orderData.orderId || orderData.id;
+    // Extract the Razorpay order_id
+    const razorpayOrderId = extractOrderId(orderData);
+    
+    if (!razorpayOrderId) {
+      console.error("[PAYWALL] ❌ Cannot start checkout - no order ID!");
+      alert("Error: Could not create order. Please try again.");
+      return;
+    }
+
+    console.log("[PAYWALL] 🚀 Starting Razorpay checkout with order:", razorpayOrderId);
 
     const rzp = new window.Razorpay({
       key: orderData.key_id,
@@ -285,13 +309,16 @@
       prefill: { email: session.user?.email || "" },
       handler: async (response) => {
         try {
+          console.log("[PAYWALL] 💳 Payment completed, verifying...");
           await verifyPayment({ 
             productId, 
             response,
-            orderData: orderData  // Pass the entire orderData object
+            orderData: orderData
           });
+          console.log("[PAYWALL] ✅ SUCCESS! Reloading page...");
           window.location.reload();
         } catch (e) {
+          console.error("[PAYWALL] ❌ Verification failed:", e);
           alert(e?.message || "Verification error");
         }
       },
