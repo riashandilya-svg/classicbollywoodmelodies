@@ -15,9 +15,24 @@
     }
   }
 
+  // ✅ FIXED: Better currency detection with fallback
   async function detectCurrency() {
     try {
-      const response = await fetch('https://ipapi.co/json/');
+      // Try timezone-based detection first (no API call needed)
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (timezone && (timezone.includes('America') || timezone.includes('US'))) {
+        return 'USD';
+      }
+      
+      // Fallback: try ipapi with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      
+      const response = await fetch('https://ipapi.co/json/', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       const data = await response.json();
       return data.country_code === 'US' ? 'USD' : 'INR';
     } catch (error) {
@@ -44,7 +59,7 @@
     return data.session;
   }
 
-  // ✅ UPDATED: Check bundle + individual song purchases
+  // ✅ FIXED: Handle 406 errors by catching and treating as "not found"
   async function userHasAccess(productId, session) {
     productId = (productId || "").trim();
     if (!productId) return false;
@@ -55,68 +70,92 @@
 
     const userId = session.user.id;
 
-    // Check if they own the bundle (pack:5)
-    const { data: bundleData } = await window.supabase
-      .from("purchases")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("song_id", BUNDLE_PRODUCT_ID)
-      .eq("status", "paid")
-      .single();
+    try {
+      // Check if they own the bundle (pack:5)
+      const { data: bundleData, error: bundleError } = await window.supabase
+        .from("purchases")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("song_id", BUNDLE_PRODUCT_ID)
+        .eq("status", "paid")
+        .maybeSingle();
 
-    if (bundleData) {
-      console.log("[PAYWALL] User has bundle pack");
-      return true;
+      // Ignore 406 errors - treat as not found
+      if (bundleData && !bundleError) {
+        console.log("[PAYWALL] User has bundle pack");
+        return true;
+      }
+    } catch (e) {
+      console.warn("[PAYWALL] Bundle check error (ignoring):", e);
     }
 
-    // Check if they own this specific song
-    const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
-    
-    const { data: songData } = await window.supabase
-      .from("purchases")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("song_slug", songSlug)
-      .eq("status", "paid")
-      .single();
+    try {
+      // Check if they own this specific song
+      const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+      
+      const { data: songData, error: songError } = await window.supabase
+        .from("purchases")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("song_slug", songSlug)
+        .eq("status", "paid")
+        .maybeSingle();
 
-    if (songData) {
-      console.log("[PAYWALL] User owns this song");
-      return true;
+      if (songData && !songError) {
+        console.log("[PAYWALL] User owns this song");
+        return true;
+      }
+    } catch (e) {
+      console.warn("[PAYWALL] Song check error (ignoring):", e);
     }
 
     console.log("[PAYWALL] User does not have access");
     return false;
   }
 
-  // ✅ NEW: Check ALL credits (bundle + book bonus)
+  // ✅ FIXED: Handle 406 errors in credit checking
   async function checkAllCredits() {
     try {
       const session = await getSessionOrThrow();
       const userId = session.user.id;
 
-      // Check bundle credits (existing system)
-      const { data: bundleData } = await window.supabase
-        .from("purchases")
-        .select("credits_remaining")
-        .eq("user_id", userId)
-        .eq("status", "paid")
-        .not("credits_remaining", "is", null)
-        .gt("credits_remaining", 0)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+      let bundleCredits = 0;
+      let bookCredits = 0;
 
-      const bundleCredits = bundleData?.credits_remaining || 0;
+      // Check bundle credits (existing system)
+      try {
+        const { data: bundleData, error } = await window.supabase
+          .from("purchases")
+          .select("credits_remaining")
+          .eq("user_id", userId)
+          .eq("status", "paid")
+          .not("credits_remaining", "is", null)
+          .gt("credits_remaining", 0)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (bundleData && !error) {
+          bundleCredits = bundleData.credits_remaining || 0;
+        }
+      } catch (e) {
+        console.warn('[PAYWALL] Bundle credits check error (ignoring):', e);
+      }
 
       // Check book bonus credits (new system)
-      const { data: bookData } = await window.supabase
-        .from('user_credits')
-        .select('balance')
-        .eq('user_id', userId)
-        .single();
+      try {
+        const { data: bookData, error } = await window.supabase
+          .from('user_credits')
+          .select('balance')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-      const bookCredits = bookData?.balance || 0;
+        if (bookData && !error) {
+          bookCredits = bookData.balance || 0;
+        }
+      } catch (e) {
+        console.warn('[PAYWALL] Book credits check error (ignoring):', e);
+      }
 
       return {
         bundleCredits,
@@ -129,7 +168,7 @@
     }
   }
 
-  // ✅ UPDATED: Get pricing (now uses new edge function)
+  // ✅ Get pricing
   async function fetchPricing(productId, currency) {
     const session = await getSessionOrThrow();
     
@@ -148,7 +187,7 @@
     return data;
   }
 
-  // ✅ Keep existing createOrder
+  // ✅ Create order
   async function createOrder({ productId, currency = "INR" }) {
     const session = await getSessionOrThrow();
     
@@ -172,8 +211,8 @@
     return data;
   }
 
-  // ✅ FIXED: Updated to match Edge Function's expected parameters
-  async function verifyPayment({ productId, response, amount, currency }) {
+  // ✅ CRITICAL FIX: Store orderId and pass it to verifyPayment
+  async function verifyPayment({ productId, response, orderId }) {
     try {
       const session = await getSessionOrThrow();
       const userId = session.user.id;
@@ -190,7 +229,7 @@
 
       console.log('[PAYWALL] Verifying payment with params:', {
         razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_order_id: response.razorpay_order_id,
+        razorpay_order_id: orderId || response.razorpay_order_id,
         user_id: userId,
         item_id: itemId,
         item_type: itemType
@@ -199,7 +238,7 @@
       const { data, error } = await window.supabase.functions.invoke('verify-razorpay-payment', {
         body: {
           razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_order_id: response.razorpay_order_id,
+          razorpay_order_id: orderId || response.razorpay_order_id, // Use stored orderId
           razorpay_signature: response.razorpay_signature,
           user_id: userId,
           item_id: itemId,
@@ -223,7 +262,7 @@
     }
   }
 
-  // ✅ Keep existing startRazorpayCheckout
+  // ✅ CRITICAL FIX: Store orderId and pass to handler
   async function startRazorpayCheckout({ productId, currency = "INR" }) {
     assertSupabase();
     await loadRazorpay();
@@ -235,9 +274,12 @@
       ? "5-Song Pack" 
       : `Unlock: ${productId.replace('song:', '')}`;
 
+    // Store orderId for later use
+    const orderId = order.orderId;
+
     const rzp = new window.Razorpay({
       key: order.key_id,
-      order_id: order.orderId,
+      order_id: orderId,
       amount: order.amount,
       currency: order.currency,
       name: "Classic Bollywood Melodies",
@@ -246,11 +288,11 @@
       handler: async (response) => {
         try {
           const fresh = await getSessionOrThrow();
+          // Pass orderId to verifyPayment
           await verifyPayment({ 
             productId, 
             response,
-            amount: order.amount,
-            currency: order.currency
+            orderId: orderId  // Pass the stored orderId
           });
           window.location.reload();
         } catch (e) {
@@ -261,7 +303,7 @@
     rzp.open();
   }
 
-  // ✅ NEW: Unified credit redemption (tries both systems)
+  // ✅ Unified credit redemption
   async function redeemAnyCredit(productId) {
     const session = await getSessionOrThrow();
     const credits = await checkAllCredits();
@@ -299,7 +341,7 @@
     throw new Error("No credits available");
   }
 
-  // ✅ UPDATED: Show paywall with merged credits display
+  // ✅ Show paywall
   async function showPaywall({ productId, title, body }) {
     assertSupabase();
     const paywallEl = document.getElementById("paywall");
