@@ -176,44 +176,62 @@
     }
   }
 
+  // ✅ FIXED: Use raw fetch instead of supabase.functions.invoke
+  // invoke() has two problems on mobile:
+  //   1. It conflicts when you manually set Authorization (double-auth)
+  //   2. It doesn't reliably throw on HTTP error statuses - error can be null
+  //      while data contains the error payload, so the caller never sees it
+  // Raw fetch gives us full control over headers and proper status checking.
   async function fetchPricing(productId, currency) {
     const session = await getSessionOrThrow();
-    
-    const { data, error } = await window.supabase.functions.invoke("get-pricing", {
-      body: { productId, currency },
+
+    console.log("[PAYWALL] 📡 Calling get-pricing via raw fetch...");
+
+    const url = `${SUPABASE_FUNCTIONS_BASE}/get-pricing`;
+    const res = await fetch(url, {
+      method: "POST",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
         apikey: SUPABASE_ANON_KEY,
       },
+      body: JSON.stringify({ productId, currency }),
     });
 
-    if (error) {
-      console.error("[PAYWALL] Fetch pricing error:", error);
-      throw new Error(error.message || "Failed to fetch pricing");
+    const data = await res.json();
+    console.log("[PAYWALL] 📦 get-pricing raw response:", res.status, data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || `get-pricing failed with status ${res.status}`);
     }
+
     return data;
   }
 
+  // ✅ FIXED: Same raw fetch treatment for createOrder
   async function createOrder({ productId, currency = "INR" }) {
     const session = await getSessionOrThrow();
-    
-    const { data, error } = await window.supabase.functions.invoke("create-razorpay-order", {
-      body: { productId, currency },
+
+    console.log("[PAYWALL] 📡 Calling create-razorpay-order via raw fetch...");
+
+    const url = `${SUPABASE_FUNCTIONS_BASE}/create-razorpay-order`;
+    const res = await fetch(url, {
+      method: "POST",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
         apikey: SUPABASE_ANON_KEY,
       },
+      body: JSON.stringify({ productId, currency }),
     });
 
-    if (error) {
-      console.error("[PAYWALL] Create order error:", error);
-      throw new Error(error.message || "Create order failed");
+    const data = await res.json();
+    console.log("[PAYWALL] 📦 create-razorpay-order raw response:", res.status, data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || `create-razorpay-order failed with status ${res.status}`);
     }
-    if (!data) {
-      throw new Error("Edge Function returned a non-2xx status code");
-    }
-    
-    console.log("[PAYWALL] ✅ Order created successfully:", data);
+
     return data;
   }
 
@@ -228,6 +246,7 @@
     return orderId;
   }
 
+  // ✅ FIXED: Same raw fetch treatment for verifyPayment
   async function verifyPayment({ productId, response, orderData }) {
     try {
       const session = await getSessionOrThrow();
@@ -249,21 +268,22 @@
 
       console.log('[PAYWALL] ✅ Verifying payment:', verifyParams);
 
-      const { data, error } = await window.supabase.functions.invoke('verify-razorpay-payment', {
-        body: verifyParams,
+      const url = `${SUPABASE_FUNCTIONS_BASE}/verify-razorpay-payment`;
+      const res = await fetch(url, {
+        method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
           apikey: SUPABASE_ANON_KEY,
-        }
+        },
+        body: JSON.stringify(verifyParams),
       });
 
-      if (error) {
-        console.error('[PAYWALL] ❌ Verify payment error:', error);
-        throw new Error(error.message || 'Payment verification failed');
-      }
+      const data = await res.json();
+      console.log('[PAYWALL] 📦 verify-razorpay-payment raw response:', res.status, data);
 
-      if (!data) {
-        throw new Error('Edge Function returned a non-2xx status code');
+      if (!res.ok) {
+        throw new Error(data?.error || `verify-razorpay-payment failed with status ${res.status}`);
       }
 
       console.log('[PAYWALL] ✅ Payment verified!', data);
@@ -322,6 +342,7 @@
     rzp.open();
   }
 
+  // ✅ FIXED: Same raw fetch treatment for redeem functions
   async function redeemAnyCredit(productId) {
     const session = await getSessionOrThrow();
     const credits = await checkAllCredits();
@@ -333,14 +354,18 @@
     if (credits.bookCredits > 0) {
       try {
         console.log("[PAYWALL] 🎁 Trying book credit...");
-        const { data, error } = await window.supabase.functions.invoke("redeem-book-credit", {
-          body: { productId },
+        const url = `${SUPABASE_FUNCTIONS_BASE}/redeem-book-credit`;
+        const res = await fetch(url, {
+          method: "POST",
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
             apikey: SUPABASE_ANON_KEY,
           },
+          body: JSON.stringify({ productId }),
         });
-        if (error) throw error;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || `redeem-book-credit failed: ${res.status}`);
         console.log("[PAYWALL] ✅ Book credit redeemed!");
         return { success: true, source: 'book_bonus' };
       } catch (e) {
@@ -351,16 +376,20 @@
     // Try bundle credits
     if (credits.bundleCredits > 0) {
       console.log("[PAYWALL] 🎁 Trying bundle credit...");
-      const { data, error } = await window.supabase.functions.invoke("redeem-credit", {
-        body: { productId },
+      const url = `${SUPABASE_FUNCTIONS_BASE}/redeem-credit`;
+      const res = await fetch(url, {
+        method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
           apikey: SUPABASE_ANON_KEY,
         },
+        body: JSON.stringify({ productId }),
       });
-      if (error) {
-        console.error("[PAYWALL] ❌ Bundle credit error:", error);
-        throw error;
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("[PAYWALL] ❌ Bundle credit error:", data);
+        throw new Error(data?.error || `redeem-credit failed: ${res.status}`);
       }
       console.log("[PAYWALL] ✅ Bundle credit redeemed!");
       return { success: true, source: 'bundle' };
