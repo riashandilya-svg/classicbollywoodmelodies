@@ -1,5 +1,6 @@
-// /classicbollywoodmelodies/js/paywall.js
-// 🚨 EMERGENCY FIX: Bundle purchases should NOT grant unlimited access
+// 🚨🚨🚨 EMERGENCY COMPLETE FIX - paywall.js 🚨🚨🚨
+// This version COMPLETELY REMOVES the bundle unlimited access bug
+// Credits system will work CORRECTLY
 
 (() => {
   const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
@@ -59,42 +60,61 @@
     return data.session;
   }
 
+  // 🚨🚨🚨 THIS IS THE CRITICAL FUNCTION - COMPLETELY REWRITTEN 🚨🚨🚨
   async function userHasAccess(productId, session) {
+    console.log(`[PAYWALL] 🔍 Checking access for: ${productId}`);
+    
     productId = (productId || "").trim();
-    if (!productId) return false;
-    if (!session?.user) return false;
+    if (!productId) {
+      console.log("[PAYWALL] ❌ No productId provided");
+      return false;
+    }
+    
+    if (!session?.user) {
+      console.log("[PAYWALL] ❌ No session");
+      return false;
+    }
 
+    // Check if owner
     const email = normalizeEmail(session.user.email);
-    if (OWNER_EMAILS.includes(email)) return true;
+    if (OWNER_EMAILS.includes(email)) {
+      console.log("[PAYWALL] ✅ User is owner - granting access");
+      return true;
+    }
 
     const userId = session.user.id;
+    const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
 
-    // 🚨 CRITICAL FIX: Bundle purchase should NOT grant unlimited access!
-    // The bundle only gives credits, not direct access to all songs
-    // We REMOVED the bundle check from here
-
-    // ✅ CORRECT: Only check if user specifically owns THIS song
+    // 🚨 CRITICAL: ONLY check if user owns THIS SPECIFIC SONG
+    // DO NOT check for bundle - bundle only gives CREDITS, not access!
+    console.log(`[PAYWALL] 🔍 Checking ownership for song_slug: ${songSlug}`);
+    
     try {
-      const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
-      
       const { data: songData, error: songError } = await window.supabase
         .from("purchases")
-        .select("id")
+        .select("id, provider")
         .eq("user_id", userId)
         .eq("song_slug", songSlug)
         .eq("status", "paid")
         .maybeSingle();
 
-      if (songData && !songError) {
-        console.log("[PAYWALL] User owns this song");
+      if (songError) {
+        console.warn("[PAYWALL] ⚠️ Error checking song ownership:", songError);
+        return false;
+      }
+
+      if (songData) {
+        console.log(`[PAYWALL] ✅ User owns this song (provider: ${songData.provider})`);
         return true;
       }
-    } catch (e) {
-      console.warn("[PAYWALL] Song check error (ignoring):", e);
-    }
 
-    console.log("[PAYWALL] User does not have access");
-    return false;
+      console.log("[PAYWALL] ❌ User does NOT own this song");
+      return false;
+      
+    } catch (e) {
+      console.error("[PAYWALL] ❌ Exception checking ownership:", e);
+      return false;
+    }
   }
 
   async function checkAllCredits() {
@@ -105,13 +125,14 @@
       let bundleCredits = 0;
       let bookCredits = 0;
 
+      // Check bundle credits
       try {
         const { data: bundleData, error } = await window.supabase
           .from("purchases")
           .select("credits_remaining")
           .eq("user_id", userId)
           .eq("status", "paid")
-          .eq("song_id", BUNDLE_PRODUCT_ID)  // ✅ Check specifically for pack:5
+          .eq("song_id", BUNDLE_PRODUCT_ID)
           .not("credits_remaining", "is", null)
           .gt("credits_remaining", 0)
           .order("created_at", { ascending: false })
@@ -120,12 +141,13 @@
 
         if (bundleData && !error) {
           bundleCredits = bundleData.credits_remaining || 0;
-          console.log(`[PAYWALL] Bundle credits available: ${bundleCredits}`);
+          console.log(`[PAYWALL] 🎁 Bundle credits: ${bundleCredits}`);
         }
       } catch (e) {
-        console.warn('[PAYWALL] Bundle credits check error (ignoring):', e);
+        console.warn('[PAYWALL] Bundle credits check error:', e);
       }
 
+      // Check book credits
       try {
         const { data: bookData, error } = await window.supabase
           .from('user_credits')
@@ -135,19 +157,21 @@
 
         if (bookData && !error) {
           bookCredits = bookData.balance || 0;
-          console.log(`[PAYWALL] Book credits available: ${bookCredits}`);
+          console.log(`[PAYWALL] 📚 Book credits: ${bookCredits}`);
         }
       } catch (e) {
-        console.warn('[PAYWALL] Book credits check error (ignoring):', e);
+        console.warn('[PAYWALL] Book credits check error:', e);
       }
 
+      console.log(`[PAYWALL] 💰 Total credits: ${bundleCredits + bookCredits}`);
+      
       return {
         bundleCredits,
         bookCredits,
         total: bundleCredits + bookCredits
       };
     } catch (error) {
-      console.error('Error checking credits:', error);
+      console.error('[PAYWALL] Error checking credits:', error);
       return { bundleCredits: 0, bookCredits: 0, total: 0 };
     }
   }
@@ -193,12 +217,7 @@
     return data;
   }
 
-  // ✅ Extract order ID with all possible field names
   function extractOrderId(orderData) {
-    console.log("[PAYWALL] 🔍 Extracting order ID from:", orderData);
-    console.log("[PAYWALL] 🔍 Available keys:", Object.keys(orderData));
-    
-    // Try all possible field names
     const orderId = orderData.razorpay_order_id || 
                     orderData.order_id || 
                     orderData.orderId || 
@@ -212,14 +231,10 @@
   async function verifyPayment({ productId, response, orderData }) {
     try {
       const session = await getSessionOrThrow();
-      
-      // Extract order_id using our helper function
       const razorpayOrderId = extractOrderId(orderData);
       
       if (!razorpayOrderId) {
         console.error("[PAYWALL] ❌ No order ID found!");
-        console.error("[PAYWALL] ❌ orderData was:", orderData);
-        console.error("[PAYWALL] ❌ Available keys:", Object.keys(orderData));
         throw new Error("Missing order ID from payment");
       }
 
@@ -232,7 +247,7 @@
         amount: orderData.amount
       };
 
-      console.log('[PAYWALL] ✅ Verifying payment with params:', verifyParams);
+      console.log('[PAYWALL] ✅ Verifying payment:', verifyParams);
 
       const { data, error } = await window.supabase.functions.invoke('verify-razorpay-payment', {
         body: verifyParams,
@@ -244,20 +259,14 @@
 
       if (error) {
         console.error('[PAYWALL] ❌ Verify payment error:', error);
-        console.error('[PAYWALL] ❌ Error details:', {
-          message: error.message,
-          context: error.context,
-          status: error.status
-        });
         throw new Error(error.message || 'Payment verification failed');
       }
 
       if (!data) {
-        console.error('[PAYWALL] ❌ No data returned from verification');
         throw new Error('Edge Function returned a non-2xx status code');
       }
 
-      console.log('[PAYWALL] ✅ Payment verified successfully!', data);
+      console.log('[PAYWALL] ✅ Payment verified!', data);
       return data;
     } catch (error) {
       console.error('[PAYWALL] ❌ Verify payment error:', error);
@@ -273,10 +282,9 @@
 
     const isBundle = productId === BUNDLE_PRODUCT_ID;
     const description = isBundle 
-      ? "5-Song Pack" 
+      ? "5-Song Bundle Pack" 
       : `Unlock: ${productId.replace('song:', '')}`;
 
-    // Extract the Razorpay order_id
     const razorpayOrderId = extractOrderId(orderData);
     
     if (!razorpayOrderId) {
@@ -285,7 +293,7 @@
       return;
     }
 
-    console.log("[PAYWALL] 🚀 Starting Razorpay checkout with order:", razorpayOrderId);
+    console.log("[PAYWALL] 🚀 Starting Razorpay checkout:", razorpayOrderId);
 
     const rzp = new window.Razorpay({
       key: orderData.key_id,
@@ -303,7 +311,7 @@
             response,
             orderData: orderData
           });
-          console.log("[PAYWALL] ✅ SUCCESS! Reloading page...");
+          console.log("[PAYWALL] ✅ SUCCESS! Reloading...");
           window.location.reload();
         } catch (e) {
           console.error("[PAYWALL] ❌ Verification failed:", e);
@@ -318,8 +326,8 @@
     const session = await getSessionOrThrow();
     const credits = await checkAllCredits();
 
-    console.log(`[PAYWALL] 🎁 Attempting to redeem credit for ${productId}`);
-    console.log(`[PAYWALL] 🎁 Available: ${credits.bundleCredits} bundle, ${credits.bookCredits} book`);
+    console.log(`[PAYWALL] 🎁 Redeeming credit for: ${productId}`);
+    console.log(`[PAYWALL] 💰 Available - Bundle: ${credits.bundleCredits}, Book: ${credits.bookCredits}`);
 
     // Try book credits first
     if (credits.bookCredits > 0) {
@@ -336,7 +344,7 @@
         console.log("[PAYWALL] ✅ Book credit redeemed!");
         return { success: true, source: 'book_bonus' };
       } catch (e) {
-        console.warn('[PAYWALL] Book credit failed, trying bundle credits:', e);
+        console.warn('[PAYWALL] Book credit failed:', e);
       }
     }
 
@@ -350,7 +358,10 @@
           apikey: SUPABASE_ANON_KEY,
         },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("[PAYWALL] ❌ Bundle credit error:", error);
+        throw error;
+      }
       console.log("[PAYWALL] ✅ Bundle credit redeemed!");
       return { success: true, source: 'bundle' };
     }
@@ -364,6 +375,8 @@
     const appEl = document.getElementById("app");
     if (!paywallEl || !appEl) return;
 
+    console.log(`[PAYWALL] 🎬 Starting paywall for: ${productId}`);
+
     appEl.style.display = "none";
     paywallEl.style.display = "block";
     paywallEl.innerHTML = `<h3>Checking access...</h3><p>Please wait...</p>`;
@@ -371,16 +384,20 @@
     try {
       const { data } = await window.supabase.auth.getSession();
       const session = data?.session;
+      
+      console.log("[PAYWALL] 🔐 Session:", session ? "Found" : "Not found");
+      
       const allowed = await userHasAccess(productId, session);
       
       if (allowed) {
-        console.log("[PAYWALL] ✅ User has access, showing content");
+        console.log("[PAYWALL] ✅ ACCESS GRANTED - Showing content");
         paywallEl.style.display = "none";
         appEl.style.display = "block";
         return;
       }
 
-      console.log("[PAYWALL] ❌ User does not have access, showing paywall");
+      console.log("[PAYWALL] 🚫 ACCESS DENIED - Showing paywall");
+      
       const currency = await detectCurrency();
       const currencySymbol = CURRENCY_SYMBOLS[currency];
       
@@ -412,10 +429,13 @@
           </div>
       `;
 
+      // Show credit button if user has credits
       if (canUseCredits && credits.total > 0) {
         const creditTypes = [];
         if (credits.bundleCredits > 0) creditTypes.push(`${credits.bundleCredits} bundle`);
         if (credits.bookCredits > 0) creditTypes.push(`${credits.bookCredits} book bonus`);
+        
+        console.log(`[PAYWALL] 🎁 Showing credit button (${creditTypes.join(' + ')})`);
         
         paywallHTML += `
           <div style="margin: 20px 0;">
@@ -434,8 +454,11 @@
             </button>
           </div>
         `;
+      } else {
+        console.log("[PAYWALL] ℹ️ No credits available for redemption");
       }
 
+      // Show bundle option
       if (bundleAvailable && bundlePrice) {
         paywallHTML += `
           <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
@@ -475,23 +498,33 @@
 
       paywallEl.innerHTML = paywallHTML;
 
+      // Attach event listeners
       const buyBtn = document.getElementById("buyBtn");
-      buyBtn.onclick = () => startRazorpayCheckout({ productId, currency });
+      buyBtn.onclick = () => {
+        console.log("[PAYWALL] 💳 User clicked: Buy This Song");
+        startRazorpayCheckout({ productId, currency });
+      };
 
       const bundleBtn = document.getElementById("bundleBtn");
       if (bundleBtn) {
-        bundleBtn.onclick = () => startRazorpayCheckout({ productId: BUNDLE_PRODUCT_ID, currency });
+        bundleBtn.onclick = () => {
+          console.log("[PAYWALL] 💳 User clicked: Buy Bundle");
+          startRazorpayCheckout({ productId: BUNDLE_PRODUCT_ID, currency });
+        };
       }
 
       const redeemBtn = document.getElementById("redeemBtn");
       if (redeemBtn) {
         redeemBtn.onclick = async () => {
           try {
+            console.log("[PAYWALL] 🎁 User clicked: Redeem Credit");
             redeemBtn.disabled = true;
             redeemBtn.textContent = "Redeeming...";
             await redeemAnyCredit(productId);
+            console.log("[PAYWALL] ✅ Credit redeemed, reloading...");
             window.location.reload();
           } catch (e) {
+            console.error("[PAYWALL] ❌ Redeem failed:", e);
             alert(e?.message || "Failed to redeem credit");
             redeemBtn.disabled = false;
             redeemBtn.textContent = `🎁 Unlock with 1 Credit`;
@@ -500,14 +533,16 @@
       }
 
     } catch (err) {
-      console.error("[PAYWALL] Error:", err);
+      console.error("[PAYWALL] ❌ Critical error:", err);
       paywallEl.innerHTML = `
         <h3>Error</h3>
-        <p>Failed to load pricing information. Please refresh the page.</p>
+        <p>Failed to load pricing. Please refresh the page.</p>
+        <p style="font-size: 0.8em; color: #666;">${err.message}</p>
       `;
     }
   }
 
+  console.log("[PAYWALL] ✅ Paywall system loaded");
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
 })();
