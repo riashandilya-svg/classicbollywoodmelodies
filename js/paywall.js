@@ -220,7 +220,6 @@
   async function verifyPayment({ productId, response, orderData }) {
     try {
       const session = await getSessionOrThrow();
-      const userId = session.user.id;
       
       // Extract order_id using our helper function
       const razorpayOrderId = extractOrderId(orderData);
@@ -231,33 +230,24 @@
         console.error("[PAYWALL] ❌ Available keys:", Object.keys(orderData));
         throw new Error("Missing order ID from payment");
       }
-      
-      let itemType, itemId;
-      if (productId === BUNDLE_PRODUCT_ID) {
-        itemType = 'bundle';
-        itemId = productId;
-      } else {
-        itemType = 'song';
-        itemId = productId.startsWith('song:') ? productId.slice(5) : productId;
-      }
 
       console.log('[PAYWALL] ✅ Verifying payment with params:', {
+        productId: productId,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_order_id: razorpayOrderId,
         razorpay_signature: response.razorpay_signature,
-        user_id: userId,
-        item_id: itemId,
-        item_type: itemType
+        currency: orderData.currency,
+        amount: orderData.amount
       });
 
       const { data, error } = await window.supabase.functions.invoke('verify-razorpay-payment', {
         body: {
+          productId: productId,
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_order_id: razorpayOrderId,
           razorpay_signature: response.razorpay_signature,
-          user_id: userId,
-          item_id: itemId,
-          item_type: itemType
+          currency: orderData.currency,
+          amount: orderData.amount
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
