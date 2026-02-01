@@ -58,9 +58,6 @@
       border-bottom: 1px solid rgba(140,120,160,0.18);
     }
 
-    /* Header layout:
-       - Desktop: 3 columns (left spacer, centered title, right account)
-       - But account is constrained so it cannot cover center; and we drop to 2-row earlier */
     .navGrid{
       display: grid;
       grid-template-columns: 1fr auto 1fr;
@@ -95,7 +92,7 @@
       justify-self: end;
       display: none;
       min-width: 0;
-      max-width: 46vw; /* key: prevents it from stretching into the center area */
+      max-width: 46vw;
     }
 
     .accountLayout{
@@ -194,7 +191,6 @@
       background: rgba(155,110,255,0.18);
     }
 
-    /* IMPORTANT: move account below title earlier so it never overlaps while resizing */
     @media (max-width: 1100px){
       .navGrid{
         grid-template-columns: 1fr;
@@ -220,7 +216,7 @@
         width: 100%;
         align-items: center;
         justify-content: center;
-        flex-direction: column; /* welcome ABOVE strip */
+        flex-direction: column;
         gap: 8px;
       }
 
@@ -240,7 +236,6 @@
       }
     }
 
-    /* Logged out: login row */
     .authRow{
       margin: 12px 0 6px;
       display:flex;
@@ -443,7 +438,9 @@
           <div class="actionStrip" role="navigation" aria-label="Account navigation">
             <a class="stripItem primary" href="./dashboard.html">Dashboard</a>
             <div class="stripDivider" aria-hidden="true"></div>
-<a id="verifyBookLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display: none;">Verify Book</a>
+            <a class="stripItem" href="./user-guide.html">User Guide</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <a id="verifyBookLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display: none;">Verify Book</a>
             <div class="stripDivider" aria-hidden="true"></div>
             <a class="stripItem" href="./pricing.html">Pricing</a>
             <div class="stripDivider" aria-hidden="true"></div>
@@ -539,16 +536,15 @@
         if (session && session.user) {
           const userId = session.user.id;
 
-          // FIXED: Changed from "profile" to "profiles"
-const { data: prof, error } = await sb
-  .from("profiles")
-  .select("display_name, setup_completed, is_book_owner")
-  .eq("id", userId)
-  .maybeSingle();
+          const { data: prof, error } = await sb
+            .from("profiles")
+            .select("display_name, setup_completed, is_book_owner")
+            .eq("id", userId)
+            .maybeSingle();
 
-   if (error && error.code !== 'PGRST116') {
-  console.log("profile fetch error:", error);
-}
+          if (error && error.code !== 'PGRST116') {
+            console.log("profile fetch error:", error);
+          }
 
           if (prof && prof.setup_completed === false) {
             window.location.href = "./setup.html";
@@ -563,15 +559,15 @@ const { data: prof, error } = await sb
 
           accountDock.style.display = "block";
           authRow.style.display = "none";
-          // Show or hide Verify Book link based on is_book_owner status
-const verifyBookLink = document.getElementById("verifyBookLink");
-if (verifyBookLink) {
-  if (prof && prof.is_book_owner === true) {
-    verifyBookLink.style.display = "none"; // Hide if already verified
-  } else {
-    verifyBookLink.style.display = "inline-flex"; // Show if not verified
-  }
-}
+          
+          const verifyBookLink = document.getElementById("verifyBookLink");
+          if (verifyBookLink) {
+            if (prof && prof.is_book_owner === true) {
+              verifyBookLink.style.display = "none";
+            } else {
+              verifyBookLink.style.display = "inline-flex";
+            }
+          }
         } else {
           accountDock.style.display = "none";
           authRow.style.display = "flex";
@@ -603,7 +599,7 @@ if (verifyBookLink) {
   </script>
 
   <script>
-    /* ===== Cursor glitter (purple/violet) ===== */
+    /* Cursor glitter (purple/violet) */
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if(prefersReduced) return;
