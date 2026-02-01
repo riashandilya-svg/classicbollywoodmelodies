@@ -680,16 +680,6 @@
       50% { opacity: 0.4; }
     }
 
-    /* today highlight box */
-    .today-box {
-      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.12));
-      border: 2px solid var(--success);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-    }
-    .today-box .stat-value { font-size: 28px; }
-
     @media (max-width: 768px) {
       .banner {
         flex-direction: column;
@@ -788,30 +778,10 @@
           <h2 class="card-title">💰 Revenue Analytics</h2>
         </div>
 
-        <!-- TODAY box always visible at top -->
-        <div style="margin-bottom: 20px;">
-          <div style="font-size: 14px; font-weight: 700; color: var(--success); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Today's Revenue</div>
-          <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
-            <div class="today-box">
-              <div class="stat-value" id="todayINR" style="color: var(--success);">₹0</div>
-              <div class="stat-label">Today (INR)</div>
-            </div>
-            <div class="today-box">
-              <div class="stat-value" id="todayUSD" style="color: var(--success);">$0</div>
-              <div class="stat-label">Today (USD)</div>
-            </div>
-            <div class="today-box">
-              <div class="stat-value" id="todayTransactions" style="color: var(--primary);">0</div>
-              <div class="stat-label">Today's Transactions</div>
-            </div>
-          </div>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
-
         <div class="date-filter">
           <select id="revenuePeriod" onchange="updateRevenueDisplay()">
-            <option value="month">This Month</option>
+            <option value="today">Today</option>
+            <option value="month" selected>This Month</option>
             <option value="90days">Last 90 Days</option>
             <option value="year">This Year</option>
             <option value="custom">Custom Range</option>
@@ -826,10 +796,6 @@
           <div class="stat-box">
             <div class="stat-value" id="revenueINR" style="color: var(--success);">₹0</div>
             <div class="stat-label">Revenue (INR)</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-value" id="revenueUSD" style="color: var(--success);">$0</div>
-            <div class="stat-label">Revenue (USD)</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" id="revenueTransactions">0</div>
@@ -863,7 +829,7 @@
                   <th>Book Owner</th>
                   <th>Books Owned</th>
                   <th>Songs Purchased</th>
-                  <th>Bundle</th>
+                  <th>Bundles</th>
                   <th>Photo</th>
                   <th>Video</th>
                   <th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
@@ -961,13 +927,14 @@
               <thead>
                 <tr>
                   <th data-sortable data-col="name" data-table="bundles">Name & Email <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="bundlecount" data-table="bundles">Bundles Purchased <span class="sort-arrow">▲</span></th>
                   <th data-sortable data-col="credits" data-table="bundles">Credits Remaining <span class="sort-arrow">▲</span></th>
                   <th data-sortable data-col="date" data-table="bundles" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
                 </tr>
               </thead>
               <tbody id="bundlesTableBody">
                 <tr>
-                  <td colspan="3" class="loading">
+                  <td colspan="4" class="loading">
                     <div class="spinner"></div>
                     Loading bundles...
                   </td>
@@ -1259,6 +1226,10 @@
     // ── Live rates fetched from frankfurter (stored here so savePricing can use them) ──
     let liveExchangeRates = null; // will be { USD: 0.012, GBP: 0.0095, ... } keyed as "1 INR = X currency"
 
+    // ── Saved exchange rates loaded from pricing_config on init ──
+    // Format from DB: { USD: 1, INR: 83.5, GBP: 0.79, ... } meaning "1 USD = X currency"
+    let savedExchangeRates = null;
+
     // Currency symbols for display
     const CURRENCY_SYMBOLS = {
       'INR': '₹', 'USD': '$', 'GBP': '£', 'EUR': '€',
@@ -1267,6 +1238,24 @@
 
     // Which currencies we show in the admin live-rates panel
     const RATE_CURRENCIES = ['USD','GBP','EUR','CAD','AUD','JPY'];
+
+    // Convert any amount (in smallest unit) from currency X → INR (paise)
+    // DB exchangeRates format: { USD: 1, INR: 83.5, GBP: 0.79 } = "1 USD = X currency"
+    // So: amount_in_INR = amount_in_C  *  (rates.INR / rates.C)
+    function convertToINR(amount, currency) {
+      if (!amount) return 0;
+      if (!currency || currency === 'INR') return amount;
+      if (!savedExchangeRates || !savedExchangeRates.INR) {
+        // Fallback hardcoded rates if DB hasn't loaded yet
+        const fallback = { USD: 1, INR: 84, GBP: 0.79, EUR: 0.92, CAD: 1.35, AUD: 1.52, JPY: 148 };
+        const rateC = fallback[currency];
+        if (!rateC) return amount; // unknown currency, return as-is
+        return Math.round(amount * (fallback.INR / rateC));
+      }
+      const rateC = savedExchangeRates[currency];
+      if (!rateC) return amount; // unknown currency, return as-is
+      return Math.round(amount * (savedExchangeRates.INR / rateC));
+    }
 
     function formatAmount(amount, currency = 'INR') {
       if (!amount) return 'N/A';
@@ -1295,8 +1284,8 @@
         .map(p => p.song_id);
     }
 
-    function hasBundleForUser(userId) {
-      return allBundles.some(b => b.user_id === userId);
+    function getBundleCountForUser(userId) {
+      return allBundles.filter(b => b.user_id === userId).length;
     }
 
     async function getPhotoUrl(userId) {
@@ -1408,12 +1397,11 @@
         authCheck.classList.add('hidden');
         adminContent.classList.remove('hidden');
 
-        await Promise.all([loadPurchasesData(), loadBundlesData()]);
+        await Promise.all([loadPurchasesData(), loadBundlesData(), loadSavedRates()]);
         loadStats();
         loadUsers();
         loadCodes();
         updateRevenueDisplay();
-        calculateTodayRevenue();
         updateSortHeaders('purchases');
         renderPurchases(sortArray(allPurchases, 'purchases'));
         updateSortHeaders('bundles');
@@ -1452,7 +1440,7 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // REVENUE — period filter + TODAY
+    // REVENUE — period filter (today / month / 90d / year / custom), all in INR
     // ═══════════════════════════════════════════════════════
 
     function updateRevenueDisplay() {
@@ -1471,7 +1459,10 @@
       const now = new Date();
       let startDate, endDate;
 
-      if (period === 'month') {
+      if (period === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        endDate   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      } else if (period === 'month') {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         endDate = now;
       } else if (period === '90days') {
@@ -1496,45 +1487,23 @@
       });
 
       let totalINR = 0;
-      let totalUSD = 0;
-
       filtered.forEach(p => {
-        const amount = p.amount || 0;
-        const currency = p.currency || 'INR';
-        if (currency === 'INR') totalINR += amount;
-        else if (currency === 'USD') totalUSD += amount;
-        else totalINR += amount; // fallback
+        totalINR += convertToINR(p.amount || 0, p.currency || 'INR');
       });
 
       document.getElementById('revenueINR').textContent = formatAmount(totalINR, 'INR');
-      document.getElementById('revenueUSD').textContent = formatAmount(totalUSD, 'USD');
       document.getElementById('revenueTransactions').textContent = filtered.length;
     }
 
-    function calculateTodayRevenue() {
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-      const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
-      const todayPurchases = allPurchases.filter(p => {
-        const d = new Date(p.created_at);
-        return d >= todayStart && d <= todayEnd;
-      });
-
-      let totalINR = 0;
-      let totalUSD = 0;
-
-      todayPurchases.forEach(p => {
-        const amount = p.amount || 0;
-        const currency = p.currency || 'INR';
-        if (currency === 'INR') totalINR += amount;
-        else if (currency === 'USD') totalUSD += amount;
-        else totalINR += amount;
-      });
-
-      document.getElementById('todayINR').textContent = formatAmount(totalINR, 'INR');
-      document.getElementById('todayUSD').textContent = formatAmount(totalUSD, 'USD');
-      document.getElementById('todayTransactions').textContent = todayPurchases.length;
+    // Load saved exchange rates from pricing_config so convertToINR works
+    async function loadSavedRates() {
+      try {
+        const { data, error } = await window.supabase
+          .from('pricing_config').select('config').eq('id', 1).single();
+        if (!error && data?.config?.exchangeRates) {
+          savedExchangeRates = data.config.exchangeRates;
+        }
+      } catch (e) { console.warn('Could not load saved rates:', e); }
     }
 
     // ═══════════════════════════════════════════════════════
@@ -1571,7 +1540,7 @@
       tbody.innerHTML = list.map(user => {
         const isAdmin = ADMIN_EMAILS.includes(user.email);
         const songs = getSongsForUser(user.id);
-        const bundle = hasBundleForUser(user.id);
+        const bundleCount = getBundleCountForUser(user.id);
         const photoUrl = photoCache[user.id] || null;
         const videoUrl = videoCache[user.id] || null;
 
@@ -1596,7 +1565,7 @@
           <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
           <td>${user.books_owned && user.books_owned.length ? user.books_owned.join(', ') : 'None'}</td>
           <td>${songsHTML}</td>
-          <td>${bundle ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
           <td>${photoHTML}</td>
           <td>${videoHTML}</td>
           <td>${new Date(user.created_at).toLocaleDateString()}</td>
@@ -1699,7 +1668,6 @@
         updateSortHeaders('purchases');
         renderPurchases(sortArray(allPurchases, 'purchases'));
         calculateRevenue();
-        calculateTodayRevenue();
       } catch (e) {
         console.error('Error:', e);
         document.getElementById('purchasesTableBody').innerHTML =
@@ -1716,13 +1684,14 @@
       }
       tbody.innerHTML = data.map(p => {
         const profile = getProfile(p.user_id);
-        const currency = p.currency || 'INR';
-        const amountDisplay = formatAmount(p.amount, currency);
+        const amountINR = convertToINR(p.amount || 0, p.currency || 'INR');
+        const origCurrency = p.currency || 'INR';
+        const convertedLabel = origCurrency !== 'INR' ? ` <span style="font-size:11px;color:var(--muted);">(was ${CURRENCY_SYMBOLS[origCurrency] || origCurrency}${origCurrency === 'JPY' ? (p.amount/100).toFixed(0) : (p.amount/100).toFixed(2)})</span>` : '';
         
         return `<tr>
           <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
           <td><span class="code-display">${p.song_id}</span></td>
-          <td>${amountDisplay}</td>
+          <td>${formatAmount(amountINR, 'INR')}${convertedLabel}</td>
           <td>${p.credits_remaining !== null && p.credits_remaining !== undefined ? p.credits_remaining : 'N/A'}</td>
           <td>${new Date(p.created_at).toLocaleString()}</td>
         </tr>`;
@@ -1762,14 +1731,14 @@
     async function loadBundles() {
       try {
         document.getElementById('bundlesTableBody').innerHTML =
-          '<tr><td colspan="3" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
+          '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
         await loadBundlesData();
         updateSortHeaders('bundles');
         renderBundles(sortArray(allBundles, 'bundles'));
       } catch (e) {
         console.error('Error:', e);
         document.getElementById('bundlesTableBody').innerHTML =
-          `<tr><td colspan="3"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+          `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
 
@@ -1777,13 +1746,15 @@
       const data = list || allBundles;
       const tbody = document.getElementById('bundlesTableBody');
       if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundle purchases found</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundle purchases found</p></td></tr>';
         return;
       }
       tbody.innerHTML = data.map(b => {
         const profile = getProfile(b.user_id);
+        const totalBundles = getBundleCountForUser(b.user_id);
         return `<tr>
           <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
+          <td><span class="badge badge-success">${totalBundles}</span></td>
           <td><span class="badge badge-success">${b.credits_remaining || 0}</span></td>
           <td>${new Date(b.created_at).toLocaleString()}</td>
         </tr>`;
@@ -1802,7 +1773,7 @@
       });
       if (!filtered.length) {
         document.getElementById('bundlesTableBody').innerHTML =
-          '<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">🔍</div><p>No bundles match your search</p></td></tr>';
+          '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">🔍</div><p>No bundles match your search</p></td></tr>';
         return;
       }
       renderBundles(filtered);
@@ -2061,9 +2032,10 @@
           if (col === 'date')   return item.created_at || '';
           break;
         case 'bundles':
-          if (col === 'name')    return (p?.display_name || '').toLowerCase();
-          if (col === 'credits') return item.credits_remaining || 0;
-          if (col === 'date')    return item.created_at || '';
+          if (col === 'name')        return (p?.display_name || '').toLowerCase();
+          if (col === 'bundlecount') return getBundleCountForUser(item.user_id) || 0;
+          if (col === 'credits')     return item.credits_remaining || 0;
+          if (col === 'date')        return item.created_at || '';
           break;
       }
       return '';
