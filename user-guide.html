@@ -3,43 +3,56 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ria Om Shandilya</title>
+  <title>User Guide • Ria Om Shandilya</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
       --bg: #ffffff;
       --surface: rgba(255,255,255,0.82);
+      --surface2: rgba(255,255,255,0.68);
       --text: #1A1A1F;
       --muted: rgba(26,26,31,0.70);
       --border: rgba(140, 120, 160, 0.18);
       --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
-      --btnText: #2b1140;
+      --shadowHover: 0 24px 55px rgba(22, 10, 35, 0.13);
 
-      --violet: 155, 110, 255;
-      --violetDeep: 85, 55, 190;
-      --pink: 255, 120, 160;
+      --accent1: rgba(255,120,160,0.28);
+      --accent2: rgba(155,110,255,0.26);
+      --accent3: rgba(255,80,90,0.16);
+      --accent4: rgba(255,90,210,0.14);
+
+      --brand: #2b1140;
+      --primaryBorder: rgba(155,110,255,0.30);
+
+      --radius: 22px;
+      --radiusSm: 16px;
     }
 
     *{ box-sizing: border-box; }
+    html,body{ height: 100%; }
 
     body{
       margin: 0;
       min-height: 100vh;
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
       background:
-        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
-        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
-        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
-        radial-gradient(520px 320px at 35% 55%, rgba(255,90,210,0.14), transparent 60%),
+        radial-gradient(900px 520px at 20% 0%, var(--accent1), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, var(--accent2), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, var(--accent3), transparent 60%),
+        radial-gradient(520px 320px at 35% 55%, var(--accent4), transparent 60%),
         var(--bg);
+
+      padding: 26px 18px 70px;
+      overflow-x: hidden;
     }
 
-    /* Cursor glitter canvas */
+    /* cursor glitter canvas */
     #glitter{
       position: fixed;
       inset: 0;
@@ -48,587 +61,758 @@
       mix-blend-mode: screen;
     }
 
-    /* Sticky banner */
+    .container{
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* Top banner */
     .banner{
       position: sticky;
       top: 0;
       z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: rgba(255,255,255,0.72);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(140,120,160,0.18);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
+      margin-bottom: 20px;
     }
 
-    /* Header layout:
-       - Desktop: 3 columns (left spacer, centered title, right account)
-       - But account is constrained so it cannot cover center; and we drop to 2-row earlier */
-    .navGrid{
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      min-height: 64px;
-      padding: 8px 12px;
-      gap: 12px;
-    }
-
-    .navTitle{
-      grid-column: 2;
-      justify-self: center;
-      text-align: center;
-      min-width: 0;
-    }
-
-    .banner-link{
+    .banner .banner-link{
       font-family: "Cormorant Garamond", serif;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 22px;
       letter-spacing: 0.7px;
       color: inherit;
       text-decoration: none;
-      padding: 8px 10px;
+      padding: 8px 12px;
       border-radius: 12px;
-      white-space: nowrap;
-    }
-    .banner-link:hover{ text-decoration: underline; }
-
-    .accountDock{
-      grid-column: 3;
-      justify-self: end;
-      display: none;
-      min-width: 0;
-      max-width: 46vw; /* key: prevents it from stretching into the center area */
     }
 
-    .accountLayout{
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: nowrap;
-      min-width: 0;
+    .banner .banner-link:hover{
+      text-decoration: underline;
     }
 
-    .welcomeText{
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: 18px;
-      letter-spacing: -0.01em;
-      line-height: 1.1;
-
-      background: linear-gradient(
-        100deg,
-        rgba(var(--violetDeep), 0.98) 0%,
-        rgba(var(--violetDeep), 0.98) 18%,
-        rgba(var(--violet), 0.95) 40%,
-        rgba(255,255,255,0.92) 50%,
-        rgba(var(--violet), 0.95) 62%,
-        rgba(var(--violetDeep), 0.98) 82%,
-        rgba(var(--violetDeep), 0.98) 100%
-      );
-      background-size: 220% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      filter: drop-shadow(0 0 16px rgba(var(--violet),0.18));
-      animation: shimmerViolet 6.8s ease-in-out infinite;
-
-      padding: 2px 2px;
-      white-space: nowrap;
-      max-width: 240px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 0 1 auto;
-    }
-
-    @keyframes shimmerViolet{
-      0%,100%{ background-position: 0% 50%; }
-      50%{ background-position: 100% 50%; }
-    }
-
-    .actionStrip{
-      display: inline-flex;
-      align-items: center;
-      overflow: hidden;
-      border-radius: 999px;
-      border: 1px solid rgba(155,110,255,0.26);
-      background: rgba(255,255,255,0.70);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
-      max-width: 100%;
-      flex: 0 0 auto;
-    }
-
-    .stripItem{
-      appearance: none;
-      border: 0;
-      background: transparent;
-      padding: 10px 14px;
-      font-weight: 650;
-      font-size: 13px;
-      color: rgba(26,26,31,0.86);
-      text-decoration: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      user-select: none;
-      white-space: nowrap;
-      transition: background .12s ease, filter .12s ease;
-    }
-
-    .stripItem:hover{
-      background: rgba(155,110,255,0.10);
-      filter: brightness(1.02);
-    }
-
-    .stripItem.primary{
-      color: #2b1140;
-      background: linear-gradient(135deg,
-        rgba(155,110,255,0.20),
-        rgba(255,120,160,0.14),
-        rgba(155,110,255,0.10)
-      );
-    }
-
-    .stripDivider{
-      width: 1px;
-      align-self: stretch;
-      background: rgba(155,110,255,0.18);
-    }
-
-    /* IMPORTANT: move account below title earlier so it never overlaps while resizing */
-    @media (max-width: 1100px){
-      .navGrid{
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
-        padding: 10px 12px 12px;
-      }
-
-      .navTitle{
-        grid-column: 1;
-        grid-row: 1;
-        justify-self: center;
-      }
-
-      .accountDock{
-        grid-column: 1;
-        grid-row: 2;
-        justify-self: stretch;
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .accountLayout{
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column; /* welcome ABOVE strip */
-        gap: 8px;
-      }
-
-      .welcomeText{
-        max-width: 92vw;
-        text-align: center;
-      }
-
-      .actionStrip{
-        width: 100%;
-      }
-
-      .stripItem{
-        flex: 1;
-        justify-content: center;
-        padding: 11px 10px;
-      }
-    }
-
-    /* Logged out: login row */
-    .authRow{
-      margin: 12px 0 6px;
-      display:flex;
-      gap:10px;
-      justify-content:center;
-      flex-wrap:wrap;
-    }
-
-    .btn{
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      text-decoration: none;
-      font-weight: 650;
-      color: var(--btnText);
-      border: 1px solid rgba(155,110,255,0.30);
-      background:
-        linear-gradient(135deg,
-          rgba(255,120,160,0.26),
-          rgba(155,110,255,0.20),
-          rgba(255,90,210,0.14));
-      transition: transform 0.14s ease, filter 0.14s ease;
-    }
-    .btn:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-    }
-
-    main{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 14px 18px 60px;
-      text-align: center;
-    }
-
-    h1{
-      font-size: clamp(28px, 4.8vw, 54px);
-      line-height: 1.06;
-      margin: 10px 0 10px;
-      letter-spacing: -0.02em;
-    }
-
-    .sub{
-      margin: 0 auto 22px;
-      max-width: 640px;
-      color: var(--muted);
-      font-size: 16px;
-    }
-
-    .grid{
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 12px;
-    }
-
-    @media (max-width: 760px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-
-    .card{
-      text-align: left;
-      border-radius: 22px;
-      padding: 22px;
+    /* Header card */
+    .header{
+      border-radius: var(--radius);
+      padding: 32px 22px;
       border: 1px solid var(--border);
       background: var(--surface);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
       position: relative;
       overflow: hidden;
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      text-align: center;
+      margin-bottom: 24px;
     }
 
-    .card:hover{
-      transform: translateY(-2px);
-      box-shadow: 0 24px 55px rgba(22, 10, 35, 0.13);
-    }
-
-    .card::before{
+    .header::before{
       content:"";
       position:absolute;
       inset:-80px -90px auto auto;
-      width: 230px;
-      height: 230px;
+      width: 250px;
+      height: 250px;
       border-radius: 999px;
       background: radial-gradient(circle at 30% 30%,
         rgba(255,120,160,0.40),
         rgba(155,110,255,0.28),
         rgba(255,90,210,0.18),
         transparent 62%);
-      pointer-events: none;
+      pointer-events:none;
     }
 
-    .card::after{
+    .header > *{ position: relative; z-index: 1; }
+
+    .header h1{
+      margin: 0 0 10px;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      font-size: clamp(32px, 5vw, 52px);
+      letter-spacing: -0.02em;
+      color: var(--brand);
+    }
+
+    .header .sub{
+      margin: 0 auto;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* Section cards */
+    .section{
+      border-radius: var(--radius);
+      padding: 0;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .section:hover{
+      transform: translateY(-2px);
+      box-shadow: var(--shadowHover);
+      border-color: var(--primaryBorder);
+    }
+
+    .section::before{
       content:"";
       position:absolute;
-      left:-120px;
-      bottom:-140px;
-      width: 260px;
-      height: 260px;
+      left:-100px;
+      bottom:-120px;
+      width: 240px;
+      height: 240px;
       border-radius: 999px;
       background: radial-gradient(circle at 60% 40%,
-        rgba(255,80,90,0.24),
-        rgba(255,120,160,0.18),
+        rgba(255,80,90,0.18),
+        rgba(255,120,160,0.14),
         transparent 62%);
-      pointer-events: none;
+      pointer-events:none;
+      opacity: .85;
     }
 
-    .card > *{ position: relative; z-index: 1; }
+    .section > *{ position: relative; z-index: 1; }
 
-    .card.book{
+    .section-header{
+      padding: 24px 28px;
+      cursor: pointer;
+      user-select: none;
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
+      transition: background 0.2s ease;
     }
 
-    .book-content{ flex: 1; min-width: 0; }
+    .section-header:hover{
+      background: rgba(155,110,255,0.04);
+    }
 
-    .book-title{
-      margin: 0 0 6px;
-      font-size: 20px;
-      font-weight: 650;
+    .section h2{
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      font-size: clamp(22px, 3vw, 28px);
       letter-spacing: -0.01em;
+      color: var(--brand);
     }
 
-    .book-meta{
-      margin: 0 0 16px;
-      color: var(--muted);
-      font-size: 14px;
+    .section-toggle{
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: rgba(155,110,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--brand);
+      transition: transform 0.3s ease, background 0.2s ease;
     }
 
-    .book-art{
-      width: 120px;
-      height: 120px;
-      border-radius: 18px;
+    .section.open .section-toggle{
+      transform: rotate(180deg);
+      background: rgba(155,110,255,0.20);
+    }
+
+    .section-content{
+      max-height: 0;
       overflow: hidden;
-      flex: 0 0 auto;
-      background: rgba(255,255,255,0.35);
-      border: 1px solid rgba(0,0,0,0.08);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.10);
+      transition: max-height 0.4s ease;
     }
 
-    .book-art img{
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+    .section.open .section-content{
+      max-height: 5000px;
     }
 
-    @media (max-width: 520px){
-      .card.book{ flex-direction: column; align-items: stretch; }
-      .book-art{
-        width: 100%;
-        height: auto;
-        aspect-ratio: 2 / 3;
-      }
-      .book-art img{ object-position: center; }
+    .section-inner{
+      padding: 0 28px 28px 28px;
     }
 
+    .section-icon{
+      font-size: 28px;
+    }
+
+    .section p{
+      color: rgba(26,26,31,0.82);
+      line-height: 1.7;
+      margin: 0 0 14px;
+    }
+
+    .section ul{
+      margin: 14px 0;
+      padding-left: 24px;
+    }
+
+    .section li{
+      color: rgba(26,26,31,0.82);
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+
+    .section li strong{
+      color: var(--brand);
+      font-weight: 700;
+    }
+
+    /* Step cards */
+    .steps{
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .step-card{
+      display: flex;
+      gap: 16px;
+      padding: 18px;
+      border-radius: var(--radiusSm);
+      border: 1px solid rgba(140,120,160,0.16);
+      background: rgba(255,255,255,0.70);
+      box-shadow: 0 10px 26px rgba(22,10,35,0.06);
+      transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+    }
+
+    .step-card:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(22,10,35,0.10);
+      border-color: rgba(155,110,255,0.26);
+    }
+
+    .step-number{
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: linear-gradient(135deg,
+        rgba(255,120,160,0.26),
+        rgba(155,110,255,0.20),
+        rgba(255,90,210,0.14));
+      border: 1px solid rgba(155,110,255,0.30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      color: var(--brand);
+    }
+
+    .step-content h3{
+      margin: 0 0 6px;
+      font-weight: 700;
+      font-size: 17px;
+      color: var(--brand);
+    }
+
+    .step-content p{
+      margin: 0;
+      font-size: 14.5px;
+      line-height: 1.6;
+      color: rgba(26,26,31,0.78);
+    }
+
+    /* Info boxes */
+    .info-box{
+      padding: 16px 18px;
+      border-radius: var(--radiusSm);
+      margin: 16px 0;
+      border: 1px solid;
+      backdrop-filter: blur(10px);
+    }
+
+    .info-box.success{
+      background: rgba(40,167,69,0.10);
+      border-color: rgba(40,167,69,0.28);
+      color: rgba(26,26,31,0.86);
+    }
+
+    .info-box.warning{
+      background: rgba(255,193,7,0.12);
+      border-color: rgba(255,193,7,0.32);
+      color: rgba(26,26,31,0.86);
+    }
+
+    .info-box.info{
+      background: rgba(13,110,253,0.10);
+      border-color: rgba(13,110,253,0.28);
+      color: rgba(26,26,31,0.86);
+    }
+
+    .info-box strong{
+      font-weight: 700;
+    }
+
+    /* FAQ */
+    .faq-item{
+      padding: 18px;
+      border-radius: var(--radiusSm);
+      border: 1px solid rgba(140,120,160,0.16);
+      background: rgba(255,255,255,0.70);
+      margin-bottom: 12px;
+      box-shadow: 0 10px 26px rgba(22,10,35,0.06);
+    }
+
+    .faq-question{
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+
+    .faq-answer{
+      color: rgba(26,26,31,0.78);
+      line-height: 1.7;
+      font-size: 14.5px;
+    }
+
+    /* Buttons */
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--brand);
+      border: 1px solid var(--primaryBorder);
+      background: linear-gradient(135deg,
+        rgba(255,120,160,0.22),
+        rgba(155,110,255,0.18),
+        rgba(255,90,210,0.12));
+      box-shadow: 0 14px 40px rgba(22,10,35,0.10);
+      transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+      cursor: pointer;
+    }
+
+    .btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 18px 44px rgba(22,10,35,0.14);
+    }
+
+    .btn-row{
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    /* Contact card */
+    .contact-card{
+      text-align: center;
+      padding: 28px 24px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(155,110,255,0.24);
+      background: linear-gradient(135deg,
+        rgba(255,120,160,0.12),
+        rgba(155,110,255,0.10),
+        rgba(255,90,210,0.08));
+      box-shadow: var(--shadow);
+      margin-top: 28px;
+    }
+
+    .contact-card h3{
+      margin: 0 0 12px;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--brand);
+    }
+
+    .contact-card p{
+      margin: 0 0 18px;
+      color: rgba(26,26,31,0.76);
+      line-height: 1.6;
+    }
+
+    /* Link styling */
+    a:not(.btn):not(.banner-link){
+      color: rgba(85,55,190,0.92);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(155,110,255,0.30);
+      transition: border-color 0.14s ease;
+    }
+
+    a:not(.btn):not(.banner-link):hover{
+      border-bottom-color: rgba(155,110,255,0.60);
+    }
+
+    /* Footer */
     footer{
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 18px 18px 28px;
+      max-width: 1100px;
+      margin: 40px auto 0;
+      padding: 20px 18px;
       text-align: center;
       color: rgba(26,26,31,0.62);
       font-size: 13px;
+      border-top: 1px solid rgba(140,120,160,0.14);
     }
 
-    footer a{
-      color: rgba(26,26,31,0.76);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(155,110,255,0.22);
-    }
-    footer a:hover{
-      border-bottom-color: rgba(155,110,255,0.45);
-    }
-
-    @media (prefers-reduced-motion: reduce){
-      .welcomeText{ animation: none !important; }
-      #glitter{ display:none !important; }
+    @media (max-width: 768px){
+      .step-card{
+        flex-direction: column;
+        text-align: center;
+      }
+      .step-number{
+        margin: 0 auto;
+      }
     }
   </style>
 </head>
 
 <body>
+  <!-- glitter cursor canvas -->
   <canvas id="glitter" aria-hidden="true"></canvas>
 
-  <header class="banner">
-    <div class="navGrid">
-      <div class="navTitle">
-        <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+  <div class="container">
+    <!-- Banner -->
+    <header class="banner">
+      <a class="banner-link" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">
+        Ria Om Shandilya
+      </a>
+    </header>
+
+    <!-- Header -->
+    <div class="header">
+      <h1>User Guide</h1>
+      <p class="sub">Everything you need to know about verifying books, using bundles, and getting support</p>
+    </div>
+
+    <!-- Book Verification Section -->
+    <section class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h2>How to Verify Book Codes</h2>
+        <div class="section-toggle">▼</div>
       </div>
+      <div class="section-content">
+        <div class="section-inner">
+          <p>Follow these simple steps to verify your physical book and unlock book owner benefits:</p>
 
-      <div id="accountDock" class="accountDock" aria-label="Account actions">
-        <div class="accountLayout">
-          <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
+          <div class="steps">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Scan the QR Code</h3>
+                <p>Open your phone's camera and scan the QR code on your physical book. This will take you to the book code generation page.</p>
+              </div>
+            </div>
 
-          <div class="actionStrip" role="navigation" aria-label="Account navigation">
-            <a class="stripItem primary" href="./dashboard.html">Dashboard</a>
-            <div class="stripDivider" aria-hidden="true"></div>
-<a id="verifyBookLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display: none;">Verify Book</a>
-            <div class="stripDivider" aria-hidden="true"></div>
-            <a class="stripItem" href="./pricing.html">Pricing</a>
-            <div class="stripDivider" aria-hidden="true"></div>
-            <button id="logoutBtn" class="stripItem" type="button">Logout</button>
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Get Your Unique Code</h3>
+                <p>You'll be redirected to <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" target="_blank">get-book-code.html</a> where you'll receive a unique verification ID.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Click "Generate My Code"</h3>
+                <p>Click the button to generate your personal verification code. Save this code!</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h3>Go to Verification Page</h3>
+                <p>Navigate to <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/verify-book.html" target="_blank">verify-book.html</a> and paste your unique code.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">5</div>
+              <div class="step-content">
+                <h3>Upload Photo Proof</h3>
+                <p>Upload a clear photo of your book as proof of ownership. This helps us prevent fraud.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">6</div>
+              <div class="step-content">
+                <h3>Optional: Upload Video (Earn 1 Credit!)</h3>
+                <p>You can optionally upload a video review to earn <strong>1 free song credit</strong>. Please read the <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/video-consent-terms.html" target="_blank">video consent terms</a> before uploading.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box success">
+            <strong>That's it!</strong> Once verified, you'll unlock book owner pricing. The verify page will no longer be accessible as you're already verified. You'll continue to receive book owner discounts on all future purchases.
+          </div>
+
+          <div class="info-box warning">
+            <strong>Video Bonus:</strong> Videos earn you 1 credit that can be redeemed for any song. By uploading a video, you agree to the terms outlined in our <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/video-consent-terms.html" target="_blank">video consent policy</a>.
+          </div>
+
+          <div class="info-box info">
+            <strong>One-Time Verification:</strong> You only need to verify once. After verification, you permanently unlock book owner pricing and the verify page will no longer appear in your account.
+          </div>
+
+          <div style="margin-top: 20px; padding: 20px; border-radius: 16px; border: 2px solid rgba(220,38,38,0.35); background: rgba(220,38,38,0.08);">
+            <h3 style="margin: 0 0 12px; font-size: 17px; font-weight: 800; color: #991b1b;">IMPORTANT LEGAL NOTICE: Verification Policy</h3>
+            
+            <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.86); font-weight: 600;">
+              <strong>Fraudulent Photo Submissions:</strong>
+            </p>
+            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.82);">
+              By submitting a photo during book verification, you hereby affirm and represent that said photo constitutes genuine proof of physical book ownership. Any submission of false, misleading, unrelated, or fraudulent imagery shall constitute a material breach of these terms. Upon detection of such violation, we reserve the absolute right to: (i) immediately and permanently revoke your account access; (ii) terminate all licenses to purchased content without refund or compensation; and (iii) permanently delete all purchased songs and associated materials from your account. All payments made prior to such revocation shall be deemed non-refundable. This is a zero-tolerance policy and such termination shall be final and irreversible.
+            </p>
+
+            <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.86); font-weight: 600;">
+              <strong>Video Submission Policy and Violations:</strong>
+            </p>
+            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.82);">
+              Video submissions must strictly pertain to your genuine review, commentary, or discussion of the physical book. The following shall constitute grounds for immediate and permanent account termination, forfeiture of all purchases, and potential legal action: (i) submission of any obscene, pornographic, sexually explicit, or indecent material; (ii) submission of violent, threatening, harassing, or defamatory content; (iii) submission of content unrelated to book review or discussion; (iv) submission of videos not featuring the submitting user; (v) submission of copyrighted material without proper authorization; or (vi) any content that violates applicable laws or regulations. We take the safety and integrity of our community with the utmost seriousness. Any violation of this policy will result in permanent account ban, forfeiture of all purchased content without refund, and we reserve the right to pursue all available legal remedies including but not limited to civil and criminal prosecution where applicable under local, state, federal, or international law.
+            </p>
+
+            <p style="margin: 0; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.86); font-weight: 600;">
+              <strong>Community Safety Commitment:</strong>
+            </p>
+            <p style="margin: 0; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.82);">
+              We are committed to maintaining a safe, respectful, and lawful community for all users. By using our verification system, you acknowledge that you have read, understood, and agree to comply with these terms. Violations compromise the safety and trust of our entire user community and will be prosecuted to the fullest extent permitted by law. We maintain comprehensive logs and records of all submissions which may be provided to law enforcement authorities upon request or as required by law.
+            </p>
           </div>
         </div>
       </div>
-    </div>
-  </header>
+    </section>
 
-  <main>
-    <h1>Pick a book</h1>
-    <p class="sub">Choose a mood, then pick a song inside.</p>
-
-    <div class="authRow" id="authRow">
-      <a id="loginLink" class="btn" href="./login.html">Login</a>
-    </div>
-
-    <section class="grid">
-      <div class="card book soulful">
-        <div class="book-content">
-          <h2 class="book-title">1. Soulful Bollywood Melodies</h2>
-          <p class="book-meta">Slow, expressive pieces</p>
-          <a class="btn" href="soulfulindex.html">Open</a>
-        </div>
-        <div class="book-art">
-          <img src="Soulful.jpg" alt="Soulful book cover">
-        </div>
+    <!-- How Bundles Work Section -->
+    <section class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h2>How Bundles Work</h2>
+        <div class="section-toggle">▼</div>
       </div>
+      <div class="section-content">
+        <div class="section-inner">
+          <p>Bundles are a cost-effective way to unlock multiple songs at once. Here's everything you need to know:</p>
 
-      <div class="card book peppy">
-        <div class="book-content">
-          <h2 class="book-title">2. Peppy Bollywood Melodies</h2>
-          <p class="book-meta">Upbeat, energetic tunes</p>
-          <a class="btn" href="peppyindex.html">Open</a>
-        </div>
-        <div class="book-art">
-          <img src="peppy.jpg" alt="Peppy book cover">
-        </div>
-      </div>
+          <div class="info-box info">
+            <strong>What is a bundle?</strong><br>
+            A bundle gives you <strong>5 song credits</strong> at a discounted price. Each credit unlocks <strong>1 song</strong> of your choice.
+          </div>
 
-      <div class="card book romantic">
-        <div class="book-content">
-          <h2 class="book-title">3. Romantic Bollywood Melodies</h2>
-          <p class="book-meta">Warm, lyrical songs</p>
-          <a class="btn" href="romanticindex.html">Open</a>
-        </div>
-        <div class="book-art">
-          <img src="romantic.jpg" alt="Romantic book cover">
-        </div>
-      </div>
+          <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">Key Features:</h3>
+          <ul>
+            <li><strong>Choose ANY song:</strong> Credits work across all books and all songs. No restrictions!</li>
+            <li><strong>No expiration:</strong> Your credits never expire. Use them whenever you want.</li>
+            <li><strong>Available to everyone:</strong> Both book owners and non-book owners can purchase bundles.</li>
+            <li><strong>Best value:</strong> Bundles offer the lowest per-song price compared to individual purchases.</li>
+            <li><strong>Book owner discount:</strong> Book owners get bundles at a discounted rate compared to non-book owners.</li>
+          </ul>
 
-      <div class="card book classic">
-        <div class="book-content">
-          <h2 class="book-title">4. Classic Bollywood Melodies</h2>
-          <p class="book-meta">Golden-era favorites</p>
-          <a class="btn" href="classicindex.html">Open</a>
-        </div>
-        <div class="book-art">
-          <img src="classic.jpg" alt="Classic book cover">
+          <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">How to Use Your Credits:</h3>
+          <div class="steps">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Purchase a Bundle</h3>
+                <p>Buy a 5-song bundle from the main site or your dashboard. Book owners get a discounted price.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Credits Added Automatically</h3>
+                <p>Your 5 credits are instantly added to your account. Check your dashboard to see your balance.</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Choose Any Song</h3>
+                <p>Browse any book and select any song you like. No restrictions!</p>
+              </div>
+            </div>
+
+            <div class="step-card">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h3>Redeem with Credit</h3>
+                <p>At checkout, choose "Use Credit" instead of paying. One credit will be deducted automatically.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box success">
+            <strong>Pricing Example (INR):</strong><br>
+            Book Owner Bundle: ₹550 for 5 songs (₹110 per song)<br>
+            Non-Book Owner Bundle: Higher price, but still better value than individual purchases<br>
+            <strong>Book owners save even more!</strong>
+          </div>
         </div>
       </div>
     </section>
-  </main>
 
-  <footer>
-    <div>© <span id="year"></span> Ria Om Shandilya. All rights reserved.</div>
-    <div style="margin-top:6px;">
-      Contact: <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a>
+    <!-- FAQ Section -->
+    <section class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h2>Frequently Asked Questions</h2>
+        <div class="section-toggle">▼</div>
+      </div>
+      <div class="section-content">
+        <div class="section-inner">
+          <div class="faq-item">
+            <div class="faq-question">Q: How long does book verification take?</div>
+            <div class="faq-answer">A: Book verification is usually instant! Once you submit your code and photo, the system automatically verifies your book and updates your account immediately.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Can I verify multiple books?</div>
+            <div class="faq-answer">A: You only need to verify once. After your first verification, you permanently unlock book owner pricing and the verify page will no longer be accessible. You don't need to verify additional books.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: What if my QR code doesn't work?</div>
+            <div class="faq-answer">A: If the QR code isn't scanning, you can manually visit the book code generation page and follow the steps. If you continue to have issues, contact support.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Do bundle credits expire?</div>
+            <div class="faq-answer">A: No! Your credits never expire. Use them whenever you're ready to unlock new songs.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Can I use credits for any song in any book?</div>
+            <div class="faq-answer">A: Absolutely! Credits work across all four books with no restrictions. Mix and match songs from different books as you like.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Can non-book owners purchase bundles?</div>
+            <div class="faq-answer">A: Yes! Both book owners and non-book owners can purchase bundles. The difference is that book owners get bundles at a discounted price.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: What happens to my credits if I buy more songs individually?</div>
+            <div class="faq-answer">A: Your credits stay in your account. You can choose whether to use a credit or pay for each song individually.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: How do I earn the video bonus credit?</div>
+            <div class="faq-answer">A: During book verification, you'll have the option to upload a video review. If you do, you'll receive 1 free credit (worth 1 song). Make sure to read the <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/video-consent-terms.html" target="_blank">video consent terms</a> first.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Can I get a refund on bundle credits?</div>
+            <div class="faq-answer">A: Bundle purchases are final and non-refundable. However, since credits never expire, you can use them at your own pace.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: What's the difference between book owner and non-book owner pricing?</div>
+            <div class="faq-answer">A: Book owners get discounted pricing on both individual songs AND bundles. Non-book owners pay standard pricing but can still purchase bundles at a higher price. See the <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/pricing.html">pricing page</a> for details.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Can I share my account with friends or family?</div>
+            <div class="faq-answer">A: Each account is personal and tied to one email address. Account sharing is not permitted as it violates our terms of service.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: How do I track my progress on songs?</div>
+            <div class="faq-answer">A: Visit your dashboard to see all your purchased songs. You can mark each song as "Not Started," "In Progress," or "Completed" to track your learning journey.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: What payment methods do you accept?</div>
+            <div class="faq-answer">A: We use Razorpay as our payment processor, which accepts all major credit/debit cards, UPI (for Indian users), net banking, and various wallets.</div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">Q: Will I lose book owner pricing if I don't verify all my books?</div>
+            <div class="faq-answer">A: No! Once you verify any book, you permanently unlock book owner pricing. You don't need to verify multiple books to maintain your discount.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Support Section -->
+    <section class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h2>Contact Support</h2>
+        <div class="section-toggle">▼</div>
+      </div>
+      <div class="section-content">
+        <div class="section-inner">
+          <div class="contact-card">
+            <h3>Need Help?</h3>
+            <p>Can't find what you're looking for? Our support team is here to help!</p>
+            <div class="btn-row">
+              <a class="btn" href="https://riashandilya-svg.github.io/riaomshandilya/connect.html" target="_blank">
+                Contact Support
+              </a>
+            </div>
+            <p style="margin-top: 16px; font-size: 13px; color: rgba(26,26,31,0.64);">
+              We typically respond within 24 hours
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Links -->
+    <div class="btn-row">
+      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">Home</a>
+      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html">Dashboard</a>
+      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/verify-book.html">Verify Book</a>
+      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/pricing.html">Pricing</a>
     </div>
-  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Footer -->
+    <footer>
+      <div>© <span id="year"></span> Ria Om Shandilya. All rights reserved.</div>
+      <div style="margin-top:6px;">
+        Questions? <a href="https://riashandilya-svg.github.io/riaomshandilya/connect.html" target="_blank">Contact us</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Glitter cursor (same as your other pages) -->
   <script>
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    function setYear(){
-      const el = document.getElementById("year");
-      if (el) el.textContent = new Date().getFullYear();
-    }
-
-    async function renderAuthUI(){
-      try{
-        const { data: { session } } = await sb.auth.getSession();
-
-        const accountDock = document.getElementById("accountDock");
-        const welcomeText = document.getElementById("welcomeText");
-        const authRow = document.getElementById("authRow");
-        const loginLink = document.getElementById("loginLink");
-
-        if (session && session.user) {
-          const userId = session.user.id;
-
-          // FIXED: Changed from "profile" to "profiles"
-const { data: prof, error } = await sb
-  .from("profiles")
-  .select("display_name, setup_completed, is_book_owner")
-  .eq("id", userId)
-  .maybeSingle();
-
-   if (error && error.code !== 'PGRST116') {
-  console.log("profile fetch error:", error);
-}
-
-          if (prof && prof.setup_completed === false) {
-            window.location.href = "./setup.html";
-            return;
-          }
-
-          const name = (prof && prof.display_name && String(prof.display_name).trim())
-            ? String(prof.display_name).trim()
-            : "";
-
-          welcomeText.textContent = name ? `Welcome, ${name}` : "Welcome";
-
-          accountDock.style.display = "block";
-          authRow.style.display = "none";
-          // Show or hide Verify Book link based on is_book_owner status
-const verifyBookLink = document.getElementById("verifyBookLink");
-if (verifyBookLink) {
-  if (prof && prof.is_book_owner === true) {
-    verifyBookLink.style.display = "none"; // Hide if already verified
-  } else {
-    verifyBookLink.style.display = "inline-flex"; // Show if not verified
-  }
-}
-        } else {
-          accountDock.style.display = "none";
-          authRow.style.display = "flex";
-          if (loginLink) loginLink.style.display = "inline-flex";
-        }
-      } catch (e){
-        console.log("renderAuthUI error:", e);
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      setYear();
-
-      const logoutBtn = document.getElementById("logoutBtn");
-      if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
-          await sb.auth.signOut();
-          await renderAuthUI();
-        });
-      }
-
-      sb.auth.onAuthStateChange(() => {
-        renderAuthUI();
-      });
-
-      renderAuthUI();
-      setTimeout(renderAuthUI, 800);
-    });
-  </script>
-
-  <script>
-    /* ===== Cursor glitter (purple/violet) ===== */
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if(prefersReduced) return;
 
       const canvas = document.getElementById('glitter');
       const ctx = canvas.getContext('2d', { alpha: true });
 
       function resize(){
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.floor(window.innerWidth * dpr);
-        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
+        canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
         canvas.style.width = window.innerWidth + 'px';
         canvas.style.height = window.innerHeight + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
       }
-      window.addEventListener('resize', resize, { passive:true });
+      window.addEventListener('resize', resize);
       resize();
 
       const particles = [];
       const MAX = 320;
 
       function addSpark(x, y, intensity=1){
+        if(prefersReduced) return;
+
         const count = Math.floor(7 * intensity);
         for(let i=0;i<count;i++){
           if(particles.length > MAX) particles.shift();
+
           const angle = Math.random() * Math.PI * 2;
           const speed = (0.30 + Math.random() * 2.0) * intensity;
 
@@ -639,8 +823,7 @@ if (verifyBookLink) {
             life: 34 + Math.random() * 30,
             size: 1.0 + Math.random() * 2.8,
             tw: Math.random() * Math.PI * 2,
-            alpha: 0.52 + Math.random() * 0.34,
-            hue: Math.random() < 0.65 ? "violet" : "pink"
+            alpha: 0.52 + Math.random() * 0.34
           });
         }
       }
@@ -677,18 +860,13 @@ if (verifyBookLink) {
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
 
-          const violet = `rgba(155, 110, 255, ${a})`;
-          const pink   = `rgba(255, 120, 160, ${a * 0.85})`;
-          const core   = `rgba(255, 255, 255, ${a * 0.55})`;
-          const dot = (p.hue === "pink") ? pink : violet;
-
           ctx.beginPath();
-          ctx.fillStyle = dot;
+          ctx.fillStyle = `rgba(255, 191, 47, ${a})`;
           ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
           ctx.fill();
 
           ctx.beginPath();
-          ctx.fillStyle = core;
+          ctx.fillStyle = `rgba(255, 255, 255, ${a * 0.55})`;
           ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
           ctx.fill();
 
@@ -696,8 +874,8 @@ if (verifyBookLink) {
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.tw * 0.35);
-            ctx.globalAlpha = a * 0.92;
-            ctx.strokeStyle = `rgba(210, 195, 255, ${a})`;
+            ctx.globalAlpha = a * 0.90;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
@@ -710,6 +888,23 @@ if (verifyBookLink) {
       }
       tick();
     })();
+
+    // Set current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Toggle accordion sections
+    function toggleSection(header) {
+      const section = header.parentElement;
+      section.classList.toggle('open');
+    }
+
+    // Open first section by default
+    document.addEventListener('DOMContentLoaded', function() {
+      const firstSection = document.querySelector('.section');
+      if (firstSection) {
+        firstSection.classList.add('open');
+      }
+    });
   </script>
 </body>
 </html>
