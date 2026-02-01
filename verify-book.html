@@ -224,6 +224,71 @@
       text-decoration: underline;
     }
 
+    .legal-warning {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(220,38,38,0.35);
+      background: rgba(220,38,38,0.06);
+    }
+
+    .legal-warning-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #991b1b;
+    }
+
+    .legal-warning-text {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(26,26,31,0.86);
+    }
+
+    .video-legal-warning {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(220,38,38,0.35);
+      background: rgba(220,38,38,0.06);
+    }
+
+    .checkbox-group {
+      margin: 20px 0;
+      padding: 16px;
+      border-radius: 10px;
+      background: rgba(155, 110, 255, 0.05);
+      border: 1px solid rgba(155, 110, 255, 0.2);
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item label {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
     .btn {
       width: 100%;
       padding: 16px;
@@ -356,7 +421,7 @@
           <div style="background: rgba(155, 110, 255, 0.05); border: 1px solid rgba(155, 110, 255, 0.2); border-radius: 10px; padding: 16px; margin: 16px 0; font-size: 14px; line-height: 1.6;">
             <p style="margin: 0 0 8px; font-weight: 600; color: var(--primary);">📱 Don't have your code handy?</p>
             <p style="margin: 0 0 8px;">• <strong>Scan the QR code</strong> provided inside your physical book to get your unique code</p>
-            <p style="margin: 0;">• <strong>Book doesn't have a QR code?</strong> Email us at <a href="/cdn-cgi/l/email-protection#f3819a929c9e809b929d979a9f8a92b3949e929a9fdd909c9e" style="color: var(--primary); text-decoration: none; font-weight: 600;"><span class="__cf_email__" data-cfemail="07756e66686a746f6669636e6b7e6647606a666e6b2964686a">[email&#160;protected]</span></a> with a photo of your purchase receipt and we'll give you access</p>
+            <p style="margin: 0;">• <strong>Book doesn't have a QR code?</strong> Email us at <a href="mailto:riaomshandilya@gmail.com" style="color: var(--primary); text-decoration: none; font-weight: 600;">riaomshandilya@gmail.com</a> with a photo of your purchase receipt and we'll give you access</p>
           </div>
           
           <button type="button" class="btn" id="verifyCodeBtn">
@@ -386,6 +451,13 @@
             <div id="photoName" class="file-name"></div>
           </div>
 
+          <div class="legal-warning">
+            <p class="legal-warning-title">⚠️ IMPORTANT LEGAL NOTICE: Photo Submission</p>
+            <p class="legal-warning-text">
+              By submitting a photo, you affirm that it constitutes genuine proof of physical book ownership. Any submission of false, misleading, unrelated, or fraudulent imagery shall constitute a material breach of these terms. Upon detection of such violation, we reserve the absolute right to: (i) immediately and permanently revoke your account access; (ii) terminate all licenses to purchased content without refund or compensation; and (iii) permanently delete all purchased songs and associated materials from your account. All payments made prior to such revocation shall be deemed non-refundable. This is a zero-tolerance policy and such termination shall be final and irreversible.
+            </p>
+          </div>
+
           <div class="bonus-section">
             <h3>🎁 Bonus: Get 1 Free Song!</h3>
             <p>Upload a short video of you enjoying the book and get 1 free song credit instantly!<a href="./video-consent-terms.html" class="asterisk" target="_blank">*</a></p>
@@ -404,8 +476,28 @@
             <div id="videoName" class="file-name"></div>
           </div>
 
+          <div id="videoWarningSection" class="hidden">
+            <div class="video-legal-warning">
+              <p class="legal-warning-title">⚠️ IMPORTANT LEGAL NOTICE: Video Submission</p>
+              <p class="legal-warning-text">
+                Video submissions must strictly pertain to your genuine review, commentary, or discussion of the physical book. The following shall constitute grounds for immediate and permanent account termination, forfeiture of all purchases, and potential legal action: (i) submission of any obscene, pornographic, sexually explicit, or indecent material; (ii) submission of violent, threatening, harassing, or defamatory content; (iii) submission of content unrelated to book review or discussion; (iv) submission of videos not featuring the submitting user; (v) submission of copyrighted material without proper authorization; or (vi) any content that violates applicable laws or regulations. We take the safety and integrity of our community with the utmost seriousness. Any violation of this policy will result in permanent account ban, forfeiture of all purchased content without refund, and we reserve the right to pursue all available legal remedies including but not limited to civil and criminal prosecution where applicable under local, state, federal, or international law.
+              </p>
+            </div>
+          </div>
+
           <div class="terms-notice">
             📹 Uploading a video? Please take a moment to <a href="./video-consent-terms.html" target="_blank">read our video usage terms</a>
+          </div>
+
+          <div class="checkbox-group">
+            <div class="checkbox-item">
+              <input type="checkbox" id="photoConsent" required>
+              <label for="photoConsent">I confirm that the photo I am uploading is genuine proof of my physical book ownership, and I accept the terms and conditions regarding photo submissions.</label>
+            </div>
+            <div class="checkbox-item" id="videoConsentItem" style="display: none;">
+              <input type="checkbox" id="videoConsent">
+              <label for="videoConsent">I confirm that my video is appropriate, features me discussing the book, and I accept all terms regarding video submissions including potential public usage as outlined in the video consent terms.</label>
+            </div>
           </div>
 
           <button type="submit" class="btn" id="submitBtn">
@@ -417,7 +509,7 @@
     </div>
   </main>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
@@ -447,7 +539,7 @@
           return;
         }
 
-        // Check if already verified (has completed verification)
+        // Check if already verified
         const { data: profile } = await window.supabase
           .from('profiles')
           .select('is_book_owner')
@@ -459,7 +551,6 @@
           return;
         }
 
-        // Not verified yet - show the form (even if they have unused codes)
         authCheck.classList.add('hidden');
         verificationForm.classList.remove('hidden');
       } catch (err) {
@@ -490,7 +581,6 @@
           throw new Error('Not authenticated');
         }
 
-        // Check if THIS SPECIFIC CODE exists and is unused
         const { data: codeData, error: codeError } = await window.supabase
           .from('book_verification_codes')
           .select('*')
@@ -505,7 +595,6 @@
           throw new Error('This code has already been used by someone else.');
         }
 
-        // Code is valid and unused!
         verifiedCode = code;
         verifiedBookType = codeData.book_name;
 
@@ -547,6 +636,16 @@
         document.getElementById('videoLabel').classList.add('has-file');
         document.getElementById('videoText').textContent = '✓ Video selected';
         document.getElementById('videoName').textContent = videoFile.name;
+        
+        // Show video warning and consent checkbox
+        document.getElementById('videoWarningSection').classList.remove('hidden');
+        document.getElementById('videoConsentItem').style.display = 'flex';
+        document.getElementById('videoConsent').required = true;
+      } else {
+        // Hide video warning and consent checkbox if no video
+        document.getElementById('videoWarningSection').classList.add('hidden');
+        document.getElementById('videoConsentItem').style.display = 'none';
+        document.getElementById('videoConsent').required = false;
       }
     });
 
@@ -564,6 +663,18 @@
 
       if (!photoFile) {
         showMessage('Please upload a photo of your book', 'error');
+        return;
+      }
+
+      // Check photo consent
+      if (!document.getElementById('photoConsent').checked) {
+        showMessage('Please accept the photo submission terms', 'error');
+        return;
+      }
+
+      // Check video consent if video is uploaded
+      if (videoFile && !document.getElementById('videoConsent').checked) {
+        showMessage('Please accept the video submission terms', 'error');
         return;
       }
 
@@ -749,31 +860,12 @@
     });
     
     function showMessage(text, type) {
-  const messageArea = document.getElementById('messageArea');
-  messageArea.className = type === 'error' ? 'error-text' : 'success-text';
-  messageArea.innerHTML = '<p>' + text + '</p>';
-}
+      const messageArea = document.getElementById('messageArea');
+      messageArea.className = type === 'error' ? 'error-text' : 'success-text';
+      messageArea.innerHTML = '<p>' + text + '</p>';
+    }
 
-   checkAuth();
-
-// Check if we have a verified code from before (in case of page refresh)
-const savedCode = sessionStorage.getItem('verifiedCode');
-const savedBookType = sessionStorage.getItem('verifiedBookType');
-if (savedCode && savedBookType) {
-  verifiedCode = savedCode;
-  verifiedBookType = savedBookType;
-  
-  // Skip code step and show the form
-  document.getElementById('codeStep').classList.add('hidden');
-  document.getElementById('bookForm').classList.remove('hidden');
-  
-  const bookNames = {
-    'soulful': 'Soulful Bollywood Melodies',
-    'peppy': 'Peppy Bollywood Melodies',
-    'romantic': 'Romantic Bollywood Melodies',
-    'classic': 'Classic Bollywood Melodies'
-  };
-  
-  document.getElementById('verifiedCodeDisplay').innerHTML = '<div class="verified-info">✓ Code Verified: ' + (bookNames[savedBookType] || savedBookType) + '</div>';
-}
-    </script>
+    checkAuth();
+  </script>
+</body>
+</html>
