@@ -6,71 +6,68 @@
     <title>Signing you in...</title>
   </head>
   <body>
-    Signing you in...
-
+    <div id="msg">Signing you in...</div>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+      
       (async () => {
-        const url = new URL(window.location.href);
-
-        // Params can be in query (?x=y) or hash (#x=y)
-        const q = url.searchParams;
-        const h = new URLSearchParams((url.hash || "").replace(/^#/, ""));
-
-        const code = q.get("code") || h.get("code");
-
-        const token_hash = q.get("token_hash") || h.get("token_hash");
-        const type = q.get("type") || h.get("type") || "magiclink";
-
-        const access_token = q.get("access_token") || h.get("access_token");
-        const refresh_token = q.get("refresh_token") || h.get("refresh_token");
-
-        let error = null;
-
-        if (code) {
-          const res = await sb.auth.exchangeCodeForSession(window.location.href);
-          error = res.error;
-        } else if (token_hash) {
-          const res = await sb.auth.verifyOtp({ type, token_hash });
-          error = res.error;
-        } else if (access_token && refresh_token) {
-          const res = await sb.auth.setSession({ access_token, refresh_token });
-          error = res.error;
-        } else {
-          // If user lands here without tokens/params, send them to login
-          window.location.href = "../login.html";
-          return;
+        const msg = document.getElementById("msg");
+        
+        try {
+          const url = new URL(window.location.href);
+          const q = url.searchParams;
+          const h = new URLSearchParams((url.hash || "").replace(/^#/, ""));
+          
+          const code = q.get("code") || h.get("code");
+          const token_hash = q.get("token_hash") || h.get("token_hash");
+          const type = q.get("type") || h.get("type") || "magiclink";
+          const access_token = q.get("access_token") || h.get("access_token");
+          const refresh_token = q.get("refresh_token") || h.get("refresh_token");
+          
+          let error = null;
+          
+          if (code) {
+            msg.textContent = "Finishing login...";
+            const res = await sb.auth.exchangeCodeForSession(code);
+            error = res.error;
+          } else if (token_hash) {
+            msg.textContent = "Verifying...";
+            const res = await sb.auth.verifyOtp({ type, token_hash });
+            error = res.error;
+          } else if (access_token && refresh_token) {
+            msg.textContent = "Setting session...";
+            const res = await sb.auth.setSession({ access_token, refresh_token });
+            error = res.error;
+          } else {
+            // No auth params found
+            msg.textContent = "No login credentials found. Redirecting...";
+            setTimeout(() => {
+              window.location.href = "../login.html";
+            }, 1500);
+            return;
+          }
+          
+          if (error) {
+            msg.textContent = "Login failed: " + error.message;
+            console.error("Auth error:", error);
+            return;
+          }
+          
+          msg.textContent = "Login successful! Redirecting...";
+          // Small delay to ensure session is saved
+          setTimeout(() => {
+            window.location.href = "../index.html";
+          }, 500);
+          
+        } catch (err) {
+          msg.textContent = "Error: " + err.message;
+          console.error("Callback error:", err);
         }
-
-        if (error) {
-          document.body.innerText = "Login failed: " + error.message;
-          return;
-        }
-
-        window.location.href = "../index.html";
       })();
     </script>
-    <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-
-<script type="module">
-  // This page runs when user clicks the magic link.
-  // It exchanges the URL code for a session and saves it.
-  const { data, error } = await window.supabase.auth.exchangeCodeForSession(window.location.href);
-
-  const msg = document.getElementById("msg");
-
-  if (error) {
-    msg.textContent = "Login failed: " + error.message;
-  } else {
-    msg.textContent = "Login success. Redirecting...";
-    // Go to any page you want after login:
-    window.location.href = "/classicbollywoodmelodies/login.html";
-  }
-</script>
-<div id="msg">Finishing login...</div>
   </body>
 </html>
