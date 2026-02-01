@@ -215,7 +215,6 @@
 <body>
   <div id="status">Checking login...</div>
   <header class="banner">
-    <!-- back to your main portfolio page -->
     <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
   </header>
 
@@ -227,84 +226,82 @@
       <label for="email">Email</label>
       <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
 
-    <div class="row">
-  <button id="discord" class="btn" type="button">Continue with Discord</button>
-</div>
+      <div class="row">
+        <button id="discord" class="btn" type="button">Continue with Discord</button>
+      </div>
 
-<div class="row">
-  <button id="send" class="btn" type="button">Send login link</button>
-  <a class="btn secondary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">Back to app</a>
-</div>
-
+      <div class="row">
+        <button id="send" class="btn" type="button">Send login link</button>
+        <a class="btn secondary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">Back to app</a>
+      </div>
 
       <div id="msg" class="msg"></div>
-      <div class="helper">Tip: check Spam/Promotions if you don’t see the email.</div>
+      <div class="helper">Tip: check Spam/Promotions if you don't see the email.</div>
     </section>
   </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
- <script>
-  const msg = document.getElementById("msg");
-  const sendBtn = document.getElementById("send");
-  const discordBtn = document.getElementById("discord");
+  <!-- 1) Load the Supabase CDN library first -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- 2) Initialize ONE client via supabaseClient.js -->
+  <script src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
 
-  discordBtn.addEventListener("click", async () => {
-    msg.textContent = "Opening Discord login…";
+  <!-- 3) All app logic runs after the client is ready -->
+  <script>
+    const msg = document.getElementById("msg");
+    const sendBtn = document.getElementById("send");
+    const discordBtn = document.getElementById("discord");
+    const status = document.getElementById("status");
 
-    const { data, error } = await sb.auth.signInWithOAuth({
-      provider: "discord",
-      options: {
-        redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+    // Use the single client that supabaseClient.js put on window.supabase
+    const sb = window.supabase;
+
+    // Check session on load
+    (async () => {
+      const { data } = await sb.auth.getSession();
+      status.textContent = data.session
+        ? "Logged in as: " + data.session.user.email
+        : "Not logged in";
+    })();
+
+    discordBtn.addEventListener("click", async () => {
+      msg.textContent = "Opening Discord login…";
+
+      const { data, error } = await sb.auth.signInWithOAuth({
+        provider: "discord",
+        options: {
+          redirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+        }
+      });
+
+      if (error) {
+        msg.textContent = "Discord error: " + error.message;
+        return;
       }
+
+      if (data?.url) window.location.href = data.url;
     });
 
-    if (error) {
-      msg.textContent = "Discord error: " + error.message;
-      console.log(error);
-      return;
-    }
-
-    if (data?.url) window.location.href = data.url;
-  });
-
-  sendBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value.trim();
-    if (!email) {
-      msg.textContent = "Please enter your email.";
-      return;
-    }
-
-    msg.textContent = "Sending login link…";
-
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+    sendBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        msg.textContent = "Please enter your email.";
+        return;
       }
+
+      msg.textContent = "Sending login link…";
+
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: "https://riashandilya-svg.github.io/classicbollywoodmelodies/auth/callback.html"
+        }
+      });
+
+      msg.textContent = error
+        ? ("Email error: " + error.message)
+        : "Sent! Check your inbox (and Spam/Promotions).";
     });
-
-    msg.textContent = error
-      ? ("Email error: " + error.message)
-      : "Sent! Check your inbox (and Spam/Promotions).";
-  });
-</script>
-  
-<script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-<script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-
-<script type="module">
-  const { data } = await window.supabase.auth.getSession();
-  const status = document.getElementById("status");
-
-  if (data.session) {
-    status.textContent = "Logged in as: " + data.session.user.email;
-  } else {
-    status.textContent = "Not logged in";
-  }
-</script>
+  </script>
 </body>
 </html>
