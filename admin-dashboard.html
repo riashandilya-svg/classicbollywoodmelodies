@@ -474,7 +474,6 @@
       color: var(--error);
     }
 
-    /* User info block in purchases/bundles */
     .user-info {
       display: flex;
       flex-direction: column;
@@ -489,7 +488,6 @@
       color: var(--muted);
     }
 
-    /* Song tags */
     .song-tags {
       display: flex;
       flex-wrap: wrap;
@@ -504,7 +502,6 @@
       font-weight: 600;
     }
 
-    /* Photo thumbnail */
     .photo-thumb {
       width: 48px;
       height: 48px;
@@ -519,7 +516,6 @@
       transform: scale(1.08);
     }
 
-    /* Video play button */
     .video-play-btn {
       display: inline-flex;
       align-items: center;
@@ -539,7 +535,6 @@
       transform: translateY(-1px);
     }
 
-    /* Media modal (photo + video) */
     .media-modal-overlay {
       position: fixed;
       inset: 0;
@@ -566,7 +561,6 @@
       background: #000;
     }
 
-    /* Sort arrows on th */
     th {
       user-select: none;
     }
@@ -1059,7 +1053,6 @@
     let allBundles = [];
     let userToDelete = null;
 
-    // ─── Helper: build a name+email block ─────────────────
     function userInfoHTML(name, email) {
       return `<div class="user-info">
                 <span class="user-name">${name || 'N/A'}</span>
@@ -1067,24 +1060,20 @@
               </div>`;
     }
 
-    // ─── Helper: look up a profile by user_id ──────────────
     function getProfile(userId) {
       return allUsers.find(u => u.id === userId);
     }
 
-    // ─── Helper: get purchased song IDs for a user ─────────
     function getSongsForUser(userId) {
       return allPurchases
         .filter(p => p.user_id === userId && p.song_id !== 'bundle_credits')
         .map(p => p.song_id);
     }
 
-    // ─── Helper: check if user has a bundle ─────────────────
     function hasBundleForUser(userId) {
       return allBundles.some(b => b.user_id === userId);
     }
 
-    // ─── Helper: get photo URL from storage (signed) ──────
     async function getPhotoUrl(userId) {
       try {
         const { data: files, error } = await window.supabase.storage
@@ -1099,7 +1088,6 @@
       } catch (e) { return null; }
     }
 
-    // ─── Helper: get video URL from storage (signed) ───────
     async function getVideoUrl(userId) {
       try {
         const { data: files, error } = await window.supabase.storage
@@ -1114,7 +1102,6 @@
       } catch (e) { return null; }
     }
 
-    // Cache: userId -> url | null
     let photoCache = {};
     let videoCache = {};
 
@@ -1127,7 +1114,6 @@
       }
     }
 
-    // ─── Auth check ─────────────────────────────────────────
     async function checkAdminAccess() {
       try {
         const { data: { session }, error } = await window.supabase.auth.getSession();
@@ -1162,7 +1148,6 @@
       }
     }
 
-    // ─── Stats ──────────────────────────────────────────────
     async function loadStats() {
       try {
         const { data: allProfiles } = await window.supabase.from('profiles').select('id, email, is_book_owner');
@@ -1186,7 +1171,6 @@
       } catch (e) { console.error('Stats error:', e); }
     }
 
-    // ─── Users ──────────────────────────────────────────────
     async function loadUsers() {
       try {
         const tbody = document.getElementById('usersTableBody');
@@ -1266,7 +1250,6 @@
       renderUsers(filtered);
     }
 
-    // ─── Codes ──────────────────────────────────────────────
     async function loadCodes() {
       try {
         const tbody = document.getElementById('codesTableBody');
@@ -1323,7 +1306,6 @@
       renderCodes(filtered);
     }
 
-    // ─── Purchases (data + render split) ────────────────────
     async function loadPurchasesData() {
       const { data, error } = await window.supabase
         .from('purchases').select('*').order('created_at', { ascending: false });
@@ -1383,7 +1365,6 @@
       renderPurchases(filtered);
     }
 
-    // ─── Bundles (data + render split) ──────────────────────
     async function loadBundlesData() {
       const { data, error } = await window.supabase
         .from('purchases').select('*').eq('song_id', 'pack:5').order('created_at', { ascending: false });
@@ -1440,7 +1421,10 @@
       renderBundles(filtered);
     }
 
-    // ─── Pricing Management ─────────────────────────────────
+    // ═══════════════════════════════════════════════════════
+    // PRICING MANAGEMENT
+    // ═══════════════════════════════════════════════════════
+    
     async function loadPricingData() {
       try {
         const { data, error } = await window.supabase
@@ -1564,7 +1548,6 @@
       }
     }
 
-    // ─── Tab switching ──────────────────────────────────────
     function switchTab(tabName, btn) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
@@ -1577,7 +1560,6 @@
       }
     }
 
-    // ─── Media modal (photo + video) ───────────────────────
     function openMediaModal(type, url) {
       const overlay = document.getElementById('mediaModal');
       const img = document.getElementById('mediaModalImg');
@@ -1603,7 +1585,6 @@
       vid.src = '';
     }
 
-    // ─── Sorting system ─────────────────────────────────────
     let sortState = {
       users:     { col: 'joined',    dir: 'desc' },
       codes:     { col: 'generated', dir: 'desc' },
@@ -1684,7 +1665,6 @@
       });
     }
 
-    // ─── Delete modal ───────────────────────────────────────
     function openDeleteModal(user) {
       if (ADMIN_EMAILS.includes(user.email)) {
         alert('⛔ Cannot delete admin accounts!\n\nAdmin emails are protected and cannot be deleted.');
@@ -1769,7 +1749,6 @@
       }
     }
 
-    // ─── Init ───────────────────────────────────────────────
     checkAdminAccess();
   </script>
 </body>
