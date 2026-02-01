@@ -347,18 +347,18 @@ async function detectCurrency() {
         console.error("[PAYWALL] ❌ No order ID found!");
         throw new Error("Missing order ID from payment");
       }
-
+  
       const verifyParams = {
         productId: productId,
         razorpay_payment_id: response.razorpay_payment_id,
         razorpay_order_id: razorpayOrderId,
         razorpay_signature: response.razorpay_signature,
-        currency: orderData.currency,
-        amount: orderData.amount
+        currency: orderData.currency,  // ✅ ADD THIS
+        amount: orderData.amount        // ✅ ADD THIS
       };
-
+  
       console.log('[PAYWALL] ✅ Verifying payment:', verifyParams);
-
+  
       const url = `${SUPABASE_FUNCTIONS_BASE}/verify-razorpay-payment`;
       const res = await fetch(url, {
         method: "POST",
@@ -369,14 +369,14 @@ async function detectCurrency() {
         },
         body: JSON.stringify(verifyParams),
       });
-
+  
       const data = await res.json();
       console.log('[PAYWALL] 📦 verify-razorpay-payment raw response:', res.status, data);
-
+  
       if (!res.ok) {
         throw new Error(data?.error || `verify-razorpay-payment failed with status ${res.status}`);
       }
-
+  
       console.log('[PAYWALL] ✅ Payment verified!', data);
       return data;
     } catch (error) {
