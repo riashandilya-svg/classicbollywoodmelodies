@@ -681,8 +681,9 @@
         <button class="tab" onclick="switchTab('codes', this)">🎫 Book Codes</button>
         <button class="tab" onclick="switchTab('purchases', this)">💳 Purchases</button>
         <button class="tab" onclick="switchTab('bundles', this)">📦 Bundles</button>
+        <button class="tab" onclick="switchTab('pricing', this)">💰 Pricing</button>
       </div>
-
+      
       <!-- Users Tab -->
       <div id="usersTab" class="tab-content">
         <div class="card">
@@ -813,6 +814,164 @@
           </div>
         </div>
       </div>
+
+      <!-- Pricing Tab -->
+      <div id="pricingTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💰 Global Pricing Management</h2>
+            <button class="refresh-btn" onclick="loadPricingData()">↻ Refresh</button>
+          </div>
+
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 12px 0; color: var(--warning);">⚠️ Important Notes:</h3>
+            <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+              <li>Prices are in the <strong>smallest currency unit</strong> (cents, paise, etc.)</li>
+              <li>Example: $8.00 = 800, ₹150 = 15000</li>
+              <li>Changes apply immediately to all new purchases</li>
+              <li>Existing purchases are not affected</li>
+            </ul>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- USD Pricing -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇺🇸 USD Pricing (in cents)</h3>
+              
+              <h4 style="margin: 16px 0 12px 0; font-size: 15px; color: var(--muted);">With Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
+                  <input type="number" id="usd_books_first" class="search-box" style="margin: 0;" placeholder="800">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
+                  <input type="number" id="usd_books_second" class="search-box" style="margin: 0;" placeholder="700">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
+                  <input type="number" id="usd_books_third" class="search-box" style="margin: 0;" placeholder="700">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
+                  <input type="number" id="usd_books_bundle" class="search-box" style="margin: 0;" placeholder="3400">
+                </div>
+              </div>
+
+              <h4 style="margin: 24px 0 12px 0; font-size: 15px; color: var(--muted);">Without Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
+                  <input type="number" id="usd_nobooks_first" class="search-box" style="margin: 0;" placeholder="1000">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
+                  <input type="number" id="usd_nobooks_second" class="search-box" style="margin: 0;" placeholder="900">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
+                  <input type="number" id="usd_nobooks_third" class="search-box" style="margin: 0;" placeholder="800">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
+                  <input type="number" id="usd_nobooks_bundle" class="search-box" style="margin: 0;" placeholder="4000">
+                </div>
+              </div>
+            </div>
+
+            <!-- INR Pricing -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇮🇳 INR Pricing (in paise)</h3>
+              
+              <h4 style="margin: 16px 0 12px 0; font-size: 15px; color: var(--muted);">With Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
+                  <input type="number" id="inr_books_first" class="search-box" style="margin: 0;" placeholder="15000">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
+                  <input type="number" id="inr_books_second" class="search-box" style="margin: 0;" placeholder="12900">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
+                  <input type="number" id="inr_books_third" class="search-box" style="margin: 0;" placeholder="10000">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
+                  <input type="number" id="inr_books_bundle" class="search-box" style="margin: 0;" placeholder="55000">
+                </div>
+              </div>
+
+              <h4 style="margin: 24px 0 12px 0; font-size: 15px; color: var(--muted);">Without Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
+                  <input type="number" id="inr_nobooks_first" class="search-box" style="margin: 0;" placeholder="20000">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
+                  <input type="number" id="inr_nobooks_second" class="search-box" style="margin: 0;" placeholder="18000">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
+                  <input type="number" id="inr_nobooks_third" class="search-box" style="margin: 0;" placeholder="15000">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
+                  <input type="number" id="inr_nobooks_bundle" class="search-box" style="margin: 0;" placeholder="85000">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exchange Rates -->
+          <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 16px 0; color: var(--primary);">💱 Exchange Rates (1 USD = X currency)</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">INR (₹)</label>
+                <input type="number" step="0.01" id="rate_INR" class="search-box" style="margin: 0;" placeholder="83">
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">GBP (£)</label>
+                <input type="number" step="0.01" id="rate_GBP" class="search-box" style="margin: 0;" placeholder="0.79">
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">EUR (€)</label>
+                <input type="number" step="0.01" id="rate_EUR" class="search-box" style="margin: 0;" placeholder="0.92">
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">CAD (CA$)</label>
+                <input type="number" step="0.01" id="rate_CAD" class="search-box" style="margin: 0;" placeholder="1.35">
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">AUD (A$)</label>
+                <input type="number" step="0.01" id="rate_AUD" class="search-box" style="margin: 0;" placeholder="1.52">
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">JPY (¥)</label>
+                <input type="number" step="0.01" id="rate_JPY" class="search-box" style="margin: 0;" placeholder="148">
+              </div>
+            </div>
+            <p style="margin: 16px 0 0; font-size: 13px; color: var(--muted);">
+              💡 Tip: Update these rates monthly for accurate pricing across all currencies
+            </p>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-cancel" style="flex: 0 0 auto; padding: 14px 32px;" onclick="loadPricingData()">
+              ↻ Reset Changes
+            </button>
+            <button class="btn btn-danger" style="flex: 1; background: var(--success);" onclick="savePricing()">
+              💾 Save All Pricing Changes
+            </button>
+          </div>
+
+          <div id="pricingStatus" style="margin-top: 20px;"></div>
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -932,7 +1091,6 @@
           .from('book-verifications')
           .list(userId);
         if (error || !files || files.length === 0) return null;
-        // Use signed URL so it works even if bucket is not public
         const { data, error: signErr } = await window.supabase.storage
           .from('book-verifications')
           .createSignedUrl(`${userId}/${files[0].name}`, 3600);
@@ -989,7 +1147,6 @@
         authCheck.classList.add('hidden');
         adminContent.classList.remove('hidden');
 
-        // Load purchases & bundles first (needed by users tab)
         await Promise.all([loadPurchasesData(), loadBundlesData()]);
         loadStats();
         loadUsers();
@@ -1021,7 +1178,6 @@
         const leftCount = (totalCodes || 0) - usedCount;
         document.getElementById('codesUsed').textContent = usedCount;
         document.getElementById('codesLeft').textContent = leftCount;
-        // Turn red if 2 or fewer left
         document.getElementById('codesLeft').style.color = leftCount <= 2 ? 'var(--error)' : 'var(--warning)';
 
         const adminIds = allProfiles?.filter(p => ADMIN_EMAILS.includes(p.email)).map(p => p.id) || [];
@@ -1041,7 +1197,6 @@
         if (error) throw error;
         allUsers = profiles || [];
 
-        // Prefetch media for all users
         await Promise.all(allUsers.map(u => fetchMediaForUser(u.id)));
         updateSortHeaders('users');
         renderUsers(sortArray(allUsers, 'users'));
@@ -1231,7 +1386,7 @@
     // ─── Bundles (data + render split) ──────────────────────
     async function loadBundlesData() {
       const { data, error } = await window.supabase
-        .from('purchases').select('*').eq('song_id', 'bundle_credits').order('created_at', { ascending: false });
+        .from('purchases').select('*').eq('song_id', 'pack:5').order('created_at', { ascending: false });
       if (error) throw error;
       allBundles = data || [];
     }
@@ -1285,12 +1440,141 @@
       renderBundles(filtered);
     }
 
+    // ─── Pricing Management ─────────────────────────────────
+    async function loadPricingData() {
+      try {
+        const { data, error } = await window.supabase
+          .from('pricing_config')
+          .select('*')
+          .eq('id', 1)
+          .single();
+
+        if (error) {
+          console.log('No pricing config found, using defaults');
+          return;
+        }
+
+        const config = data.config;
+
+        // USD
+        document.getElementById('usd_books_first').value = config.USD.withBooks.first;
+        document.getElementById('usd_books_second').value = config.USD.withBooks.second;
+        document.getElementById('usd_books_third').value = config.USD.withBooks.third;
+        document.getElementById('usd_books_bundle').value = config.USD.withBooks.bundle;
+        document.getElementById('usd_nobooks_first').value = config.USD.withoutBooks.first;
+        document.getElementById('usd_nobooks_second').value = config.USD.withoutBooks.second;
+        document.getElementById('usd_nobooks_third').value = config.USD.withoutBooks.third;
+        document.getElementById('usd_nobooks_bundle').value = config.USD.withoutBooks.bundle;
+
+        // INR
+        document.getElementById('inr_books_first').value = config.INR.withBooks.first;
+        document.getElementById('inr_books_second').value = config.INR.withBooks.second;
+        document.getElementById('inr_books_third').value = config.INR.withBooks.third;
+        document.getElementById('inr_books_bundle').value = config.INR.withBooks.bundle;
+        document.getElementById('inr_nobooks_first').value = config.INR.withoutBooks.first;
+        document.getElementById('inr_nobooks_second').value = config.INR.withoutBooks.second;
+        document.getElementById('inr_nobooks_third').value = config.INR.withoutBooks.third;
+        document.getElementById('inr_nobooks_bundle').value = config.INR.withoutBooks.bundle;
+
+        // Exchange rates
+        if (config.exchangeRates) {
+          document.getElementById('rate_INR').value = config.exchangeRates.INR;
+          document.getElementById('rate_GBP').value = config.exchangeRates.GBP;
+          document.getElementById('rate_EUR').value = config.exchangeRates.EUR;
+          document.getElementById('rate_CAD').value = config.exchangeRates.CAD;
+          document.getElementById('rate_AUD').value = config.exchangeRates.AUD;
+          document.getElementById('rate_JPY').value = config.exchangeRates.JPY;
+        }
+      } catch (e) {
+        console.error('Error loading pricing:', e);
+      }
+    }
+
+    async function savePricing() {
+      const statusDiv = document.getElementById('pricingStatus');
+      statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Saving pricing changes...</div>';
+
+      try {
+        const config = {
+          USD: {
+            withBooks: {
+              first: parseInt(document.getElementById('usd_books_first').value) || 800,
+              second: parseInt(document.getElementById('usd_books_second').value) || 700,
+              third: parseInt(document.getElementById('usd_books_third').value) || 700,
+              bundle: parseInt(document.getElementById('usd_books_bundle').value) || 3400,
+            },
+            withoutBooks: {
+              first: parseInt(document.getElementById('usd_nobooks_first').value) || 1000,
+              second: parseInt(document.getElementById('usd_nobooks_second').value) || 900,
+              third: parseInt(document.getElementById('usd_nobooks_third').value) || 800,
+              bundle: parseInt(document.getElementById('usd_nobooks_bundle').value) || 4000,
+            },
+          },
+          INR: {
+            withBooks: {
+              first: parseInt(document.getElementById('inr_books_first').value) || 15000,
+              second: parseInt(document.getElementById('inr_books_second').value) || 12900,
+              third: parseInt(document.getElementById('inr_books_third').value) || 10000,
+              bundle: parseInt(document.getElementById('inr_books_bundle').value) || 55000,
+            },
+            withoutBooks: {
+              first: parseInt(document.getElementById('inr_nobooks_first').value) || 20000,
+              second: parseInt(document.getElementById('inr_nobooks_second').value) || 18000,
+              third: parseInt(document.getElementById('inr_nobooks_third').value) || 15000,
+              bundle: parseInt(document.getElementById('inr_nobooks_bundle').value) || 85000,
+            },
+          },
+          exchangeRates: {
+            USD: 1,
+            INR: parseFloat(document.getElementById('rate_INR').value) || 83,
+            GBP: parseFloat(document.getElementById('rate_GBP').value) || 0.79,
+            EUR: parseFloat(document.getElementById('rate_EUR').value) || 0.92,
+            CAD: parseFloat(document.getElementById('rate_CAD').value) || 1.35,
+            AUD: parseFloat(document.getElementById('rate_AUD').value) || 1.52,
+            JPY: parseFloat(document.getElementById('rate_JPY').value) || 148,
+          },
+          lastUpdated: new Date().toISOString(),
+        };
+
+        const { error } = await window.supabase
+          .from('pricing_config')
+          .upsert({
+            id: 1,
+            config: config,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error) throw error;
+
+        statusDiv.innerHTML = `
+          <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 12px; padding: 20px; color: var(--success);">
+            <strong>✅ Pricing updated successfully!</strong><br>
+            <span style="font-size: 13px;">Changes will apply to all new purchases immediately.</span>
+          </div>
+        `;
+
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
+      } catch (e) {
+        console.error('Error saving pricing:', e);
+        statusDiv.innerHTML = `
+          <div class="error-message">
+            <strong>❌ Failed to save pricing:</strong><br>${e.message}
+          </div>
+        `;
+      }
+    }
+
     // ─── Tab switching ──────────────────────────────────────
     function switchTab(tabName, btn) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
       document.getElementById(tabName + 'Tab').classList.remove('hidden');
+      
+      // Load pricing data when pricing tab is opened
+      if (tabName === 'pricing') {
+        loadPricingData();
+      }
     }
 
     // ─── Media modal (photo + video) ───────────────────────
@@ -1320,7 +1604,6 @@
     }
 
     // ─── Sorting system ─────────────────────────────────────
-    // sortState: { users: {col, dir}, codes: {col, dir}, ... }
     let sortState = {
       users:     { col: 'joined',    dir: 'desc' },
       codes:     { col: 'generated', dir: 'desc' },
@@ -1380,7 +1663,6 @@
       });
     }
 
-    // Click handler delegation — attached once after DOM ready
     function initSortHeaders() {
       document.querySelectorAll('th[data-sortable]').forEach(th => {
         th.addEventListener('click', () => {
@@ -1392,7 +1674,6 @@
             sortState[table] = { col, dir: 'asc' };
           }
           updateSortHeaders(table);
-          // Re-render the right table
           switch (table) {
             case 'users':     renderUsers(sortArray(allUsers, 'users'));         break;
             case 'codes':     renderCodes(sortArray(allCodes, 'codes'));         break;
@@ -1456,7 +1737,6 @@
 
         await window.supabase.from('profiles').delete().eq('id', userId);
 
-        // Delete from auth via Edge Function
         const { data: { session } } = await window.supabase.auth.getSession();
         const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
           method: 'POST',
@@ -1473,11 +1753,9 @@
         alert('✅ User completely deleted!');
         closeDeleteModal();
 
-        // Clear caches for this user
         delete photoCache[userId];
         delete videoCache[userId];
 
-        // Reload everything
         await Promise.all([loadPurchasesData(), loadBundlesData()]);
         loadStats();
         loadUsers();
