@@ -116,6 +116,7 @@ if (verifyBookLink) {
     verifyBookLink.style.display = 'inline-flex'; // Show if not verified
   }
 }
+        setupProfileModal(user);
 // Optional: you can keep userEmail empty or hide it
 const userEmailEl = document.getElementById('userEmail');
 if (userEmailEl) userEmailEl.textContent = '';
@@ -132,6 +133,97 @@ if (userEmailEl) userEmailEl.textContent = '';
         console.error('Dashboard init error:', error);
         alert('Failed to load dashboard. Please refresh the page.');
     }
+}
+// ─────────────────────────────────────────────
+// PROFILE MODAL: open / close / save name
+// ─────────────────────────────────────────────
+function setupProfileModal(user) {
+  const trigger   = document.getElementById('editProfileBtn');
+  const modal     = document.getElementById('profileModal');
+  const overlay   = document.getElementById('profileModalOverlay');
+  const nameInput = document.getElementById('profileNameInput');
+  const emailEl   = document.getElementById('profileEmailDisplay');
+  const saveBtn   = document.getElementById('profileSaveBtn');
+  const cancelBtn = document.getElementById('profileCancelBtn');
+  const feedback  = document.getElementById('profileFeedback');
+
+  if (!trigger || !modal) return;
+
+  // Pre-fill current values when opening
+  trigger.addEventListener('click', async () => {
+    try {
+      const { data: profile } = await window.supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+
+      nameInput.value     = profile?.display_name || '';
+      emailEl.textContent = user.email;
+      feedback.textContent = '';
+      feedback.className   = '';
+
+      modal.classList.add('open');
+      overlay.classList.add('open');
+      nameInput.focus();
+    } catch (err) {
+      console.error('Failed to load profile for editing:', err);
+    }
+  });
+
+  // Close helpers
+  function closeModal() {
+    modal.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  overlay.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  // Save
+  saveBtn.addEventListener('click', async () => {
+    const newName = nameInput.value.trim();
+
+    if (!newName) {
+      feedback.textContent = 'Name cannot be empty.';
+      feedback.className   = 'error';
+      return;
+    }
+    if (newName.length > 40) {
+      feedback.textContent = 'Name must be 40 characters or less.';
+      feedback.className   = 'error';
+      return;
+    }
+
+    saveBtn.disabled    = true;
+    saveBtn.textContent = 'Saving…';
+    feedback.textContent = '';
+
+    try {
+      const { error } = await window.supabase
+        .from('profiles')
+        .update({ display_name: newName })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      feedback.textContent = '✓ Name updated!';
+      feedback.className   = 'success';
+
+      // Refresh welcome text live
+      const welcomeEl = document.getElementById('welcomeText');
+      if (welcomeEl) welcomeEl.textContent = `Welcome, ${newName}`;
+
+      setTimeout(closeModal, 1200);
+    } catch (err) {
+      console.error('Save name error:', err);
+      feedback.textContent = 'Something went wrong. Please try again.';
+      feedback.className   = 'error';
+    } finally {
+      saveBtn.disabled    = false;
+      saveBtn.textContent = 'Save';
+    }
+  });
 }
 async function loadProfileAvatar(userId) {
   try {
