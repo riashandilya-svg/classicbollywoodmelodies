@@ -6,7 +6,42 @@
   const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
   const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
   const BUNDLE_PRODUCT_ID = "pack:5";
-  const CURRENCY_SYMBOLS = { INR: '₹', USD: '$' };
+const CURRENCY_SYMBOLS = {
+  'INR': '₹',
+  'USD': '$',
+  'GBP': '£',
+  'EUR': '€',
+  'CAD': 'CA$',
+  'AUD': 'A$',
+  'NZD': 'NZ$',
+  'SGD': 'S$',
+  'MYR': 'RM',
+  'AED': 'د.إ',
+  'SAR': '﷼',
+  'JPY': '¥',
+  'CNY': '¥',
+  'BRL': 'R$',
+  'MXN': 'MX$',
+  'ZAR': 'R',
+  'CHF': 'CHF',
+  'SEK': 'kr',
+  'NOK': 'kr',
+  'DKK': 'kr',
+  'PLN': 'zł',
+  'TRY': '₺',
+  'RUB': '₽',
+  'KRW': '₩',
+  'THB': '฿',
+  'IDR': 'Rp',
+  'PHP': '₱',
+  'VND': '₫',
+  'BDT': '৳',
+  'PKR': '₨',
+  'LKR': '₨',
+  'NPR': '₨',
+  'HKD': 'HK$',
+  'TWD': 'NT$'
+};
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
 
   function normalizeEmail(email) {
@@ -19,29 +54,85 @@
     }
   }
 
-  async function detectCurrency() {
+async function detectCurrency() {
+  // Map of country codes to currencies
+  const currencyMap = {
+    'US': 'USD',
+    'IN': 'INR',
+    'GB': 'GBP',
+    'EU': 'EUR',
+    'DE': 'EUR',
+    'FR': 'EUR',
+    'IT': 'EUR',
+    'ES': 'EUR',
+    'NL': 'EUR',
+    'CA': 'CAD',
+    'AU': 'AUD',
+    'NZ': 'NZD',
+    'SG': 'SGD',
+    'MY': 'MYR',
+    'AE': 'AED',
+    'SA': 'SAR',
+    'JP': 'JPY',
+    'CN': 'CNY',
+    'BR': 'BRL',
+    'MX': 'MXN',
+    'ZA': 'ZAR',
+    'CH': 'CHF',
+    'SE': 'SEK',
+    'NO': 'NOK',
+    'DK': 'DKK',
+    'PL': 'PLN',
+    'TR': 'TRY',
+    'RU': 'RUB',
+    'KR': 'KRW',
+    'TH': 'THB',
+    'ID': 'IDR',
+    'PH': 'PHP',
+    'VN': 'VND',
+    'BD': 'BDT',
+    'PK': 'PKR',
+    'LK': 'LKR',
+    'NP': 'NPR',
+    'HK': 'HKD',
+    'TW': 'TWD'
+  };
+
+  try {
+    // Check timezone first for US
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timezone && (timezone.includes('America') || timezone.includes('US'))) {
+      return 'USD';
+    }
+    
+    // Mobile-friendly: longer timeout + better error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
     try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (timezone && (timezone.includes('America') || timezone.includes('US'))) {
-        return 'USD';
-      }
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      
       const response = await fetch('https://ipapi.co/json/', {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
       
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
-      return data.country_code === 'US' ? 'USD' : 'INR';
-    } catch (error) {
-      console.warn('Currency detection failed, defaulting to INR:', error);
-      return 'INR';
+      const countryCode = data.country_code;
+      
+      // Return currency for country, or INR as fallback
+      return currencyMap[countryCode] || 'INR';
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
     }
+  } catch (error) {
+    console.warn('Currency detection failed, defaulting to INR:', error);
+    return 'INR';
   }
-
+}
   async function loadRazorpay() {
     if (window.Razorpay) return;
     await new Promise((resolve, reject) => {
@@ -437,13 +528,19 @@
 
       const { price, hasBooks, songsOwned, canUseCredits, bundleAvailable, bundlePrice } = pricingData;
       
-      const priceDisplay = currency === 'INR' 
-        ? `${currencySymbol}${(price / 100).toFixed(0)}`
-        : `${currencySymbol}${(price / 100).toFixed(2)}`;
-      
-      const bundlePriceDisplay = bundlePrice && currency === 'INR'
-        ? `${currencySymbol}${(bundlePrice / 100).toFixed(0)}`
-        : bundlePrice ? `${currencySymbol}${(bundlePrice / 100).toFixed(2)}` : null;
+    // Currencies that don't use decimals
+const noDecimalCurrencies = ['JPY', 'KRW', 'VND', 'IDR', 'CLP'];
+const useDecimals = !noDecimalCurrencies.includes(currency);
+
+const priceDisplay = useDecimals
+  ? `${currencySymbol}${(price / 100).toFixed(2)}`
+  : `${currencySymbol}${(price / 100).toFixed(0)}`;
+
+const bundlePriceDisplay = bundlePrice 
+  ? (useDecimals 
+      ? `${currencySymbol}${(bundlePrice / 100).toFixed(2)}`
+      : `${currencySymbol}${(bundlePrice / 100).toFixed(0)}`)
+  : null;
 
       let paywallHTML = `
         <div style="max-width: 500px; margin: 0 auto; padding: 20px;">
