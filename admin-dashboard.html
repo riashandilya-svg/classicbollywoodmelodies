@@ -614,6 +614,82 @@
       border: 2px solid var(--success);
     }
 
+    /* Live rates panel */
+    .rates-panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .rates-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .rates-panel-header h3 {
+      margin: 0;
+      color: var(--primary);
+    }
+    .rates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .rate-chip {
+      background: rgba(155, 110, 255, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .rate-chip .rate-code {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .rate-chip .rate-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 4px;
+    }
+    .rate-chip .rate-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .rates-status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+    .rates-status .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* today highlight box */
+    .today-box {
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.12));
+      border: 2px solid var(--success);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+    .today-box .stat-value { font-size: 28px; }
+
     @media (max-width: 768px) {
       .banner {
         flex-direction: column;
@@ -711,6 +787,28 @@
         <div class="card-header">
           <h2 class="card-title">💰 Revenue Analytics</h2>
         </div>
+
+        <!-- TODAY box always visible at top -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--success); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">📅 Today's Revenue</div>
+          <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+            <div class="today-box">
+              <div class="stat-value" id="todayINR" style="color: var(--success);">₹0</div>
+              <div class="stat-label">Today (INR)</div>
+            </div>
+            <div class="today-box">
+              <div class="stat-value" id="todayUSD" style="color: var(--success);">$0</div>
+              <div class="stat-label">Today (USD)</div>
+            </div>
+            <div class="today-box">
+              <div class="stat-value" id="todayTransactions" style="color: var(--primary);">0</div>
+              <div class="stat-label">Today's Transactions</div>
+            </div>
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+
         <div class="date-filter">
           <select id="revenuePeriod" onchange="updateRevenueDisplay()">
             <option value="month">This Month</option>
@@ -891,8 +989,8 @@
           <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
             <h3 style="margin: 0 0 12px 0; color: var(--warning);">⚠️ Important Notes:</h3>
             <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-              <li>Prices are in the <strong>smallest currency unit</strong> (cents, paise, etc.)</li>
-              <li>Example: $8.00 = 800, ₹150 = 15000</li>
+              <li>Enter prices in <strong>normal amounts</strong> — e.g. <strong>$8</strong> or <strong>₹150</strong></li>
+              <li>Decimals are fine: $8.50, ₹149.99, etc.</li>
               <li>Changes apply immediately to all new purchases</li>
               <li>Existing purchases are not affected</li>
             </ul>
@@ -901,25 +999,37 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
             <!-- USD Pricing -->
             <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
-              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇺🇸 USD Pricing (in cents)</h3>
+              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇺🇸 USD Pricing ($)</h3>
               
               <h4 style="margin: 16px 0 12px 0; font-size: 15px; color: var(--muted);">With Books:</h4>
               <div style="display: grid; gap: 12px;">
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
-                  <input type="number" id="usd_books_first" class="search-box" style="margin: 0;" placeholder="800">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_books_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="8.00">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
-                  <input type="number" id="usd_books_second" class="search-box" style="margin: 0;" placeholder="700">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_books_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="7.00">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
-                  <input type="number" id="usd_books_third" class="search-box" style="margin: 0;" placeholder="700">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_books_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="7.00">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
-                  <input type="number" id="usd_books_bundle" class="search-box" style="margin: 0;" placeholder="3400">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_books_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="34.00">
+                  </div>
                 </div>
               </div>
 
@@ -927,44 +1037,68 @@
               <div style="display: grid; gap: 12px;">
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
-                  <input type="number" id="usd_nobooks_first" class="search-box" style="margin: 0;" placeholder="1000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_nobooks_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="10.00">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
-                  <input type="number" id="usd_nobooks_second" class="search-box" style="margin: 0;" placeholder="900">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_nobooks_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="9.00">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
-                  <input type="number" id="usd_nobooks_third" class="search-box" style="margin: 0;" placeholder="800">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_nobooks_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="8.00">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
-                  <input type="number" id="usd_nobooks_bundle" class="search-box" style="margin: 0;" placeholder="4000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span>
+                    <input type="number" step="0.01" id="usd_nobooks_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="40.00">
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- INR Pricing -->
             <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
-              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇮🇳 INR Pricing (in paise)</h3>
+              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇮🇳 INR Pricing (₹)</h3>
               
               <h4 style="margin: 16px 0 12px 0; font-size: 15px; color: var(--muted);">With Books:</h4>
               <div style="display: grid; gap: 12px;">
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
-                  <input type="number" id="inr_books_first" class="search-box" style="margin: 0;" placeholder="15000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_books_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="150">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
-                  <input type="number" id="inr_books_second" class="search-box" style="margin: 0;" placeholder="12900">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_books_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="129">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
-                  <input type="number" id="inr_books_third" class="search-box" style="margin: 0;" placeholder="10000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_books_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="100">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
-                  <input type="number" id="inr_books_bundle" class="search-box" style="margin: 0;" placeholder="55000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_books_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="550">
+                  </div>
                 </div>
               </div>
 
@@ -972,59 +1106,54 @@
               <div style="display: grid; gap: 12px;">
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label>
-                  <input type="number" id="inr_nobooks_first" class="search-box" style="margin: 0;" placeholder="20000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_nobooks_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="200">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label>
-                  <input type="number" id="inr_nobooks_second" class="search-box" style="margin: 0;" placeholder="18000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_nobooks_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="180">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label>
-                  <input type="number" id="inr_nobooks_third" class="search-box" style="margin: 0;" placeholder="15000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_nobooks_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="150">
+                  </div>
                 </div>
                 <div>
                   <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label>
-                  <input type="number" id="inr_nobooks_bundle" class="search-box" style="margin: 0;" placeholder="85000">
+                  <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span>
+                    <input type="number" step="0.01" id="inr_nobooks_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="850">
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Exchange Rates -->
-          <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-            <h3 style="margin: 0 0 16px 0; color: var(--primary);">💱 Exchange Rates (1 INR = X currency)</h3>
-            <p style="margin: 0 0 16px; font-size: 14px; color: var(--muted);">
-              <strong>Note:</strong> INR is the base currency. Enter how much of other currencies equals 1 INR.
-            </p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-              <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">USD ($)</label>
-                <input type="number" step="0.0001" id="rate_USD" class="search-box" style="margin: 0;" placeholder="0.012">
-              </div>
-              <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">GBP (£)</label>
-                <input type="number" step="0.0001" id="rate_GBP" class="search-box" style="margin: 0;" placeholder="0.0095">
-              </div>
-              <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">EUR (€)</label>
-                <input type="number" step="0.0001" id="rate_EUR" class="search-box" style="margin: 0;" placeholder="0.011">
-              </div>
-              <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">CAD (CA$)</label>
-                <input type="number" step="0.0001" id="rate_CAD" class="search-box" style="margin: 0;" placeholder="0.016">
-              </div>
-              <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">AUD (A$)</label>
-                <input type="number" step="0.0001" id="rate_AUD" class="search-box" style="margin: 0;" placeholder="0.018">
-              </div>
-              <div>
-                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">JPY (¥)</label>
-                <input type="number" step="0.01" id="rate_JPY" class="search-box" style="margin: 0;" placeholder="1.78">
-              </div>
+          <!-- AUTO Exchange Rates (read-only, live from Frankfurter) -->
+          <div class="rates-panel" id="ratesPanel">
+            <div class="rates-panel-header">
+              <h3>💱 Live Exchange Rates (INR base)</h3>
+              <button class="refresh-btn" onclick="fetchLiveRates()" style="font-size:13px; padding:8px 14px;">↻ Refresh Rates</button>
             </div>
-            <p style="margin: 16px 0 0; font-size: 13px; color: var(--muted);">
-              💡 Example: If 1 INR = $0.012, then $1 = ₹83.33. Update these rates monthly for accurate pricing.
+            <p style="margin: 0 0 16px; font-size: 13px; color: var(--muted);">
+              Auto-fetched from <strong>frankfurter.dev</strong> — how much 1 INR is worth in each currency. Updates every time you open this tab.
             </p>
+            <div id="ratesLoading" style="padding:20px; text-align:center; color:var(--muted);">
+              <div class="spinner" style="width:28px;height:28px;border-width:2px;"></div>
+              Fetching live rates...
+            </div>
+            <div id="ratesGridContainer" class="hidden">
+              <div class="rates-grid" id="ratesGridEl"></div>
+              <div class="rates-status" id="ratesStatus"></div>
+            </div>
+            <div id="ratesError" class="hidden" style="color:var(--error); font-size:13px; margin-top:8px;"></div>
           </div>
 
           <div style="display: flex; gap: 12px;">
@@ -1127,28 +1256,25 @@
     let allBundles = [];
     let userToDelete = null;
 
+    // ── Live rates fetched from frankfurter (stored here so savePricing can use them) ──
+    let liveExchangeRates = null; // will be { USD: 0.012, GBP: 0.0095, ... } keyed as "1 INR = X currency"
+
     // Currency symbols for display
     const CURRENCY_SYMBOLS = {
-      'INR': '₹',
-      'USD': '$',
-      'GBP': '£',
-      'EUR': '€',
-      'CAD': 'CA$',
-      'AUD': 'A$',
-      'JPY': '¥',
+      'INR': '₹', 'USD': '$', 'GBP': '£', 'EUR': '€',
+      'CAD': 'CA$', 'AUD': 'A$', 'JPY': '¥',
     };
+
+    // Which currencies we show in the admin live-rates panel
+    const RATE_CURRENCIES = ['USD','GBP','EUR','CAD','AUD','JPY'];
 
     function formatAmount(amount, currency = 'INR') {
       if (!amount) return 'N/A';
       const symbol = CURRENCY_SYMBOLS[currency] || currency;
-      
-      // Currencies without decimals
       const noDecimals = ['JPY', 'KRW', 'VND', 'IDR'];
       if (noDecimals.includes(currency)) {
         return `${symbol}${(amount / 100).toFixed(0)}`;
       }
-      
-      // Normal currencies with decimals
       return `${symbol}${(amount / 100).toFixed(2)}`;
     }
 
@@ -1176,12 +1302,10 @@
     async function getPhotoUrl(userId) {
       try {
         const { data: files, error } = await window.supabase.storage
-          .from('book-verifications')
-          .list(userId);
+          .from('book-verifications').list(userId);
         if (error || !files || files.length === 0) return null;
         const { data, error: signErr } = await window.supabase.storage
-          .from('book-verifications')
-          .createSignedUrl(`${userId}/${files[0].name}`, 3600);
+          .from('book-verifications').createSignedUrl(`${userId}/${files[0].name}`, 3600);
         if (signErr || !data) return null;
         return data.signedUrl;
       } catch (e) { return null; }
@@ -1190,12 +1314,10 @@
     async function getVideoUrl(userId) {
       try {
         const { data: files, error } = await window.supabase.storage
-          .from('book-videos')
-          .list(userId);
+          .from('book-videos').list(userId);
         if (error || !files || files.length === 0) return null;
         const { data, error: signErr } = await window.supabase.storage
-          .from('book-videos')
-          .createSignedUrl(`${userId}/${files[0].name}`, 3600);
+          .from('book-videos').createSignedUrl(`${userId}/${files[0].name}`, 3600);
         if (signErr || !data) return null;
         return data.signedUrl;
       } catch (e) { return null; }
@@ -1205,13 +1327,67 @@
     let videoCache = {};
 
     async function fetchMediaForUser(userId) {
-      if (!(userId in photoCache)) {
-        photoCache[userId] = await getPhotoUrl(userId);
-      }
-      if (!(userId in videoCache)) {
-        videoCache[userId] = await getVideoUrl(userId);
+      if (!(userId in photoCache)) photoCache[userId] = await getPhotoUrl(userId);
+      if (!(userId in videoCache)) videoCache[userId] = await getVideoUrl(userId);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FRANKFURTER LIVE RATES
+    // ═══════════════════════════════════════════════════════
+    // Frankfurter default base is EUR. We want INR as base.
+    // Frankfurter supports ?base=INR so we get "1 INR = X currency" directly.
+
+    async function fetchLiveRates() {
+      const loading = document.getElementById('ratesLoading');
+      const container = document.getElementById('ratesGridContainer');
+      const errEl = document.getElementById('ratesError');
+      const gridEl = document.getElementById('ratesGridEl');
+      const statusEl = document.getElementById('ratesStatus');
+
+      loading.style.display = 'block';
+      container.classList.add('hidden');
+      errEl.classList.add('hidden');
+      errEl.textContent = '';
+
+      try {
+        const symbols = RATE_CURRENCIES.join(',');
+        const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=INR&symbols=${symbols}`);
+        if (!res.ok) throw new Error(`Frankfurter returned ${res.status}`);
+        const json = await res.json();
+        // json.rates = { USD: 0.01183, GBP: 0.00934, ... }  — these are "1 INR = X currency"
+        liveExchangeRates = json.rates; // store globally for save
+
+        // Render chips
+        gridEl.innerHTML = RATE_CURRENCIES.map(code => {
+          const val = json.rates[code];
+          if (val == null) return '';
+          // Show a few decimals depending on magnitude
+          const decimals = val < 0.01 ? 6 : val < 1 ? 4 : val >= 100 ? 1 : 3;
+          const display = val.toFixed(decimals);
+          // Also show inverse: 1 USD = ? INR
+          const inverse = (1 / val).toFixed(2);
+          return `<div class="rate-chip">
+            <div class="rate-code">${code}</div>
+            <div class="rate-val">${display}</div>
+            <div class="rate-label">1 INR = ${display} ${code}<br>1 ${code} = ₹${inverse}</div>
+          </div>`;
+        }).join('');
+
+        loading.style.display = 'none';
+        container.classList.remove('hidden');
+        statusEl.innerHTML = `<span class="live-dot"></span>Live rates as of <strong>${json.date}</strong> — auto-fetched from frankfurter.dev`;
+
+      } catch (e) {
+        loading.style.display = 'none';
+        errEl.classList.remove('hidden');
+        errEl.textContent = '❌ Failed to fetch rates: ' + e.message + ' — will use last saved rates on save.';
+        liveExchangeRates = null;
       }
     }
+
+    // ═══════════════════════════════════════════════════════
+    // AUTH + INIT
+    // ═══════════════════════════════════════════════════════
 
     async function checkAdminAccess() {
       try {
@@ -1237,6 +1413,7 @@
         loadUsers();
         loadCodes();
         updateRevenueDisplay();
+        calculateTodayRevenue();
         updateSortHeaders('purchases');
         renderPurchases(sortArray(allPurchases, 'purchases'));
         updateSortHeaders('bundles');
@@ -1269,22 +1446,23 @@
         const nonAdminPurchases = allPurchases?.filter(p => !adminIds.includes(p.user_id)) || [];
         document.getElementById('totalPurchases').textContent = nonAdminPurchases.length;
 
-        // Count bundles sold
         const bundlesSold = allBundles?.filter(b => !adminIds.includes(b.user_id)).length || 0;
         document.getElementById('bundlesPurchased').textContent = bundlesSold;
       } catch (e) { console.error('Stats error:', e); }
     }
 
+    // ═══════════════════════════════════════════════════════
+    // REVENUE — period filter + TODAY
+    // ═══════════════════════════════════════════════════════
+
     function updateRevenueDisplay() {
       const period = document.getElementById('revenuePeriod').value;
       const customRange = document.getElementById('customDateRange');
-      
       if (period === 'custom') {
         customRange.classList.remove('hidden');
       } else {
         customRange.classList.add('hidden');
       }
-
       calculateRevenue();
     }
 
@@ -1319,26 +1497,49 @@
 
       let totalINR = 0;
       let totalUSD = 0;
-      let transactions = filtered.length;
 
       filtered.forEach(p => {
         const amount = p.amount || 0;
         const currency = p.currency || 'INR';
-        
-        if (currency === 'INR') {
-          totalINR += amount;
-        } else if (currency === 'USD') {
-          totalUSD += amount;
-        } else {
-          // Convert other currencies to INR (approximate)
-          totalINR += amount;
-        }
+        if (currency === 'INR') totalINR += amount;
+        else if (currency === 'USD') totalUSD += amount;
+        else totalINR += amount; // fallback
       });
 
       document.getElementById('revenueINR').textContent = formatAmount(totalINR, 'INR');
       document.getElementById('revenueUSD').textContent = formatAmount(totalUSD, 'USD');
-      document.getElementById('revenueTransactions').textContent = transactions;
+      document.getElementById('revenueTransactions').textContent = filtered.length;
     }
+
+    function calculateTodayRevenue() {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const todayEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+      const todayPurchases = allPurchases.filter(p => {
+        const d = new Date(p.created_at);
+        return d >= todayStart && d <= todayEnd;
+      });
+
+      let totalINR = 0;
+      let totalUSD = 0;
+
+      todayPurchases.forEach(p => {
+        const amount = p.amount || 0;
+        const currency = p.currency || 'INR';
+        if (currency === 'INR') totalINR += amount;
+        else if (currency === 'USD') totalUSD += amount;
+        else totalINR += amount;
+      });
+
+      document.getElementById('todayINR').textContent = formatAmount(totalINR, 'INR');
+      document.getElementById('todayUSD').textContent = formatAmount(totalUSD, 'USD');
+      document.getElementById('todayTransactions').textContent = todayPurchases.length;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // USERS
+    // ═══════════════════════════════════════════════════════
 
     async function loadUsers() {
       try {
@@ -1419,6 +1620,10 @@
       renderUsers(filtered);
     }
 
+    // ═══════════════════════════════════════════════════════
+    // CODES
+    // ═══════════════════════════════════════════════════════
+
     async function loadCodes() {
       try {
         const tbody = document.getElementById('codesTableBody');
@@ -1475,6 +1680,10 @@
       renderCodes(filtered);
     }
 
+    // ═══════════════════════════════════════════════════════
+    // PURCHASES
+    // ═══════════════════════════════════════════════════════
+
     async function loadPurchasesData() {
       const { data, error } = await window.supabase
         .from('purchases').select('*').order('created_at', { ascending: false });
@@ -1490,6 +1699,7 @@
         updateSortHeaders('purchases');
         renderPurchases(sortArray(allPurchases, 'purchases'));
         calculateRevenue();
+        calculateTodayRevenue();
       } catch (e) {
         console.error('Error:', e);
         document.getElementById('purchasesTableBody').innerHTML =
@@ -1537,6 +1747,10 @@
       }
       renderPurchases(filtered);
     }
+
+    // ═══════════════════════════════════════════════════════
+    // BUNDLES
+    // ═══════════════════════════════════════════════════════
 
     async function loadBundlesData() {
       const { data, error } = await window.supabase
@@ -1597,56 +1811,83 @@
     // ═══════════════════════════════════════════════════════
     // PRICING MANAGEMENT
     // ═══════════════════════════════════════════════════════
+    // DB stores in smallest unit (cents / paise).
+    // UI shows in dollars / rupees.
+    // On LOAD:  divide DB value by 100 → show in input.
+    // On SAVE:  multiply input by 100  → store in DB.
+    // Exchange rates: fetched live, converted to the format the backend expects.
     
     async function loadPricingData() {
       try {
         const { data, error } = await window.supabase
-          .from('pricing_config')
-          .select('*')
-          .eq('id', 1)
-          .single();
+          .from('pricing_config').select('*').eq('id', 1).single();
 
         if (error) {
           console.log('No pricing config found, using defaults');
+          // Fill with human-readable defaults
+          setInputDollars('usd_books_first', 8);
+          setInputDollars('usd_books_second', 7);
+          setInputDollars('usd_books_third', 7);
+          setInputDollars('usd_books_bundle', 34);
+          setInputDollars('usd_nobooks_first', 10);
+          setInputDollars('usd_nobooks_second', 9);
+          setInputDollars('usd_nobooks_third', 8);
+          setInputDollars('usd_nobooks_bundle', 40);
+          setInputDollars('inr_books_first', 150);
+          setInputDollars('inr_books_second', 129);
+          setInputDollars('inr_books_third', 100);
+          setInputDollars('inr_books_bundle', 550);
+          setInputDollars('inr_nobooks_first', 200);
+          setInputDollars('inr_nobooks_second', 180);
+          setInputDollars('inr_nobooks_third', 150);
+          setInputDollars('inr_nobooks_bundle', 850);
           return;
         }
 
         const config = data.config;
 
-        // USD
-        document.getElementById('usd_books_first').value = config.USD.withBooks.first;
-        document.getElementById('usd_books_second').value = config.USD.withBooks.second;
-        document.getElementById('usd_books_third').value = config.USD.withBooks.third;
-        document.getElementById('usd_books_bundle').value = config.USD.withBooks.bundle;
-        document.getElementById('usd_nobooks_first').value = config.USD.withoutBooks.first;
-        document.getElementById('usd_nobooks_second').value = config.USD.withoutBooks.second;
-        document.getElementById('usd_nobooks_third').value = config.USD.withoutBooks.third;
-        document.getElementById('usd_nobooks_bundle').value = config.USD.withoutBooks.bundle;
+        // USD — DB is in cents, divide by 100 for display
+        setInputDollars('usd_books_first',   config.USD.withBooks.first);
+        setInputDollars('usd_books_second',  config.USD.withBooks.second);
+        setInputDollars('usd_books_third',   config.USD.withBooks.third);
+        setInputDollars('usd_books_bundle',  config.USD.withBooks.bundle);
+        setInputDollars('usd_nobooks_first', config.USD.withoutBooks.first);
+        setInputDollars('usd_nobooks_second',config.USD.withoutBooks.second);
+        setInputDollars('usd_nobooks_third', config.USD.withoutBooks.third);
+        setInputDollars('usd_nobooks_bundle',config.USD.withoutBooks.bundle);
 
-        // INR
-        document.getElementById('inr_books_first').value = config.INR.withBooks.first;
-        document.getElementById('inr_books_second').value = config.INR.withBooks.second;
-        document.getElementById('inr_books_third').value = config.INR.withBooks.third;
-        document.getElementById('inr_books_bundle').value = config.INR.withBooks.bundle;
-        document.getElementById('inr_nobooks_first').value = config.INR.withoutBooks.first;
-        document.getElementById('inr_nobooks_second').value = config.INR.withoutBooks.second;
-        document.getElementById('inr_nobooks_third').value = config.INR.withoutBooks.third;
-        document.getElementById('inr_nobooks_bundle').value = config.INR.withoutBooks.bundle;
+        // INR — DB is in paise, divide by 100 for display
+        setInputDollars('inr_books_first',   config.INR.withBooks.first);
+        setInputDollars('inr_books_second',  config.INR.withBooks.second);
+        setInputDollars('inr_books_third',   config.INR.withBooks.third);
+        setInputDollars('inr_books_bundle',  config.INR.withBooks.bundle);
+        setInputDollars('inr_nobooks_first', config.INR.withoutBooks.first);
+        setInputDollars('inr_nobooks_second',config.INR.withoutBooks.second);
+        setInputDollars('inr_nobooks_third', config.INR.withoutBooks.third);
+        setInputDollars('inr_nobooks_bundle',config.INR.withoutBooks.bundle);
 
-        // Exchange rates - INR is base (1), others show how much of that currency = 1 INR
-        if (config.exchangeRates) {
-          // Convert from "1 USD = X INR" to "1 INR = X USD"
-          const usdToInr = config.exchangeRates.INR || 83;
-          document.getElementById('rate_USD').value = (1 / usdToInr).toFixed(4);
-          document.getElementById('rate_GBP').value = (config.exchangeRates.GBP / usdToInr).toFixed(4);
-          document.getElementById('rate_EUR').value = (config.exchangeRates.EUR / usdToInr).toFixed(4);
-          document.getElementById('rate_CAD').value = (config.exchangeRates.CAD / usdToInr).toFixed(4);
-          document.getElementById('rate_AUD').value = (config.exchangeRates.AUD / usdToInr).toFixed(4);
-          document.getElementById('rate_JPY').value = (config.exchangeRates.JPY / usdToInr).toFixed(2);
-        }
+        // Also fetch live rates while we're here
+        await fetchLiveRates();
       } catch (e) {
         console.error('Error loading pricing:', e);
       }
+    }
+
+    // Helper: set input value from DB cents/paise → human dollars/rupees
+    function setInputDollars(inputId, centsValue) {
+      const el = document.getElementById(inputId);
+      if (el) {
+        const human = (centsValue || 0) / 100;
+        // Show clean number: remove trailing zeros after decimal
+        el.value = parseFloat(human.toFixed(2));
+      }
+    }
+
+    // Helper: read input value in human dollars/rupees → convert to cents/paise for DB
+    function getInputCents(inputId) {
+      const el = document.getElementById(inputId);
+      const val = parseFloat(el?.value) || 0;
+      return Math.round(val * 100); // e.g. 8.50 → 850
     }
 
     async function savePricing() {
@@ -1654,57 +1895,79 @@
       statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Saving pricing changes...</div>';
 
       try {
-        // Get exchange rates (INR base to USD base conversion)
-        const inrToUsd = parseFloat(document.getElementById('rate_USD').value) || 0.012;
-        const inrToGbp = parseFloat(document.getElementById('rate_GBP').value) || 0.0095;
-        const inrToEur = parseFloat(document.getElementById('rate_EUR').value) || 0.011;
-        const inrToCad = parseFloat(document.getElementById('rate_CAD').value) || 0.016;
-        const inrToAud = parseFloat(document.getElementById('rate_AUD').value) || 0.018;
-        const inrToJpy = parseFloat(document.getElementById('rate_JPY').value) || 1.78;
-
-        // Convert to USD base (1 USD = X currency)
-        const usdToInr = 1 / inrToUsd;
-        
+        // Build the config object — multiply human values by 100 for DB storage
         const config = {
           USD: {
             withBooks: {
-              first: parseInt(document.getElementById('usd_books_first').value) || 800,
-              second: parseInt(document.getElementById('usd_books_second').value) || 700,
-              third: parseInt(document.getElementById('usd_books_third').value) || 700,
-              bundle: parseInt(document.getElementById('usd_books_bundle').value) || 3400,
+              first:  getInputCents('usd_books_first'),
+              second: getInputCents('usd_books_second'),
+              third:  getInputCents('usd_books_third'),
+              bundle: getInputCents('usd_books_bundle'),
             },
             withoutBooks: {
-              first: parseInt(document.getElementById('usd_nobooks_first').value) || 1000,
-              second: parseInt(document.getElementById('usd_nobooks_second').value) || 900,
-              third: parseInt(document.getElementById('usd_nobooks_third').value) || 800,
-              bundle: parseInt(document.getElementById('usd_nobooks_bundle').value) || 4000,
+              first:  getInputCents('usd_nobooks_first'),
+              second: getInputCents('usd_nobooks_second'),
+              third:  getInputCents('usd_nobooks_third'),
+              bundle: getInputCents('usd_nobooks_bundle'),
             },
           },
           INR: {
             withBooks: {
-              first: parseInt(document.getElementById('inr_books_first').value) || 15000,
-              second: parseInt(document.getElementById('inr_books_second').value) || 12900,
-              third: parseInt(document.getElementById('inr_books_third').value) || 10000,
-              bundle: parseInt(document.getElementById('inr_books_bundle').value) || 55000,
+              first:  getInputCents('inr_books_first'),
+              second: getInputCents('inr_books_second'),
+              third:  getInputCents('inr_books_third'),
+              bundle: getInputCents('inr_books_bundle'),
             },
             withoutBooks: {
-              first: parseInt(document.getElementById('inr_nobooks_first').value) || 20000,
-              second: parseInt(document.getElementById('inr_nobooks_second').value) || 18000,
-              third: parseInt(document.getElementById('inr_nobooks_third').value) || 15000,
-              bundle: parseInt(document.getElementById('inr_nobooks_bundle').value) || 85000,
+              first:  getInputCents('inr_nobooks_first'),
+              second: getInputCents('inr_nobooks_second'),
+              third:  getInputCents('inr_nobooks_third'),
+              bundle: getInputCents('inr_nobooks_bundle'),
             },
-          },
-          exchangeRates: {
-            USD: 1,
-            INR: usdToInr,
-            GBP: inrToGbp / inrToUsd,
-            EUR: inrToEur / inrToUsd,
-            CAD: inrToCad / inrToUsd,
-            AUD: inrToAud / inrToUsd,
-            JPY: inrToJpy / inrToUsd,
           },
           lastUpdated: new Date().toISOString(),
         };
+
+        // ── Exchange rates ──
+        // Backend expects: { USD: 1, INR: 83, GBP: 0.79, ... }
+        // meaning "1 USD = X currency"  (USD-base format)
+        //
+        // Frankfurter gave us INR-base: { USD: 0.0118, GBP: 0.0093, ... }
+        // meaning "1 INR = X currency"
+        //
+        // Convert: 1 USD = (1/rates.USD) INR  →  INR value = 1 / rates.USD
+        // Then for any other currency C:  1 USD = rates.C / rates.USD  units of C
+
+        if (liveExchangeRates && liveExchangeRates.USD) {
+          const inrPerUsd = 1 / liveExchangeRates.USD; // e.g. 1/0.0118 ≈ 84.7
+          const exchangeRates = { USD: 1, INR: parseFloat(inrPerUsd.toFixed(2)) };
+
+          // For every other currency we have: 1 USD = liveRate[C] / liveRate[USD]
+          RATE_CURRENCIES.forEach(code => {
+            if (code === 'USD') return;
+            if (liveExchangeRates[code] != null) {
+              exchangeRates[code] = parseFloat((liveExchangeRates[code] / liveExchangeRates.USD).toFixed(4));
+            }
+          });
+
+          // Also add the extra currencies the backend fallback has (we keep them from previous config or skip)
+          // For now we just save what we have — the backend FALLBACK_PRICING covers the rest if missing.
+          config.exchangeRates = exchangeRates;
+        } else {
+          // No live rates available — try to load existing from DB so we don't wipe them
+          try {
+            const { data: existing } = await window.supabase
+              .from('pricing_config').select('config').eq('id', 1).single();
+            if (existing?.config?.exchangeRates) {
+              config.exchangeRates = existing.config.exchangeRates;
+            }
+          } catch(_) {}
+
+          if (!config.exchangeRates) {
+            statusDiv.innerHTML = `<div class="error-message">⚠️ Could not fetch live exchange rates and no previous rates found. Please click "Refresh Rates" first.</div>`;
+            return;
+          }
+        }
 
         const { error } = await window.supabase
           .from('pricing_config')
@@ -1719,20 +1982,20 @@
         statusDiv.innerHTML = `
           <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 12px; padding: 20px; color: var(--success);">
             <strong>✅ Pricing updated successfully!</strong><br>
-            <span style="font-size: 13px;">Changes will apply to all new purchases immediately.</span>
+            <span style="font-size: 13px;">Changes apply to all new purchases immediately. Exchange rates: ${config.exchangeRates ? '✅ saved' : '⚠️ not updated'}</span>
           </div>
         `;
 
         setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
       } catch (e) {
         console.error('Error saving pricing:', e);
-        statusDiv.innerHTML = `
-          <div class="error-message">
-            <strong>❌ Failed to save pricing:</strong><br>${e.message}
-          </div>
-        `;
+        statusDiv.innerHTML = `<div class="error-message"><strong>❌ Failed to save pricing:</strong><br>${e.message}</div>`;
       }
     }
+
+    // ═══════════════════════════════════════════════════════
+    // TABS
+    // ═══════════════════════════════════════════════════════
 
     function switchTab(tabName, btn) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1740,36 +2003,37 @@
       document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
       document.getElementById(tabName + 'Tab').classList.remove('hidden');
       
-      // Load pricing data when pricing tab is opened
       if (tabName === 'pricing') {
-        loadPricingData();
+        loadPricingData(); // also triggers fetchLiveRates() inside
       }
     }
+
+    // ═══════════════════════════════════════════════════════
+    // MEDIA LIGHTBOX
+    // ═══════════════════════════════════════════════════════
 
     function openMediaModal(type, url) {
       const overlay = document.getElementById('mediaModal');
       const img = document.getElementById('mediaModalImg');
       const vid = document.getElementById('mediaModalVideo');
       if (type === 'photo') {
-        img.src = url;
-        img.style.display = 'block';
-        vid.style.display = 'none';
-        vid.pause();
-        vid.src = '';
+        img.src = url; img.style.display = 'block';
+        vid.style.display = 'none'; vid.pause(); vid.src = '';
       } else {
-        vid.src = url;
-        vid.style.display = 'block';
-        img.style.display = 'none';
-        img.src = '';
+        vid.src = url; vid.style.display = 'block';
+        img.style.display = 'none'; img.src = '';
       }
       overlay.classList.remove('hidden');
     }
     function closeMediaModal() {
       document.getElementById('mediaModal').classList.add('hidden');
       const vid = document.getElementById('mediaModalVideo');
-      vid.pause();
-      vid.src = '';
+      vid.pause(); vid.src = '';
     }
+
+    // ═══════════════════════════════════════════════════════
+    // SORTING
+    // ═══════════════════════════════════════════════════════
 
     let sortState = {
       users:     { col: 'joined',    dir: 'desc' },
@@ -1842,14 +2106,18 @@
           }
           updateSortHeaders(table);
           switch (table) {
-            case 'users':     renderUsers(sortArray(allUsers, 'users'));         break;
-            case 'codes':     renderCodes(sortArray(allCodes, 'codes'));         break;
+            case 'users':     renderUsers(sortArray(allUsers, 'users'));             break;
+            case 'codes':     renderCodes(sortArray(allCodes, 'codes'));             break;
             case 'purchases': renderPurchases(sortArray(allPurchases, 'purchases')); break;
-            case 'bundles':   renderBundles(sortArray(allBundles, 'bundles'));   break;
+            case 'bundles':   renderBundles(sortArray(allBundles, 'bundles'));       break;
           }
         });
       });
     }
+
+    // ═══════════════════════════════════════════════════════
+    // DELETE USER
+    // ═══════════════════════════════════════════════════════
 
     function openDeleteModal(user) {
       if (ADMIN_EMAILS.includes(user.email)) {
@@ -1935,11 +2203,14 @@
       }
     }
 
-    // Initialize date inputs with today
+    // ═══════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════
+
     document.getElementById('endDate').valueAsDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    document.getElementById('startDate').valueAsDate = startDate;
+    const _startDate = new Date();
+    _startDate.setDate(_startDate.getDate() - 30);
+    document.getElementById('startDate').valueAsDate = _startDate;
 
     checkAdminAccess();
   </script>
