@@ -234,14 +234,19 @@ const STEPS = [
   selector: "#startPracticeButton",
   dim: false,
   video: null,
-action: {
-  type: "click",
-  selector: "#startPracticeButton",
-  prompt: "Click Start Practice to begin.",
-  doneText: "Practice started ▶️",
-  hideCardAfterClick: true
-}
+  action: {
+    type: "click",
+    selector: "#startPracticeButton",
+    prompt: "Click Start Practice to begin.",
+    doneText: "Practice started ▶️",
+    hideCardAfterClick: true
+  },
+  resume: {
+    title: "Well done 🎉",
+    text: "Nice work. Now let’s look at the next feature. Click Next when you’re ready."
+  }
 },
+
 
   {
     title: "Play Full Song",
@@ -596,12 +601,34 @@ window.addEventListener("message", (event) => {
   if (event.source !== frame.contentWindow) return;
 
   const data = event.data || {};
-  if (data.type === "tour:resume") {
-    // show the card again when app says it's time
-    card.style.display = "block";
-    // re-position in case layout changed
-    render();
+if (data.type === "tour:resume") {
+  const step = STEPS[idx];
+
+  // show the card again
+  card.style.display = "block";
+
+  // If this step has a custom resume message, show it
+  if (step && step.resume) {
+    titleEl.textContent = step.resume.title || step.title || "";
+    textEl.textContent  = step.resume.text  || step.text  || "";
+    setStatus("", false); // clear the action status line
+
+    // keep highlight positioned
+    const rect = highlight(step.selector);
+    placeCardNear(rect);
+
+    // keep step counter + buttons correct
+    stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
+    backBtn.disabled = idx === 0;
+    nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
+
+    return; // don't call full render()
   }
+
+  // fallback
+  render();
+}
+
 });
 
 </script>
