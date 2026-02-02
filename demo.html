@@ -373,8 +373,17 @@ text: "You can slow things down or speed them up anytime. Try tapping + or – o
     doneText: "Done ✅ Free Mode toggled."
   }
 },
-
+{
+  title: "Demo complete 🎉",
+  text: "You’ve reached the end of the demo.\n\nThis was a trial version of the song, designed to show you how practice, feedback, and playback work.\n\nTo unlock the full song, please log in first.",
+  selector: null,
+  dim: true,
+  video: null,
+  nextLabel: "Login first",
+  nextUrl: "https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html"
+}
 ];
+
 
 
   const frame = document.getElementById("appFrame");
@@ -723,7 +732,11 @@ setOverlayDim(step.dim !== false);
     stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
 
     backBtn.disabled = idx === 0;
-    nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
+nextBtn.textContent =
+  (idx === STEPS.length - 1)
+    ? (STEPS[idx].nextLabel || "Done")
+    : "Next";
+
 
     stopVideo();
     const rect = highlight(step.selector);
@@ -754,10 +767,19 @@ if (step.waitForClick) {
   stopBtn.addEventListener("click", hideTour);
 
 
-  nextBtn.addEventListener("click", () => {
-    if (idx === STEPS.length - 1) hideTour();
-    else goTo(idx + 1);
-  });
+nextBtn.addEventListener("click", () => {
+  const step = STEPS[idx];
+
+  // If this step defines a link (like login), go there
+  if (step && step.nextUrl && idx === STEPS.length - 1) {
+    window.location.href = step.nextUrl;
+    return;
+  }
+
+  if (idx === STEPS.length - 1) hideTour();
+  else goTo(idx + 1);
+});
+
 
   backBtn.addEventListener("click", () => goTo(idx - 1));
   skipBtn.addEventListener("click", hideTour);
