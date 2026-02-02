@@ -306,28 +306,34 @@ setOverlayDim(true);
   }
 
   function hideTour(){
-    running = false;
-    overlay.style.display = "none";
-    hi.style.display = "none";
-    card.style.display = "none";
-    stopBtn.style.display = "none";
-    startBtn.style.display = "inline-block";
-    stopVideo();
-    if (waitCleanup) {
-  waitCleanup();
-  waitCleanup = null;
-      if (actionCleanup) {
-  actionCleanup();
-  actionCleanup = null;
-}
-actionDone = false;
-setStatus("");
+  running = false;
 
-}
-waitSatisfied = false;
-setNextEnabled(true);
+  overlay.style.display = "none";
+  hi.style.display = "none";
+  card.style.display = "none";
 
+  stopBtn.style.display = "none";
+  startBtn.style.display = "inline-block";
+
+  stopVideo();
+
+  // cleanup wait listener
+  if (waitCleanup) {
+    waitCleanup();
+    waitCleanup = null;
   }
+  waitSatisfied = false;
+
+  // cleanup action listener
+  if (actionCleanup) {
+    actionCleanup();
+    actionCleanup = null;
+  }
+  actionDone = false;
+  setStatus("");
+
+  setNextEnabled(true);
+}
 
   function stopVideo(){
     videoEl.pause();
