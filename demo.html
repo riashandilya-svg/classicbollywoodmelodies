@@ -340,11 +340,18 @@ text: "As you play, messages will appear here telling you whether each note was 
 
 {
   title: "Speed",
-  text: "Use these controls to slow down or speed up playback while training or playing the full song.",
+  text: "You can slow things down or speed them up anytime. Try tapping + or – once, then click Next.",
   selector: "#speedDisplay",
   dim: false,
-  video: null
+  video: null,
+  action: {
+    type: "observeTextChange",
+    selector: "#speedDisplay",
+    prompt: "Try clicking + or – to change the speed.",
+    doneText: "Done ✅ Speed changed."
+  }
 },
+
 {
   title: "Instant note feedback",
   text: "On the right, you’ll see what you played under “You pressed”. Under “Correct note”, you’ll see the note you’re supposed to play.",
@@ -638,6 +645,33 @@ if (action.type === "click") {
     actionCleanup = () => el.removeEventListener("input", onInput, true);
     return;
   }
+  if (action.type === "observeTextChange") {
+  const initial = (el.textContent || "").trim();
+
+  const checkDone = () => {
+    const now = (el.textContent || "").trim();
+    return now && now !== initial;
+  };
+
+  if (checkDone()) {
+    markDone();
+    return;
+  }
+
+  const obs = new MutationObserver(() => {
+    if (checkDone()) {
+      markDone();
+      obs.disconnect();
+      actionCleanup = null;
+    }
+  });
+
+  obs.observe(el, { childList: true, subtree: true, characterData: true });
+
+  actionCleanup = () => obs.disconnect();
+  return;
+}
+
   if (action.type === "observe") {
     const checkDone = () => {
       if (action.classIncludes) {
