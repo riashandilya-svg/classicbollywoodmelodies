@@ -966,22 +966,22 @@ if (data.type === "tour:resume") {
 
   // If this step has a custom resume message, show it
   if (step && step.resume) {
-titleEl.textContent = step.resume.title || step.title || "";
-titleEl.textContent  = step.resume.text  || step.text  || ""; // <-- should be textEl
+  titleEl.textContent = step.resume.title || step.title || "";
+  textEl.textContent  = step.resume.text  || step.text  || "";
+  setStatus("", false);
 
-    setStatus("", false); // clear the action status line
+  const rect = highlight(step.selector);
+  placeCardNear(rect);
 
-    // keep highlight positioned
-    const rect = highlight(step.selector);
-    placeCardNear(rect);
+  stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
+  backBtn.disabled = idx === 0;
+  nextBtn.textContent = (idx === STEPS.length - 1)
+    ? (STEPS[idx].nextLabel || "Done")
+    : "Next";
 
-    // keep step counter + buttons correct
-    stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
-    backBtn.disabled = idx === 0;
-    nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
+  return;
+}
 
-    return; // don't call full render()
-  }
 
   // fallback
   render();
