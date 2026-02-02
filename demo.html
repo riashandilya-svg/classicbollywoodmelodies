@@ -192,6 +192,7 @@ const STEPS = [
   title: "Choose which hand to practice",
   text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you’re ready.",
   selector: "#handSelect",
+      dim: false,
   video: null,
   action: {
     type: "change",
@@ -258,7 +259,8 @@ let waitSatisfied = false;
 
   function showTour(){
     running = true;
-    overlay.style.display = "block";
+setOverlayDim(true);
+
     card.style.display = "block";
     stopBtn.style.display = "inline-block";
     startBtn.style.display = "none";
@@ -400,9 +402,14 @@ function setupWaitForClick(selector){
     el.removeEventListener("click", onClick, true);
   };
 }
+function setOverlayDim(dim){
+  overlay.style.display = "block";
+  overlay.style.background = dim ? "var(--demo-bg)" : "transparent";
+}
 
   function render(){
     const step = STEPS[idx];
+setOverlayDim(step.dim !== false);
 
     titleEl.textContent = step.title;
     textEl.textContent = step.text;
