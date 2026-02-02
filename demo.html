@@ -752,18 +752,32 @@ if (action.type === "click") {
 }
 
   if (action.type === "observe") {
-    const checkDone = () => {
-      // Check for checked attribute change (for checkboxes)
-      if (action.watchChecked && el.type === 'checkbox') {
-        // Store initial state on first call
-        if (!action._initialCheckedState) {
-          action._initialCheckedState = el.checked;
-          return false;
-        }
-        // Return true if checked state changed from initial
-        return el.checked !== action._initialCheckedState;
-      }
+    console.log("🔍 Setting up observe for:", action.selector);
+    console.log("   watchChecked:", action.watchChecked);
+    console.log("   element type:", el.type);
+    console.log("   initial checked state:", el.checked);
+    
+    // For checkboxes, we need to use change event, not MutationObserver
+    if (action.watchChecked && el.type === 'checkbox') {
+      const initialCheckedState = el.checked;
       
+      const onChange = () => {
+        console.log("✅ Checkbox changed! Old:", initialCheckedState, "New:", el.checked);
+        markDone();
+      };
+      
+      console.log("👂 Listening for 'change' event on checkbox");
+      el.addEventListener("change", onChange, true);
+      
+      actionCleanup = () => {
+        console.log("🛑 Removing change listener");
+        el.removeEventListener("change", onChange, true);
+      };
+      return;
+    }
+    
+    // For other observe types (class, text)
+    const checkDone = () => {
       if (action.classIncludes) {
         if (!el.classList.contains(action.classIncludes)) return false;
       }
@@ -776,27 +790,35 @@ if (action.type === "click") {
 
     // if it's already in the done state, mark done immediately
     if (checkDone()) {
+      console.log("✅ Already done on setup!");
       markDone();
       return;
     }
 
-    const obs = new MutationObserver(() => {
+    const obs = new MutationObserver((mutations) => {
+      console.log("👀 MutationObserver fired! Mutations:", mutations.length);
+      
       if (checkDone()) {
+        console.log("✅ Condition met, marking done!");
         markDone();
         obs.disconnect();
         actionCleanup = null;
       }
     });
 
+    console.log("👂 Starting to observe element...");
     obs.observe(el, {
       attributes: true,
-      attributeFilter: action.watchChecked ? ["checked"] : ["class"],
+      attributeFilter: ["class"],
       childList: true,
       subtree: true,
       characterData: true
     });
 
-    actionCleanup = () => obs.disconnect();
+    actionCleanup = () => {
+      console.log("🛑 Cleaning up observer");
+      obs.disconnect();
+    };
     return;
   }
 
