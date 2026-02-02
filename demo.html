@@ -191,6 +191,8 @@
       text: "This button starts the practice flow.",
       selector: "#startPracticeButton",
       video: null
+        waitForClick: true
+
     },
     {
       title: "Play Full Song",
@@ -229,8 +231,13 @@
   const backBtn = document.getElementById("backBtn");
   const skipBtn = document.getElementById("skipBtn");
 
-  let idx = 0;
-  let running = false;
+let idx = 0;
+let running = false;
+
+// ✅ for "wait until user clicks"
+let waitCleanup = null;
+let waitSatisfied = false;
+
 
   frame.src = APP_URL;
 
@@ -251,6 +258,13 @@
     stopBtn.style.display = "none";
     startBtn.style.display = "inline-block";
     stopVideo();
+    if (waitCleanup) {
+  waitCleanup();
+  waitCleanup = null;
+}
+waitSatisfied = false;
+setNextEnabled(true);
+
   }
 
   function stopVideo(){
@@ -318,6 +332,59 @@
 
     return rect;
   }
+function setNextEnabled(enabled){
+  nextBtn.disabled = !enabled;
+  nextBtn.style.opacity = enabled ? "1" : "0.55";
+  nextBtn.style.cursor = enabled ? "pointer" : "not-allowed";
+}
+
+function setupWaitForClick(selector){
+  // clean up any previous waiting listener
+  if (waitCleanup) {
+    waitCleanup();
+    waitCleanup = null;
+  }
+  waitSatisfied = false;
+
+  // If no selector, nothing to wait for
+  if (!selector) {
+    setNextEnabled(true);
+    return;
+  }
+
+  const doc = frame.contentWindow?.document;
+  if (!doc) {
+    setNextEnabled(true);
+    return;
+  }
+
+  const el = doc.querySelector(selector);
+  if (!el) {
+    // If element not found, don't block the demo
+    setNextEnabled(true);
+    return;
+  }
+
+  // Disable Next until they click the target
+  setNextEnabled(false);
+
+  const onClick = (e) => {
+    waitSatisfied = true;
+    setNextEnabled(true);
+
+    // remove listener after first click
+    el.removeEventListener("click", onClick, true);
+    waitCleanup = null;
+  };
+
+  // Use capture so we catch it even if the app stops propagation
+  el.addEventListener("click", onClick, true);
+
+  // cleanup function for when user goes back/next/exit
+  waitCleanup = () => {
+    el.removeEventListener("click", onClick, true);
+  };
+}
 
   function render(){
     const step = STEPS[idx];
@@ -333,6 +400,19 @@
     const rect = highlight(step.selector);
     placeCardNear(rect);
     playVideo(step.video);
+    // ✅ if this step requires clicking the feature, wait for it
+if (step.waitForClick) {
+  setupWaitForClick(step.selector);
+} else {
+  // normal steps: Next is available
+  if (waitCleanup) {
+    waitCleanup();
+    waitCleanup = null;
+  }
+  waitSatisfied = false;
+  setNextEnabled(true);
+}
+
   }
 
   function goTo(newIndex){
