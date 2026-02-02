@@ -136,6 +136,10 @@
       display:flex;
       gap:10px;
       align-items:center;
+      background: rgba(255,255,255,0.95);
+      padding: 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
   </style>
 </head>
@@ -146,6 +150,7 @@
 
   <!-- Quick start button always visible -->
   <div id="demoTopBar">
+    <span style="margin-right:10px;font-size:11px;opacity:0.7;">v3.0</span>
     <button class="btn" id="startTourBtn">Start Demo</button>
     <button class="btn ghost" id="stopTourBtn" style="display:none;">Exit</button>
   </div>
@@ -175,9 +180,6 @@
   </div>
 
 <script>
-  document.title = "Interactive Demo (version 2026-02-03-loop)";
-console.log("Loaded demo.html version 2026-02-03-loop");
-
   // STEP 1: SET YOUR REAL APP PAGE HERE
   const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/demo-app.html";
 
@@ -326,13 +328,19 @@ text: "As you play, messages will appear here telling you whether each note was 
   dim: false,
   video: null
 },
-  {
+{
   title: "Loop section",
-  text:
-    "Turn Loop on to repeat the section you selected.\n\nThe app will play from your Start Measure to your End Measure, then automatically jump back to the Start Measure and play to the End Measure again. It will keep looping until you press Stop.",
-  selector: null,   // or set this to the loop toggle/button selector if you have one (example: '#loopToggle')
+  text: "Turn this on to keep repeating your selected measures. After it reaches the end measure, it automatically jumps back to the start measure and continues until you press Stop.",
+  selector: "#loopCheckbox",
   dim: false,
-  video: null
+  video: null,
+  action: {
+    type: "observe",
+    selector: "#loopCheckbox",
+    watchChecked: true,
+    prompt: "Optional: toggle Loop on or off.",
+    doneText: "Done ✅ Loop setting changed."
+  }
 },
 
   {
@@ -394,8 +402,6 @@ text: "You can slow things down or speed them up anytime. Try tapping + or - onc
   nextUrl: "https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html"
 }
 ];
-console.log("STEPS length:", STEPS.length);
-console.log("Has Loop section step:", STEPS.some(s => s.title === "Loop section"));
 
 
 
@@ -953,9 +959,8 @@ nextBtn.addEventListener("click", () => {
     requestAnimationFrame(startPositionTracking);
   }
 
-  window.addEventListener("load", () => {
-  showTour();
-});
+  // Removed auto-start - user clicks "Start Demo" button instead
+  
 window.addEventListener("message", (event) => {
   // Only accept messages from the iframe page
   if (event.source !== frame.contentWindow) return;
@@ -969,22 +974,21 @@ if (data.type === "tour:resume") {
 
   // If this step has a custom resume message, show it
   if (step && step.resume) {
-  titleEl.textContent = step.resume.title || step.title || "";
-  textEl.textContent  = step.resume.text  || step.text  || "";
-  setStatus("", false);
+    titleEl.textContent = step.resume.title || step.title || "";
+    titleEl.textContent  = step.resume.text  || step.text  || "";
+    setStatus("", false); // clear the action status line
 
-  const rect = highlight(step.selector);
-  placeCardNear(rect);
+    // keep highlight positioned
+    const rect = highlight(step.selector);
+    placeCardNear(rect);
 
-  stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
-  backBtn.disabled = idx === 0;
-  nextBtn.textContent = (idx === STEPS.length - 1)
-    ? (STEPS[idx].nextLabel || "Done")
-    : "Next";
+    // keep step counter + buttons correct
+    stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
+    backBtn.disabled = idx === 0;
+    nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
 
-  return;
-}
-
+    return; // don't call full render()
+  }
 
   // fallback
   render();
