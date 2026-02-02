@@ -537,6 +537,43 @@ if (action.type === "click") {
     actionCleanup = () => el.removeEventListener("input", onInput, true);
     return;
   }
+  if (action.type === "observe") {
+    const checkDone = () => {
+      if (action.classIncludes) {
+        if (!el.classList.contains(action.classIncludes)) return false;
+      }
+      if (action.textIncludes) {
+        const t = (el.textContent || "").trim();
+        if (!t.includes(action.textIncludes)) return false;
+      }
+      return true;
+    };
+
+    // if it's already in the done state, mark done immediately
+    if (checkDone()) {
+      markDone();
+      return;
+    }
+
+    const obs = new MutationObserver(() => {
+      if (checkDone()) {
+        markDone();
+        obs.disconnect();
+        actionCleanup = null;
+      }
+    });
+
+    obs.observe(el, {
+      attributes: true,
+      attributeFilter: ["class"],
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    actionCleanup = () => obs.disconnect();
+    return;
+  }
 
   // unknown action type
   setStatus("");
