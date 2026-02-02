@@ -315,8 +315,11 @@ canvas {
 }
 canvas {
     display: block;
-
+    touch-action: none; /* Prevents default touch behaviors like scrolling */
+    -webkit-user-select: none; /* Prevents text selection on iOS */
+    user-select: none;
 }
+    
 /* 🎯 Training Progress Bar */
 #trainingProgress {
     position: relative;
@@ -1046,6 +1049,9 @@ let freeModeActiveNote = null;
 let mouseDown = false;
 let freeModeReleaseTimer = null;
 let lastMouseMidi = null;
+let touchActive = false; // Track if touch is active
+let activeTouches = new Map(); // Track multiple touches by touch identifier
+    
 function hardStopUserNote() {
     if (!synth) return;
 
@@ -2181,7 +2187,175 @@ retryTimeout = setTimeout(() => {
     noteHoldStartTime = null;
     activeMidiNote = null;
 });
+// ================================
+// TOUCH EVENTS (for mobile with multi-touch support)
+// ================================
+canvas.addEventListener('touchstart', async (e) => {
+    if (previewMode) return;
+    e.preventDefault();
+    await Tone.start();
 
+    touchActive = true;
+    mouseDown = true;
+
+    const rect = canvas.getBoundingClientRect();
+
+    // Process all new touches
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        if (y < canvas.height - KEYBOARD_HEIGHT) continue;
+
+        const midiNote = getMidiFromMouse(x, y);
+        if (midiNote === null) continue;
+
+        // Store this touch
+        activeTouches.set(touch.identifier, midiNote);
+
+        // Trigger the note
+        processUserNoteOn(midiNote);
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    if (!touchActive) return;
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+
+    // Update each moving touch
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        if (y < canvas.height - KEYBOARD_HEIGHT) continue;
+
+        const midiNote = getMidiFromMouse(x, y);
+        if (midiNote === null) continue;
+
+        const oldNote = activeTouches.get(touch.identifier);
+
+        // Only trigger if the note changed
+        if (oldNote !== midiNote) {
+            activeTouches.set(touch.identifier, midiNote);
+            processUserNoteOn(midiNote);
+        }
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    if (!touchActive) return;
+    e.preventDefault();
+
+    // Process each released touch
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const midiNote = activeTouches.get(touch.identifier);
+
+        if (midiNote !== undefined) {
+            // Release this specific note
+            if (freeMode && midiNote === freeModeActiveNote) {
+                freeModeSynth.triggerRelease(getNoteName(midiNote));
+                freeModeActiveNote = null;
+                expectedMidiNote = null;
+                expectedMidiTreble.clear();
+            } else if (synth) {
+                synth.triggerRelease(getNoteName(midiNote));
+            }
+
+            // Remove from pressed notes in training mode
+            midiPressedNotes.delete(midiNote);
+
+            // Remove this touch
+            activeTouches.delete(touch.identifier);
+        }
+    }
+
+    // If all touches are released, check hold duration
+    if (e.touches.length === 0) {
+        touchActive = false;
+        mouseDown = false;
+        activeTouches.clear();
+
+        // Check hold duration if in training mode
+        if (!freeMode && noteHoldStartTime !== null) {
+            const heldTime = performance.now() - noteHoldStartTime;
+
+            if (heldTime >= expectedHoldDuration) {
+                const feedback = document.getElementById('feedback');
+                feedback.textContent = 'Good!';
+
+                feedback.classList.remove('correct', 'wrong', 'show');
+                void feedback.offsetWidth;
+                feedback.classList.add('correct', 'show');
+                explanationLocked = false;
+
+                waitingForInput = false;
+                expectedMidiNote = null;
+
+                expectedMidiTreble.clear();
+                expectedMidiBass.clear();
+
+                trainingIndex += currentChordNotes.size;
+                updateTrainingProgress();
+
+                document.getElementById('holdInfo').textContent = '';
+                setTimeout(() => spawnNextValidNote(), 300);
+
+            } else {
+                const heldBeats = heldTime / 1000 / secondsPerBeat;
+                const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+
+                const feedback = document.getElementById('feedback');
+                feedback.innerHTML = `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>. Let's try holding a little longer!`;
+
+                feedback.classList.remove('correct', 'wrong', 'show');
+                void feedback.offsetWidth;
+                feedback.classList.add('wrong', 'show');
+
+                const holdEl = document.getElementById('holdInfo');
+                holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+                if (retryTimeout) {
+                    clearTimeout(retryTimeout);
+                }
+
+                retryTimeout = setTimeout(() => {
+                    spawnTrainingNote(practiceNotes[trainingIndex]);
+                }, 600);
+            }
+
+            noteHoldStartTime = null;
+            activeMidiNote = null;
+        }
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', (e) => {
+    if (!touchActive) return;
+    e.preventDefault();
+
+    // Release all cancelled touches
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const midiNote = activeTouches.get(touch.identifier);
+
+        if (midiNote !== undefined && synth) {
+            synth.triggerRelease(getNoteName(midiNote));
+            midiPressedNotes.delete(midiNote);
+            activeTouches.delete(touch.identifier);
+        }
+    }
+
+    if (e.touches.length === 0) {
+        touchActive = false;
+        mouseDown = false;
+        activeTouches.clear();
+    }
+}, { passive: false });
 // MIDI handling
 async function initMIDI() {
     if(!navigator.requestMIDIAccess){ console.log('Web MIDI API not supported'); return; }
