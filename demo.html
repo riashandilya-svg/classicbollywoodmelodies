@@ -481,10 +481,27 @@ setOverlayDim(true);
     let left = 24;
 
     if (rect){
+      const cardHeight = card.offsetHeight || 300; // estimate if not yet rendered
       const spaceBelow = window.innerHeight - rect.bottom;
-      const preferBelow = spaceBelow > 240;
-
-      top = preferBelow ? (rect.bottom + 14) : Math.max(14, rect.top - 14 - card.offsetHeight);
+      const spaceAbove = rect.top;
+      
+      // For dropdown elements (like #handSelect), prefer placing above to avoid overlap
+      const isDropdown = currentHighlightedElement?.tagName === 'SELECT';
+      
+      if (isDropdown && spaceAbove > cardHeight + 40) {
+        // Place above dropdown with extra spacing
+        top = Math.max(14, rect.top - cardHeight - 24);
+      } else if (spaceBelow > cardHeight + 40) {
+        // Place below with spacing
+        top = rect.bottom + 14;
+      } else if (spaceAbove > cardHeight + 40) {
+        // Place above with spacing
+        top = Math.max(14, rect.top - cardHeight - 14);
+      } else {
+        // Not enough space either way, place to the side
+        top = Math.max(14, Math.min(rect.top, window.innerHeight - cardHeight - 14));
+      }
+      
       left = Math.min(Math.max(14, rect.left), window.innerWidth - card.offsetWidth - 14);
     } else {
       top = 28;
@@ -518,6 +535,9 @@ setOverlayDim(true);
     hi.style.top = (rect.top - pad) + "px";
     hi.style.width = (rect.width + pad*2) + "px";
     hi.style.height = (rect.height + pad*2) + "px";
+
+    // Also update card position when highlight moves
+    placeCardNear(rect);
 
     return rect;
   }
@@ -823,15 +843,40 @@ nextBtn.addEventListener("click", () => {
     if (running) render();
   });
   
-  // Update highlight position on iframe scroll
+  // Update highlight position on iframe scroll or any scroll within iframe
   frame.addEventListener("load", () => {
-    const iframeDoc = frame.contentWindow?.document;
+    const iframeWin = frame.contentWindow;
+    const iframeDoc = iframeWin?.document;
+    
     if (iframeDoc) {
+      // Listen for scroll on the document and all scrollable elements
       iframeDoc.addEventListener("scroll", () => {
         if (running && currentHighlightedElement) {
           updateHighlightPosition();
         }
       }, true); // Use capture to catch scroll on any element
+      
+      // Also use requestAnimationFrame to continuously update position
+      let rafId;
+      const updateLoop = () => {
+        if (running && currentHighlightedElement) {
+          updateHighlightPosition();
+        }
+        rafId = requestAnimationFrame(updateLoop);
+      };
+      
+      // Start the update loop when tour is running
+      const originalShowTour = showTour;
+      showTour = function() {
+        originalShowTour();
+        rafId = requestAnimationFrame(updateLoop);
+      };
+      
+      const originalHideTour = hideTour;
+      hideTour = function() {
+        originalHideTour();
+        if (rafId) cancelAnimationFrame(rafId);
+      };
     }
   });
 
@@ -841,6 +886,14 @@ nextBtn.addEventListener("click", () => {
       updateHighlightPosition();
     }
   }, true);
+
+  // Continuous position update using animation frame
+  function startPositionTracking() {
+    if (!running || !currentHighlightedElement) return;
+    
+    updateHighlightPosition();
+    requestAnimationFrame(startPositionTracking);
+  }
 
   window.addEventListener("load", () => {
   showTour();
