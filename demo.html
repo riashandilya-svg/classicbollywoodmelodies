@@ -136,10 +136,6 @@
       display:flex;
       gap:10px;
       align-items:center;
-      background: rgba(255,255,255,0.95);
-      padding: 8px 12px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
   </style>
 </head>
@@ -150,7 +146,6 @@
 
   <!-- Quick start button always visible -->
   <div id="demoTopBar">
-    <span style="margin-right:10px;font-size:11px;opacity:0.7;">v3.0</span>
     <button class="btn" id="startTourBtn">Start Demo</button>
     <button class="btn ghost" id="stopTourBtn" style="display:none;">Exit</button>
   </div>
@@ -328,21 +323,6 @@ text: "As you play, messages will appear here telling you whether each note was 
   dim: false,
   video: null
 },
-{
-  title: "Loop section",
-  text: "Turn this on to keep repeating your selected measures. After it reaches the end measure, it automatically jumps back to the start measure and continues until you press Stop.",
-  selector: "#loopCheckbox",
-  dim: false,
-  video: null,
-  action: {
-    type: "observe",
-    selector: "#loopCheckbox",
-    watchChecked: true,
-    prompt: "Optional: toggle Loop on or off.",
-    doneText: "Done ✅ Loop setting changed."
-  }
-},
-
   {
   title: "Play full song",
   text: "Use this to play the full song with visuals. It's helpful to listen first before practicing a section.",
@@ -664,8 +644,6 @@ function setStatus(msg, done=false){
 }
 
 function setupActionWatcher(action){
-  console.log("⚙️ setupActionWatcher called with action:", action);
-  
   // clear previous watcher
   if (actionCleanup) {
     actionCleanup();
@@ -674,26 +652,21 @@ function setupActionWatcher(action){
   actionDone = false;
 
   if (!action) {
-    console.log("   No action defined for this step");
     setStatus("");
     return;
   }
 
   const doc = frame.contentWindow?.document;
   if (!doc) {
-    console.log("   ❌ No iframe document");
     setStatus("");
     return;
   }
 
   const el = doc.querySelector(action.selector);
   if (!el) {
-    console.log("   ❌ Element not found:", action.selector);
     setStatus("");
     return;
   }
-
-  console.log("   ✅ Element found:", el);
 
   // show prompt text
   setStatus(action.prompt || "Try this now…", false);
@@ -764,31 +737,6 @@ if (action.type === "click") {
 }
 
   if (action.type === "observe") {
-    console.log("🔍 Setting up observe for:", action.selector);
-    console.log("   watchChecked:", action.watchChecked);
-    console.log("   element type:", el.type);
-    console.log("   initial checked state:", el.checked);
-    
-    // For checkboxes, we need to use change event, not MutationObserver
-    if (action.watchChecked && el.type === 'checkbox') {
-      const initialCheckedState = el.checked;
-      
-      const onChange = () => {
-        console.log("✅ Checkbox changed! Old:", initialCheckedState, "New:", el.checked);
-        markDone();
-      };
-      
-      console.log("👂 Listening for 'change' event on checkbox");
-      el.addEventListener("change", onChange, true);
-      
-      actionCleanup = () => {
-        console.log("🛑 Removing change listener");
-        el.removeEventListener("change", onChange, true);
-      };
-      return;
-    }
-    
-    // For other observe types (class, text)
     const checkDone = () => {
       if (action.classIncludes) {
         if (!el.classList.contains(action.classIncludes)) return false;
@@ -802,23 +750,18 @@ if (action.type === "click") {
 
     // if it's already in the done state, mark done immediately
     if (checkDone()) {
-      console.log("✅ Already done on setup!");
       markDone();
       return;
     }
 
-    const obs = new MutationObserver((mutations) => {
-      console.log("👀 MutationObserver fired! Mutations:", mutations.length);
-      
+    const obs = new MutationObserver(() => {
       if (checkDone()) {
-        console.log("✅ Condition met, marking done!");
         markDone();
         obs.disconnect();
         actionCleanup = null;
       }
     });
 
-    console.log("👂 Starting to observe element...");
     obs.observe(el, {
       attributes: true,
       attributeFilter: ["class"],
@@ -827,10 +770,7 @@ if (action.type === "click") {
       characterData: true
     });
 
-    actionCleanup = () => {
-      console.log("🛑 Cleaning up observer");
-      obs.disconnect();
-    };
+    actionCleanup = () => obs.disconnect();
     return;
   }
 
@@ -840,9 +780,6 @@ if (action.type === "click") {
 
   function render(){
     const step = STEPS[idx];
-    console.log("🎬 Rendering step", idx + 1, ":", step.title);
-    console.log("   Selector:", step.selector);
-    
 setOverlayDim(step.dim !== false);
 
     titleEl.textContent = step.title;
@@ -858,7 +795,6 @@ nextBtn.textContent =
 
     stopVideo();
     const rect = highlight(step.selector);
-    console.log("   Highlight rect:", rect);
     placeCardNear(rect);
     setupActionWatcher(step.action);
     playVideo(step.video);
@@ -959,8 +895,9 @@ nextBtn.addEventListener("click", () => {
     requestAnimationFrame(startPositionTracking);
   }
 
-  // Removed auto-start - user clicks "Start Demo" button instead
-  
+  window.addEventListener("load", () => {
+  showTour();
+});
 window.addEventListener("message", (event) => {
   // Only accept messages from the iframe page
   if (event.source !== frame.contentWindow) return;
