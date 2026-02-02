@@ -35,6 +35,8 @@
       background: var(--demo-bg);
       display:none;
       z-index: 999999;
+        pointer-events: none; /* ✅ ADD THIS */
+
     }
 
     /* Highlight rectangle */
@@ -340,7 +342,7 @@
 
   startBtn.addEventListener("click", showTour);
   stopBtn.addEventListener("click", hideTour);
-  overlay.addEventListener("click", hideTour);
+
 
   nextBtn.addEventListener("click", () => {
     if (idx === STEPS.length - 1) hideTour();
