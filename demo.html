@@ -391,6 +391,8 @@ text: "You can slow things down or speed them up anytime. Try tapping + or - onc
   nextUrl: "https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html"
 }
 ];
+console.log("STEPS length:", STEPS.length);
+console.log("Has Loop section step:", STEPS.some(s => s.title === "Loop section"));
 
 
 
@@ -964,8 +966,9 @@ if (data.type === "tour:resume") {
 
   // If this step has a custom resume message, show it
   if (step && step.resume) {
-    titleEl.textContent = step.resume.title || step.title || "";
-    titleEl.textContent  = step.resume.text  || step.text  || "";
+titleEl.textContent = step.resume.title || step.title || "";
+titleEl.textContent  = step.resume.text  || step.text  || ""; // <-- should be textEl
+
     setStatus("", false); // clear the action status line
 
     // keep highlight positioned
