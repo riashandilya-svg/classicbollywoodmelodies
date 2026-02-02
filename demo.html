@@ -325,13 +325,14 @@ text: "As you play, messages will appear here telling you whether each note was 
 },
 {
   title: "Loop section",
-  text: "Turn this on to keep repeating your selected measures. After it reaches the end measure, it automatically jumps back to the start measure and continues until you press Stop.",
+  text: "Turn this on to keep repeating your selected measures...",
   selector: "#loopCheckbox",
   dim: false,
   video: null,
   action: {
-    type: "change",  // ← Change this from "click" to "change"
+    type: "observe",
     selector: "#loopCheckbox",
+    watchChecked: true,  // ← Add this flag
     prompt: "Optional: toggle Loop on or off.",
     doneText: "Done ✅ Loop setting changed."
   }
