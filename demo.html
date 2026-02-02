@@ -171,213 +171,189 @@
     </div>
   </div>
 
-  <script>
-    /**
-     * ✅ STEP 1: SET YOUR REAL APP PAGE HERE
+<script>
+  // ✅ STEP 1: SET YOUR REAL APP PAGE HERE
+  const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/romanticindex.html";
 
-    const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/romanticindex.html"; // <-- CHANGE THIS
-
-    /**
-     * ✅ STEP 2: Define demo steps using CSS selectors that exist on the app page.
-     * Start with easy ones you know you have (buttons / sections).
-     *
-     * If a selector isn’t found, the step will still show, but without highlight.
-     *
-     * Video:
-     *   Put a path like "./demo-videos/step1.mp4"
-     *   (you’ll add those files in step 3 below)
-     */
-    const STEPS = [
-      {
-        title: "Welcome",
-        text: "This is a guided demo. I’ll highlight the exact feature blocks on the real page.",
-        selector: null,
-        video: null
-      },
-      {
-        title: "Start Practice",
-        text: "This button starts the practice flow. The demo is highlighting the real button on the live page.",
-        selector: "#startPracticeButton",
-        video: null
-      },
-      {
-        title: "Play Full Song",
-        text: "This plays the full song playback with visuals.",
-        selector: "#playSongButton",
-        video: null
-      },
-      {
-        title: "Free Mode",
-        text: "Free Mode lets you play any notes and get feedback.",
-        selector: "#freeModeButton",
-        video: null
-      },
-      {
-        title: "Speed Controls",
-        text: "Use these to slow down or speed up training.",
-        selector: "#speedDisplay",
-        video: null
-      }
-    ];
-
-    const frame = document.getElementById("appFrame");
-    const overlay = document.getElementById("demoOverlay");
-    const hi = document.getElementById("demoHighlight");
-    const card = document.getElementById("demoCard");
-    const titleEl = document.getElementById("demoTitle");
-    const textEl = document.getElementById("demoText");
-    const stepEl = document.getElementById("demoStep");
-
-    const videoWrap = document.getElementById("demoVideo");
-    const videoEl = document.getElementById("demoVideoEl");
-
-    const startBtn = document.getElementById("startTourBtn");
-    const stopBtn = document.getElementById("stopTourBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    const backBtn = document.getElementById("backBtn");
-    const skipBtn = document.getElementById("skipBtn");
-
-    let idx = 0;
-    let running = false;
-
-    frame.src = APP_URL;
-
-    function showTour(){
-      running = true;
-      overlay.style.display = "block";
-      card.style.display = "block";
-      stopBtn.style.display = "inline-block";
-      startBtn.style.display = "none";
-      goTo(0);
+  // ✅ STEP 2: Define demo steps using CSS selectors that exist on the app page.
+  // If a selector isn’t found, the step will still show, but without highlight.
+  const STEPS = [
+    {
+      title: "Welcome",
+      text: "This is a guided demo. I’ll highlight the exact feature blocks on the real page.",
+      selector: null,
+      video: null
+    },
+    {
+      title: "Start Practice",
+      text: "This button starts the practice flow.",
+      selector: "#startPracticeButton",
+      video: null
+    },
+    {
+      title: "Play Full Song",
+      text: "This plays the full song playback with visuals.",
+      selector: "#playSongButton",
+      video: null
+    },
+    {
+      title: "Free Mode",
+      text: "Free Mode lets you play any notes and get feedback.",
+      selector: "#freeModeButton",
+      video: null
+    },
+    {
+      title: "Speed Controls",
+      text: "Use these to slow down or speed up training.",
+      selector: "#speedDisplay",
+      video: null
     }
+  ];
 
-    function hideTour(){
-      running = false;
-      overlay.style.display = "none";
-      hi.style.display = "none";
-      card.style.display = "none";
-      stopBtn.style.display = "none";
-      startBtn.style.display = "inline-block";
+  const frame = document.getElementById("appFrame");
+  const overlay = document.getElementById("demoOverlay");
+  const hi = document.getElementById("demoHighlight");
+  const card = document.getElementById("demoCard");
+  const titleEl = document.getElementById("demoTitle");
+  const textEl = document.getElementById("demoText");
+  const stepEl = document.getElementById("demoStep");
+
+  const videoWrap = document.getElementById("demoVideo");
+  const videoEl = document.getElementById("demoVideoEl");
+
+  const startBtn = document.getElementById("startTourBtn");
+  const stopBtn = document.getElementById("stopTourBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const backBtn = document.getElementById("backBtn");
+  const skipBtn = document.getElementById("skipBtn");
+
+  let idx = 0;
+  let running = false;
+
+  frame.src = APP_URL;
+
+  function showTour(){
+    running = true;
+    overlay.style.display = "block";
+    card.style.display = "block";
+    stopBtn.style.display = "inline-block";
+    startBtn.style.display = "none";
+    goTo(0);
+  }
+
+  function hideTour(){
+    running = false;
+    overlay.style.display = "none";
+    hi.style.display = "none";
+    card.style.display = "none";
+    stopBtn.style.display = "none";
+    startBtn.style.display = "inline-block";
+    stopVideo();
+  }
+
+  function stopVideo(){
+    videoEl.pause();
+    videoEl.removeAttribute("src");
+    videoEl.load();
+    videoWrap.style.display = "none";
+  }
+
+  function playVideo(src){
+    if (!src){
       stopVideo();
+      return;
+    }
+    videoEl.src = src;
+    videoWrap.style.display = "block";
+    videoEl.currentTime = 0;
+    videoEl.play().catch(()=>{});
+  }
+
+  function placeCardNear(rect){
+    let top = 24;
+    let left = 24;
+
+    if (rect){
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const preferBelow = spaceBelow > 240;
+
+      top = preferBelow ? (rect.bottom + 14) : Math.max(14, rect.top - 14 - card.offsetHeight);
+      left = Math.min(Math.max(14, rect.left), window.innerWidth - card.offsetWidth - 14);
+    } else {
+      top = 28;
+      left = window.innerWidth - card.offsetWidth - 28;
     }
 
-    function stopVideo(){
-      videoEl.pause();
-      videoEl.removeAttribute("src");
-      videoEl.load();
-      videoWrap.style.display = "none";
-    }
+    card.style.top = top + "px";
+    card.style.left = left + "px";
+  }
 
-    function playVideo(src){
-      if (!src){
-        stopVideo();
-        return;
-      }
-      videoEl.src = src;
-      videoWrap.style.display = "block";
-      videoEl.currentTime = 0;
-      videoEl.play().catch(()=>{});
-    }
+  function highlight(selector){
+    const doc = frame.contentWindow?.document;
+    if (!doc || !selector) return null;
 
-    function placeCardNear(rect){
-      // Default: bottom-left-ish
-      let top = 24;
-      let left = 24;
+    const el = doc.querySelector(selector);
+    if (!el) return null;
 
-      if (rect){
-        // Put card under highlight if possible, else above
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-        const preferBelow = spaceBelow > 240;
+    const r = el.getBoundingClientRect();
+    const frameRect = frame.getBoundingClientRect();
 
-        top = preferBelow ? (rect.bottom + 14) : Math.max(14, rect.top - 14 - card.offsetHeight);
-        left = Math.min(Math.max(14, rect.left), window.innerWidth - card.offsetWidth - 14);
-      } else {
-        // Center-ish if no target
-        top = 28;
-        left = window.innerWidth - card.offsetWidth - 28;
-      }
+    const rect = {
+      left: frameRect.left + r.left,
+      top: frameRect.top + r.top,
+      right: frameRect.left + r.right,
+      bottom: frameRect.top + r.bottom,
+      width: r.width,
+      height: r.height
+    };
 
-      card.style.top = top + "px";
-      card.style.left = left + "px";
-    }
+    const pad = 8;
+    hi.style.display = "block";
+    hi.style.left = (rect.left - pad) + "px";
+    hi.style.top = (rect.top - pad) + "px";
+    hi.style.width = (rect.width + pad*2) + "px";
+    hi.style.height = (rect.height + pad*2) + "px";
 
-    function highlight(selector){
-      const doc = frame.contentWindow?.document;
-      if (!doc || !selector) return null;
+    return rect;
+  }
 
-      const el = doc.querySelector(selector);
-      if (!el) return null;
+  function render(){
+    const step = STEPS[idx];
 
-      const r = el.getBoundingClientRect();
+    titleEl.textContent = step.title;
+    textEl.textContent = step.text;
+    stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
 
-      // The iframe itself might be scrolled; we need its position on this page
-      const frameRect = frame.getBoundingClientRect();
+    backBtn.disabled = idx === 0;
+    nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
 
-      // Convert iframe-local coords to page coords
-      const rect = {
-        left: frameRect.left + r.left,
-        top: frameRect.top + r.top,
-        right: frameRect.left + r.right,
-        bottom: frameRect.top + r.bottom,
-        width: r.width,
-        height: r.height
-      };
+    stopVideo();
+    const rect = highlight(step.selector);
+    placeCardNear(rect);
+    playVideo(step.video);
+  }
 
-      const pad = 8;
-      hi.style.display = "block";
-      hi.style.left = (rect.left - pad) + "px";
-      hi.style.top = (rect.top - pad) + "px";
-      hi.style.width = (rect.width + pad*2) + "px";
-      hi.style.height = (rect.height + pad*2) + "px";
+  function goTo(newIndex){
+    idx = Math.max(0, Math.min(STEPS.length - 1, newIndex));
+    render();
+  }
 
-      return rect;
-    }
+  startBtn.addEventListener("click", showTour);
+  stopBtn.addEventListener("click", hideTour);
+  overlay.addEventListener("click", hideTour);
 
-    function render(){
-      const step = STEPS[idx];
+  nextBtn.addEventListener("click", () => {
+    if (idx === STEPS.length - 1) hideTour();
+    else goTo(idx + 1);
+  });
 
-      titleEl.textContent = step.title;
-      textEl.textContent = step.text;
-      stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
+  backBtn.addEventListener("click", () => goTo(idx - 1));
+  skipBtn.addEventListener("click", hideTour);
 
-      // Buttons
-      backBtn.disabled = idx === 0;
-      nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
+  window.addEventListener("resize", () => {
+    if (running) render();
+  });
+</script>
 
-      // Highlight + card placement
-      stopVideo();
-      const rect = highlight(step.selector);
-      placeCardNear(rect);
-      playVideo(step.video);
-    }
-
-    function goTo(newIndex){
-      idx = Math.max(0, Math.min(STEPS.length - 1, newIndex));
-      render();
-    }
-
-    startBtn.addEventListener("click", showTour);
-    stopBtn.addEventListener("click", hideTour);
-    overlay.addEventListener("click", hideTour);
-
-    nextBtn.addEventListener("click", () => {
-      if (idx === STEPS.length - 1) hideTour();
-      else goTo(idx + 1);
-    });
-
-    backBtn.addEventListener("click", () => goTo(idx - 1));
-    skipBtn.addEventListener("click", hideTour);
-
-    // Reposition highlight/card on resize
-    window.addEventListener("resize", () => {
-      if (running) render();
-    });
-
-    // Wait for iframe to be ready
-    frame.addEventListener("load", () => {
-      // no-op: tour can start anytime after load
-    });
-  </script>
 </body>
 </html>
