@@ -180,7 +180,7 @@
   const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/demo-app.html";
 
   // ✅ STEP 2: Define demo steps using CSS selectors that exist on the app page.
-  // If a selector isn’t found, the step will still show, but without highlight.
+  // If a selector isn't found, the step will still show, but without highlight.
 const STEPS = [
   {
     title: "Connect your keyboard (USB)",
@@ -190,7 +190,7 @@ const STEPS = [
   },
 {
   title: "Choose which hand to practice",
-  text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you’re ready.",
+  text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you're ready.",
   selector: "#handSelect",
   dim: false,
   video: null,
@@ -203,7 +203,7 @@ const STEPS = [
 },
 {
   title: "Pick your start measure",
-  text: "Type the start measure from your sheet music here (for example: 1). Then click Next when you’re ready.",
+  text: "Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.",
   selector: "#startMeasureInput",
   dim: false,
   video: null,
@@ -216,7 +216,7 @@ const STEPS = [
 },
 {
   title: "Pick your end measure",
-  text: "Now type the end measure from your sheet music (for example: 2). Then click Next when you’re ready.",
+  text: "Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.",
   selector: "#endMeasureInput",
   dim: false,
   video: null,
@@ -243,20 +243,20 @@ const STEPS = [
   },
   resume: {
     title: "Well done 🎉",
-    text: "Nice work. Now let’s look at the next feature. Click Next when you’re ready."
+    text: "Nice work. Now let's look at the next feature. Click Next when you're ready."
   }
 },
 
 {
   title: "Understanding mistakes",
-text: "As you play, messages will appear here telling you whether each note was played correctly. If something isn’t right, you’ll also see an explanation of why.\n\nIf you’d like to try this yourself, you can click Back, choose a short section, and start practice again. Otherwise, click Next to continue.",
+text: "As you play, messages will appear here telling you whether each note was played correctly. If something isn't right, you'll also see an explanation of why.\n\nIf you'd like to try this yourself, you can click Back, choose a short section, and start practice again. Otherwise, click Next to continue.",
   selector: "#feedback",
   dim: false,
   video: null
 },
 {
   title: "Stop",
-  text: "Click Stop anytime to stop playback or training. It’s useful if you want to pause, fix a setting, or take a break.",
+  text: "Click Stop anytime to stop playback or training. It's useful if you want to pause, fix a setting, or take a break.",
   selector: "#stopButton",
   dim: false,
   video: null
@@ -277,7 +277,7 @@ text: "As you play, messages will appear here telling you whether each note was 
 },
 {
   title: "Hide note names",
-  text: "Use this to hide or show the note names on the keyboard. It’s great when you want to test yourself without hints.",
+  text: "Use this to hide or show the note names on the keyboard. It's great when you want to test yourself without hints.",
   selector: "#toggleNamesButton",
   dim: false,
   video: null,
@@ -304,7 +304,7 @@ text: "As you play, messages will appear here telling you whether each note was 
 },
 {
   title: "1 & 2 &",
-  text: "This adds the “and” subdivisions, which is useful for faster rhythms and tighter timing.",
+  text: "This adds the "and" subdivisions, which is useful for faster rhythms and tighter timing.",
   selector: "#subdivisionToggle",
   dim: false,
   video: null
@@ -319,14 +319,14 @@ text: "As you play, messages will appear here telling you whether each note was 
 
 {
   title: "Skip repeats in sheet",
-  text: "If your sheet music has a repeat section, you can toggle this on or off. When it’s on, repeats are skipped. When it’s off, repeats will play normally.",
+  text: "If your sheet music has a repeat section, you can toggle this on or off. When it's on, repeats are skipped. When it's off, repeats will play normally.",
   selector: "#skipRepeatsCheckbox",
   dim: false,
   video: null
 },
   {
   title: "Play full song",
-  text: "Use this to play the full song with visuals. It’s helpful to listen first before practicing a section.",
+  text: "Use this to play the full song with visuals. It's helpful to listen first before practicing a section.",
   selector: "#playSongButton",
   dim: false,
   video: null,
@@ -340,7 +340,7 @@ text: "As you play, messages will appear here telling you whether each note was 
 
 {
   title: "Speed",
-text: "You can slow things down or speed them up anytime. Try tapping + or – once. If you want to feel the difference more clearly, click Back and play the full song, then try changing the speed while it plays. Click Next when you’re ready.",
+text: "You can slow things down or speed them up anytime. Try tapping + or – once. If you want to feel the difference more clearly, click Back and play the full song, then try changing the speed while it plays. Click Next when you're ready.",
   selector: "#speedDisplay",
   dim: false,
   video: null,
@@ -354,7 +354,7 @@ text: "You can slow things down or speed them up anytime. Try tapping + or – o
 
 {
   title: "Instant note feedback",
-  text: "On the right, you’ll see what you played under “You pressed”. Under “Correct note”, you’ll see the note you’re supposed to play.",
+  text: "On the right, you'll see what you played under "You pressed". Under "Correct note", you'll see the note you're supposed to play.",
   selector: "#sideNoteFeedback",
   dim: false,
   video: null
@@ -375,7 +375,7 @@ text: "You can slow things down or speed them up anytime. Try tapping + or – o
 },
 {
   title: "Demo complete 🎉",
-  text: "You’ve reached the end of the demo.\n\nThis was a trial version of the song, designed to show you how practice, feedback, and playback work.\n\nTo unlock the full song, please log in first.",
+  text: "You've reached the end of the demo.\n\nThis was a trial version of the song, designed to show you how practice, feedback, and playback work.\n\nTo unlock the full song, please log in first.",
   selector: null,
   dim: true,
   video: null,
@@ -414,6 +414,8 @@ let waitSatisfied = false;
 let actionCleanup = null;
 let actionDone = false;
 
+// ✅ Track scroll listener for continuous updates
+let scrollUpdateInterval = null;
 
   frame.src = APP_URL;
 
@@ -425,6 +427,9 @@ setOverlayDim(true);
     stopBtn.style.display = "inline-block";
     startBtn.style.display = "none";
     goTo(0);
+    
+    // Start continuous scroll tracking
+    startScrollTracking();
   }
 
   function hideTour(){
@@ -455,6 +460,9 @@ setOverlayDim(true);
   setStatus("");
 
   setNextEnabled(true);
+  
+  // Stop scroll tracking
+  stopScrollTracking();
 }
 
   function stopVideo(){
@@ -522,6 +530,58 @@ setOverlayDim(true);
 
     return rect;
   }
+
+function updateHighlightPosition() {
+  const step = STEPS[idx];
+  if (!step || !step.selector) return;
+  
+  const rect = highlight(step.selector);
+  if (rect) {
+    placeCardNear(rect);
+  }
+}
+
+function startScrollTracking() {
+  // Stop any existing tracking
+  stopScrollTracking();
+  
+  // Update position on scroll
+  const doc = frame.contentWindow?.document;
+  if (doc) {
+    const scrollHandler = () => updateHighlightPosition();
+    frame.contentWindow.addEventListener('scroll', scrollHandler, true);
+    
+    // Store cleanup function
+    scrollUpdateInterval = () => {
+      frame.contentWindow.removeEventListener('scroll', scrollHandler, true);
+    };
+  }
+  
+  // Also update on animation frame for smooth tracking
+  let rafId;
+  const rafUpdate = () => {
+    if (running) {
+      updateHighlightPosition();
+      rafId = requestAnimationFrame(rafUpdate);
+    }
+  };
+  rafId = requestAnimationFrame(rafUpdate);
+  
+  // Add to cleanup
+  const oldCleanup = scrollUpdateInterval;
+  scrollUpdateInterval = () => {
+    if (oldCleanup) oldCleanup();
+    cancelAnimationFrame(rafId);
+  };
+}
+
+function stopScrollTracking() {
+  if (scrollUpdateInterval) {
+    scrollUpdateInterval();
+    scrollUpdateInterval = null;
+  }
+}
+
 function setNextEnabled(enabled){
   nextBtn.disabled = !enabled;
   nextBtn.style.opacity = enabled ? "1" : "0.55";
