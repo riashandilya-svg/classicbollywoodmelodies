@@ -188,18 +188,20 @@ const STEPS = [
     selector: null,
     video: null
   },
-  {
+{
   title: "Choose which hand to practice",
   text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you’re ready.",
   selector: "#handSelect",
-      dim: false,
+  dim: false,
   video: null,
   action: {
     type: "change",
     selector: "#handSelect",
+    prompt: "Try switching the hand option once.",
     doneText: "Done ✅ Hand selected."
   }
 },
+
 
   {
     title: "Start Practice",
@@ -253,6 +255,8 @@ let running = false;
 // ✅ for "wait until user clicks"
 let waitCleanup = null;
 let waitSatisfied = false;
+let actionCleanup = null;
+let actionDone = false;
 
 
   frame.src = APP_URL;
@@ -278,6 +282,13 @@ setOverlayDim(true);
     if (waitCleanup) {
   waitCleanup();
   waitCleanup = null;
+      if (actionCleanup) {
+  actionCleanup();
+  actionCleanup = null;
+}
+actionDone = false;
+setStatus("");
+
 }
 waitSatisfied = false;
 setNextEnabled(true);
@@ -406,6 +417,75 @@ function setOverlayDim(dim){
   overlay.style.display = "block";
   overlay.style.background = dim ? "var(--demo-bg)" : "transparent";
 }
+function setStatus(msg, done=false){
+  const el = document.getElementById("demoActionStatus");
+  if (!el) return;
+
+  el.textContent = msg || "";
+  el.style.color = done ? "#1B5E20" : "#111";
+  el.style.opacity = msg ? "1" : "0";
+}
+
+function setupActionWatcher(action){
+  // clear previous watcher
+  if (actionCleanup) {
+    actionCleanup();
+    actionCleanup = null;
+  }
+  actionDone = false;
+
+  if (!action) {
+    setStatus("");
+    return;
+  }
+
+  const doc = frame.contentWindow?.document;
+  if (!doc) {
+    setStatus("");
+    return;
+  }
+
+  const el = doc.querySelector(action.selector);
+  if (!el) {
+    setStatus("");
+    return;
+  }
+
+  // show prompt text
+  setStatus(action.prompt || "Try this now…", false);
+
+  const markDone = () => {
+    if (actionDone) return;
+    actionDone = true;
+    setStatus(action.doneText || "Done ✅", true);
+  };
+
+  if (action.type === "change") {
+    el.addEventListener("change", markDone, true);
+    actionCleanup = () => el.removeEventListener("change", markDone, true);
+    return;
+  }
+
+  if (action.type === "click") {
+    el.addEventListener("click", markDone, true);
+    actionCleanup = () => el.removeEventListener("click", markDone, true);
+    return;
+  }
+
+  if (action.type === "input") {
+    // done when they type something non-empty
+    const onInput = () => {
+      const v = (el.value ?? "").toString().trim();
+      if (v.length) markDone();
+    };
+    el.addEventListener("input", onInput, true);
+    actionCleanup = () => el.removeEventListener("input", onInput, true);
+    return;
+  }
+
+  // unknown action type
+  setStatus("");
+}
 
   function render(){
     const step = STEPS[idx];
@@ -421,6 +501,7 @@ setOverlayDim(step.dim !== false);
     stopVideo();
     const rect = highlight(step.selector);
     placeCardNear(rect);
+    setupActionWatcher(step.action);
     playVideo(step.video);
     // ✅ if this step requires clicking the feature, wait for it
 if (step.waitForClick) {
