@@ -8,10 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 
-
 <style>
     /* Fixed brand bar */
-/* Fixed brand bar */
 #brandBar{
   position: fixed;
   top: 0;
@@ -25,7 +23,7 @@
 
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-border-bottom: 1px solid rgba(235, 50, 70, 0.18);
+  border-bottom: 1px solid rgba(235, 50, 70, 0.18);
 
   z-index: 10000;
 }
@@ -36,17 +34,15 @@ border-bottom: 1px solid rgba(235, 50, 70, 0.18);
     letter-spacing: 0.6px;
 }
 
-
-
   :root{
-  --bg-main: #ffffff;          /* ✅ keep WHITE background */
+  --bg-main: #ffffff;
   --bg-surface: rgba(255,255,255,0.86);
 
   --red1: rgba(235, 50, 70, 0.22);
   --red2: rgba(255, 120, 130, 0.16);
   --softBlack: rgba(0, 0, 0, 0.10);
 
---accent-primary: #E57373;   /* light red */
+  --accent-primary: #E57373;
   --accent-success: #22C55E;
   --accent-error: #EF4444;
 
@@ -56,8 +52,7 @@ border-bottom: 1px solid rgba(235, 50, 70, 0.18);
 
 body {
     margin: 0;
-    padding: 80px 0 40px 0; /* room for brand bar + heading */
-    /* 🔼 nudges everything up */
+    padding: 80px 0 40px 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -65,23 +60,24 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-background:
-  radial-gradient(900px 520px at 20% 0%, var(--red1), transparent 60%),
-  radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
-  radial-gradient(780px 480px at 50% 80%, var(--red2), transparent 60%),
-  radial-gradient(520px 320px at 35% 55%, rgba(235, 50, 70, 0.10), transparent 60%),
-  var(--bg-main);
+    background:
+      radial-gradient(900px 520px at 20% 0%, var(--red1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--red2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(235, 50, 70, 0.10), transparent 60%),
+      var(--bg-main);
 
     color: var(--text-main);
 }
+
 h1 {
     font-size: clamp(32px, 6vw, 60px);
     color: var(--text-main);
     text-align: center;
-
-    margin-top: 12px;      /* 🔽 kills the huge gap */
-    margin-bottom: 13px;  /* slightly tighter */
+    margin-top: 12px;
+    margin-bottom: 13px;
 }
+
 button {
     padding: clamp(8px, 2vw, 15px) clamp(14px, 4vw, 30px);
     font-size: clamp(14px, 2.2vw, 18px);
@@ -106,14 +102,14 @@ button:disabled {
     cursor: not-allowed;
 }
 
-    button:disabled { background-color: #cccccc; cursor: not-allowed; }
-    .button-group {
+.button-group {
     display: flex;
-    flex-wrap: wrap;        /* ✅ ADD THIS */
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 20px;
     justify-content: center;
 }
+
 #stopButton {
     background-color: var(--accent-error);
 }
@@ -121,8 +117,8 @@ button:disabled {
 #stopButton:hover:not(:disabled) {
     background-color: #DC2626;
 }
-    #feedback {
-    /* animation */
+
+#feedback {
     opacity: 0;
     transform: scale(0.96);
     transition:
@@ -130,19 +126,16 @@ button:disabled {
         transform 0.25s ease,
         background-color 0.25s ease;
 
-    /* visual */
     border-radius: 14px;
     padding: 12px 18px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 
-    /* FIX 1 — prevent full-width banner */
     max-width: 520px;
     width: fit-content;
     margin: 6px auto 0 auto;
     text-align: center;
-
-    /* ✅ FIX 2 — reserve vertical space (THIS IS THE ANSWER) */
 }
+
 #feedback.show {
     opacity: 1;
     transform: scale(1);
@@ -157,7 +150,7 @@ button:disabled {
     background-color: var(--accent-error);
     color: white;
 }
-/* 🎵 Note feedback circles */
+
 .note-feedback {
     display: flex;
     align-items: center;
@@ -166,13 +159,12 @@ button:disabled {
     flex-wrap: wrap;
 }
 
-/* 🎨 Circle color rules */
 .note-circle {
     width: 42px;
     height: 42px;
     border-radius: 50%;
 
-    background: #e5e7eb; /* neutral gray */
+    background: #e5e7eb;
     color: #111;
 
     font-weight: 700;
@@ -186,12 +178,12 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #E57373; /* LIGHT RED */
+    background: #E57373;
     color: white;
 }
 
 .note-circle.wrong {
-    background: #EF4444; /* RED */
+    background: #EF4444;
     color: white;
 }
 
@@ -207,6 +199,7 @@ button:disabled {
     line-height: 1.4;
     opacity: 0.95;
 }
+
 #feedback .note-circle {
     color: inherit;
 }
@@ -216,14 +209,16 @@ button:disabled {
     font-weight: 600;
     text-align: center;
 }
+
 #notesDisplay {
-    display: none !important;  /* 🔒 hard lock */
+    display: none !important;
 }
 
-    #notesDisplay h2 { margin-top: 0; color: #333; font-size: 24px; }
-    .note-list { display: flex; flex-wrap: wrap; gap: 10px; }
-    .note-number { padding: 8px 12px; background-color: #e3f2fd; border-radius: 4px; font-size: 16px; color: #1976d2; }
-    #countdownOverlay {
+#notesDisplay h2 { margin-top: 0; color: #333; font-size: 24px; }
+.note-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.note-number { padding: 8px 12px; background-color: #e3f2fd; border-radius: 4px; font-size: 16px; color: #1976d2; }
+
+#countdownOverlay {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -238,7 +233,7 @@ button:disabled {
     display: none;
     pointer-events: none;
 }
-/* Notes Pressed section — compact */
+
 #notesDisplay,
 #notesList {
     font-size: 14px;
@@ -253,18 +248,20 @@ button:disabled {
     margin-top: 4px;
     line-height: 1.3;
 }
+
 #midiDisplay {
-    margin-top: 4px;   /* 🔽 tighter */
+    margin-top: 4px;
     font-size: 18px;
 }
 
 #midiDisplay > div:not(:empty) {
     margin-top: 6px;
 }
+
 .music-symbol {
     font-family: "Arial Unicode MS", "Segoe UI Symbol", "Noto Music", serif;
 }
-/* 🎯 Right-side fixed note feedback */
+
 #sideNoteFeedback {
     position: fixed;
     right: 20px;
@@ -277,11 +274,11 @@ button:disabled {
 
     z-index: 1000;
 }
-/* 🟦 Free Mode button — fixed above side note circles */
+
 #freeModeButton.side-floating {
     position: fixed;
     right: 20px;
-    top: calc(50% - 260px); /* ABOVE the circles */
+    top: calc(50% - 260px);
 
     width: 64px;
     height: 64px;
@@ -298,37 +295,39 @@ button:disabled {
 
     z-index: 1001;
 }
+
 .side-note {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
 }
+
 @media (max-width: 900px) {
+    .button-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
 
-.button-group {
-    flex-direction: column;
-    align-items: stretch;
+    #practiceControls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    canvas {
+        width: 100%;
+        height: auto;
+    }
+
+    #holdInfo:empty {
+        display: none;
+    }
 }
 
-#practiceControls {
-    flex-direction: column;
-    align-items: stretch;
-}
-
-canvas {
-    width: 100%;
-    height: auto;
-}
-#holdInfo:empty {
-    display: none;
-}
-}
 canvas {
     display: block;
-
 }
-/* 🎯 Training Progress Bar */
+
 #trainingProgress {
     position: relative;
     width: min(600px, 90%);
@@ -358,155 +357,122 @@ canvas {
     font-weight: 600;
     color: var(--text-main);
 }
-/* ⬇️ Push canvas + keyboard + controls to bottom */
+
 #bottomDock {
     margin-top: auto;
-    padding-top: 100px;   /* 👈 PUSHES KEYBOARD + BUTTONS DOWN */
+    padding-top: 100px;
     padding-bottom: 80px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-/* 🎵 Falling note visual style */
+
 .falling-note {
     border-radius: 10px;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
 }
-/* 🔒 Paywall card */
-#paywall{
-  display: none;                 /* hidden until JS shows it */
-  width: min(420px, 92%);
-  padding: 16px 18px;
-  margin: 14px auto;
-  border: 1px solid rgba(235,50,70,0.22);
-  border-radius: 16px;
-  background: rgba(255,255,255,0.88);
-  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
-  text-align: center;
+
+/* ✅ CRITICAL: Make app visible by default */
+#app { 
+    display: block; 
 }
-
-#paywall h3{
-  margin: 0 0 8px 0;
-  font-size: 22px;
-  font-family: 'Cormorant Garamond', serif;
-  letter-spacing: 0.3px;
-}
-
-#paywall p{
-  margin: 0 0 14px 0;
-  font-size: 15px;
-  opacity: 0.9;
-  line-height: 1.45;
-}
-
-#buyBtn{
-  display: inline-block;
-  width: auto;
-  min-width: 180px;
-  padding: 10px 18px;
-  border-radius: 12px;
-}
-
-/* 🔒 Default: hide the app until unlocked */
-#app { display: none; }
-
 </style>
 </head>
 <body>
     <div id="brandBar">
         <span>Ria Om Shandilya</span>
-      </div>      
+    </div>      
     <h1>Mere Saamne Wali Khidhki</h1>
-    <div id="paywall"></div>
 
 <div id="app">
-<!-- 🎯 Training Progress Bar -->
-<div id="trainingProgress" style="display:none;">
-    <div id="trainingProgressFill"></div>
-    <span id="trainingProgressText">0%</span>
-</div>
-<div id="bottomDock">
-    <div id="feedback"></div>
-    <div id="holdInfo" style="color:#333;"></div>
-
-
-    <canvas id="canvas" width="1400"></canvas>
-
-<div id="countdownOverlay">3</div>
-<!-- 🎯 Right-side note indicators -->
-<div id="sideNoteFeedback">
-
-    <div class="side-note">
-        <div class="note-label">You pressed</div>
-        <div id="pressedNoteCircle" class="note-circle"></div>
+    <!-- Training Progress Bar -->
+    <div id="trainingProgress" style="display:none;">
+        <div id="trainingProgressFill"></div>
+        <span id="trainingProgressText">0%</span>
     </div>
 
-    <div class="side-note">
-        <div class="note-label">Correct note</div>
-        <div id="correctNoteCircle" class="note-circle correct"></div>
+    <div id="bottomDock">
+        <div id="feedback"></div>
+        <div id="holdInfo" style="color:#333;"></div>
+
+        <canvas id="canvas" width="1400"></canvas>
+
+        <div id="countdownOverlay">3</div>
+
+        <!-- Right-side note indicators -->
+        <div id="sideNoteFeedback">
+            <div class="side-note">
+                <div class="note-label">You pressed</div>
+                <div id="pressedNoteCircle" class="note-circle"></div>
+            </div>
+
+            <div class="side-note">
+                <div class="note-label">Correct note</div>
+                <div id="correctNoteCircle" class="note-circle correct"></div>
+            </div>
+        </div>
+
+        <div class="button-group" id="playbackControls">
+            <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
+                <label>
+                    Hand:
+                    <select id="handSelect">
+                        <option value="treble">Right Hand (Treble)</option>
+                        <option value="bass">Left Hand (Bass)</option>
+                        <option value="both">Both Hands</option>
+                    </select>
+                </label>
+            
+                <label>
+                    Start Measure:
+                    <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;">
+                </label>
+                
+                <label>
+                    End Measure:
+                    <input id="endMeasureInput" type="number" min="1" value="4" style="width:60px;">
+                </label>
+            
+                <button id="startPracticeButton">Start Practice</button>
+            </div>
+
+            <button id="stopButton">Stop</button>
+            <button id="freeModeButton">Free Mode</button>
+            <button id="resetButton">Reset</button>
+            <button id="toggleNamesButton">Hide Note Names</button>
+            <button id="playSongButton">Play Full Song</button>
+            <button id="beatToggle">Beat</button>
+            <button id="countToggle">Counting</button>
+            <button id="subdivisionToggle">1 & 2 &</button>
+            <button id="languageToggle">EN</button>
+            
+            <label style="display:flex;align-items:center;gap:6px;font-size:16px;">
+                <input type="checkbox" id="skipRepeatsCheckbox">
+                Skip repeats in sheet
+            </label>
+
+            <label style="display:flex;align-items:center;gap:6px;font-size:16px;">
+                <input type="checkbox" id="loopCheckbox">
+                Loop section
+            </label>
+
+            <button id="speedDown">–</button>
+            <span id="speedDisplay" style="font-size:18px;min-width:60px;text-align:center;">1.0×</span>
+            <button id="speedUp">+</button>
+        </div>
+
+        <div id="notesDisplay" style="display: none;">
+            <h2>Note Numbers:</h2>
+            <div class="note-list" id="noteList"></div>
+        </div>
     </div>
 </div>
-<div class="button-group" id="playbackControls">
-    <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
-        <label>
-            Hand:
-            <select id="handSelect">
-                <option value="treble">Right Hand (Treble)</option>
-                <option value="bass">Left Hand (Bass)</option>
-                <option value="both">Both Hands</option>
-            </select>
-        </label>
-    
-        <label>
-            Start Measure:
-            <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;">
-        </label>
-        
-        <label>
-            End Measure:
-            <input id="endMeasureInput" type="number" min="1" value="4" style="width:60px;">
-        </label>
-        
-    
-        <button id="startPracticeButton">Start Practice</button>
-    </div>
-    <button id="stopButton">Stop</button>
-    <button id="freeModeButton">Free Mode</button>
-    <button id="resetButton">Reset</button>
-    <button id="toggleNamesButton">Hide Note Names</button>
-<button id="playSongButton">Play Full Song</button>
-<button id="beatToggle">Beat</button>
-<button id="countToggle">Counting</button>
-<button id="subdivisionToggle">1 & 2 &</button>
-<button id="languageToggle">EN</button>
-    
-<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
-    <input type="checkbox" id="skipRepeatsCheckbox">
-    Skip repeats in sheet
-</label>
-
-<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
-    <input type="checkbox" id="loopCheckbox">
-    Loop section
-</label>
-
-
-    <button id="speedDown">–</button>
-    <span id="speedDisplay" style="font-size:18px;min-width:60px;text-align:center;">1.0×</span>
-    <button id="speedUp">+</button>
-</div>
-
-<div id="notesDisplay" style="display: none;">
-    <h2>Note Numbers:</h2>
-    <div class="note-list" id="noteList"></div>
-</div>   <!-- closes bottomDock -->
-</div>   <!-- closes midiDisplay -->
-
 
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script type="module">
 import { Midi } from 'https://cdn.skypack.dev/@tonejs/midi@2.0.28';
+
 // ================================
 // SONG CONFIG (SHEET STRUCTURE)
 // ================================
@@ -514,40 +480,33 @@ const SONG_CONFIG = {
     id: "demomeresaamne",
     title: "demomeresaamne",
 
-    timeSignature: [4, 4], // 4/4
+    timeSignature: [4, 4],
     measures: 44,
 
-    // MIDI is linear — sheet logic comes later
     repeats: [],
 
-    // optional future hooks
     pickupBeats: 0
 };
-// ================================
+
 // ================================
 // REPEAT MODEL (MIDI IS EXPANDED)
-// Physical measures are MIDI timeline (1..SONG_CONFIG.measures)
-// Logical measures are sheet numbers (what user types in)
-// Repeat section: 7..14 is duplicated once in the MIDI timeline
 // ================================
-const REPEAT_START = 0;  // No repeats
-const REPEAT_END = 0;    // No repeats
+const REPEAT_START = 0;
+const REPEAT_END = 0;
 const REPEAT_LEN = 0;
+
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
   for (let p = 1; p <= config.measures; p++) {
     let logical;
 
-    // 1..14 -> 1..14 (first occurrence, includes bar 14)
     if (p <= 14) {
       logical = p;
     }
-    // 15..21 -> 7..13 (repeated copy, bar 14 is NOT here)
     else if (p <= 14 + REPEAT_LEN) {
       logical = REPEAT_START + (p - 15);
     }
-    // 22+ -> 15+ (after repeat)
     else {
       logical = p - REPEAT_LEN;
     }
@@ -557,6 +516,7 @@ function buildPhysicalToLogicalMap(config) {
 
   return map;
 }
+
 const PHYSICAL_TO_LOGICAL = buildPhysicalToLogicalMap(SONG_CONFIG);
 
 let MAX_LOGICAL_MEASURE = 0;
@@ -564,17 +524,15 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
   MAX_LOGICAL_MEASURE = Math.max(MAX_LOGICAL_MEASURE, PHYSICAL_TO_LOGICAL[p] || 0);
 }
 
-
 async function loadSongMidi() {
-const response = await fetch("demomeresaamne.mid");  // ← Your new MIDI file name
+    const response = await fetch("demomeresaamne.mid");
     const arrayBuffer = await response.arrayBuffer();
 
     currentMidi = new Midi(arrayBuffer);
 
     allMidiNotes = [];
 
-currentMidi.tracks.forEach((track, trackIndex) => {
-        // Track 0 = TREBLE (right hand), Track 1 = BASS (left hand)
+    currentMidi.tracks.forEach((track, trackIndex) => {
         const clef = trackIndex === 0 ? TREBLE : BASS;
 
         track.notes.forEach(note => {
@@ -595,18 +553,16 @@ currentMidi.tracks.forEach((track, trackIndex) => {
         : 120;
 
     secondsPerBeat = 60 / bpm;
-    secondsPerMeasure =
-        secondsPerBeat * SONG_CONFIG.timeSignature[0];
-        MEASURE_TIME_MAP = buildMeasureTimeMap(
-    SONG_CONFIG,
-    secondsPerBeat
-);
+    secondsPerMeasure = secondsPerBeat * SONG_CONFIG.timeSignature[0];
+    
+    MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
 
     setControlsEnabled(true);
     showTrainingProgress();
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
+
 // ==================================
 // MEASURE → TIME MAPPING
 // ==================================
@@ -628,6 +584,7 @@ function buildMeasureTimeMap(config, secondsPerBeat) {
 
     return map;
 }
+
 // ================================
 // TIME → MEASURE LOOKUP
 // ================================
@@ -637,7 +594,6 @@ function getMeasureFromTime(timeSeconds) {
     if (m < 1 || m > SONG_CONFIG.measures) return null;
     return m;
 }
-
 
 function getLogicalSheetMeasureFromTime(timeSeconds) {
   const physicalMeasure = getMeasureFromTime(timeSeconds);
@@ -649,24 +605,16 @@ function getLogicalSheetMeasureFromTime(timeSeconds) {
 // PRACTICE SEQUENCE BUILDER (PHYSICAL MEASURES)
 // ================================
 
-// first physical occurrence of a logical bar
 function logicalToPhysicalFirst(logical) {
-  // 1..14 exist as-is (bar 14 is NOT repeated, so it stays at physical 14)
   if (logical <= 14) return logical;
-
-  // after the inserted repeated chunk, everything shifts forward by REPEAT_LEN
   return logical + REPEAT_LEN;
 }
 
 function logicalToPhysicalSecond(logical) {
-  // Only bars 7-13 have a second occurrence
   if (logical < REPEAT_START || logical > REPEAT_END) return null;
-  // 7->15, 8->16, 9->17, 10->18, 11->19, 12->20, 13->21
-  return logical + 8; // Shift by 8 (14 - 7 + 1)
+  return logical + 8;
 }
 
-// Builds the list of PHYSICAL measures we will include in practice playback
-// ✅ FIXED VERSION
 function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats) {
   if (startLogical > endLogical) return null;
 
@@ -678,7 +626,6 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
   const seq = [];
   const logicalSeq = [];
 
-  // Skip repeats mode: straight line
   if (skipRepeats) {
     for (let l = startLogical; l <= endLogical; l++) {
       const p = logicalToPhysicalFirst(l);
@@ -689,35 +636,29 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
     return { seq, logicalSeq };
   }
 
-  // Case 1: Selection is entirely before measure 27 (measures 1-26)
   if (endLogical <= 26) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 2: Selection is entirely after measure 32 (measures 33+)
   else if (startLogical > 32) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 3: Selection spans across the repeat boundary
   else {
-    // Play from start to 32 (first time through)
     for (let l = startLogical; l <= Math.min(32, endLogical); l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
     
-    // Play repeat: 27 to 32 (second time)
     for (let l = 27; l <= 32; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalSecond(l));
     }
 
-    // Continue from 33 onwards (if selection extends past 32)
     if (endLogical > 32) {
       for (let l = 33; l <= endLogical; l++) {
         logicalSeq.push(l);
@@ -729,16 +670,13 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
   return { seq, logicalSeq };
 }
 
-
 // ================================
 // CLEF DEFINITIONS (TRACK-BASED)
 // ================================
 
-// By convention:
-// Track 0 → Treble clef (Right hand)
-// Track 1 → Bass clef (Left hand)
 const TREBLE = "treble";
 const BASS = "bass";
+
 const notesDisplay = document.getElementById('notesDisplay');
 const noteList = document.getElementById('noteList');
 const playbackControls = document.getElementById('playbackControls');
@@ -750,9 +688,7 @@ function setControlsEnabled(enabled) {
     );
 
     controls.forEach(el => {
-        // ✅ Free Mode is ALWAYS clickable
         if (el.id === 'freeModeButton') return;
-
         el.disabled = !enabled;
     });
 }
@@ -761,29 +697,22 @@ const startMeasureInput = document.getElementById('startMeasureInput');
 const endMeasureInput = document.getElementById('endMeasureInput');
 const startPracticeButton = document.getElementById('startPracticeButton');
 const stopButton = document.getElementById('stopButton');
-stopButton.addEventListener('click', () => {
-    stopPlayback(true); // ✅ USER initiated
-});
-
 const toggleNamesButton = document.getElementById('toggleNamesButton');
 const speedDownButton = document.getElementById('speedDown');
 const speedUpButton = document.getElementById('speedUp');
 const speedDisplay = document.getElementById('speedDisplay');
 const resetButton = document.getElementById('resetButton');
-resetButton.addEventListener('click', () => {
-    resetAll();
-});
-
 const playSongButton = document.getElementById('playSongButton');
 const loopCheckbox = document.getElementById('loopCheckbox');
 const freeModeButton = document.getElementById('freeModeButton');
+
 freeModeButton.classList.add('side-floating');
-setControlsEnabled(true); // ✅ buttons enabled immediately
-// 🎵 Auto-load built-in song
+setControlsEnabled(true);
+
+// Auto-load built-in song
 (async () => {
     await loadSongMidi();
 })();
-
 
 function updateSpeed(delta) {
     if (visualsPlaying || previewMode || speedLocked) return;
@@ -800,23 +729,20 @@ function updateSpeed(delta) {
     }
 }
 
-
 speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
 
-// enabled by default (before play)
 speedDownButton.disabled = false;
 speedUpButton.disabled = false;
 
-
-
 let showNoteNames = true;
-
-let repeatEnabled = true;   // retry same note on mistake
+let repeatEnabled = true;
 let loopEnabled = false; 
 let skipSheetRepeats = false;
 let freeMode = false;
+
 const skipRepeatsCheckbox = document.getElementById('skipRepeatsCheckbox');
+
 // ================================
 // METRONOME STATE (ISOLATED)
 // ================================
@@ -829,17 +755,11 @@ let metronomeRunning = false;
 let transportStartTime = null;
 let countdownActive = false;
 
-// 🔊 SPEECH SYNTH (REQUIRED FOR CHROME)
 const speechSynth = window.speechSynthesis;
 
-// ---- Metronome options ----
 let countMode = "normal"; 
 let subdivisionEnabled = false;
-// "normal" = one two three four
-// "accent" = ONE two three four
-// "subdivision" = 1 & 2 & 3 & 4 &
-
-let countLanguage = "en"; // future-proof
+let countLanguage = "en";
 
 function stopMetronome() {
     if (metroInterval) {
@@ -860,6 +780,7 @@ const beatToggle = document.getElementById('beatToggle');
 const countToggle = document.getElementById('countToggle');
 const languageToggle = document.getElementById('languageToggle');
 const subdivisionToggle = document.getElementById('subdivisionToggle');
+
 languageToggle.addEventListener('click', () => {
     countLanguage = countLanguage === "en" ? "it" : "en";
     languageToggle.textContent = countLanguage.toUpperCase();
@@ -869,29 +790,26 @@ beatToggle.addEventListener('click', () => {
     beatEnabled = !beatEnabled;
     beatToggle.textContent = beatEnabled ? "Beat ✓" : "Beat";
 
-    // 🔥 AUTO-START METRONOME IF NEEDED
     if (beatEnabled && !metronomeRunning) {
         startMetronome();
     }
 });
 
 countToggle.addEventListener('click', () => {
+    if (!window.__chromeSpeechUnlocked) {
+        const u = new SpeechSynthesisUtterance("one");
+        u.volume = 1;
+        u.rate = 1;
+        speechSynthesis.speak(u);
+        window.__chromeSpeechUnlocked = true;
+    }
 
-// 🔓 CHROME HARD UNLOCK (REAL SPEECH, REAL WORD)
-if (!window.__chromeSpeechUnlocked) {
-    const u = new SpeechSynthesisUtterance("one");
-    u.volume = 1;
-    u.rate = 1;
-    speechSynthesis.speak(u);
-    window.__chromeSpeechUnlocked = true;
-}
+    countEnabled = !countEnabled;
+    countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
-countEnabled = !countEnabled;
-countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
-
-if (countEnabled && !metronomeRunning) {
-    startMetronome();
-}
+    if (countEnabled && !metronomeRunning) {
+        startMetronome();
+    }
 });
 
 subdivisionToggle.addEventListener('click', () => {
@@ -910,12 +828,9 @@ subdivisionToggle.addEventListener('click', () => {
     startMetronome(transportStartTime);
 });
 
-
-
 skipRepeatsCheckbox.addEventListener('change', () => {
     skipSheetRepeats = skipRepeatsCheckbox.checked;
 });
-   // loop selected section
 
 toggleNamesButton.addEventListener('click', () => {
     showNoteNames = !showNoteNames;
@@ -927,10 +842,10 @@ toggleNamesButton.addEventListener('click', () => {
 loopCheckbox.addEventListener('change', () => {
     loopEnabled = loopCheckbox.checked;
 });
+
 freeModeButton.addEventListener('click', async () => {
     await Tone.start();
     
-    // ✅ Request MIDI on first user interaction
     if (midiInputs.length === 0) {
         await initMIDI();
     }
@@ -940,7 +855,6 @@ freeModeButton.addEventListener('click', async () => {
     freeModeButton.textContent =
         freeMode ? "Exit Free Mode" : "Free Mode";
 
-    // 🔥 stop everything else
     stopPlayback();
 
     trainingActive = false;
@@ -955,9 +869,19 @@ freeModeButton.addEventListener('click', async () => {
     document.getElementById('feedback').textContent =
         freeMode ? "Free Play — play any note 🎹" : "";
 });
+
+stopButton.addEventListener('click', () => {
+    stopPlayback(true);
+});
+
+resetButton.addEventListener('click', () => {
+    resetAll();
+});
+
 let currentMidi = null;
 let synth = null;
 let freeModeSynth = null;
+
 function ensureSynth() {
     if (!synth) {
         synth = new Tone.Sampler({
@@ -1001,7 +925,7 @@ function ensureSynth() {
     freeModeSynth = synth;
 }
 
-let secondsPerBeat = 0.5; // will be set from MIDI BPM
+let secondsPerBeat = 0.5;
 let MEASURE_TIME_MAP = {};
 
 let playbackTimeouts = [];
@@ -1009,7 +933,7 @@ let isPlaying = false;
 let midiInputs = [];
 let pressedNotes = [];
 let targetNote = null;
-// 🎯 Training Progress Helpers
+
 function showTrainingProgress() {
     document.getElementById('trainingProgress').style.display = 'block';
     updateTrainingProgress();
@@ -1033,30 +957,31 @@ function updateTrainingProgress() {
     document.getElementById('trainingProgressText').textContent =
         percent + "%";
 }
+
 let trainingActive = false;
 let trainingIndex = 0;
 let waitingForInput = false;
 let previewMode = false;
 let previewTimeouts = [];
 let retryTimeout = null; 
-let fullSongPlaying = false; // 🔒 controls Play Full Song audio
-  // ⬅ prevents stacked retries
+let fullSongPlaying = false;
 
 let currentTrainingNote = null;
 let noteHoldStartTime = null;
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
-let expectedMidiNote = null; // legacy (keep for safety)
+let expectedMidiNote = null;
 
-let expectedMidiTreble = new Set(); // RIGHT hand (can hold chords)
-let expectedMidiBass   = new Set(); // LEFT hand (can hold chords)
-let currentChordNotes = new Set(); // All notes in current chord being trained
-let midiPressedNotes = new Set(); // Currently held MIDI notes
-let chordNotesCompleted = new Set(); // Completed notes for mouse mode
+let expectedMidiTreble = new Set();
+let expectedMidiBass   = new Set();
+let currentChordNotes = new Set();
+let midiPressedNotes = new Set();
+let chordNotesCompleted = new Set();
 let freeModeActiveNote = null;
 let mouseDown = false;
 let freeModeReleaseTimer = null;
 let lastMouseMidi = null;
+
 function hardStopUserNote() {
     if (!synth) return;
 
@@ -1069,22 +994,22 @@ function hardStopUserNote() {
     activeMidiNote = null;
     noteHoldStartTime = null;
 }
+
 let failureCount = 0;
 let autoSlowed = false;
 let showBlackKeyArrow = false;
-let arrowTargetGroup = null; // "2" or "3"
-let explanationLocked = false; // keeps explanation visible until success
+let arrowTargetGroup = null;
+let explanationLocked = false;
 
-let clefMode = 'treble'; // 'treble' or 'bass'
+let clefMode = 'treble';
 let sectionStartTime = 0;
 let sectionEndTime = 0;
-let secondsPerMeasure = 2; // default for 4/4 at 120bpm
+let secondsPerMeasure = 2;
 
 // Canvas setup
-const START_NOTE = 36; // C2
-const END_NOTE = 96;   // C7
+const START_NOTE = 36;
+const END_NOTE = 96;
 const TOTAL_NOTES = END_NOTE - START_NOTE + 1;
-/* ✅ MOVE IT HERE */
 const KEYBOARD_HEIGHT = 130;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -1093,12 +1018,13 @@ function resizeCanvas() {
     const maxWidth = Math.min(window.innerWidth - 20, 1400);
     canvas.width = maxWidth;
 
-    const NOTE_AREA_HEIGHT = 260;   // ⬅️ INCREASED
+    const NOTE_AREA_HEIGHT = 260;
     canvas.height = NOTE_AREA_HEIGHT + KEYBOARD_HEIGHT;
 }
 
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas(); // initial call
+resizeCanvas();
+
 let fallingRectangles = [];
 let midiFallingNotes = [];
 let songStartTime = null;
@@ -1106,15 +1032,16 @@ let visualClockStart = null;
 let allMidiNotes = [];
 let practiceNotes = [];
 let visualsPlaying = false;
-let speedMultiplier = 1.0; // 0.25 → 2.0
-let speedLocked = false; // 🔒 prevents preview skipping
+let speedMultiplier = 1.0;
+let speedLocked = false;
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
 }
+
 const BLACK_KEYS = [1, 3, 6, 8, 10];
-const NOTE_GAP_PX = 4; // visual gap between consecutive notes
-const NOTE_GAP_TIME = 0.02; // seconds (visual-only spacing)
+const NOTE_GAP_PX = 4;
+const NOTE_GAP_TIME = 0.02;
 
 function isBlackMidi(midi) {
     return BLACK_KEYS.includes(midi % 12);
@@ -1129,12 +1056,13 @@ function countWhiteKeys(start, end) {
 }
 
 const TOTAL_WHITE_KEYS = countWhiteKeys(START_NOTE, END_NOTE);
+
 function getWhiteKeyWidth() {
     return canvas.width / TOTAL_WHITE_KEYS;
 }
+
 function xToMidi(x) {
-    let whiteKeyIndex = Math.floor(x / getWhiteKeyWidth()
-    );
+    let whiteKeyIndex = Math.floor(x / getWhiteKeyWidth());
     let count = 0;
 
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
@@ -1145,8 +1073,8 @@ function xToMidi(x) {
     }
     return null;
 }
-function noteToX(midi) {
 
+function noteToX(midi) {
     let whiteIndex = 0;
 
     for (let m = START_NOTE; m < midi; m++) {
@@ -1155,12 +1083,10 @@ function noteToX(midi) {
         }
     }
 
-    let x = whiteIndex * getWhiteKeyWidth()
-    ;
+    let x = whiteIndex * getWhiteKeyWidth();
 
-    // Black keys sit between white keys
     if (isBlackMidi(midi)) {
-        x -= getWhiteKeyWidth()        * 0.35;
+        x -= getWhiteKeyWidth() * 0.35;
     }
 
     return x;
@@ -1171,14 +1097,14 @@ function noteToX(midi) {
 // ================================
 function beatsToNoteName(beats) {
     const values = [
-    { beats: 4, name: "○" },
-{ beats: 3, name: "d." },
-{ beats: 2, name: "d" },
-{ beats: 1.5, name: "♩." },
-{ beats: 1, name: "♩" },
-{ beats: 0.75, name: "♪." },
-{ beats: 0.5, name: "♪" },
-{ beats: 0.25, name: "♬" }
+        { beats: 4, name: "○" },
+        { beats: 3, name: "d." },
+        { beats: 2, name: "d" },
+        { beats: 1.5, name: "♩." },
+        { beats: 1, name: "♩" },
+        { beats: 0.75, name: "♪." },
+        { beats: 0.5, name: "♪" },
+        { beats: 0.25, name: "♬" }
     ];
 
     let closest = values[0];
@@ -1195,14 +1121,13 @@ function beatsToNoteName(beats) {
     return closest.name;
 }
 
-// Convert MIDI note number to note name
 function getNoteName(midiNote) {
-
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const note = noteNames[midiNote % 12];
     const octave = Math.floor(midiNote / 12) - 1;
     return note + octave;
 }
+
 function explainWrongNote(playedMidi, expectedMidi) {
     const playedName = getNoteName(playedMidi);
     const expectedName = getNoteName(expectedMidi);
@@ -1211,106 +1136,101 @@ function explainWrongNote(playedMidi, expectedMidi) {
     const expectedPitch = expectedMidi % 12;
 
     if (playedPitch === expectedPitch) {
-        const octaveDiff =
-            Math.round((playedMidi - expectedMidi) / 12);
+        const octaveDiff = Math.round((playedMidi - expectedMidi) / 12);
 
         if (octaveDiff > 0) {
-            return `You played the correct note (${playedName[0]}),
-but it should be ${Math.abs(octaveDiff)} octave lower.`;
+            return `You played the correct note (${playedName[0]}), but it should be ${Math.abs(octaveDiff)} octave lower.`;
         } else if (octaveDiff < 0) {
-            return `You played the correct note (${playedName[0]}),
-but it should be ${Math.abs(octaveDiff)} octave higher.`;
+            return `You played the correct note (${playedName[0]}), but it should be ${Math.abs(octaveDiff)} octave higher.`;
         }
-        // If octaveDiff === 0, fall through to generic message
     }
 
     return `Almost There! Let's try again 😊`;
 }
+
 function drawKeyboard() {
     const keyHeight = KEYBOARD_HEIGHT;
-const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
+    const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
 
-    // ---- WHITE KEYS ----
+    // WHITE KEYS
     let whiteIndex = 0;
 
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         if (isBlackMidi(midi)) continue;
 
-        const x = whiteIndex * getWhiteKeyWidth()        ;
+        const x = whiteIndex * getWhiteKeyWidth();
         const isTreble = expectedMidiTreble.has(midi);
-const isBass   = expectedMidiBass.has(midi);
-if (isTreble) {
-    ctx.fillStyle = "#FFCDD2"; // ❤️ light red
-} else if (isBass) {
-    ctx.fillStyle = "#757575"; // 🖤 gray
-} else {
-    ctx.fillStyle = "#ffffff";
-}
-        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
+        const isBass   = expectedMidiBass.has(midi);
+        
+        if (isTreble) {
+            ctx.fillStyle = "#FFCDD2";
+        } else if (isBass) {
+            ctx.fillStyle = "#757575";
+        } else {
+            ctx.fillStyle = "#ffffff";
+        }
+        
+        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
 
         ctx.strokeStyle = "#000";
-        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
-// White key note name
-if (showNoteNames) {
-    ctx.fillStyle = "#000";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
+        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
 
-    ctx.fillText(
-        getNoteName(midi),
-        x + getWhiteKeyWidth()        / 2,
-        keyboardTop + keyHeight - 5
-    );
-}
+        if (showNoteNames) {
+            ctx.fillStyle = "#000";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+
+            ctx.fillText(
+                getNoteName(midi),
+                x + getWhiteKeyWidth() / 2,
+                keyboardTop + keyHeight - 5
+            );
+        }
 
         whiteIndex++;
     }
 
-   // ---- BLACK KEYS ----
-whiteIndex = 0;
+    // BLACK KEYS
+    whiteIndex = 0;
 
-for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
-    if (!isBlackMidi(midi)) {
-        whiteIndex++;
-        continue;
-    }
+    for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
+        if (!isBlackMidi(midi)) {
+            whiteIndex++;
+            continue;
+        }
 
-    const blackKeyWidth = getWhiteKeyWidth()    * 0.6;
-    const blackKeyHeight = keyHeight * 0.6;
+        const blackKeyWidth = getWhiteKeyWidth() * 0.6;
+        const blackKeyHeight = keyHeight * 0.6;
 
-    const x =
-        (whiteIndex - 1) * getWhiteKeyWidth()        +
-        getWhiteKeyWidth()
-        * 0.7;
+        const x = (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
 
         const isTreble = expectedMidiTreble.has(midi);
-const isBass   = expectedMidiBass.has(midi);
+        const isBass   = expectedMidiBass.has(midi);
 
-if (isTreble) {
-    ctx.fillStyle = "#E57373"; // ❤️ medium red
-} else if (isBass) {
-    ctx.fillStyle = "#424242"; // 🖤 dark gray
-} else {
-    ctx.fillStyle = "#000";
-}
+        if (isTreble) {
+            ctx.fillStyle = "#E57373";
+        } else if (isBass) {
+            ctx.fillStyle = "#424242";
+        } else {
+            ctx.fillStyle = "#000";
+        }
 
-    ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+        ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
 
-    // ✅ NOTE NAME — NOW IN SCOPE
-    if (showNoteNames) {
-        ctx.fillStyle = "#fff";
-        ctx.font = "10px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
+        if (showNoteNames) {
+            ctx.fillStyle = "#fff";
+            ctx.font = "10px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
 
-        ctx.fillText(
-            getNoteName(midi),
-            x + blackKeyWidth / 2,
-            keyboardTop + blackKeyHeight - 4
-        );
+            ctx.fillText(
+                getNoteName(midi),
+                x + blackKeyWidth / 2,
+                keyboardTop + blackKeyHeight - 4
+            );
+        }
     }
-}
 }
 
 function describeNoteByBlackKeys(midiNote) {
@@ -1333,13 +1253,12 @@ function describeNoteByBlackKeys(midiNote) {
 
     return descriptions[noteInOctave] || "";
 }
+
 function blackKeyGroupForMidi(midi) {
     const pitch = midi % 12;
 
-    // Group of 2 black keys: C#, D#
     if (pitch === 1 || pitch === 3) return "2";
 
-    // Group of 3 black keys: F#, G#, A#
     if (pitch === 6 || pitch === 8 || pitch === 10) return "3";
 
     return null;
@@ -1349,128 +1268,103 @@ function blackKeyGroupForMidi(midi) {
 // SHARED USER NOTE HANDLER (MIDI + MOUSE)
 // =======================================
 function processUserNoteOn(midiNote) {
+    if (!freeMode) {
+        hardStopUserNote();
+    }
 
-// ❌ DO NOT hard-stop in Free Mode (allows glide)
-if (!freeMode) {
-    hardStopUserNote();
-}
+    if (previewMode) return;
 
-if (previewMode) return;
+    // FREE MODE — LEGATO / GLIDE WITH AUTO-RELEASE
+    if (freeMode) {
+        ensureSynth();
 
+        freeModeSynth.triggerAttack(getNoteName(midiNote));
+        freeModeActiveNote = midiNote;
+        
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        expectedMidiTreble.add(midiNote);
 
-// 🎹 FREE MODE — LEGATO / GLIDE WITH AUTO-RELEASE
-if (freeMode) {
+        canvas.addEventListener('mouseleave', () => {
+            mouseDown = false;
+
+            if (freeMode && freeModeActiveNote !== null) {
+                freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+                freeModeActiveNote = null;
+                expectedMidiNote = null;
+            }
+        });
+
+        document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
+        document.getElementById('pressedNoteCircle').className = 'note-circle';
+        document.getElementById('correctNoteCircle').textContent = '';
+
+        expectedMidiNote = midiNote;
+        return;
+    }
+
+    // TRAINING MODE ONLY
+    if (!trainingActive) return;
+
+    const noteName = getNoteName(midiNote);
+    const feedback = document.getElementById('feedback');
+
+    // ---------- WRONG NOTE ----------
+    if (!currentChordNotes.has(midiNote)) {
+        const expectedMidi = allMidiNotes[trainingIndex].midi;
+        const explanation = explainWrongNote(midiNote, expectedMidi);
+
+        feedback.textContent = explanation;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
+
+        failureCount++;
+        expectedMidiNote = expectedMidi;
+        
+        document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
+        document.getElementById('pressedNoteCircle').className = 'note-circle wrong';
+        document.getElementById('correctNoteCircle').textContent = currentTrainingNote;
+        return;
+    }
+
+    // ---------- CORRECT NOTE ----------
+    document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
+    document.getElementById('pressedNoteCircle').className = 'note-circle correct';
+    document.getElementById('correctNoteCircle').textContent = currentTrainingNote;
+    
+    explanationLocked = false;
+    showBlackKeyArrow = false;
+    arrowTargetGroup = null;
+    failureCount = 0;
+
+    midiPressedNotes.add(midiNote);
+
+    const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
+
+    if (allPressed && noteHoldStartTime === null) {
+        const isChord = currentChordNotes.size > 1;
+        feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
+        noteHoldStartTime = performance.now();
+    } else if (!allPressed) {
+        const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
+        feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
+    }
+
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+
+    activeMidiNote = midiNote;
     ensureSynth();
 
-    // 🎵 Attack new note (do NOT release previous = glide)
-    freeModeSynth.triggerAttack(getNoteName(midiNote));
-    freeModeActiveNote = midiNote;
-        // 🔑 KEYBOARD HIGHLIGHT (FREE MODE)
-        expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    expectedMidiTreble.add(midiNote);
-
-    canvas.addEventListener('mouseleave', () => {
-    mouseDown = false;
-
-    if (freeMode && freeModeActiveNote !== null) {
-        freeModeSynth.triggerRelease(
-            getNoteName(freeModeActiveNote)
-        );
-        freeModeActiveNote = null;
-        expectedMidiNote = null;
-    }
-});
-
-    // 🟡 UI
-    document.getElementById('pressedNoteCircle').textContent =
-        getNoteName(midiNote);
-
-    document.getElementById('pressedNoteCircle').className =
-        'note-circle';
-
-    document.getElementById('correctNoteCircle').textContent = '';
-
-    expectedMidiNote = midiNote;
-    return;
+    synth.triggerAttack(noteName);
 }
 
-// 🎯 TRAINING MODE ONLY
-if (!trainingActive) return;
-
-const noteName = getNoteName(midiNote);
-const feedback = document.getElementById('feedback');
-
-// ---------- WRONG NOTE ----------
-// ✅ Check if this note is part of the expected chord
-if (!currentChordNotes.has(midiNote)) {
-
-const expectedMidi = allMidiNotes[trainingIndex].midi;
-const explanation = explainWrongNote(midiNote, expectedMidi);
-
-feedback.textContent = explanation;
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('wrong', 'show');
-
-failureCount++;
-expectedMidiNote = expectedMidi;
-// 🔴 Update side circles (WRONG)
-document.getElementById('pressedNoteCircle').textContent =
-    getNoteName(midiNote);
-
-document.getElementById('pressedNoteCircle')
-    .className = 'note-circle wrong';
-
-document.getElementById('correctNoteCircle').textContent =
-    currentTrainingNote;
-return;
+function isBlackKey(noteName) { 
+    return noteName.includes("#"); 
 }
 
-// ---------- CORRECT NOTE ----------
-// 🟢 Update side circles (CORRECT)
-document.getElementById('pressedNoteCircle').textContent =
-    getNoteName(midiNote);
-
-document.getElementById('pressedNoteCircle')
-    .className = 'note-circle correct';
-
-document.getElementById('correctNoteCircle').textContent =
-    currentTrainingNote;
-explanationLocked = false;
-showBlackKeyArrow = false;
-arrowTargetGroup = null;
-failureCount = 0;
-
-// ✅ Track which notes in the chord have been pressed
-midiPressedNotes.add(midiNote);
-
-// 🎹 Check if ALL chord notes are now pressed
-const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
-
-if (allPressed && noteHoldStartTime === null) {
-    // ALL notes pressed - start the hold timer
-    const isChord = currentChordNotes.size > 1;
-    feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
-    noteHoldStartTime = performance.now();
-    
-} else if (!allPressed) {
-    // Still waiting for more notes
-    const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
-    feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
-}
-
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('show');
-
-activeMidiNote = midiNote;
-ensureSynth();
-
-synth.triggerAttack(noteName);
-}
-
-function isBlackKey(noteName) { return noteName.includes("#"); }
 function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const x = noteToX(midiNumber);
 
@@ -1479,43 +1373,39 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
-    // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-  if (track === TREBLE) {
-    // ❤️ LIGHT RED
-    gradient.addColorStop(0.00, "#FFEBEE"); // very light red
-    gradient.addColorStop(0.25, "#EF9A9A"); // light red
-    gradient.addColorStop(0.55, "#E57373"); // medium red
-    gradient.addColorStop(1.00, "#EF5350"); // base red
+    if (track === TREBLE) {
+        gradient.addColorStop(0.00, "#FFEBEE");
+        gradient.addColorStop(0.25, "#EF9A9A");
+        gradient.addColorStop(0.55, "#E57373");
+        gradient.addColorStop(1.00, "#EF5350");
+    }
+    else if (track === BASS) {
+        gradient.addColorStop(0.00, "#616161");
+        gradient.addColorStop(0.25, "#424242");
+        gradient.addColorStop(0.55, "#212121");
+        gradient.addColorStop(1.00, "#000000");
+    }
+
+    fallingRectangles.push({
+        midi: midiNumber,
+        noteName: getNoteName(midiNumber),
+        track,
+        isMidi: true,
+
+        x,
+        y: startY,
+        startY,
+        endY,
+        width: getWhiteKeyWidth() * 0.86,
+        height,
+
+        gradient,
+        startTime: noteStartTime,
+        landed: false,
+    });
 }
-else if (track === BASS) {
-    // 🖤 BLACK
-    gradient.addColorStop(0.00, "#616161"); // light gray
-    gradient.addColorStop(0.25, "#424242"); // medium gray
-    gradient.addColorStop(0.55, "#212121"); // dark gray
-    gradient.addColorStop(1.00, "#000000"); // pure black
-}
-
-fallingRectangles.push({
-    midi: midiNumber,
-    noteName: getNoteName(midiNumber),
-    track,                 // ✅ ← THIS WAS MISSING
-    isMidi: true,
-
-    x,
-    y: startY,
-    startY,
-    endY,
-    width: getWhiteKeyWidth() * 0.86,
-    height,
-
-    gradient,
-    startTime: noteStartTime,
-    landed: false,
-});
-}
-
 
 function spawnTrainingNote(noteObj) {
     hardStopUserNote();
@@ -1537,21 +1427,17 @@ function spawnTrainingNote(noteObj) {
 
     expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
 
-// 🎹 CHECK IF THIS IS A CHORD (multiple notes at same time)
     currentChordNotes.clear();
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
     currentChordNotes.add(noteObj.midi);
     
-// Look ahead for simultaneous notes (within 10ms) FROM THE SAME TRACK
-    // ✅ USE playTime (compressed timeline) instead of original time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
         
-        // ✅ ONLY add notes from the SAME track (same hand)
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01 && nextNote.track === noteObj.track) {
             currentChordNotes.add(nextNote.midi);
         } else if (Math.abs(nextPlayTime - currentPlayTime) >= 0.01) {
@@ -1559,7 +1445,7 @@ function spawnTrainingNote(noteObj) {
         }
     }
 
-   const isChord = currentChordNotes.size > 1;
+    const isChord = currentChordNotes.size > 1;
     
     const holdEl = document.getElementById('holdInfo');
     if (isChord) {
@@ -1567,10 +1453,10 @@ function spawnTrainingNote(noteObj) {
     } else {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
     }
+    
     noteHoldStartTime = null;
     setTargetNote(noteName);
     
-    // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES
     currentChordNotes.forEach(midi => {
         addMidiFallingRectangle(
             midi,
@@ -1580,7 +1466,6 @@ function spawnTrainingNote(noteObj) {
         );
     });
 
-    // 🎹 HIGHLIGHT KEYBOARD for chord notes (persistent until played)
     if (isChord) {
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
@@ -1596,140 +1481,122 @@ function spawnTrainingNote(noteObj) {
 }
 
 function playMeasurePreview(startTime, clef) {
-    speedLocked = true; // 🔒 lock speed ONLY during preview
+    speedLocked = true;
     ensureSynth();
     hardStopUserNote();
 
-trainingActive = false;
-visualsPlaying = true;
-fallingRectangles = [];
-previewMode = true;
-
-const feedback = document.getElementById('feedback');
-feedback.textContent = 'Listen first…';
-
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('show');
-
-const sectionNotes = practiceNotes.filter(note => {
-    const isTreble = note.track === TREBLE;
-    const isBass   = note.track === BASS;
-
-    return (
-        clef === 'both' ||
-        (clef === 'treble' && isTreble) ||
-        (clef === 'bass' && isBass)
-    );
-});
-
-
-const previewStart = performance.now();
-const visualPreroll = getFallTimeMs(); // 👈 ADD THIS
-
-visualClockStart = previewStart + visualPreroll;
-
-sectionNotes.forEach(note => {
-    const t0 = (note.playTime ?? note.time);
-const visualStart =
-  visualClockStart +
-  (((t0 - startTime) * 1000) / speedMultiplier) -
-  getFallTimeMs();
-
-
-
-    addMidiFallingRectangle(
-        note.midi,
-        note.duration,
-        note.track,
-        visualStart
-    );
-    const t = setTimeout(() => {
-    synth.triggerAttackRelease(
-        getNoteName(note.midi),
-        note.duration / speedMultiplier
-    );
-}, visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier);
-
-
-    previewTimeouts.push(t);
-});
-
-// If no notes, end quickly
-if (!sectionNotes.length) {
-    speedLocked = false;
-    previewMode = false;
-    spawnNextValidNote();
-    return;
-}
-
-const lastNoteEnd = Math.max(...sectionNotes.map(n => (n.playTime ?? n.time) + n.duration));
-
-// ✅ Let sustain finish (do NOT clamp to sectionEndTime)
-const previewLength =
-    ((lastNoteEnd - startTime) * 1000) / speedMultiplier;
-
-// ✅ IMPORTANT: include visualPreroll, because audio starts after it
-const endTimeout = setTimeout(() => {
-    // don't hard cut the audio right at the boundary
-    // hardStopUserNote();
-
-    previewMode = false;
-    speedLocked = false;
+    trainingActive = false;
+    visualsPlaying = true;
+    fallingRectangles = [];
+    previewMode = true;
 
     const feedback = document.getElementById('feedback');
-    feedback.textContent = 'Your turn';
+    feedback.textContent = 'Listen first…';
+
     feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
 
-    spawnNextValidNote();
-}, visualPreroll + previewLength + 400); // 400 = extra tail room
+    const sectionNotes = practiceNotes.filter(note => {
+        const isTreble = note.track === TREBLE;
+        const isBass   = note.track === BASS;
 
+        return (
+            clef === 'both' ||
+            (clef === 'treble' && isTreble) ||
+            (clef === 'bass' && isBass)
+        );
+    });
 
-previewTimeouts.push(endTimeout);
+    const previewStart = performance.now();
+    const visualPreroll = getFallTimeMs();
 
-}
+    visualClockStart = previewStart + visualPreroll;
 
+    sectionNotes.forEach(note => {
+        const t0 = (note.playTime ?? note.time);
+        const visualStart = visualClockStart + (((t0 - startTime) * 1000) / speedMultiplier) - getFallTimeMs();
 
-function spawnNextValidNote(){
+        addMidiFallingRectangle(
+            note.midi,
+            note.duration,
+            note.track,
+            visualStart
+        );
+        
+        const t = setTimeout(() => {
+            synth.triggerAttackRelease(
+                getNoteName(note.midi),
+                note.duration / speedMultiplier
+            );
+        }, visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier);
 
-    while (trainingIndex < practiceNotes.length) {
-    const note = practiceNotes[trainingIndex];
-    const currentMeasure = getLogicalSheetMeasureFromTime(note.time);
+        previewTimeouts.push(t);
+    });
 
-    const isTreble = note.track === TREBLE;
-const isBass   = note.track === BASS;
-
-
-        if (
-    clefMode === 'both' ||
-    (clefMode === 'treble' && isTreble) ||
-    (clefMode === 'bass' && isBass)
-) {
-        spawnTrainingNote(note);
+    if (!sectionNotes.length) {
+        speedLocked = false;
+        previewMode = false;
+        spawnNextValidNote();
         return;
     }
 
-    trainingIndex++;
-    updateTrainingProgress();
+    const lastNoteEnd = Math.max(...sectionNotes.map(n => (n.playTime ?? n.time) + n.duration));
+
+    const previewLength = ((lastNoteEnd - startTime) * 1000) / speedMultiplier;
+
+    const endTimeout = setTimeout(() => {
+        previewMode = false;
+        speedLocked = false;
+
+        const feedback = document.getElementById('feedback');
+        feedback.textContent = 'Your turn';
+        feedback.classList.remove('correct', 'wrong', 'show');
+
+        spawnNextValidNote();
+    }, visualPreroll + previewLength + 400);
+
+    previewTimeouts.push(endTimeout);
 }
 
-if (loopEnabled) {
-    trainingIndex = 0;
-    document.getElementById('feedback').textContent = 'Looping section…';
-    setTimeout(() => {
-        playMeasurePreview(sectionStartTime, clefMode);
-    }, 600);
-    return;
-}
+function spawnNextValidNote(){
+    while (trainingIndex < practiceNotes.length) {
+        const note = practiceNotes[trainingIndex];
+        const currentMeasure = getLogicalSheetMeasureFromTime(note.time);
 
-const feedback = document.getElementById('feedback');
-feedback.textContent = 'Excellent work! 🌟';
+        const isTreble = note.track === TREBLE;
+        const isBass   = note.track === BASS;
 
-feedback.classList.remove('wrong');
-feedback.classList.add('correct', 'show');
+        if (
+            clefMode === 'both' ||
+            (clefMode === 'treble' && isTreble) ||
+            (clefMode === 'bass' && isBass)
+        ) {
+            spawnTrainingNote(note);
+            return;
+        }
 
-trainingActive = false;
-stopButton.disabled = true;
+        trainingIndex++;
+        updateTrainingProgress();
+    }
+
+    if (loopEnabled) {
+        trainingIndex = 0;
+        document.getElementById('feedback').textContent = 'Looping section…';
+        setTimeout(() => {
+            playMeasurePreview(sectionStartTime, clefMode);
+        }, 600);
+        return;
+    }
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Excellent work! 🌟';
+
+    feedback.classList.remove('wrong');
+    feedback.classList.add('correct', 'show');
+
+    trainingActive = false;
+    stopButton.disabled = true;
 }
 
 function startVisualCountdown(onComplete) {
@@ -1764,160 +1631,140 @@ function animate() {
 
     if (visualsPlaying) {
         fallingRectangles = fallingRectangles.filter(rect => {
-            const elapsed =
-    performance.now() - rect.startTime;
+            const elapsed = performance.now() - rect.startTime;
+            const progress = elapsed / getFallTimeMs();
 
+            rect.y = rect.startY + progress * (rect.endY - rect.startY);
+            
+            if (rect.isMidi && !rect.landed && rect.y >= rect.endY) {
+                rect.landed = true;
 
-const progress = elapsed / getFallTimeMs();
+                if (rect.track === TREBLE) {
+                    expectedMidiTreble.add(rect.midi);
+                } else if (rect.track === BASS) {
+                    expectedMidiBass.add(rect.midi);
+                }
 
-    ;
+                const isPartOfCurrentChord = currentChordNotes.has(rect.midi);
+                
+                if (!isPartOfCurrentChord) {
+                    setTimeout(() => {
+                        expectedMidiTreble.delete(rect.midi);
+                        expectedMidiBass.delete(rect.midi);
+                    }, 100);
+                }
+            }
+            
+            if (rect.y > canvas.height) {
+                return false;
+            }
 
-    rect.y = rect.startY + progress * (rect.endY - rect.startY);
-// 🎯 NOTE HAS LANDED ON KEYBOARD (ALWAYS HIGHLIGHT)
-if (
-    rect.isMidi &&
-    !rect.landed &&
-    rect.y >= rect.endY
-) {
-    rect.landed = true;
+            ctx.fillStyle = rect.gradient;
 
-    // 🔔 highlight the piano key (but don't remove if it's part of current chord)
-    if (rect.track === TREBLE) {
-        expectedMidiTreble.add(rect.midi);
-    } else if (rect.track === BASS) {
-        expectedMidiBass.add(rect.midi);
-    }
+            const r = 9;
+            ctx.beginPath();
+            ctx.moveTo(rect.x + r, rect.y);
+            ctx.lineTo(rect.x + rect.width - r, rect.y);
+            ctx.quadraticCurveTo(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y + r);
+            ctx.lineTo(rect.x + rect.width, rect.y + rect.height - r);
+            ctx.quadraticCurveTo(rect.x + rect.width, rect.y + rect.height, rect.x + rect.width - r, rect.y + rect.height);
+            ctx.lineTo(rect.x + r, rect.y + rect.height);
+            ctx.quadraticCurveTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - r);
+            ctx.lineTo(rect.x, rect.y + r);
+            ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
+            ctx.closePath();
+            ctx.fill();
 
-    // ⏱ REMOVE HIGHLIGHT ONLY IF NOT PART OF CURRENT CHORD
-    const isPartOfCurrentChord = currentChordNotes.has(rect.midi);
+            ctx.save();
+            ctx.globalCompositeOperation = "screen";
+            ctx.globalAlpha = 0.22;
+
+            const gloss = ctx.createLinearGradient(
+                rect.x,
+                rect.y,
+                rect.x + rect.width,
+                rect.y
+            );
+
+            gloss.addColorStop(0.0, "rgba(255,255,255,0.05)");
+            gloss.addColorStop(0.4, "rgba(255,255,255,0.35)");
+            gloss.addColorStop(0.6, "rgba(255,255,255,0.35)");
+            gloss.addColorStop(1.0, "rgba(255,255,255,0.05)");
+
+            ctx.fillStyle = gloss;
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+            ctx.restore();
+
+            const shimmerSpeed = 0.0015 * speedMultiplier;
+            const shimmerPhase = (performance.now() * shimmerSpeed) % 1;
+
+            const shimmerY = rect.y + shimmerPhase * rect.height;
+
+            const isDownbeat = metronomeRunning && (metroBeat % 4 === 0);
+
+            ctx.save();
+            ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
+            ctx.globalCompositeOperation = "lighter";
+
+            const shimmerGradient = ctx.createLinearGradient(
+                0,
+                shimmerY - 20,
+                0,
+                shimmerY + 20
+            );
+
+            shimmerGradient.addColorStop(0, "rgba(255,255,255,0)");
+            shimmerGradient.addColorStop(0.5, "rgba(255,255,255,0.8)");
+            shimmerGradient.addColorStop(1, "rgba(255,255,255,0)");
+
+            ctx.fillStyle = shimmerGradient;
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+            ctx.restore();
+
+            if (showNoteNames && rect.isMidi && rect.noteName) {
+                if (rect.track === BASS) {
+                    ctx.fillStyle = "rgba(255,255,255,0.95)";
+                    ctx.shadowColor = "rgba(0,0,0,0.5)";
+                } else {
+                    ctx.fillStyle = "rgba(0,0,0,0.9)";
+                    ctx.shadowColor = "rgba(255,255,255,0.7)";
+                }
+                
+                ctx.font = "bold 15px Arial";
+                ctx.shadowBlur = 2;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                ctx.fillText(
+                    rect.noteName,
+                    rect.x + rect.width / 2,
+                    rect.y + rect.height / 2
+                );
+                ctx.shadowBlur = 0;
+            }
+
+            return true;
+        });
+    } 
     
-    if (!isPartOfCurrentChord) {
-        setTimeout(() => {
-            expectedMidiTreble.delete(rect.midi);
-            expectedMidiBass.delete(rect.midi);
-        }, 100);
-    }
-}
-if (rect.y > canvas.height) {
-    return false;
-}
-
-// 🎨 Base glossy fill
-ctx.fillStyle = rect.gradient;
-
-const r = 9;
-ctx.beginPath();
-ctx.moveTo(rect.x + r, rect.y);
-ctx.lineTo(rect.x + rect.width - r, rect.y);
-ctx.quadraticCurveTo(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y + r);
-ctx.lineTo(rect.x + rect.width, rect.y + rect.height - r);
-ctx.quadraticCurveTo(rect.x + rect.width, rect.y + rect.height, rect.x + rect.width - r, rect.y + rect.height);
-ctx.lineTo(rect.x + r, rect.y + rect.height);
-ctx.quadraticCurveTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - r);
-ctx.lineTo(rect.x, rect.y + r);
-ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
-ctx.closePath();
-ctx.fill();
-/* ✨ FULL-BODY GLOSS (soft vertical sheen) */
-ctx.save();
-ctx.globalCompositeOperation = "screen";
-ctx.globalAlpha = 0.22;
-
-const gloss = ctx.createLinearGradient(
-    rect.x,
-    rect.y,
-    rect.x + rect.width,
-    rect.y
-);
-
-gloss.addColorStop(0.0, "rgba(255,255,255,0.05)");
-gloss.addColorStop(0.4, "rgba(255,255,255,0.35)");
-gloss.addColorStop(0.6, "rgba(255,255,255,0.35)");
-gloss.addColorStop(1.0, "rgba(255,255,255,0.05)");
-
-ctx.fillStyle = gloss;
-ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-
-ctx.restore();
-
-/* 🌊 SUBTLE SHIMMER (animated light pass) */
-const shimmerSpeed = 0.0015 * speedMultiplier;
-const shimmerPhase =
-    (performance.now() * shimmerSpeed) % 1;
-
-const shimmerY =
-    rect.y + shimmerPhase * rect.height;
-
-// 🟢 DOWNBEAT ACCENT (beat 1)
-const isDownbeat = metronomeRunning && (metroBeat % 4 === 0);
-
-ctx.save();
-ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
-ctx.globalCompositeOperation = "lighter";
-
-const shimmerGradient = ctx.createLinearGradient(
-    0,
-    shimmerY - 20,
-    0,
-    shimmerY + 20
-);
-
-shimmerGradient.addColorStop(0, "rgba(255,255,255,0)");
-shimmerGradient.addColorStop(0.5, "rgba(255,255,255,0.8)");
-shimmerGradient.addColorStop(1, "rgba(255,255,255,0)");
-
-ctx.fillStyle = shimmerGradient;
-ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-
-ctx.restore();
-
-if (!rect.landed) {
-    // shimmer code
-}
-
-if (showNoteNames && rect.isMidi && rect.noteName) {
-        // White text for bass (black notes), Black text for treble (red notes)
-        if (rect.track === BASS) {
-            ctx.fillStyle = "rgba(255,255,255,0.95)";
-            ctx.shadowColor = "rgba(0,0,0,0.5)";
-        } else {
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.shadowColor = "rgba(255,255,255,0.7)";
-        }
-        
-        ctx.font = "bold 15px Arial";
-        ctx.shadowBlur = 2;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.fillText(
-            rect.noteName,
-            rect.x + rect.width / 2,
-            rect.y + rect.height / 2
-        );
-        ctx.shadowBlur = 0;
-    }
-
-    return true;
-});
-} 
-drawKeyboard();
+    drawKeyboard();
     drawBlackKeyArrow();
     requestAnimationFrame(animate);
 }
+
 function drawBlackKeyArrow() {
     if (!showBlackKeyArrow || !arrowTargetGroup) return;
 
     const keyHeight = KEYBOARD_HEIGHT;
-const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
+    const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
 
-    // Representative black key
     const targetMidi = arrowTargetGroup === "2" ? 61 : 66;
 
-    const x = noteToX(targetMidi) + getWhiteKeyWidth()    / 2;
+    const x = noteToX(targetMidi) + getWhiteKeyWidth() / 2;
     const y = keyboardTop - 140;
 
-    // Arrow
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
 
@@ -1926,7 +1773,6 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
     ctx.lineTo(x, keyboardTop - 20);
     ctx.stroke();
 
-    // Arrow head
     ctx.fillStyle = "red";
     ctx.beginPath();
     ctx.moveTo(x - 10, keyboardTop - 30);
@@ -1934,7 +1780,6 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
     ctx.lineTo(x + 10, keyboardTop - 30);
     ctx.fill();
 
-    // Label box
     const text = `Group of ${arrowTargetGroup} black keys`;
     ctx.font = "16px Arial";
     const textWidth = ctx.measureText(text).width;
@@ -1955,7 +1800,9 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
     ctx.textBaseline = "middle";
     ctx.fillText(text, x, boxY + boxHeight / 2);
 }
+
 animate();
+
 // ================================
 // SIMPLE METRONOME (BUTTON ONLY)
 // ================================
@@ -1998,7 +1845,6 @@ function startMetronome(startTimeOverride = null) {
 
     const bpm = (60 / secondsPerBeat) * speedMultiplier;
 
-    // 🔒 ALWAYS run at subdivision resolution (half-beat)
     const stepMs = (60000 / bpm) / 2;
 
     let lastStep = -1;
@@ -2015,12 +1861,10 @@ function startMetronome(startTimeOverride = null) {
             const isMainBeat = step % 2 === 0;
             const beatIndex = Math.floor(step / 2);
 
-            // 🔊 BEAT CLICK (quarters only)
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
 
-            // 🗣️ COUNTING
             if (countEnabled && speechSynth) {
                 let word = null;
 
@@ -2057,7 +1901,6 @@ function getMidiFromMouse(x, y) {
     const blackKeyWidth = whiteKeyWidth * 0.6;
     const blackKeyHeight = KEYBOARD_HEIGHT * 0.6;
 
-    // 🔥 1️⃣ CHECK BLACK KEYS FIRST
     let whiteIndex = 0;
 
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
@@ -2066,9 +1909,7 @@ function getMidiFromMouse(x, y) {
             continue;
         }
 
-        const bx =
-            (whiteIndex - 1) * whiteKeyWidth +
-            whiteKeyWidth * 0.7;
+        const bx = (whiteIndex - 1) * whiteKeyWidth + whiteKeyWidth * 0.7;
 
         if (
             x >= bx &&
@@ -2080,7 +1921,6 @@ function getMidiFromMouse(x, y) {
         }
     }
 
-    // 🔁 2️⃣ FALL BACK TO WHITE KEYS
     return xToMidi(x);
 }
 
@@ -2094,7 +1934,6 @@ canvas.addEventListener('mousedown', async (e) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Only allow clicks on keyboard area
     if (y < canvas.height - KEYBOARD_HEIGHT) return;
 
     const midiNote = getMidiFromMouse(x, y);
@@ -2104,6 +1943,7 @@ canvas.addEventListener('mousedown', async (e) => {
 
     processUserNoteOn(midiNote);
 });
+
 canvas.addEventListener('mousemove', (e) => {
     if (!mouseDown || !freeMode) return;
 
@@ -2125,22 +1965,20 @@ canvas.addEventListener('mouseup', () => {
     lastMouseMidi = null;
 
     if (freeMode && freeModeActiveNote !== null) {
-    freeModeSynth.triggerRelease(
-        getNoteName(freeModeActiveNote)
-    );
-    freeModeActiveNote = null;
-    expectedMidiNote = null;
-    expectedMidiTreble.clear();
-    return;
-}
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+        freeModeActiveNote = null;
+        expectedMidiNote = null;
+        expectedMidiTreble.clear();
+        return;
+    }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
-// ❌ Ignore releases of wrong notes
-if (getNoteName(activeMidiNote) !== currentTrainingNote) {
-    activeMidiNote = null;
-    noteHoldStartTime = null;
-    return;
-}
+    
+    if (getNoteName(activeMidiNote) !== currentTrainingNote) {
+        activeMidiNote = null;
+        noteHoldStartTime = null;
+        return;
+    }
 
     const note = activeMidiNote;
     const heldTime = performance.now() - noteHoldStartTime;
@@ -2148,53 +1986,47 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     synth.triggerRelease(getNoteName(note));
 
     if (heldTime >= expectedHoldDuration) {
-const feedback = document.getElementById('feedback');
-feedback.textContent = 'Good!';
+        const feedback = document.getElementById('feedback');
+        feedback.textContent = 'Good!';
 
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('correct', 'show');
-explanationLocked = false;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+        explanationLocked = false;
+        
         waitingForInput = false;
         expectedMidiNote = null;
         
-        // 🔓 Clear chord highlights on success
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         
-        // ✅ Skip ALL notes in the chord
         trainingIndex += currentChordNotes.size;
-updateTrainingProgress();
+        updateTrainingProgress();
 
-document.getElementById('holdInfo').textContent = '';
-setTimeout(() => spawnNextValidNote(), 300);
+        document.getElementById('holdInfo').textContent = '';
+        setTimeout(() => spawnNextValidNote(), 300);
 
     } else {
         const heldBeats = heldTime / 1000 / secondsPerBeat;
         const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
 
         const feedback = document.getElementById('feedback');
-feedback.innerHTML =
-    `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>.
-Let's try holding a little longer!`;
+        feedback.innerHTML = `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>. Let's try holding a little longer!`;
 
-     feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('wrong', 'show');
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
 
         const holdEl = document.getElementById('holdInfo');
-holdEl.innerHTML =
-    `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+        holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
+        if (retryTimeout) {
+            clearTimeout(retryTimeout);
+        }
 
-            if (retryTimeout) {
-    clearTimeout(retryTimeout);
-}
-
-retryTimeout = setTimeout(() => {
-    spawnTrainingNote(practiceNotes[trainingIndex]    );
-}, 600);
-
+        retryTimeout = setTimeout(() => {
+            spawnTrainingNote(practiceNotes[trainingIndex]);
+        }, 600);
     }
 
     noteHoldStartTime = null;
@@ -2203,7 +2035,11 @@ retryTimeout = setTimeout(() => {
 
 // MIDI handling
 async function initMIDI() {
-    if(!navigator.requestMIDIAccess){ console.log('Web MIDI API not supported'); return; }
+    if(!navigator.requestMIDIAccess){ 
+        console.log('Web MIDI API not supported'); 
+        return; 
+    }
+    
     try {
         const midiAccess = await navigator.requestMIDIAccess();
         for(const input of midiAccess.inputs.values()){
@@ -2219,7 +2055,9 @@ async function initMIDI() {
                 if(idx>-1) midiInputs.splice(idx,1);
             }
         }
-    } catch(err){ console.error(err); }
+    } catch(err){ 
+        console.error(err); 
+    }
 }
 
 function setTargetNote(noteName){
@@ -2239,13 +2077,8 @@ function splitRepeatedNotes(notes, gapSeconds = NOTE_GAP_TIME) {
             prev.track === current.track &&
             Math.abs((prev.time + prev.duration) - current.time) < 0.001
         ) {
-            // shorten previous note slightly
-            prev.duration = Math.max(
-                0,
-                prev.duration - gapSeconds
-            );
+            prev.duration = Math.max(0, prev.duration - gapSeconds);
 
-            // push current note slightly later
             result.push({
                 ...current,
                 time: current.time + gapSeconds
@@ -2257,7 +2090,6 @@ function splitRepeatedNotes(notes, gapSeconds = NOTE_GAP_TIME) {
 
     return result;
 }
-
 
 function removeRepeatedMeasures(notes, secondsPerMeasure) {
     const measures = new Map();
@@ -2320,7 +2152,6 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
     
-    // ✅ Initialize MIDI on first click
     if (midiInputs.length === 0) {
         try {
             const midiAccess = await navigator.requestMIDIAccess();
@@ -2343,129 +2174,116 @@ startPracticeButton.addEventListener('click', async () => {
 
     const selectedHand = handSelect.value;
     const startMeasure = parseInt(startMeasureInput.value, 10);
-const endMeasure = parseInt(endMeasureInput.value, 10);
+    const endMeasure = parseInt(endMeasureInput.value, 10);
 
-if (
-    isNaN(startMeasure) ||
-    isNaN(endMeasure) ||
-    startMeasure < 1 ||
-    endMeasure < startMeasure
-) {
-    alert("Invalid measure range");
-    return;
-}
-if (endMeasure > MAX_LOGICAL_MEASURE) {
-    alert(`Max sheet measure is ${MAX_LOGICAL_MEASURE}`);
-    return;
-}
+    if (
+        isNaN(startMeasure) ||
+        isNaN(endMeasure) ||
+        startMeasure < 1 ||
+        endMeasure < startMeasure
+    ) {
+        alert("Invalid measure range");
+        return;
+    }
+    
+    if (endMeasure > MAX_LOGICAL_MEASURE) {
+        alert(`Max sheet measure is ${MAX_LOGICAL_MEASURE}`);
+        return;
+    }
 
-const startLogical = startMeasure;
-const endLogical   = endMeasure;
+    const startLogical = startMeasure;
+    const endLogical   = endMeasure;
 
-const built = buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipSheetRepeats);
-if (!built) {
-    alert("Could not map that sheet range to the MIDI timeline.");
-    return;
-}
+    const built = buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipSheetRepeats);
+    if (!built) {
+        alert("Could not map that sheet range to the MIDI timeline.");
+        return;
+    }
 
-const physicalSeq = built.seq; // list of physical measures to include (in playback order)
-const allowedPhysical = new Set(physicalSeq);
+    const physicalSeq = built.seq;
+    const allowedPhysical = new Set(physicalSeq);
 
-const physicalIndex = new Map();
-physicalSeq.forEach((p, idx) => physicalIndex.set(p, idx));
+    const physicalIndex = new Map();
+    physicalSeq.forEach((p, idx) => physicalIndex.set(p, idx));
 
-// Helpful debug: what bars will the user *think* they are playing?
-const logicalSeq =
-    skipSheetRepeats
-        ? Array.from({ length: endLogical - startLogical + 1 }, (_, i) => startLogical + i)
-        : physicalSeq.map(p => PHYSICAL_TO_LOGICAL[p]);
+    const logicalSeq =
+        skipSheetRepeats
+            ? Array.from({ length: endLogical - startLogical + 1 }, (_, i) => startLogical + i)
+            : physicalSeq.map(p => PHYSICAL_TO_LOGICAL[p]);
 
-console.log("Skip repeats:", skipSheetRepeats);
-console.log("Logical sequence:", logicalSeq.join(","));
-console.log("Physical measures used:", physicalSeq.join(","));
+    console.log("Skip repeats:", skipSheetRepeats);
+    console.log("Logical sequence:", logicalSeq.join(","));
+    console.log("Physical measures used:", physicalSeq.join(","));
 
+    sectionStartTime = 0;
+    sectionEndTime   = physicalSeq.length * secondsPerMeasure;
 
-
-// Practice timeline will start at 0 for preview scheduling
-sectionStartTime = 0;
-sectionEndTime   = physicalSeq.length * secondsPerMeasure;
-
-practiceNotes = allMidiNotes
-    .map(note => {
-        const p = getMeasureFromTime(note.time);
-        if (p === null) return null;
-        
-        // ONLY include notes from measures we explicitly selected
-        if (!allowedPhysical.has(p)) return null;
-// ONLY include notes from measures we explicitly selected
-if (!allowedPhysical.has(p)) {
-            if (note.time >= 48 && note.time <= 54) {
-                console.log("❌ REJECTED note at time", note.time.toFixed(2), "in physical measure", p, "- not in allowed set");
+    practiceNotes = allMidiNotes
+        .map(note => {
+            const p = getMeasureFromTime(note.time);
+            if (p === null) return null;
+            
+            if (!allowedPhysical.has(p)) {
+                if (note.time >= 48 && note.time <= 54) {
+                    console.log("❌ REJECTED note at time", note.time.toFixed(2), "in physical measure", p, "- not in allowed set");
+                }
+                return null;
             }
-            return null;
-        }
-// Then verify the note actually belongs to this measure
-const measureStart = MEASURE_TIME_MAP[p]?.start ?? ((p - 1) * secondsPerMeasure);
-const measureEnd = MEASURE_TIME_MAP[p]?.end ?? (p * secondsPerMeasure);
 
-// Include notes that start in this measure (with tiny tolerance for floating point)
-const TOLERANCE = 0.001;
-if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null;
-// hand filter
-        const isTreble = note.track === TREBLE;
-        const isBass   = note.track === BASS;
-        if (selectedHand !== "both") {
-            const want = selectedHand === "treble" ? isTreble : isBass;
-            if (!want) return null;
-        }
+            const measureStart = MEASURE_TIME_MAP[p]?.start ?? ((p - 1) * secondsPerMeasure);
+            const measureEnd = MEASURE_TIME_MAP[p]?.end ?? (p * secondsPerMeasure);
 
-        // Compress time so there are no silent gaps when skipping repeats
-        const idx = physicalIndex.get(p);
-        const offsetInMeasure = Math.max(0, note.time - MEASURE_TIME_MAP[p].start);
+            const TOLERANCE = 0.001;
+            if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null;
 
-        const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
+            const isTreble = note.track === TREBLE;
+            const isBass   = note.track === BASS;
+            if (selectedHand !== "both") {
+                const want = selectedHand === "treble" ? isTreble : isBass;
+                if (!want) return null;
+            }
 
-        const logicalMeasure =
-            skipSheetRepeats
-                ? (startLogical + idx)
-                : (PHYSICAL_TO_LOGICAL[p] ?? null);
+            const idx = physicalIndex.get(p);
+            const offsetInMeasure = Math.max(0, note.time - MEASURE_TIME_MAP[p].start);
 
+            const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
-        return {
-            ...note,
-            playTime,
-            logicalMeasure,
-            physicalMeasure: p,
-        };
-    })
-    .filter(Boolean);
+            const logicalMeasure =
+                skipSheetRepeats
+                    ? (startLogical + idx)
+                    : (PHYSICAL_TO_LOGICAL[p] ?? null);
 
-// Order notes by practice playback time (not original MIDI time)
-practiceNotes.sort((a, b) => a.playTime - b.playTime);
+            return {
+                ...note,
+                playTime,
+                logicalMeasure,
+                physicalMeasure: p,
+            };
+        })
+        .filter(Boolean);
 
-// ✅ ADD THIS BLOCK RIGHT HERE
-const emptyBars = reportEmptyLogicalMeasures(startMeasure, endMeasure, practiceNotes);
+    practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
-if (emptyBars.length) {
-    const feedback = document.getElementById('feedback');
-    feedback.textContent =
-        `FYI: no notes in bars ${emptyBars.join(", ")} for this hand.`;
-    feedback.classList.remove('correct', 'wrong', 'show');
-    void feedback.offsetWidth;
-    feedback.classList.add('show');
-}
+    const emptyBars = reportEmptyLogicalMeasures(startMeasure, endMeasure, practiceNotes);
+
+    if (emptyBars.length) {
+        const feedback = document.getElementById('feedback');
+        feedback.textContent =
+            `FYI: no notes in bars ${emptyBars.join(", ")} for this hand.`;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('show');
+    }
 
     if (practiceNotes.length === 0) {
         alert("No notes found for this selection");
         return;
     }
 
-    // 🔄 RESET TRAINING STATE
     trainingIndex = 0;
     showTrainingProgress();
-updateTrainingProgress();
+    updateTrainingProgress();
     clefMode = selectedHand === 'both' ? 'both' : selectedHand;
-// sectionStartTime already set correctly above — REMOVE THIS LINE
 
     trainingActive = true;
     waitingForInput = false;
@@ -2473,32 +2291,28 @@ updateTrainingProgress();
     stopButton.disabled = false;
     transportStartTime = performance.now();
 
-document.getElementById('feedback').textContent = 'Get ready…';
+    document.getElementById('feedback').textContent = 'Get ready…';
 
-startVisualCountdown(() => {
+    startVisualCountdown(() => {
+        transportStartTime = performance.now();
 
-transportStartTime = performance.now();
+        if (beatEnabled || countEnabled) {
+            startMetronome();
+        }
 
-if (beatEnabled || countEnabled) {
-    startMetronome();
-}
-
-playMeasurePreview(sectionStartTime, clefMode);
-});
-
-
+        playMeasurePreview(sectionStartTime, clefMode);
+    });
 });
 
 playSongButton.addEventListener('click', async () => {
     await Tone.start();
 
-    fullSongPlaying = true;      // ✅ ADD THIS (LINE 1)
+    fullSongPlaying = true;
 
-    stopPlayback(false); // ✅ INTERNAL cleanup only
+    stopPlayback(false);
     ensureSynth();
     transportStartTime = performance.now();
 
-    // 🔇 Silence counting during full song
     countEnabled = false;
     countToggle.textContent = "Counting";
     speechSynth.cancel();
@@ -2510,96 +2324,81 @@ playSongButton.addEventListener('click', async () => {
     startFullSongPlayback();
 });
 
-stopButton.addEventListener('click', () => {
-    stopPlayback();
-});
 function stopPlayback(userInitiated = false) {
+    isPlaying = false;
+    trainingActive = false;
+    previewMode = false;
+    visualsPlaying = false;
+    waitingForInput = false;
+    fullSongPlaying = false;
+    speedLocked = false;
 
-// 🛑 Always stop audio & visuals
-isPlaying = false;
-trainingActive = false;
-previewMode = false;
-visualsPlaying = false;
-waitingForInput = false;
-fullSongPlaying = false;
-speedLocked = false; // 🔓 emergency unlock
+    stopMetronome();
 
-stopMetronome();
+    if (synth) synth.releaseAll();
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
 
-if (synth) synth.releaseAll();
-Tone.Transport.stop();
-Tone.Transport.cancel();
+    playbackTimeouts.forEach(t => clearTimeout(t));
+    playbackTimeouts = [];
 
-playbackTimeouts.forEach(t => clearTimeout(t));
-playbackTimeouts = [];
+    previewTimeouts.forEach(t => clearTimeout(t));
+    previewTimeouts = [];
 
-previewTimeouts.forEach(t => clearTimeout(t));
-previewTimeouts = [];
+    fallingRectangles = [];
+    expectedMidiNote = null;
+    activeMidiNote = null;
 
-fallingRectangles = [];
-expectedMidiNote = null;
-activeMidiNote = null;
+    if (!userInitiated) return;
 
-// ❌ DO NOT touch UI unless USER pressed stop
-if (!userInitiated) return;
+    hideTrainingProgress();
 
-// ✅ USER pressed Stop — now update UI
-hideTrainingProgress();
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Stopped';
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
 
-const feedback = document.getElementById('feedback');
-feedback.textContent = 'Stopped';
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('show');
-
-document.getElementById('countdownOverlay').style.display = 'none';
-stopButton.disabled = true;
+    document.getElementById('countdownOverlay').style.display = 'none';
+    stopButton.disabled = true;
 }
 
 function resetAll() {
     hideTrainingProgress();
-    // 🛑 Stop everything first
     stopPlayback();
 
-    // 🎵 Reset all states
     trainingActive = false;
     fullSongPlaying = false;
     previewMode = false;
     waitingForInput = false;
     visualsPlaying = false;
 
-    // 🔄 Reset indices and arrays
     trainingIndex = 0;
     playbackTimeouts = [];
     previewTimeouts = [];
     fallingRectangles = [];
 
-    // 🧹 Clear piano state
     expectedMidiNote = null;
     activeMidiNote = null;
     currentTrainingNote = null;
     noteHoldStartTime = null;
     pressedNotes = [];
     
-    // 🎹 Clear keyboard highlights
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
 
-    // 🖼️ Clear visuals
     const feedback = document.getElementById('feedback');
     feedback.textContent = '';
 
-feedback.classList.remove('correct', 'wrong', 'show');
+    feedback.classList.remove('correct', 'wrong', 'show');
     document.getElementById('holdInfo').textContent = '';
 
-    // ⚙️ Reset speed and UI
     speedMultiplier = 1.0;
     speedDisplay.textContent = '1.0×';
 
-    // 🔕 Reset metronome
     beatEnabled = false;
     countEnabled = false;
     metronomeRunning = false;
@@ -2608,7 +2407,6 @@ feedback.classList.remove('correct', 'wrong', 'show');
     subdivisionToggle.textContent = '1 & 2 &';
     stopMetronome();
 
-    // 🧭 Reset training inputs
     handSelect.value = 'treble';
     startMeasureInput.value = 1;
     endMeasureInput.value = 4;
@@ -2616,29 +2414,27 @@ feedback.classList.remove('correct', 'wrong', 'show');
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
 
-// 💬 Confirm reset
     feedback.textContent = 'All reset — ready!';
     console.log('✅ All reset');
+    
     document.getElementById('pressedNoteCircle').textContent = '';
-document.getElementById('pressedNoteCircle').className = 'note-circle';
+    document.getElementById('pressedNoteCircle').className = 'note-circle';
+    document.getElementById('correctNoteCircle').textContent = '';
 
-document.getElementById('correctNoteCircle').textContent = '';
-
-    // ✅ Re-enable Stop button
     stopButton.disabled = true;
 }
     
 function startFullSongPlayback() {
-    
     const visualBaseline = performance.now() + 16;
     const now = performance.now();
     
     if (!allMidiNotes.length) return;
     songStartTime = performance.now();
     visualClockStart = songStartTime;
+    
     if (beatEnabled || countEnabled) {
-    startMetronome(songStartTime);
-}
+        startMetronome(songStartTime);
+    }
 
     fullSongPlaying = true;
     visualsPlaying = true;
@@ -2646,56 +2442,41 @@ function startFullSongPlayback() {
     fallingRectangles = [];
     playbackTimeouts = [];
 
-
     allMidiNotes.forEach(note => {
+        const visualStartTime = visualBaseline + ((note.time * 1000) / speedMultiplier) - getFallTimeMs();
 
-        // 🎹 Falling notes
-        const visualStartTime =
-    visualBaseline +
-    ((note.time * 1000) / speedMultiplier) -
-    getFallTimeMs();
+        addMidiFallingRectangle(
+            note.midi,
+            note.duration,
+            note.track,
+            visualStartTime
+        );
 
-
-
-addMidiFallingRectangle(
-    note.midi,
-    note.duration,
-    note.track,
-    visualStartTime
-);
-
-
-
-        // 🔊 Audio
         const t = setTimeout(() => {
-    if (!fullSongPlaying) return;
+            if (!fullSongPlaying) return;
 
-    synth.triggerAttackRelease(
-        getNoteName(note.midi),
-        note.duration / speedMultiplier
-    );
-}, (note.time * 1000) / speedMultiplier);
-
-
+            synth.triggerAttackRelease(
+                getNoteName(note.midi),
+                note.duration / speedMultiplier
+            );
+        }, (note.time * 1000) / speedMultiplier);
 
         playbackTimeouts.push(t);
     });
 
-    // ⏹ auto-stop at end
     const lastNote = allMidiNotes[allMidiNotes.length - 1];
-    const endTime =
-        ((lastNote.time + lastNote.duration) * 1000) / speedMultiplier;
+    const endTime = ((lastNote.time + lastNote.duration) * 1000) / speedMultiplier;
 
     setTimeout(() => {
         if (fullSongPlaying) stopPlayback();
     }, endTime + 200);
+    
     stopButton.disabled = false;
 }
 
 function handleMIDIMessage(event) {
     if (previewMode) return;
     
-    // ✅ ADD THIS LINE:
     Tone.start();
     
     const [status, note, velocity] = event.data;
@@ -2707,138 +2488,74 @@ function handleMIDIMessage(event) {
     const noteName = getNoteName(note);
     const feedback = document.getElementById('feedback');
 
-  // -------- NOTE ON --------
-if (isNoteOn) {
-    pressedNotes = [noteName];
-
-    processUserNoteOn(note);
-}
-// -------- NOTE OFF --------
+    if (isNoteOn) {
+        pressedNotes = [noteName];
+        processUserNoteOn(note);
+    }
+    
     if (isNoteOff) {
-// 🎹 FREE MODE — release immediately
-if (freeMode && note === freeModeActiveNote) {
-    freeModeSynth.triggerRelease(getNoteName(note));  // ← Use freeModeSynth
-    freeModeActiveNote = null;
-    expectedMidiNote = null;
-    expectedMidiTreble.clear();  // ← Clear keyboard highlight
-    return;
-}
+        if (freeMode && note === freeModeActiveNote) {
+            freeModeSynth.triggerRelease(getNoteName(note));
+            freeModeActiveNote = null;
+            expectedMidiNote = null;
+            expectedMidiTreble.clear();
+            return;
+        }
 
-        // ✅ For chords: only process release if this note is part of the chord
         if (!currentChordNotes.has(note)) return;
         
-        // Remove from pressed notes
         midiPressedNotes.delete(note);
         
-        // Release the audio
         synth.triggerRelease(getNoteName(note));
         
-        // ✅ Only check hold duration when ALL notes have been released
-        if (midiPressedNotes.size > 0) return; // Still holding some notes
+        if (midiPressedNotes.size > 0) return;
         
-        // All notes released - check if held long enough
         if (noteHoldStartTime === null) return;
 
         const heldTime = performance.now() - noteHoldStartTime;
 
         if (heldTime >= expectedHoldDuration) {
-   feedback.textContent = 'Good!';
+            feedback.textContent = 'Good!';
 
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('correct', 'show');
-explanationLocked = false;
-    waitingForInput = false;
-    expectedMidiNote = null;
-    
-    // 🔓 Clear chord highlights on success
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    
-    // ✅ Skip ALL notes in the chord
-    trainingIndex += currentChordNotes.size;
-updateTrainingProgress();
-    // clear only AFTER success
-    document.getElementById('holdInfo').textContent = '';
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('correct', 'show');
+            explanationLocked = false;
+            waitingForInput = false;
+            expectedMidiNote = null;
+            
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+            
+            trainingIndex += currentChordNotes.size;
+            updateTrainingProgress();
+            
+            document.getElementById('holdInfo').textContent = '';
 
-    setTimeout(() => spawnNextValidNote(), 300);
+            setTimeout(() => spawnNextValidNote(), 300);
         } else {
             const heldBeats = heldTime / 1000 / secondsPerBeat;
-const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+            const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
 
-feedback.innerHTML =
-    `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>,
-     need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+            feedback.innerHTML = `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
-     feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('wrong', 'show');
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('wrong', 'show');
 
-const holdEl = document.getElementById('holdInfo');
-holdEl.innerHTML =
-    `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+            const holdEl = document.getElementById('holdInfo');
+            holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
-
-    setTimeout(() => {
-        spawnTrainingNote(practiceNotes[trainingIndex]        );
-    }, 600);
-}
-
+            setTimeout(() => {
+                spawnTrainingNote(practiceNotes[trainingIndex]);
+            }, 600);
+        }
 
         noteHoldStartTime = null;
         activeMidiNote = null;
     }
 }
-loadSongMidi();
-</script>
-    <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-      window.location.replace("/classicbollywoodmelodies/login.html");
-    }
-  }
-
-  // First load
-  await requireLogin();
-
-  // When coming back via Back button
-  window.addEventListener("pageshow", requireLogin);
-</script>
-<!-- 1) Supabase library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- 2) Your Supabase client -->
-<script src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-
-<!-- 3) Paywall logic -->
-<script src="/classicbollywoodmelodies/js/paywall.js"></script>
-
-<!-- 4) Login check -->
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-      window.location.replace("/classicbollywoodmelodies/login.html");
-    }
-  }
-
-  await requireLogin();
-  window.addEventListener("pageshow", requireLogin);
 </script>
 
-<!-- 5) Call paywall for THIS song -->
-<script>
-  window.showPaywall({
-    productId: "song:demomeresaamne",  // ← CHANGE THIS FOR EACH SONG!
-    title: "This song is locked",
-    body: "Please buy to unlock this lesson."
-  });
-</script>
-
-</body>
-</html>
 </body>
 </html>
