@@ -659,6 +659,8 @@ function setStatus(msg, done=false){
 }
 
 function setupActionWatcher(action){
+  console.log("⚙️ setupActionWatcher called with action:", action);
+  
   // clear previous watcher
   if (actionCleanup) {
     actionCleanup();
@@ -667,21 +669,26 @@ function setupActionWatcher(action){
   actionDone = false;
 
   if (!action) {
+    console.log("   No action defined for this step");
     setStatus("");
     return;
   }
 
   const doc = frame.contentWindow?.document;
   if (!doc) {
+    console.log("   ❌ No iframe document");
     setStatus("");
     return;
   }
 
   const el = doc.querySelector(action.selector);
   if (!el) {
+    console.log("   ❌ Element not found:", action.selector);
     setStatus("");
     return;
   }
+
+  console.log("   ✅ Element found:", el);
 
   // show prompt text
   setStatus(action.prompt || "Try this now…", false);
@@ -828,6 +835,9 @@ if (action.type === "click") {
 
   function render(){
     const step = STEPS[idx];
+    console.log("🎬 Rendering step", idx + 1, ":", step.title);
+    console.log("   Selector:", step.selector);
+    
 setOverlayDim(step.dim !== false);
 
     titleEl.textContent = step.title;
@@ -843,6 +853,7 @@ nextBtn.textContent =
 
     stopVideo();
     const rect = highlight(step.selector);
+    console.log("   Highlight rect:", rect);
     placeCardNear(rect);
     setupActionWatcher(step.action);
     playVideo(step.video);
