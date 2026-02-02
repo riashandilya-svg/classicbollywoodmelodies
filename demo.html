@@ -325,14 +325,14 @@ text: "As you play, messages will appear here telling you whether each note was 
 },
 {
   title: "Loop section",
-  text: "Turn this on to keep repeating your selected measures...",
+  text: "Turn this on to keep repeating your selected measures. After it reaches the end measure, it automatically jumps back to the start measure and continues until you press Stop.",
   selector: "#loopCheckbox",
   dim: false,
   video: null,
   action: {
     type: "observe",
     selector: "#loopCheckbox",
-    watchChecked: true,  // ← Add this flag
+    watchChecked: true,
     prompt: "Optional: toggle Loop on or off.",
     doneText: "Done ✅ Loop setting changed."
   }
@@ -753,6 +753,17 @@ if (action.type === "click") {
 
   if (action.type === "observe") {
     const checkDone = () => {
+      // Check for checked attribute change (for checkboxes)
+      if (action.watchChecked && el.type === 'checkbox') {
+        // Store initial state on first call
+        if (!action._initialCheckedState) {
+          action._initialCheckedState = el.checked;
+          return false;
+        }
+        // Return true if checked state changed from initial
+        return el.checked !== action._initialCheckedState;
+      }
+      
       if (action.classIncludes) {
         if (!el.classList.contains(action.classIncludes)) return false;
       }
@@ -779,7 +790,7 @@ if (action.type === "click") {
 
     obs.observe(el, {
       attributes: true,
-      attributeFilter: ["class"],
+      attributeFilter: action.watchChecked ? ["checked"] : ["class"],
       childList: true,
       subtree: true,
       characterData: true
