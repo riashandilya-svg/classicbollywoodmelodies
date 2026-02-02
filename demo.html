@@ -158,6 +158,8 @@
   <div id="demoCard">
     <h3 id="demoTitle"></h3>
     <p id="demoText"></p>
+    <div id="demoActionStatus" style="margin: 6px 0 10px 0; font-size: 13px; font-weight: 700;"></div>
+
 
     <div id="demoVideo">
       <video id="demoVideoEl" controls playsinline></video>
@@ -186,6 +188,18 @@ const STEPS = [
     selector: null,
     video: null
   },
+  {
+  title: "Choose which hand to practice",
+  text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you’re ready.",
+  selector: "#handSelect",
+  video: null,
+  action: {
+    type: "change",
+    selector: "#handSelect",
+    doneText: "Done ✅ Hand selected."
+  }
+},
+
   {
     title: "Start Practice",
     text: "This button starts the practice flow.",
@@ -220,6 +234,8 @@ const STEPS = [
   const titleEl = document.getElementById("demoTitle");
   const textEl = document.getElementById("demoText");
   const stepEl = document.getElementById("demoStep");
+  const statusEl = document.getElementById("demoActionStatus");
+
 
   const videoWrap = document.getElementById("demoVideo");
   const videoEl = document.getElementById("demoVideoEl");
