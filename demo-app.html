@@ -473,6 +473,36 @@ canvas {
 <script type="module">
 import { Midi } from 'https://cdn.skypack.dev/@tonejs/midi@2.0.28';
 
+// ===== TOUR: MIDI CONNECTION STATUS =====
+let __tourMidiAccess = null;
+
+function __tourSendMidiStatus() {
+  const connected =
+    !!__tourMidiAccess &&
+    __tourMidiAccess.inputs &&
+    __tourMidiAccess.inputs.size > 0;
+
+  window.parent?.postMessage(
+    { type: "tour:midi", connected },
+    "*"
+  );
+}
+
+// Try to detect MIDI on load (tells the tour even before any button is clicked)
+if (navigator.requestMIDIAccess) {
+  navigator.requestMIDIAccess()
+    .then((ma) => {
+      __tourMidiAccess = ma;
+      __tourSendMidiStatus();
+
+      ma.onstatechange = () => {
+        __tourMidiAccess = ma;
+        __tourSendMidiStatus();
+      };
+    })
+    .catch(() => {});
+}
+
 // ================================
 // SONG CONFIG (SHEET STRUCTURE)
 // ================================
@@ -1597,9 +1627,6 @@ function spawnNextValidNote(){
 
     trainingActive = false;
     stopButton.disabled = true;
-    window.parent?.postMessage({ type: "tour:resume" }, "*");
-
-    // ✅ Tell the tour it can resume (show the popup again)
 window.parent?.postMessage({ type: "tour:resume" }, "*");
 }
 
@@ -2039,29 +2066,38 @@ canvas.addEventListener('mouseup', () => {
 
 // MIDI handling
 async function initMIDI() {
-    if(!navigator.requestMIDIAccess){ 
-        console.log('Web MIDI API not supported'); 
-        return; 
+  if (!navigator.requestMIDIAccess) {
+    console.log("Web MIDI API not supported");
+    return;
+  }
+
+  try {
+    const midiAccess = await navigator.requestMIDIAccess();
+    __tourMidiAccess = midiAccess;
+
+    // Send initial status (if already connected)
+    __tourSendMidiStatus();
+
+    // Attach current inputs
+    midiInputs = []; // reset so we don't duplicate
+    for (const input of midiAccess.inputs.values()) {
+      midiInputs.push(input);
+      input.onmidimessage = handleMIDIMessage;
     }
-    
-    try {
-        const midiAccess = await navigator.requestMIDIAccess();
-        for(const input of midiAccess.inputs.values()){
-            midiInputs.push(input);
-            input.onmidimessage = handleMIDIMessage;
-        }
-        midiAccess.onstatechange = (event)=>{
-            if(event.port.state==='connected' && event.port.connection==='open' && event.port.type==='input'){
-                midiInputs.push(event.port);
-                event.port.onmidimessage=handleMIDIMessage;
-            } else if(event.port.state==='disconnected'){
-                const idx = midiInputs.indexOf(event.port);
-                if(idx>-1) midiInputs.splice(idx,1);
-            }
-        }
-    } catch(err){ 
-        console.error(err); 
-    }
+
+    // Watch for plug/unplug events
+    midiAccess.onstatechange = () => {
+      midiInputs = [];
+      for (const input of midiAccess.inputs.values()) {
+        midiInputs.push(input);
+        input.onmidimessage = handleMIDIMessage;
+      }
+
+      __tourSendMidiStatus();
+    };
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function setTargetNote(noteName){
@@ -2157,21 +2193,7 @@ startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
     
     if (midiInputs.length === 0) {
-        try {
-            const midiAccess = await navigator.requestMIDIAccess();
-            console.log('✅ MIDI Access granted');
-            
-            for (const input of midiAccess.inputs.values()) {
-                console.log('🔌 Connected:', input.name);
-                midiInputs.push(input);
-                
-                input.onmidimessage = (event) => {
-                    handleMIDIMessage(event);
-                };
-            }
-        } catch (err) {
-            console.error('❌ MIDI Error:', err);
-        }
+        await initMIDI();
     }
     
     hardStopUserNote();
