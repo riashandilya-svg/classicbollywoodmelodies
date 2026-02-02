@@ -326,6 +326,9 @@ button:disabled {
 
 canvas {
     display: block;
+    touch-action: none; /* Prevents default touch behaviors like scrolling */
+    -webkit-user-select: none; /* Prevents text selection on iOS */
+    user-select: none;
 }
 
 #trainingProgress {
@@ -1955,43 +1958,19 @@ function getMidiFromMouse(x, y) {
     return xToMidi(x);
 }
 
-canvas.addEventListener('mousedown', async (e) => {
-    if (previewMode) return;
-    await Tone.start();
-
-    mouseDown = true;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
+// Helper function to handle note press (used by both mouse and touch)
+function handleNotePress(x, y) {
     if (y < canvas.height - KEYBOARD_HEIGHT) return;
 
     const midiNote = getMidiFromMouse(x, y);
     if (midiNote === null) return;
 
     lastMouseMidi = midiNote;
-
     processUserNoteOn(midiNote);
-});
+}
 
-canvas.addEventListener('mousemove', (e) => {
-    if (!mouseDown || !freeMode) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (y < canvas.height - KEYBOARD_HEIGHT) return;
-
-    const midiNote = getMidiFromMouse(x, y);
-    if (midiNote === null || midiNote === lastMouseMidi) return;
-
-    lastMouseMidi = midiNote;
-    processUserNoteOn(midiNote);
-});
-
-canvas.addEventListener('mouseup', () => {
+// Helper function to handle note release (used by both mouse and touch)
+function handleNoteRelease() {
     mouseDown = false;
     lastMouseMidi = null;
 
@@ -2062,6 +2041,88 @@ canvas.addEventListener('mouseup', () => {
 
     noteHoldStartTime = null;
     activeMidiNote = null;
+}
+
+// ================================
+// MOUSE EVENTS
+// ================================
+canvas.addEventListener('mousedown', async (e) => {
+    if (previewMode) return;
+    await Tone.start();
+
+    mouseDown = true;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    handleNotePress(x, y);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!mouseDown || !freeMode) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (y < canvas.height - KEYBOARD_HEIGHT) return;
+
+    const midiNote = getMidiFromMouse(x, y);
+    if (midiNote === null || midiNote === lastMouseMidi) return;
+
+    lastMouseMidi = midiNote;
+    processUserNoteOn(midiNote);
+});
+
+canvas.addEventListener('mouseup', () => {
+    handleNoteRelease();
+});
+
+// ================================
+// TOUCH EVENTS (for mobile)
+// ================================
+canvas.addEventListener('touchstart', async (e) => {
+    if (previewMode) return;
+    e.preventDefault(); // Prevent scrolling and mouse events
+    await Tone.start();
+
+    mouseDown = true;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    handleNotePress(x, y);
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    if (!mouseDown || !freeMode) return;
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    if (y < canvas.height - KEYBOARD_HEIGHT) return;
+
+    const midiNote = getMidiFromMouse(x, y);
+    if (midiNote === null || midiNote === lastMouseMidi) return;
+
+    lastMouseMidi = midiNote;
+    processUserNoteOn(midiNote);
+});
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleNoteRelease();
+});
+
+canvas.addEventListener('touchcancel', (e) => {
+    e.preventDefault();
+    handleNoteRelease();
 });
 
 // MIDI handling
