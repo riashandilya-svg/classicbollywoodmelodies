@@ -234,12 +234,13 @@ const STEPS = [
   selector: "#startPracticeButton",
   dim: false,
   video: null,
-  action: {
-    type: "click",
-    selector: "#startPracticeButton",
-    prompt: "Click Start Practice to begin.",
-    doneText: "Practice started ▶️"
-  }
+action: {
+  type: "click",
+  selector: "#startPracticeButton",
+  prompt: "Click Start Practice to begin.",
+  doneText: "Practice started ▶️",
+  hideCardAfterClick: true
+}
 },
 
   {
@@ -499,11 +500,21 @@ function setupActionWatcher(action){
     return;
   }
 
-  if (action.type === "click") {
-    el.addEventListener("click", markDone, true);
-    actionCleanup = () => el.removeEventListener("click", markDone, true);
-    return;
-  }
+if (action.type === "click") {
+  const onClick = () => {
+    markDone();
+
+    // If this action wants the card to hide, hide it after click
+    if (action.hideCardAfterClick) {
+      card.style.display = "none";
+    }
+  };
+
+  el.addEventListener("click", onClick, true);
+  actionCleanup = () => el.removeEventListener("click", onClick, true);
+  return;
+}
+
 
   if (action.type === "input") {
     // done when they type something non-empty
@@ -573,6 +584,18 @@ if (step.waitForClick) {
   });
   window.addEventListener("load", () => {
   showTour();
+});
+window.addEventListener("message", (event) => {
+  // Only accept messages from the iframe page
+  if (event.source !== frame.contentWindow) return;
+
+  const data = event.data || {};
+  if (data.type === "tour:resume") {
+    // show the card again when app says it's time
+    card.style.display = "block";
+    // re-position in case layout changed
+    render();
+  }
 });
 
 </script>
