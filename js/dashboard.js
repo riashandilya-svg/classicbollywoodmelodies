@@ -122,12 +122,14 @@ const userEmailEl = document.getElementById('userEmail');
 if (userEmailEl) userEmailEl.textContent = '';
 
         // Load all dashboard data
-        await Promise.all([
-            loadStats(user.id),
-            loadBookStatus(user.id),
-            loadSongs(user.id),
-            loadPurchaseHistory(user.id)
-        ]);
+      await Promise.all([
+  loadStats(user.id),
+  loadBookStatus(user.id),
+  loadSongs(user.id),
+  loadSheetMusic(user.id),      // ✅ ADD THIS
+  loadPurchaseHistory(user.id)
+]);
+
 
     } catch (error) {
         console.error('Dashboard init error:', error);
