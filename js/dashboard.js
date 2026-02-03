@@ -739,13 +739,13 @@ async function loadSongs(userId) {
       const purchaseDate = new Date(purchase.created_at).toLocaleDateString();
 
       return `
-        <div class="song-item" data-song-id="${songId}">
+        <div class="song-item" data-song-id="${songId}" data-song-slug="${songSlug}">
           <div class="song-info">
             <div class="song-title">${songName}</div>
             <div class="song-meta">From: ${bookName} • Purchased: ${purchaseDate}</div>
           </div>
           <div class="song-actions">
-            <button class="download-pdf-btn" onclick="downloadSheetMusic('${songId}')" title="Download sheet music PDF">
+            <button class="download-pdf-btn" onclick="downloadSheetMusic('${songId}', '${songSlug}')" title="Download sheet music PDF">
               📄 PDF
             </button>
             <div class="progress-selector">
@@ -819,15 +819,17 @@ async function updateProgress(songId, newStatus) {
   }
 }
 
-// Called when user clicks "Download PDF"
-async function downloadSheetMusic(songId) {
+// ✅ FIXED: Download sheet music with proper song_slug parameter
+async function downloadSheetMusic(songId, songSlug) {
   try {
-    const songSlug = songId.replace('song:', '');
+    console.log('📥 Downloading PDF for:', { songId, songSlug });
 
     const { data, error } = await window.supabase.functions.invoke(
       'get-sheet-music-url',
       { body: { songSlug } }
     );
+
+    console.log('📦 Edge function response:', { data, error });
 
     if (error) throw error;
 
