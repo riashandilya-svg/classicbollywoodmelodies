@@ -53,7 +53,7 @@ font-size: 14px;
         radial-gradient(520px 320px at 35% 55%, var(--accent4), transparent 60%),
         var(--bg);
 
-      padding: 26px 18px 70px;
+padding: 0 18px 70px;
       overflow-x: hidden;
     }
 
@@ -72,36 +72,44 @@ font-size: 14px;
     }
 
     /* Top banner */
-    .banner{
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: 0 14px 40px rgba(22,10,35,0.08);
-      margin-bottom: 20px;
-    }
+.banner{
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(140,120,160,0.18);
+  margin-bottom: 20px;
+}
 
-    .banner .banner-link{
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-font-size: clamp(18px, 2.2vw, 22px);
-      letter-spacing: 0.7px;
-      color: inherit;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 12px;
-    }
+.banner-link{
+  font-family: "Cormorant Garamond", serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: 0.7px;
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.banner-link:hover{ text-decoration: underline; }
 
-    .banner .banner-link:hover{
-      text-decoration: underline;
-    }
+.navGrid{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 64px;
+  padding: 8px 12px;
+  width: 100%;
+}
+
+.navTitle{
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+  min-width: 0;
+}
 
     /* Header card */
     .header{
@@ -624,11 +632,16 @@ font-size: clamp(18px, 2.2vw, 22px);
 
   <div class="container">
     <!-- Banner -->
-    <header class="banner">
+<header class="banner">
+  <div class="navGrid">
+    <div class="navTitle">
       <a class="banner-link" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">
         Ria Om Shandilya
       </a>
-    </header>
+    </div>
+  </div>
+</header>
+
 
     <!-- Header -->
     <div class="header">
