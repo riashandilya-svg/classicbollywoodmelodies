@@ -595,7 +595,7 @@ const bundlePriceDisplay = bundlePrice
     💡 <strong>What's included:</strong><br>
     • Falling notes learning video<br>
     • Sheet music PDF (watermarked with your name)<br>
-    • Access both in your <a href="/dashboard.html" style="color: #3b82f6; text-decoration: underline;">DASHBOARD</a>
+    • Access both in your <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="color: #3b82f6; text-decoration: underline;">DASHBOARD</a>
   </p>
       `;
 
