@@ -473,6 +473,67 @@
         margin: 0 auto;
       }
     }
+    <style>
+  /* --- MIDI / keyboard connection image helpers --- */
+  .img-grid{
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+    margin: 14px 0 6px;
+  }
+  .img-grid figure{
+    margin: 0;
+    grid-column: span 6;
+    border-radius: var(--radiusSm);
+    border: 1px solid rgba(140,120,160,0.16);
+    background: rgba(255,255,255,0.72);
+    box-shadow: 0 10px 26px rgba(22,10,35,0.06);
+    overflow: hidden;
+  }
+  .img-grid img{
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .img-grid figcaption{
+    padding: 12px 12px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(26,26,31,0.76);
+  }
+  .img-grid figcaption strong{
+    color: var(--brand);
+  }
+  .chip-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0 2px;
+  }
+  .chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(155,110,255,0.28);
+    background: rgba(155,110,255,0.10);
+    color: rgba(26,26,31,0.82);
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+  .muted-small{
+    margin-top: 8px;
+    font-size: 13px;
+    color: rgba(26,26,31,0.66);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px){
+    .img-grid figure{ grid-column: span 12; }
+  }
+</style>
+
   </style>
 </head>
 
@@ -493,6 +554,223 @@
       <h1>User Guide</h1>
       <p class="sub">Everything you need to know about verifying books, using bundles, and getting support</p>
     </div>
+<!-- Connect Your Digital Piano / MIDI Keyboard (TOP SECTION) -->
+<section class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2>Connect Your Digital Piano / Keyboard to Your Laptop (USB-MIDI Setup)</h2>
+    <div class="section-toggle">▼</div>
+  </div>
+
+  <div class="section-content">
+    <div class="section-inner">
+      <p>
+        You can use this app on a laptop, tablet, or mobile device. You can also play notes using your mouse or touch.
+        For the best experience, connect a digital piano or MIDI keyboard so the app can detect the notes you play and
+        display them instantly on screen.
+      </p>
+
+      <div class="info-box info">
+        <strong>Good to know:</strong> In most cases, this is “plug-and-play.”
+        Many keyboards support <strong>USB-MIDI</strong> and your device will recognize them automatically.
+      </div>
+
+      <h3 style="margin-top: 18px; font-size: 18px; font-weight: 700; color: var(--brand);">
+        What you need
+      </h3>
+
+      <div class="chip-row">
+        <div class="chip">1) A digital piano / MIDI keyboard</div>
+        <div class="chip">2) A USB cable (usually USB-B on the keyboard)</div>
+        <div class="chip">3) Your laptop (USB-A or USB-C port)</div>
+      </div>
+
+      <p class="muted-small">
+        Most keyboards have a square-ish <strong>USB-B</strong> port (often labeled “USB to Host”, “USB”, or “MIDI USB”).
+        Your laptop side may be <strong>USB-A</strong> (classic rectangle) or <strong>USB-C</strong> (small oval).
+      </p>
+
+      <!-- Images -->
+      <div class="img-grid">
+        <figure>
+          <img src="USB_A_TO_USB_B_CABLE.jpg" alt="USB-A to USB-B cable (printer-style cable) showing both ends">
+          <figcaption>
+            <strong>USB-A to USB-B cable</strong> (very common). The <strong>USB-B end</strong> goes into the keyboard.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <img src="USB_B_PORT_ON_KEYBOARD.jpg" alt="Digital piano rear panel showing the USB-B / USB to Host port">
+          <figcaption>
+            <strong>Keyboard port (USB-B)</strong>. Look for labels like <strong>USB to Host</strong>, <strong>USB</strong>, or <strong>MIDI USB</strong>.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <img src="USB_A_PORT_ON_LAPTOP.jpg" alt="USB-A ports on a laptop">
+          <figcaption>
+            <strong>Laptop USB-A port</strong> (rectangle). If you have this, use a <strong>USB-A to USB-B</strong> cable.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <img src="USB_C_PORT_ON_LAPTOP.jpg" alt="USB-C port and/or Thunderbolt symbol on a laptop">
+          <figcaption>
+            <strong>Laptop USB-C port</strong> (small oval). If you have only USB-C, use a <strong>USB-C to USB-B</strong> cable
+            or a USB-C adapter/hub.
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="info-box warning">
+        <strong>Make sure you buy the right cable:</strong><br>
+        • If your laptop has USB-A: get <strong>USB-A → USB-B</strong><br>
+        • If your laptop has USB-C only: get <strong>USB-C → USB-B</strong> (or use a USB-C hub + USB-A → USB-B cable)<br>
+        • If your keyboard has only round 5-pin MIDI ports (no USB): you’ll need a <strong>USB-MIDI interface</strong> (MIDI IN/OUT).
+      </div>
+
+      <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">
+        Step-by-step setup
+      </h3>
+
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Find the correct port on your keyboard</h3>
+            <p>
+              Turn the keyboard around and look for a port labeled <strong>USB</strong>, <strong>USB to Host</strong>, or <strong>MIDI USB</strong>.
+              This is usually a <strong>USB-B</strong> port (square-ish, “printer style”).
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Connect the cable (keyboard first, then laptop)</h3>
+            <p>
+              Plug the <strong>USB-B end</strong> into your keyboard, then plug the other end into your laptop
+              (<strong>USB-A</strong> or <strong>USB-C</strong>, depending on your cable/adapter).
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Power on the keyboard</h3>
+            <p>
+              Turn the keyboard on. Some models only “announce” themselves to the computer after they’re powered on,
+              so if the app doesn’t detect it immediately, power-cycle the keyboard once.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Open the app and allow MIDI access (if prompted)</h3>
+            <p>
+              In some browsers/devices you may see a prompt asking to allow a MIDI device. Click <strong>Allow</strong>.
+              Once connected, the app will detect your playing and show the notes on screen.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h3>Play a few notes to confirm</h3>
+            <p>
+              Play single notes and then a chord. You should see the corresponding notes appear in the app immediately.
+              If nothing shows up, use the troubleshooting tips below.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">
+        Drivers and common installation notes
+      </h3>
+
+      <div class="info-box success">
+        <strong>Most keyboards:</strong> No driver needed. They are “class-compliant” USB-MIDI devices and work automatically.
+      </div>
+
+      <ul>
+        <li>
+          <strong>Windows:</strong> Usually installs the device automatically the first time you plug it in.
+          If Windows shows an error, or your keyboard brand provides a dedicated “USB-MIDI driver,” install the driver from the manufacturer’s official support page,
+          then unplug/replug the keyboard and try again.
+        </li>
+        <li>
+          <strong>Mac:</strong> Typically no driver needed for USB-MIDI. Just plug in the keyboard and refresh/reopen the browser tab if needed.
+        </li>
+        <li>
+          <strong>Chromebook:</strong> Many USB-MIDI keyboards work, but compatibility can vary by model and browser settings.
+          If it’s not detected, try a different browser or a powered USB-C hub.
+        </li>
+        <li>
+          <strong>Tablets / phones:</strong> You may need an <strong>OTG adapter</strong> (USB-C OTG or Lightning to USB adapter).
+          Once connected, allow MIDI/USB access when prompted.
+        </li>
+      </ul>
+
+      <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">
+        Troubleshooting (quick fixes)
+      </h3>
+
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Try a different USB port or cable</h3>
+            <p>
+              Bad cables are more common than you’d think. If you’re using a hub, try plugging directly into the laptop (or try another hub).
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Unplug → close the browser tab → reconnect</h3>
+            <p>
+              Some browsers only detect MIDI devices when the page loads. Close the app tab, reconnect the keyboard, then reopen the page.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Check the keyboard’s USB mode (if available)</h3>
+            <p>
+              A few keyboards have a setting related to USB/MIDI. If your keyboard has a “USB Mode,” set it to <strong>MIDI</strong> or <strong>USB-MIDI</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Install the manufacturer driver (Windows, only if needed)</h3>
+            <p>
+              If your keyboard is not recognized or shows warnings in Windows, download and install the official driver for your exact model,
+              restart, then reconnect.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box info" style="margin-top: 18px;">
+        <strong>Still stuck?</strong> Contact support and include:
+        your keyboard model name, your device (Windows/Mac/Chromebook), and whether you’re using a hub/adapter.
+      </div>
+
+    </div>
+  </div>
+</section>
 
     <!-- Book Verification Section -->
     <section class="section">
