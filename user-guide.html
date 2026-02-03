@@ -10,6 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
+    html{
+  scroll-behavior: smooth;
+}
+
     :root{
       --bg: #ffffff;
       --surface: rgba(255,255,255,0.82);
@@ -40,6 +44,7 @@
       min-height: 100vh;
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+font-size: 14px;
 
       background:
         radial-gradient(900px 520px at 20% 0%, var(--accent1), transparent 60%),
@@ -490,11 +495,14 @@
     box-shadow: 0 10px 26px rgba(22,10,35,0.06);
     overflow: hidden;
   }
-  .img-grid img{
-    width: 100%;
-    height: auto;
-    display: block;
-  }
+.img-grid img{
+  width: 100%;
+  height: 85px;         /* desktop default */
+  object-fit: contain;
+  display: block;
+  padding: 8px;
+}
+
   .img-grid figcaption{
     padding: 8px 10px 10px;
     font-size: 12px;
@@ -536,11 +544,17 @@
     }
   }
   
-  @media (max-width: 520px){
-    .img-grid{
-      grid-template-columns: 1fr; /* 1 per row */
-    }
+@media (max-width: 520px){
+  .img-grid{
+    grid-template-columns: 1fr; /* 1 per row on phones */
   }
+
+  .img-grid img{
+    height: 120px;  /* bigger on phones so it’s easy to see */
+    padding: 10px;
+  }
+}
+
 
 /* ---- Lightbox (click-to-zoom image popup) ---- */
 .lightbox{
@@ -620,9 +634,18 @@
     <div class="header">
       <h1>User Guide</h1>
       <p class="sub">Everything you need to know about verifying books, using bundles, and getting support</p>
+  <div class="btn-row" style="margin-top: 16px;">
+  <a class="btn" href="#connect-keyboard">Connect Keyboard</a>
+  <a class="btn" href="#verify-book">Verify Book</a>
+  <a class="btn" href="#bundles">Bundles</a>
+  <a class="btn" href="#faq">FAQ</a>
+  <a class="btn" href="#support">Support</a>
+</div>
     </div>
+    
 <!-- Connect Your Digital Piano / MIDI Keyboard (TOP SECTION) -->
-<section class="section">
+<section class="section" id="connect-keyboard">
+
   <div class="section-header" onclick="toggleSection(this)">
     <h2>Connect Your Digital Piano / Keyboard to Your Laptop (USB-MIDI Setup)</h2>
     <div class="section-toggle">▼</div>
@@ -840,7 +863,7 @@
 </section>
 
     <!-- Book Verification Section -->
-    <section class="section">
+<section class="section" id="verify-book">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>How to Verify Book Codes</h2>
         <div class="section-toggle">▼</div>
@@ -940,7 +963,7 @@
     </section>
 
     <!-- How Bundles Work Section -->
-    <section class="section">
+<section class="section" id="bundles">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>How Bundles Work</h2>
         <div class="section-toggle">▼</div>
@@ -1009,7 +1032,7 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="section">
+<section class="section" id="faq">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>Frequently Asked Questions</h2>
         <div class="section-toggle">▼</div>
@@ -1090,7 +1113,7 @@
     </section>
 
     <!-- Contact Support Section -->
-    <section class="section">
+<section class="section" id="support">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>Contact Support</h2>
         <div class="section-toggle">▼</div>
@@ -1256,6 +1279,28 @@
       const firstSection = document.querySelector('.section');
       if (firstSection) {
         firstSection.classList.add('open');
+          // If the URL has a hash (ex: #faq), open that section automatically
+  if (window.location.hash) {
+    const target = document.querySelector(window.location.hash);
+    if (target && target.classList.contains('section')) {
+      target.classList.add('open');
+
+      // Optional: close the first section so only the target is open
+      if (firstSection && firstSection !== target) firstSection.classList.remove('open');
+    }
+  }
+
+  // When clicking the skip buttons, open the target section
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const id = link.getAttribute('href');
+      const target = document.querySelector(id);
+      if (target && target.classList.contains('section')) {
+        target.classList.add('open');
+      }
+    });
+  });
+
       }
     });
     // ---- Lightbox: click images to zoom ----
