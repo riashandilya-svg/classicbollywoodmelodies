@@ -272,8 +272,9 @@ async function detectCurrency() {
           .maybeSingle();
 
         if (bookData && !error) {
-          bookCredits = bookData.balance || 0;
-          console.log(`[PAYWALL] 📚 Book credits: ${bookCredits}`);
+          // 🚨 Hard cap: book bonus is max 1 credit, ever
+          bookCredits = Math.min(bookData.balance || 0, 1);
+          console.log(`[PAYWALL] 📚 Book credits: ${bookCredits} (raw: ${bookData.balance})`);
         }
       } catch (e) {
         console.warn('[PAYWALL] Book credits check error:', e);
