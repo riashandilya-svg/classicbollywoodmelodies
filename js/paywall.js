@@ -601,10 +601,23 @@ const bundlePriceDisplay = bundlePrice
 
       // ✅ FIXED: Show simple total credit count instead of confusing "5 bundle + 5 book bonus" breakdown
       if (canUseCredits && credits.total > 0) {
-        console.log(`[PAYWALL] 🎁 Showing credit button (total: ${credits.total})`);
+        // Build credit summary: "1 Bundle = 5 credits + 2 book bonus"
+        let creditSummary = "";
+        if (credits.bundleCredits > 0 && credits.bookCredits > 0) {
+          creditSummary = `1 Bundle = 5 credits + ${credits.bookCredits} book bonus`;
+        } else if (credits.bundleCredits > 0) {
+          creditSummary = `1 Bundle = 5 credits`;
+        } else {
+          creditSummary = `${credits.bookCredits} book bonus`;
+        }
+
+        console.log(`[PAYWALL] 🎁 Showing credit button — ${creditSummary} (total: ${credits.total})`);
         
         paywallHTML += `
           <div style="margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #444;">
+              🎁 Your credits: <strong>${creditSummary}</strong>
+            </p>
             <button id="redeemBtn" type="button" style="
               width: 100%;
               padding: 12px;
@@ -616,7 +629,7 @@ const bundlePriceDisplay = bundlePrice
               cursor: pointer;
               margin-bottom: 10px;
             ">
-              🎁 Unlock with 1 Credit (${credits.total} available)
+              Unlock with 1 Credit (${credits.total} available)
             </button>
           </div>
         `;
