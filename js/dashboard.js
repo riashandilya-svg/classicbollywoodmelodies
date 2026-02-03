@@ -821,33 +821,27 @@ try {
 
 // Called when user clicks "Download PDF"
 async function downloadSheetMusic(songId) {
-try {
-  // IMPORTANT:
-  // This assumes your PDFs are stored at:
-  // sheet-music bucket -> songs/<slug>.pdf
-  // where <slug> is songId without "song:" (example: song:badeacche -> badeacche.pdf)
-  const slug = songId.replace('song:', '');
-  const path = `songs/${slug}.pdf`;
+  try {
+    // songId is like "song:badeacche"
+    const songSlug = songId.replace('song:', '');
 
-  // This uses your existing Edge Function that returns a signed URL
-  // (you already confirmed paywall.js contains "get-sheet-music-url")
-  const { data, error } = await window.supabase.functions.invoke('get-sheet-music-url', {
-    body: { path }
-  });
+    const { data, error } = await window.supabase.functions.invoke(
+      'get-sheet-music-url',
+      { body: { songSlug } }
+    );
 
-  if (error) throw error;
+    if (error) throw error;
 
-  const url = data?.signedUrl;
-  if (!url) throw new Error('No signedUrl returned');
+    const url = data?.url;
+    if (!url) throw new Error('No url returned');
 
-  // Open the PDF in a new tab
-  window.open(url, '_blank', 'noopener');
-
-} catch (err) {
-  console.error('Download PDF error:', err);
-  alert("Couldn't load the PDF. Please contact support if this continues.");
+    window.open(url, '_blank', 'noopener');
+  } catch (err) {
+    console.error('Download PDF error:', err);
+    alert("Couldn't load the PDF.");
+  }
 }
-}
+
 
 // ✅ UPDATED: Load purchase history (exclude pack:5 from individual display)
 async function loadPurchaseHistory(userId) {
