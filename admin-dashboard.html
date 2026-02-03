@@ -719,6 +719,102 @@
         align-items: stretch;
       }
     }
+
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      background: rgba(155, 110, 255, 0.02);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 24px;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: rgba(155, 110, 255, 0.05);
+    }
+
+    .upload-area input[type="file"] {
+      display: none;
+    }
+
+    .pdf-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .pdf-item {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .pdf-item:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(155, 110, 255, 0.15);
+    }
+
+    .pdf-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .pdf-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .pdf-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .pdf-actions button {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .pdf-actions button:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-view {
+      border-color: var(--primary) !important;
+      color: var(--primary);
+    }
+
+    .btn-view:hover {
+      background: rgba(155, 110, 255, 0.1);
+    }
+
+    .btn-delete {
+      border-color: var(--error) !important;
+      color: var(--error);
+    }
+
+    .btn-delete:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
   </style>
 </head>
 <body>
@@ -810,6 +906,7 @@
         <button class="tab" onclick="switchTab('codes', this)">🎫 Book Codes</button>
         <button class="tab" onclick="switchTab('purchases', this)">💳 Purchases</button>
         <button class="tab" onclick="switchTab('bundles', this)">📦 Bundles</button>
+          <button class="tab" onclick="switchTab('sheetmusic', this)">📄 Sheet Music</button>
         <button class="tab" onclick="switchTab('pricing', this)">💰 Pricing</button>
       </div>
       
@@ -941,6 +1038,41 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+  <!-- Sheet Music Tab -->
+      <div id="sheetmusicTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📄 Sheet Music PDFs</h2>
+            <button class="refresh-btn" onclick="loadSheetMusic()">↻ Refresh</button>
+          </div>
+
+          <div class="upload-area" onclick="document.getElementById('pdfUpload').click()">
+            <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="uploadPDFs(event)">
+            <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+            <h3 style="margin: 0 0 8px;">Upload Sheet Music PDFs</h3>
+            <p style="color: var(--muted); font-size: 14px; margin: 0;">
+              Click to browse or drag PDFs here<br>
+              <strong>Important:</strong> File name must match song slug (e.g., "kalho.pdf" for song:kalho)
+            </p>
+          </div>
+
+          <div id="uploadProgress" class="hidden" style="background: rgba(155, 110, 255, 0.1); border: 1px solid var(--primary); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="font-weight: 600; margin-bottom: 8px;" id="uploadStatus">Uploading...</div>
+            <div style="background: white; height: 8px; border-radius: 4px; overflow: hidden;">
+              <div id="uploadBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+          </div>
+
+          <input type="text" class="search-box" id="pdfSearch" placeholder="Search PDFs..." onkeyup="filterPDFs()">
+
+          <div id="pdfGrid" class="pdf-grid">
+            <div class="loading">
+              <div class="spinner"></div>
+              Loading PDFs...
+            </div>
           </div>
         </div>
       </div>
@@ -1222,6 +1354,151 @@
     let allPurchases = [];
     let allBundles = [];
     let userToDelete = null;
+let allPDFs = [];
+
+    // ═══════════════════════════════════════════════════════
+    // SHEET MUSIC MANAGEMENT
+    // ═══════════════════════════════════════════════════════
+
+    async function loadSheetMusic() {
+      try {
+        const grid = document.getElementById('pdfGrid');
+        grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
+
+        const { data: files, error } = await window.supabase.storage
+          .from('sheet-music')
+          .list('songs', {
+            limit: 1000,
+            sortBy: { column: 'name', order: 'asc' }
+          });
+
+        if (error) throw error;
+
+        allPDFs = (files || []).filter(f => f.name.endsWith('.pdf'));
+        renderPDFs(allPDFs);
+      } catch (e) {
+        console.error('Error loading PDFs:', e);
+        document.getElementById('pdfGrid').innerHTML = 
+          `<div class="error-message">Error loading PDFs: ${e.message}</div>`;
+      }
+    }
+
+    function renderPDFs(pdfs) {
+      const grid = document.getElementById('pdfGrid');
+      
+      if (!pdfs.length) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <p>No PDFs uploaded yet</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = pdfs.map(pdf => `
+        <div class="pdf-item">
+          <div class="pdf-icon">📄</div>
+          <div class="pdf-name">${pdf.name}</div>
+          <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
+            ${(pdf.metadata.size / 1024).toFixed(1)} KB
+          </div>
+          <div class="pdf-actions">
+            <button class="btn-view" onclick="viewPDF('${pdf.name}')">👁️ View</button>
+            <button class="btn-delete" onclick="deletePDF('${pdf.name}')">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterPDFs() {
+      const search = document.getElementById('pdfSearch').value.toLowerCase();
+      const filtered = allPDFs.filter(pdf => 
+        pdf.name.toLowerCase().includes(search)
+      );
+      renderPDFs(filtered);
+    }
+
+    async function viewPDF(filename) {
+      try {
+        const { data, error } = await window.supabase.storage
+          .from('sheet-music')
+          .createSignedUrl(`songs/${filename}`, 300);
+
+        if (error) throw error;
+        window.open(data.signedUrl, '_blank');
+      } catch (e) {
+        alert('❌ Error viewing PDF: ' + e.message);
+      }
+    }
+
+    async function deletePDF(filename) {
+      if (!confirm(`Delete "${filename}"?\n\nThis will remove the PDF from storage. Users who purchased this song will no longer be able to download it.`)) {
+        return;
+      }
+
+      try {
+        const { error } = await window.supabase.storage
+          .from('sheet-music')
+          .remove([`songs/${filename}`]);
+
+        if (error) throw error;
+
+        alert('✅ PDF deleted successfully!');
+        await loadSheetMusic();
+      } catch (e) {
+        alert('❌ Error deleting PDF: ' + e.message);
+      }
+    }
+
+    async function uploadPDFs(event) {
+      const files = Array.from(event.target.files);
+      if (!files.length) return;
+
+      const progress = document.getElementById('uploadProgress');
+      const status = document.getElementById('uploadStatus');
+      const bar = document.getElementById('uploadBar');
+
+      progress.classList.remove('hidden');
+      
+      let uploaded = 0;
+      const total = files.length;
+
+      for (const file of files) {
+        if (!file.name.endsWith('.pdf')) {
+          alert(`⚠️ Skipping "${file.name}" - not a PDF file`);
+          continue;
+        }
+
+        try {
+          status.textContent = `Uploading ${uploaded + 1}/${total}: ${file.name}`;
+          bar.style.width = `${(uploaded / total) * 100}%`;
+
+          const { error } = await window.supabase.storage
+            .from('sheet-music')
+            .upload(`songs/${file.name}`, file, {
+              upsert: true,
+              contentType: 'application/pdf'
+            });
+
+          if (error) throw error;
+
+          uploaded++;
+        } catch (e) {
+          alert(`❌ Error uploading "${file.name}": ${e.message}`);
+        }
+      }
+
+      bar.style.width = '100%';
+      status.textContent = `✅ Uploaded ${uploaded}/${total} files!`;
+
+      setTimeout(() => {
+        progress.classList.add('hidden');
+        bar.style.width = '0%';
+        event.target.value = '';
+      }, 2000);
+
+      await loadSheetMusic();
+    }
 
     // ── Live rates fetched from frankfurter (stored here so savePricing can use them) ──
     let liveExchangeRates = null; // will be { USD: 0.012, GBP: 0.0095, ... } keyed as "1 INR = X currency"
@@ -1975,7 +2252,13 @@
       document.getElementById(tabName + 'Tab').classList.remove('hidden');
       
       if (tabName === 'pricing') {
-        loadPricingData(); // also triggers fetchLiveRates() inside
+    loadPricingData();
+  }
+  if (tabName === 'sheetmusic') {
+    loadSheetMusic();
+  }
+
+
       }
     }
 
