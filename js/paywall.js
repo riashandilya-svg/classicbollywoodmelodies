@@ -4,6 +4,31 @@
 
 (() => {
   const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
+  async function fetchSheetMusicUrl(songSlug) {
+  const session = await getSessionOrThrow();
+
+  const url = `${SUPABASE_FUNCTIONS_BASE}/get-sheet-music-url`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ songSlug }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Failed to fetch sheet music URL");
+  return data.url;
+}
+
+function tryOpenPdf(url) {
+  // open in new tab; mobile Safari sometimes needs this in user gesture,
+  // but this is still the best default behavior.
+  window.open(url, "_blank");
+}
+
   const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
   const BUNDLE_PRODUCT_ID = "pack:5";
 const CURRENCY_SYMBOLS = {
@@ -417,13 +442,27 @@ async function detectCurrency() {
       handler: async (response) => {
         try {
           console.log("[PAYWALL] 💳 Payment completed, verifying...");
-          await verifyPayment({ 
-            productId, 
-            response,
-            orderData: orderData
-          });
-          console.log("[PAYWALL] ✅ SUCCESS! Reloading...");
-          window.location.reload();
+     await verifyPayment({ 
+  productId, 
+  response,
+  orderData: orderData
+});
+
+// ✅ If this was a song purchase, open its PDF
+if (productId && productId !== BUNDLE_PRODUCT_ID) {
+  const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+
+  try {
+    const pdfUrl = await fetchSheetMusicUrl(songSlug);
+    tryOpenPdf(pdfUrl);
+  } catch (e) {
+    console.warn("[PAYWALL] PDF open failed:", e);
+  }
+}
+
+console.log("[PAYWALL] ✅ SUCCESS! Reloading...");
+window.location.reload();
+
         } catch (e) {
           console.error("[PAYWALL] ❌ Verification failed:", e);
           alert(e?.message || "Verification error");
@@ -646,9 +685,23 @@ const bundlePriceDisplay = bundlePrice
             console.log("[PAYWALL] 🎁 User clicked: Redeem Credit");
             redeemBtn.disabled = true;
             redeemBtn.textContent = "Redeeming...";
-            await redeemAnyCredit(productId);
-            console.log("[PAYWALL] ✅ Credit redeemed, reloading...");
-            window.location.reload();
+       await redeemAnyCredit(productId);
+
+// ✅ After credit unlock, open PDF for this song
+if (productId && productId !== BUNDLE_PRODUCT_ID) {
+  const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+
+  try {
+    const pdfUrl = await fetchSheetMusicUrl(songSlug);
+    tryOpenPdf(pdfUrl);
+  } catch (e) {
+    console.warn("[PAYWALL] PDF open failed:", e);
+  }
+}
+
+console.log("[PAYWALL] ✅ Credit redeemed, reloading...");
+window.location.reload();
+
           } catch (e) {
             console.error("[PAYWALL] ❌ Redeem failed:", e);
             alert(e?.message || "Failed to redeem credit");
