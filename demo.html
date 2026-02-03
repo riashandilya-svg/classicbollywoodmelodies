@@ -137,26 +137,13 @@
       gap:10px;
       align-items:center;
     }
-    #demoWatermark {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  color: rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-  z-index: 1000003;
-  text-transform: uppercase;
-}
+
   </style>
 </head>
 
 <body>
   <!-- Your real app loads here -->
   <iframe id="appFrame" title="App"></iframe>
-<div id="demoWatermark">DEMO · TRIAL VERSION</div>
 
   <!-- Quick start button always visible -->
 <div id="demoTopBar">
@@ -253,6 +240,9 @@ const STEPS = [
   selector: "#startPracticeButton",
   dim: false,
   video: null,
+
+  waitForClick: true,   // ✅ disables Next until they click the button
+
   action: {
     type: "click",
     selector: "#startPracticeButton",
@@ -265,6 +255,7 @@ const STEPS = [
     text: "Nice work. Now let's look at the next feature. Click Next when you're ready."
   }
 },
+
 
 {
   title: "Understanding mistakes",
