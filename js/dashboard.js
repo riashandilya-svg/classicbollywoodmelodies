@@ -822,7 +822,7 @@ try {
 // Called when user clicks "Download PDF"
 async function downloadSheetMusic(songId) {
   try {
-    // songId is like "song:badeacche"
+    // songId looks like "song:kaisipaheli"
     const songSlug = songId.replace('song:', '');
 
     const { data, error } = await window.supabase.functions.invoke(
@@ -833,7 +833,7 @@ async function downloadSheetMusic(songId) {
     if (error) throw error;
 
     const url = data?.url;
-    if (!url) throw new Error('No url returned');
+    if (!url) throw new Error('No URL returned');
 
     window.open(url, '_blank', 'noopener');
   } catch (err) {
@@ -841,6 +841,8 @@ async function downloadSheetMusic(songId) {
     alert("Couldn't load the PDF.");
   }
 }
+
+
 
 
 // ✅ UPDATED: Load purchase history (exclude pack:5 from individual display)
