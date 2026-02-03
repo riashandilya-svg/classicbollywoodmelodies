@@ -100,9 +100,10 @@
       align-items: center;
       justify-content: flex-end;
       gap: 10px;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;      /* allow wrapping when space is tight */
       min-width: 0;
     }
+    
 
     .welcomeText{
       font-family: "Cormorant Garamond", serif;
@@ -235,6 +236,22 @@
         padding: 11px 10px;
       }
     }
+/* When space is tight, put Welcome on its own line */
+@media (max-width: 760px){
+  .accountLayout{
+    justify-content: center;
+  }
+
+  .welcomeText{
+    flex: 0 0 100%;       /* full row */
+    max-width: 92vw;
+    text-align: center;
+  }
+
+  .actionStrip{
+    width: 100%;
+  }
+}
 
     .authRow{
       margin: 12px 0 6px;
