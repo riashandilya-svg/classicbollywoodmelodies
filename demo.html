@@ -137,12 +137,26 @@
       gap:10px;
       align-items:center;
     }
+    #demoWatermark {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 1000003;
+  text-transform: uppercase;
+}
   </style>
 </head>
 
 <body>
   <!-- Your real app loads here -->
   <iframe id="appFrame" title="App"></iframe>
+<div id="demoWatermark">DEMO · TRIAL VERSION</div>
 
   <!-- Quick start button always visible -->
 <div id="demoTopBar">
@@ -185,12 +199,14 @@
   // STEP 2: Define demo steps using CSS selectors that exist on the app page.
   // If a selector isn't found, the step will still show, but without highlight.
 const STEPS = [
-  {
-    title: "Connect your keyboard (USB)",
-text: "You can use this app on a laptop, tablet, or mobile device. You can play notes using your mouse or touch as well.\n\nFor the best experience, connect a piano or MIDI keyboard to your device using a USB cable (usually USB-B on the keyboard side). When you play on the keyboard, the app automatically detects and shows the notes you’re playing on the screen."
-    selector: null,
-    video: null
-  },
+  
+{
+  title: "Connect your keyboard (USB)",
+  text: "You can use this app on a laptop, tablet, or mobile device. You can play notes using your mouse or touch as well.\n\nFor the best experience, connect a piano or MIDI keyboard to your device using a USB cable (usually USB-B on the keyboard side). When you play on the keyboard, the app automatically detects and shows the notes you’re playing on the screen.",
+  selector: null,
+  video: null
+},
+
 {
   title: "Choose which hand to practice",
   text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you're ready.",
@@ -928,7 +944,7 @@ if (data.type === "tour:resume") {
   // If this step has a custom resume message, show it
   if (step && step.resume) {
     titleEl.textContent = step.resume.title || step.title || "";
-    titleEl.textContent  = step.resume.text  || step.text  || "";
+textEl.textContent = step.resume.text || step.text || "";
     setStatus("", false); // clear the action status line
 
     // keep highlight positioned
