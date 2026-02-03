@@ -473,17 +473,17 @@
         margin: 0 auto;
       }
     }
-    <style>
+
   /* --- MIDI / keyboard connection image helpers --- */
   .img-grid{
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 per row */
+    gap: 12px;
     margin: 14px 0 6px;
   }
+  
   .img-grid figure{
     margin: 0;
-    grid-column: span 6;
     border-radius: var(--radiusSm);
     border: 1px solid rgba(140,120,160,0.16);
     background: rgba(255,255,255,0.72);
@@ -496,11 +496,12 @@
     display: block;
   }
   .img-grid figcaption{
-    padding: 12px 12px 14px;
-    font-size: 13px;
-    line-height: 1.5;
+    padding: 8px 10px 10px;
+    font-size: 12px;
+    line-height: 1.35;
     color: rgba(26,26,31,0.76);
   }
+  
   .img-grid figcaption strong{
     color: var(--brand);
   }
@@ -529,25 +530,18 @@
     line-height: 1.6;
   }
 
-  @media (max-width: 768px){
-    .img-grid figure{ grid-column: span 12; }
+  @media (max-width: 900px){
+    .img-grid{
+      grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 per row */
+    }
   }
-    /* Reduce MIDI / keyboard images */
-.img-grid img{
-  max-width: 100%;
-  height: auto;
-  max-height: 180px;   /* <-- MAIN SIZE CONTROL */
-  object-fit: contain;
-  margin: 0 auto;
-}
+  
+  @media (max-width: 520px){
+    .img-grid{
+      grid-template-columns: 1fr; /* 1 per row */
+    }
+  }
 
-.img-grid figure{
-  padding: 10px;
-}
-
-.img-grid figcaption{
-  font-size: 12.5px;
-}
 
   </style>
 </head>
