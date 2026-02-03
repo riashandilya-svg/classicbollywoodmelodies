@@ -64,6 +64,31 @@ const SONG_CATEGORIES = {
   'song:aaogejab': 'classic'
 };
 
+// ✅ NEW: Song ID to slug mapping (for PDF filename matching)
+const SONG_SLUGS = {
+  'song:badeacche': 'badeacche',
+  'song:kalho': 'kalho',
+  'song:haiapna': 'haiapna',
+  'song:ekladki': 'ekladki',
+  'song:gulaabi': 'gulaabi',
+  'song:chookar': 'chookar',
+  'song:aaogejab': 'aaogejab',
+  'song:jashnebahaara': 'jashnebahaara',
+  'song:goregore': 'goregore',
+  'song:darling': 'darling',
+  'song:allahkebande': 'allahkebande',
+  'song:palpalharpal': 'palpalharpal',
+  'song:zoobiedoobie': 'zoobiedoobie',
+  'song:meresaamne': 'meresaamne',
+  'song:jaanekahan': 'jaanekahan',
+  'song:aajkal': 'aajkal',
+  'song:aehairate': 'aehairate',
+  'song:piyubole': 'piyubole',
+  'song:raatkali': 'raatkali',
+  'song:khwaabho': 'khwaabho',
+  'song:kaisipaheli': 'kaisipaheli'
+};
+
 const DEFAULT_AVATAR = 'default-avatar.png';
 
 function setAvatar(src) {
