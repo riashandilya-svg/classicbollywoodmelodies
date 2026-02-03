@@ -122,13 +122,14 @@ const userEmailEl = document.getElementById('userEmail');
 if (userEmailEl) userEmailEl.textContent = '';
 
         // Load all dashboard data
- await Promise.all([
+await Promise.all([
   loadStats(user.id),
   loadBookStatus(user.id),
   loadSongs(user.id),
-  loadSheetMusic(user.id),   // ✅ ADD THIS
+  loadSheetMusic(user.id),   // ✅ ADD THIS LINE
   loadPurchaseHistory(user.id)
 ]);
+
 
 
 
