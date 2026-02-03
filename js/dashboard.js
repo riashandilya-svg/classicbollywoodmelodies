@@ -825,7 +825,6 @@ try {
 // Called when user clicks "Download PDF"
 async function downloadSheetMusic(songId) {
   try {
-    // songId looks like "song:kaisipaheli"
     const songSlug = songId.replace('song:', '');
 
     const { data, error } = await window.supabase.functions.invoke(
@@ -844,6 +843,7 @@ async function downloadSheetMusic(songId) {
     alert("Couldn't load the PDF.");
   }
 }
+
 
 
 
