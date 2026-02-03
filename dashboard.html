@@ -76,7 +76,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-        position: relative;
       background: rgba(255,255,255,0.72);
       backdrop-filter: blur(12px);
       border: 1px solid var(--border);
@@ -98,19 +97,20 @@
     .banner .banner-link:hover{
       text-decoration: underline;
     }
-/* NEW: small avatar in the top banner (right side) */
-#bannerAvatar{
-  position: absolute;
-  right: 14px;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  object-fit: cover;
-  display: block;
-  border: 1px solid rgba(155,110,255,0.25);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.10);
-  background: rgba(155,110,255,0.08);
-}
+
+    /* small avatar in the top banner (right side) */
+    #bannerAvatar{
+      position: absolute;
+      right: 14px;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      object-fit: cover;
+      display: block;
+      border: 1px solid rgba(155,110,255,0.25);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.10);
+      background: rgba(155,110,255,0.08);
+    }
 
     /* Header card */
     .header{
@@ -149,7 +149,8 @@
       font-size: clamp(30px, 4vw, 44px);
       letter-spacing: -0.02em;
     }
-#welcomeText {
+
+    #welcomeText {
       font-family: "Cormorant Garamond", serif;
       font-weight: 700;
       font-size: 20px;
@@ -174,125 +175,114 @@
       0%, 100% { background-position: 0% 50%; }
       50%      { background-position: 100% 50%; }
     }
-    .header .sub{
-margin: 6px 0 0;
 
+    .header .sub{
+      margin: 6px 0 0;
       color: var(--muted);
       font-size: 14.5px;
       line-height: 1.6;
     }
 
-.header .user-email{
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+    .header .user-email{
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      border-radius: 0;
+      font-size: 13px;
+      color: rgba(26,26,31,0.78);
+    }
 
-  /* remove the extra mini-box */
-  padding: 0;
-  border: 0;
-  background: transparent;
-  border-radius: 0;
+    /* --- Avatar in header (right side, big circle) --- */
+    .header-top{
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-  font-size: 13px;
-  color: rgba(26,26,31,0.78);
-}
+    /* keep text centered always */
+    .header-text{
+      text-align: center;
+    }
 
+    /* avatar is taken out of normal flow, so it won't push the title */
+    .avatar-slot{
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
 
-/* --- Avatar in header (right side, big circle) --- */
-.header{
-  position: relative; /* make sure absolute positioning works */
-}
+    /* shift avatar slightly left from the right edge */
+    .avatar-wrap{
+      position: relative;
+      transform: translateX(-8px);
+    }
 
-.header-top{
-  position: relative;
-  display: flex;
-  justify-content: center;   /* centers the text block */
-  align-items: center;
-}
+    /* BIG CIRCLE */
+    #userAvatar{
+      width: 110px;
+      height: 110px;
+      border-radius: 999px;
+      object-fit: cover;
+      display: block;
+      border: 2px solid rgba(155,110,255,0.25);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+      background: rgba(155,110,255,0.08);
+    }
 
-/* keep text centered always */
-.header-text{
-  text-align: center;
-}
+    /* show avatar buttons ONLY on hover */
+    #changeAvatarBtn,
+    #removeAvatarBtn{
+      opacity: 0;
+      transform: translateY(2px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
 
-/* avatar is taken out of normal flow, so it won't push the title */
-.avatar-slot{
-  position: absolute;
-  right: 18px;              /* distance from right edge */
-  top: 50%;
-  transform: translateY(-50%);
-}
+    .avatar-wrap:hover #changeAvatarBtn,
+    .avatar-wrap:hover #removeAvatarBtn{
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-/* shift avatar slightly left from the right edge if you want */
-.avatar-wrap{
-  position: relative;
-  transform: translateX(-8px);  /* move left; try -8px or -16px */
-}
+    /* pencil button on the avatar */
+    #changeAvatarBtn{
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+    }
 
+    /* trash button (bottom-left of avatar) */
+    #removeAvatarBtn{
+      position: absolute;
+      left: 4px;
+      bottom: 4px;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: white;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+    }
 
-/* BIG CIRCLE */
-#userAvatar{
-  width: 110px;
-  height: 110px;
-  border-radius: 999px;
-  object-fit: cover;
-  display: block;
-  border: 2px solid rgba(155,110,255,0.25);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
-  background: rgba(155,110,255,0.08);
-}
+    /* hide the file input */
+    #avatarInput{
+      display: none;
+    }
 
-/* NEW: show avatar buttons ONLY on hover */
-#changeAvatarBtn,
-#removeAvatarBtn{
-  opacity: 0;
-  transform: translateY(2px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.avatar-wrap:hover #changeAvatarBtn,
-.avatar-wrap:hover #removeAvatarBtn{
-  opacity: 1;
-  transform: translateY(0);
-}
-
-    
-/* pencil button on the avatar */
-#changeAvatarBtn{
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.10);
-  background: white;
-  cursor: pointer;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
-}
-
-    /* NEW: trash button (bottom-left of avatar) */
-#removeAvatarBtn{
-  position: absolute;
-  left: 4px;
-  bottom: 4px;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.10);
-  background: white;
-  cursor: pointer;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
-}
-
-/* hide the file input */
-#avatarInput{
-  display: none;
-}
-
-    
     /* Stats */
     .stats-grid{
       display: grid;
@@ -627,268 +617,284 @@ margin: 6px 0 0;
       }
     }
 
-@media (max-width: 900px){
-  .header-top{
-    display: block;
-    text-align: center;
-  }
+    @media (max-width: 900px){
+      .header-top{
+        display: block;
+        text-align: center;
+      }
 
-  .avatar-slot{
-    position: static;
-    transform: none;
-    margin-top: 14px;
-    display: flex;
-    justify-content: center;
-  }
+      .avatar-slot{
+        position: static;
+        transform: none;
+        margin-top: 14px;
+        display: flex;
+        justify-content: center;
+      }
 
-  .avatar-wrap{
-    transform: none;
-  }
-}
+      .avatar-wrap{
+        transform: none;
+      }
+    }
 
-/* ===== Main content button (Dashboard -> Main site) ===== */
-.main-content-btn{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+    /* ===== Main content button (Dashboard -> Main site) ===== */
+    .main-content-btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
 
-  padding: 12px 16px;
-  border-radius: 14px;
-  text-decoration: none;
+      padding: 12px 16px;
+      border-radius: 14px;
+      text-decoration: none;
 
-  font-weight: 800;
-  font-size: 13.5px;
+      font-weight: 800;
+      font-size: 13.5px;
 
-  color: rgba(43,17,64,0.92);
-  border: 1px solid rgba(155,110,255,0.30);
-  background: linear-gradient(135deg,
-    rgba(255,120,160,0.22),
-    rgba(155,110,255,0.18),
-    rgba(255,90,210,0.12)
-  );
-  box-shadow: 0 14px 40px rgba(22,10,35,0.10);
+      color: rgba(43,17,64,0.92);
+      border: 1px solid rgba(155,110,255,0.30);
+      background: linear-gradient(135deg,
+        rgba(255,120,160,0.22),
+        rgba(155,110,255,0.18),
+        rgba(255,90,210,0.12)
+      );
+      box-shadow: 0 14px 40px rgba(22,10,35,0.10);
 
-  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
-}
+      transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+    }
 
-.main-content-btn:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.03);
-  box-shadow: 0 18px 44px rgba(22,10,35,0.14);
-}
+    .main-content-btn:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 18px 44px rgba(22,10,35,0.14);
+    }
 
-.main-content-btn-wrap{
-  margin-top: 14px;
-  display: flex;
-  justify-content: center;
-}
+    /* row that holds Go Back / User Guide / Verify / Logout */
+    .main-content-btn-row{
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Logout button — matches .main-content-btn visually but is a <button> */
+    .logout-btn{
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .logout-btn:disabled{
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none !important;
+      filter: none !important;
+    }
 
     /* ===== Edit Profile Button ===== */
-#editProfileBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 14px;
-  padding: 9px 18px;
-  border-radius: 999px;
-  border: 1px solid rgba(155,110,255,0.28);
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(10px);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(43,17,64,0.86);
-  box-shadow: 0 8px 22px rgba(22,10,35,0.08);
-  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
-}
-#editProfileBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(22,10,35,0.12);
-  border-color: rgba(155,110,255,0.42);
-  background: rgba(255,255,255,0.88);
-}
+    #editProfileBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 14px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(155,110,255,0.28);
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(43,17,64,0.86);
+      box-shadow: 0 8px 22px rgba(22,10,35,0.08);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    #editProfileBtn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(22,10,35,0.12);
+      border-color: rgba(155,110,255,0.42);
+      background: rgba(255,255,255,0.88);
+    }
 
-/* ===== Profile Modal ===== */
-.profile-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  background: rgba(22, 10, 35, 0.38);
-  backdrop-filter: blur(5px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.22s ease;
-}
-.profile-modal-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-.profile-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.94);
-  z-index: 10001;
-  width: 90%;
-  max-width: 440px;
-  border-radius: 24px;
-  padding: 32px 28px 28px;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(155,110,255,0.22);
-  box-shadow: 0 28px 60px rgba(22,10,35,0.18);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.22s ease, transform 0.22s ease;
-  overflow: hidden;
-}
-.profile-modal::before {
-  content: "";
-  position: absolute;
-  top: -60px;
-  right: -70px;
-  width: 200px;
-  height: 200px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 40% 40%,
-    rgba(255,120,160,0.32),
-    rgba(155,110,255,0.22),
-    transparent 65%);
-  pointer-events: none;
-}
-.profile-modal > * { position: relative; z-index: 1; }
-.profile-modal.open {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translate(-50%, -50%) scale(1);
-}
-.profile-modal h3 {
-  margin: 0 0 6px;
-  font-family: "Cormorant Garamond", serif;
-  font-weight: 700;
-  font-size: 26px;
-  color: var(--brand);
-}
-.profile-modal .modal-sub {
-  margin: 0 0 22px;
-  font-size: 13.5px;
-  color: var(--muted);
-}
-.profile-modal label {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  color: rgba(43,17,64,0.60);
-  margin-bottom: 7px;
-}
-.profile-modal input[type="text"] {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(155,110,255,0.24);
-  background: rgba(255,255,255,0.80);
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--brand);
-  outline: none;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
-  box-shadow: 0 4px 12px rgba(22,10,35,0.06);
-}
-.profile-modal input[type="text"]:focus {
-  border-color: rgba(155,110,255,0.46);
-  box-shadow: 0 4px 16px rgba(155,110,255,0.18);
-}
-.profile-modal .email-row {
-  margin-top: 18px;
-  margin-bottom: 6px;
-}
-.profile-modal .email-value {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(140,120,160,0.18);
-  background: rgba(245,242,250,0.70);
-  font-size: 14px;
-  color: rgba(43,17,64,0.72);
-  font-weight: 500;
-  word-break: break-all;
-  min-height: 44px;
-}
-.profile-modal .email-value .lock-icon {
-  flex-shrink: 0;
-  font-size: 14px;
-  opacity: 0.55;
-}
-.profile-modal .email-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(26,26,31,0.48);
-}
-.profile-modal .modal-feedback {
-  height: 20px;
-  margin-top: 14px;
-  font-size: 13px;
-  font-weight: 600;
-}
-.profile-modal .modal-feedback.success { color: #059669; }
-.profile-modal .modal-feedback.error   { color: #dc2626; }
-.profile-modal .modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 18px;
-}
-.profile-modal .btn-cancel {
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: 1px solid rgba(140,120,160,0.22);
-  background: rgba(255,255,255,0.72);
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: rgba(43,17,64,0.72);
-  cursor: pointer;
-  transition: background 0.14s ease;
-}
-.profile-modal .btn-cancel:hover {
-  background: rgba(255,255,255,0.92);
-}
-.profile-modal .btn-save {
-  padding: 10px 24px;
-  border-radius: 999px;
-  border: 1px solid rgba(155,110,255,0.34);
-  background: linear-gradient(135deg,
-    rgba(255,120,160,0.28),
-    rgba(155,110,255,0.22),
-    rgba(255,90,210,0.16));
-  font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--brand);
-  cursor: pointer;
-  box-shadow: 0 8px 22px rgba(22,10,35,0.10);
-  transition: transform 0.14s ease, filter 0.14s ease;
-}
-.profile-modal .btn-save:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.04);
-}
-.profile-modal .btn-save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
-@media (max-width: 480px) {
-  .profile-modal { width: 94%; padding: 26px 20px 22px; }
-}
-    
+    /* ===== Profile Modal ===== */
+    .profile-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(22, 10, 35, 0.38);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+    .profile-modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .profile-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.94);
+      z-index: 10001;
+      width: 90%;
+      max-width: 440px;
+      border-radius: 24px;
+      padding: 32px 28px 28px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(155,110,255,0.22);
+      box-shadow: 0 28px 60px rgba(22,10,35,0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      overflow: hidden;
+    }
+    .profile-modal::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: -70px;
+      width: 200px;
+      height: 200px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 40% 40%,
+        rgba(255,120,160,0.32),
+        rgba(155,110,255,0.22),
+        transparent 65%);
+      pointer-events: none;
+    }
+    .profile-modal > * { position: relative; z-index: 1; }
+    .profile-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .profile-modal h3 {
+      margin: 0 0 6px;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--brand);
+    }
+    .profile-modal .modal-sub {
+      margin: 0 0 22px;
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+    .profile-modal label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: rgba(43,17,64,0.60);
+      margin-bottom: 7px;
+    }
+    .profile-modal input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(155,110,255,0.24);
+      background: rgba(255,255,255,0.80);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--brand);
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+      box-shadow: 0 4px 12px rgba(22,10,35,0.06);
+    }
+    .profile-modal input[type="text"]:focus {
+      border-color: rgba(155,110,255,0.46);
+      box-shadow: 0 4px 16px rgba(155,110,255,0.18);
+    }
+    .profile-modal .email-row {
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+    .profile-modal .email-value {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(140,120,160,0.18);
+      background: rgba(245,242,250,0.70);
+      font-size: 14px;
+      color: rgba(43,17,64,0.72);
+      font-weight: 500;
+      word-break: break-all;
+      min-height: 44px;
+    }
+    .profile-modal .email-value .lock-icon {
+      flex-shrink: 0;
+      font-size: 14px;
+      opacity: 0.55;
+    }
+    .profile-modal .email-hint {
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(26,26,31,0.48);
+    }
+    .profile-modal .modal-feedback {
+      height: 20px;
+      margin-top: 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .profile-modal .modal-feedback.success { color: #059669; }
+    .profile-modal .modal-feedback.error   { color: #dc2626; }
+    .profile-modal .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+    .profile-modal .btn-cancel {
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(140,120,160,0.22);
+      background: rgba(255,255,255,0.72);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: rgba(43,17,64,0.72);
+      cursor: pointer;
+      transition: background 0.14s ease;
+    }
+    .profile-modal .btn-cancel:hover {
+      background: rgba(255,255,255,0.92);
+    }
+    .profile-modal .btn-save {
+      padding: 10px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(155,110,255,0.34);
+      background: linear-gradient(135deg,
+        rgba(255,120,160,0.28),
+        rgba(155,110,255,0.22),
+        rgba(255,90,210,0.16));
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--brand);
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(22,10,35,0.10);
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+    .profile-modal .btn-save:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+    .profile-modal .btn-save:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+    @media (max-width: 480px) {
+      .profile-modal { width: 94%; padding: 26px 20px 22px; }
+    }
+
   </style>
 </head>
 
@@ -898,87 +904,81 @@ margin: 6px 0 0;
 
   <div class="container">
     <header class="banner">
-<a class="banner-link"
-   href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">
-
+      <a class="banner-link"
+         href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">
         Ria Om Shandilya
       </a>
       <img id="bannerAvatar" alt="Profile" />
     </header>
 
- <div class="header">
-  <div class="header-top">
-<div class="header-text">
-  <h1>🎵 My Dashboard</h1>
-  <div id="welcomeText" class="welcomeText">Welcome</div>
-  <p class="sub">Track your songs, progress, and purchases.</p>
-  <button id="editProfileBtn" type="button">✏️ Edit Profile</button>
-</div>
+    <div class="header">
+      <div class="header-top">
+        <div class="header-text">
+          <h1>🎵 My Dashboard</h1>
+          <div id="welcomeText" class="welcomeText">Welcome</div>
+          <p class="sub">Track your songs, progress, and purchases.</p>
+          <div class="user-email" id="userEmail">Loading...</div>
+          <button id="editProfileBtn" type="button">✏️ Edit Profile</button>
+        </div>
 
-<div class="avatar-slot">
-  <div class="avatar-wrap">
-    <img id="userAvatar" alt="Profile photo" />
-
-    <button id="changeAvatarBtn" type="button" title="Change photo">✏️</button>
-
-    <!-- NEW: remove/reset avatar -->
-    <button id="removeAvatarBtn" type="button" title="Reset photo">🗑️</button>
-
-    <input id="avatarInput" type="file" accept="image/*" />
-  </div>
-</div>
-    <div class="user-email" id="userEmail">Loading...</div>
-  </div>  <!-- closes .header-top -->
-</div>    <!-- closes .header -->
-
-<div id="profileModalOverlay" class="profile-modal-overlay"></div>
-<div id="profileModal" class="profile-modal" role="dialog" aria-modal="true" aria-label="Edit Profile">
-  <h3>Edit Profile</h3>
-  <p class="modal-sub">Update your display name or view your email.</p>
-
-  <label for="profileNameInput">Display Name</label>
-  <input type="text" id="profileNameInput" placeholder="Your name…" maxlength="40" autocomplete="off" />
-
-  <div class="email-row">
-    <label>Email</label>
-    <div class="email-value">
-      <span class="lock-icon">🔒</span>
-      <span id="profileEmailDisplay">—</span>
+        <div class="avatar-slot">
+          <div class="avatar-wrap">
+            <img id="userAvatar" alt="Profile photo" />
+            <button id="changeAvatarBtn" type="button" title="Change photo">✏️</button>
+            <button id="removeAvatarBtn" type="button" title="Reset photo">🗑️</button>
+            <input id="avatarInput" type="file" accept="image/*" />
+          </div>
+        </div>
+      </div>
     </div>
-    <p class="email-hint">Email is set at sign-up and cannot be changed here.</p>
-  </div>
 
-  <div class="modal-feedback" id="profileFeedback"></div>
+    <div id="profileModalOverlay" class="profile-modal-overlay"></div>
+    <div id="profileModal" class="profile-modal" role="dialog" aria-modal="true" aria-label="Edit Profile">
+      <h3>Edit Profile</h3>
+      <p class="modal-sub">Update your display name or view your email.</p>
 
-  <div class="modal-actions">
-    <button class="btn-cancel" id="profileCancelBtn" type="button">Cancel</button>
-    <button class="btn-save"   id="profileSaveBtn"   type="button">Save</button>
-  </div>
-</div>
+      <label for="profileNameInput">Display Name</label>
+      <input type="text" id="profileNameInput" placeholder="Your name…" maxlength="40" autocomplete="off" />
 
-<div class="main-content-btn-wrap">
-  <a class="main-content-btn"
-     href="https://riashandilya-svg.github.io/classicbollywoodmelodies/"
-     target="_blank"
-     rel="noopener">
-    Go Back to Main Content
-  </a>
-</div>
+      <div class="email-row">
+        <label>Email</label>
+        <div class="email-value">
+          <span class="lock-icon">🔒</span>
+          <span id="profileEmailDisplay">—</span>
+        </div>
+        <p class="email-hint">Email is set at sign-up and cannot be changed here.</p>
+      </div>
 
-<div class="main-content-btn-wrap">
-  <a class="main-content-btn"
-     href="./user-guide.html">
-    User Guide
-  </a>
-</div>
+      <div class="modal-feedback" id="profileFeedback"></div>
 
-<div class="main-content-btn-wrap">
-  <a id="verifyBookLink" class="main-content-btn"
-     href="./get-book-code.html"
-     style="display: none;">
-    Verify Your Book
-  </a>
-</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="profileCancelBtn" type="button">Cancel</button>
+        <button class="btn-save"   id="profileSaveBtn"   type="button">Save</button>
+      </div>
+    </div>
+
+    <div class="main-content-btn-row">
+      <a class="main-content-btn"
+         href="https://riashandilya-svg.github.io/classicbollywoodmelodies/"
+         target="_blank"
+         rel="noopener">
+        Go Back to Main Content
+      </a>
+
+      <a class="main-content-btn" href="./user-guide.html">
+        User Guide
+      </a>
+
+      <a id="verifyBookLink" class="main-content-btn"
+         href="./get-book-code.html"
+         style="display: none;">
+        Verify Your Book
+      </a>
+
+      <button id="logoutBtn" class="main-content-btn logout-btn" type="button">
+        Logout
+      </button>
+    </div>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -1026,25 +1026,51 @@ margin: 6px 0 0;
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <script>
-    // Initialize Supabase client
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
     window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('✅ Supabase initialized:', window.supabase);
   </script>
-  
+
+  <script>
+    // ── Logout handler ──────────────────────────────────────
+    (function(){
+      const btn = document.getElementById('logoutBtn');
+      if(!btn) return;
+
+      btn.addEventListener('click', async function(){
+        btn.disabled = true;
+        btn.textContent = 'Logging out…';
+
+        try {
+          const { error } = await window.supabase.auth.signOut();
+          if(error){
+            console.error('signOut error:', error);
+            btn.textContent = 'Logout';
+            btn.disabled  = false;
+            return;
+          }
+          // Redirect to login page after successful sign-out
+          window.location.href = 'https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html';
+        } catch(err){
+          console.error('signOut threw:', err);
+          btn.textContent = 'Logout';
+          btn.disabled  = false;
+        }
+      });
+    })();
+  </script>
+
   <script src="js/dashboard.js"></script>
-  
-  <!-- Glitter cursor (copied behavior, minimal + classy) -->
+
+  <!-- Glitter cursor -->
   <script>
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
       const canvas = document.getElementById('glitter');
       const ctx = canvas.getContext('2d', { alpha: true });
-
       function resize(){
         canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
         canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
@@ -1054,20 +1080,15 @@ margin: 6px 0 0;
       }
       window.addEventListener('resize', resize);
       resize();
-
       const particles = [];
       const MAX = 320;
-
       function addSpark(x, y, intensity=1){
         if(prefersReduced) return;
-
         const count = Math.floor(7 * intensity);
         for(let i=0;i<count;i++){
           if(particles.length > MAX) particles.shift();
-
           const angle = Math.random() * Math.PI * 2;
           const speed = (0.30 + Math.random() * 2.0) * intensity;
-
           particles.push({
             x, y,
             vx: Math.cos(angle) * speed,
@@ -1079,7 +1100,6 @@ margin: 6px 0 0;
           });
         }
       }
-
       let last = { x: window.innerWidth/2, y: window.innerHeight/2 };
       window.addEventListener('pointermove', (e) => {
         const dx = e.clientX - last.x;
@@ -1089,39 +1109,30 @@ margin: 6px 0 0;
         addSpark(e.clientX, e.clientY, intensity);
         last = { x: e.clientX, y: e.clientY };
       }, { passive: true });
-
       window.addEventListener('pointerdown', (e) => addSpark(e.clientX, e.clientY, 1.9), { passive: true });
-
       function tick(){
         ctx.clearRect(0,0,canvas.width,canvas.height);
-
         for(let i=particles.length-1;i>=0;i--){
           const p = particles[i];
           p.life -= 1;
           if(p.life <= 0){ particles.splice(i,1); continue; }
-
           p.vx *= 0.986;
           p.vy *= 0.986;
           p.vy += 0.018;
-
           p.x += p.vx;
           p.y += p.vy;
-
           p.tw += 0.22;
           const twinkle = 0.62 + Math.sin(p.tw) * 0.38;
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
-
           ctx.beginPath();
           ctx.fillStyle = `rgba(255, 191, 47, ${a})`;
           ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
           ctx.fill();
-
           ctx.beginPath();
           ctx.fillStyle = `rgba(255, 255, 255, ${a * 0.55})`;
           ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
           ctx.fill();
-
           if(Math.random() < 0.24){
             ctx.save();
             ctx.translate(p.x, p.y);
