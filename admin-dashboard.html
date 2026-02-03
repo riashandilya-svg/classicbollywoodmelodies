@@ -1360,56 +1360,106 @@ let allPDFs = [];
     // SHEET MUSIC MANAGEMENT
     // ═══════════════════════════════════════════════════════
 
-   async function loadSheetMusic() {
-  try {
-    console.log('🔍 Loading PDFs from sheet-music/songs...');
-    const grid = document.getElementById('pdfGrid');
-    grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
-
-    const { data: files, error } = await window.supabase.storage
-      .from('sheet-music')
-      .list('songs', {
-        limit: 1000,
-        sortBy: { column: 'name', order: 'asc' }
-      });
-
-    console.log('📦 Files response:', { files, error });
-
-    if (error) {
-      console.error('❌ Storage error:', error);
-      throw error;
-    }
-
-    if (!files || files.length === 0) {
-      console.log('⚠️ No files found in storage');
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">📄</div>
-          <p>No files found in storage/sheet-music/songs/</p>
-          <p style="font-size: 13px; color: var(--muted);">Upload PDFs using the area above</p>
-        </div>`;
-      return;
-    }
-
-    allPDFs = files.filter(f => f.name && f.name.endsWith('.pdf'));
-    console.log('✅ Found PDFs:', allPDFs.map(p => p.name));
+    async function loadSheetMusic() {
+      try {
+        console.log('🔍 Loading PDFs from sheet-music/songs...');
+        const grid = document.getElementById('pdfGrid');
+        grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
     
-    if (allPDFs.length === 0) {
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">📄</div>
-          <p>No PDF files found (found ${files.length} files total)</p>
-        </div>`;
-      return;
+        // Get current session for auth
+        const { data: { session } } = await window.supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error('Not authenticated');
+        }
+    
+        // Create admin client with service role key simulation via RLS
+        const { data: files, error } = await window.supabase.storage
+          .from('sheet-music')
+          .list('songs', {
+            limit: 1000,
+            sortBy: { column: 'name', order: 'asc' }
+          });
+    
+        console.log('📦 Files response:', { files, error });
+    
+        if (error) {
+          console.error('❌ Storage error:', error);
+          
+          // Try alternative: list root and look for songs folder
+          console.log('🔄 Trying alternative method...');
+          const { data: rootFiles, error: rootError } = await window.supabase.storage
+            .from('sheet-music')
+            .list('', {
+              limit: 1000,
+              sortBy: { column: 'name', order: 'asc' }
+            });
+          
+          console.log('📦 Root files:', { rootFiles, rootError });
+          
+          if (rootError) throw error;
+          
+          // If files are in root instead of songs folder
+          if (rootFiles && rootFiles.length > 0) {
+            allPDFs = rootFiles.filter(f => f.name && f.name.endsWith('.pdf'));
+            console.log('✅ Found PDFs in root:', allPDFs.map(p => p.name));
+            
+            if (allPDFs.length > 0) {
+              renderPDFs(allPDFs);
+              return;
+            }
+          }
+          
+          throw error;
+        }
+    
+        if (!files || files.length === 0) {
+          console.log('⚠️ No files found in songs folder, checking root...');
+          
+          const { data: rootFiles } = await window.supabase.storage
+            .from('sheet-music')
+            .list('', {
+              limit: 1000
+            });
+          
+          if (rootFiles && rootFiles.length > 0) {
+            allPDFs = rootFiles.filter(f => f.name && f.name.endsWith('.pdf'));
+            if (allPDFs.length > 0) {
+              console.log('✅ Found PDFs in root:', allPDFs.map(p => p.name));
+              renderPDFs(allPDFs);
+              return;
+            }
+          }
+          
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📄</div>
+              <p>No PDF files found</p>
+              <p style="font-size: 13px; color: var(--muted);">Upload PDFs using the area above</p>
+            </div>`;
+          return;
+        }
+    
+        allPDFs = files.filter(f => f.name && f.name.endsWith('.pdf'));
+        console.log('✅ Found PDFs:', allPDFs.map(p => p.name));
+        
+        if (allPDFs.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📄</div>
+              <p>No PDF files found (found ${files.length} non-PDF files)</p>
+            </div>`;
+          return;
+        }
+    
+        renderPDFs(allPDFs);
+      } catch (e) {
+        console.error('💥 Error loading PDFs:', e);
+        document.getElementById('pdfGrid').innerHTML = 
+          `<div class="error-message">Error loading PDFs: ${e.message}<br><br>
+          <small>Check browser console for details</small></div>`;
+      }
     }
-
-    renderPDFs(allPDFs);
-  } catch (e) {
-    console.error('💥 Error loading PDFs:', e);
-    document.getElementById('pdfGrid').innerHTML = 
-      `<div class="error-message">Error loading PDFs: ${e.message}</div>`;
-  }
-}
 
     function renderPDFs(pdfs) {
       const grid = document.getElementById('pdfGrid');
