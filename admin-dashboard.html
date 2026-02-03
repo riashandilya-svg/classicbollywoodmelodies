@@ -2245,22 +2245,19 @@ let allPDFs = [];
     // TABS
     // ═══════════════════════════════════════════════════════
 
-    function switchTab(tabName, btn) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      document.getElementById(tabName + 'Tab').classList.remove('hidden');
-      
-      if (tabName === 'pricing') {
+function switchTab(tabName, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+  document.getElementById(tabName + 'Tab').classList.remove('hidden');
+  
+  if (tabName === 'pricing') {
     loadPricingData();
   }
   if (tabName === 'sheetmusic') {
     loadSheetMusic();
   }
-
-
-      }
-    }
+}
 
     // ═══════════════════════════════════════════════════════
     // MEDIA LIGHTBOX
