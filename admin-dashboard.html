@@ -1360,28 +1360,56 @@ let allPDFs = [];
     // SHEET MUSIC MANAGEMENT
     // ═══════════════════════════════════════════════════════
 
-    async function loadSheetMusic() {
-      try {
-        const grid = document.getElementById('pdfGrid');
-        grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
+   async function loadSheetMusic() {
+  try {
+    console.log('🔍 Loading PDFs from sheet-music/songs...');
+    const grid = document.getElementById('pdfGrid');
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
 
-        const { data: files, error } = await window.supabase.storage
-          .from('sheet-music')
-          .list('songs', {
-            limit: 1000,
-            sortBy: { column: 'name', order: 'asc' }
-          });
+    const { data: files, error } = await window.supabase.storage
+      .from('sheet-music')
+      .list('songs', {
+        limit: 1000,
+        sortBy: { column: 'name', order: 'asc' }
+      });
 
-        if (error) throw error;
+    console.log('📦 Files response:', { files, error });
 
-        allPDFs = (files || []).filter(f => f.name.endsWith('.pdf'));
-        renderPDFs(allPDFs);
-      } catch (e) {
-        console.error('Error loading PDFs:', e);
-        document.getElementById('pdfGrid').innerHTML = 
-          `<div class="error-message">Error loading PDFs: ${e.message}</div>`;
-      }
+    if (error) {
+      console.error('❌ Storage error:', error);
+      throw error;
     }
+
+    if (!files || files.length === 0) {
+      console.log('⚠️ No files found in storage');
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📄</div>
+          <p>No files found in storage/sheet-music/songs/</p>
+          <p style="font-size: 13px; color: var(--muted);">Upload PDFs using the area above</p>
+        </div>`;
+      return;
+    }
+
+    allPDFs = files.filter(f => f.name && f.name.endsWith('.pdf'));
+    console.log('✅ Found PDFs:', allPDFs.map(p => p.name));
+    
+    if (allPDFs.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">📄</div>
+          <p>No PDF files found (found ${files.length} files total)</p>
+        </div>`;
+      return;
+    }
+
+    renderPDFs(allPDFs);
+  } catch (e) {
+    console.error('💥 Error loading PDFs:', e);
+    document.getElementById('pdfGrid').innerHTML = 
+      `<div class="error-message">Error loading PDFs: ${e.message}</div>`;
+  }
+}
 
     function renderPDFs(pdfs) {
       const grid = document.getElementById('pdfGrid');
