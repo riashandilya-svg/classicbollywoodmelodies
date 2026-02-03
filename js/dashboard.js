@@ -794,25 +794,26 @@ try {
   const uniqueSongSlugs = [...new Set(purchases.map(p => p.song_slug))];
 
 
-  // 3) Render each unique purchased song with a download button
-  container.innerHTML = uniqueSongIds.map(songSlug => {
-    const songId = `song:${songSlug}`;
-    const songName = SONG_NAMES[songId] || songSlug;
-  
-    return `
-      <div class="song-item" data-sheet-song-id="${songSlug}">
-        <div class="song-info">
-          <div class="song-title">${songName}</div>
-          <div class="song-meta">PDF download for your purchase</div>
-        </div>
-        <div class="song-actions">
-          <button class="play-btn" onclick="downloadSheetMusic('${songId}')">
-            Download PDF
-          </button>
-        </div>
+// 3) Render each unique purchased song with a download button
+container.innerHTML = uniqueSongSlugs.map(songSlug => {
+  const songId = `song:${songSlug}`;
+  const songName = SONG_NAMES[songId] || songSlug;
+
+  return `
+    <div class="song-item" data-sheet-song-id="${songSlug}">
+      <div class="song-info">
+        <div class="song-title">${songName}</div>
+        <div class="song-meta">PDF download for your purchase</div>
       </div>
-    `;
-  }).join('');
+      <div class="song-actions">
+        <button class="play-btn" onclick="downloadSheetMusic('${songId}')">
+          Download PDF
+        </button>
+      </div>
+    </div>
+  `;
+}).join('');
+
   
 
 } catch (err) {
