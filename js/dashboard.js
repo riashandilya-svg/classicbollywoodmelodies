@@ -8,7 +8,7 @@ const SONG_NAMES = {
   'song:chookar': 'Chookar Mere Mann Ko',
   'song:aaogejab': 'Aaoge Jab Tum Sajna',
   'song:jashnebahaara': 'Jashn-e-Bahaara',
-  'song:goregore': 'Gore Gore Mukhde Pe',
+  'song:goregore': 'Gore Gore Baanke Chorre',
   'song:darling': 'Darling',
   'song:allahkebande': 'Allah Ke Bande',
   'song:palpalharpal': 'Pal Pal Har Pal',
