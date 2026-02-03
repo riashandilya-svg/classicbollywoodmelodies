@@ -475,13 +475,13 @@
     }
 
   /* --- MIDI / keyboard connection image helpers --- */
-  .img-grid{
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 per row */
-    gap: 12px;
-    margin: 14px 0 6px;
-  }
-  
+.img-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 per row on big screens */
+  gap: 12px;
+  margin: 14px 0 6px;
+}
+
   .img-grid figure{
     margin: 0;
     border-radius: var(--radiusSm);
@@ -542,6 +542,64 @@
     }
   }
 
+/* ---- Lightbox (click-to-zoom image popup) ---- */
+.lightbox{
+  width: min(960px, 92vw);
+  border: 0;
+  padding: 0;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+}
+
+.lightbox::backdrop{
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+}
+
+.lightbox img{
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 78vh;
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+.lightbox-caption{
+  margin: 0;
+  padding: 12px 14px 16px;
+  font-size: 13px;
+  color: rgba(26,26,31,0.78);
+  border-top: 1px solid rgba(140,120,160,0.16);
+}
+
+.lightbox-close{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(140,120,160,0.22);
+  background: rgba(255,255,255,0.90);
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lightbox-close:hover{
+  filter: brightness(0.98);
+}
+
+/* Zoom toggle state */
+.lightbox.zoomed img{
+  cursor: zoom-out;
+  max-height: none;       /* allow large */
+  width: auto;            /* allow natural size */
+  max-width: 92vw;
+  margin: 0 auto;
+}
 
   </style>
 </head>
@@ -1072,7 +1130,15 @@
     </footer>
   </div>
 
+  <!-- Image Lightbox (click to zoom) -->
+<dialog id="imgLightbox" class="lightbox" aria-label="Image preview">
+  <button class="lightbox-close" type="button" aria-label="Close">✕</button>
+  <img id="lightboxImg" alt="">
+  <p id="lightboxCaption" class="lightbox-caption"></p>
+</dialog>
+  
   <!-- Glitter cursor (same as your other pages) -->
+
   <script>
     (function(){
       const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1192,6 +1258,55 @@
         firstSection.classList.add('open');
       }
     });
+    // ---- Lightbox: click images to zoom ----
+(function(){
+  const dialog = document.getElementById('imgLightbox');
+  const imgEl = document.getElementById('lightboxImg');
+  const capEl = document.getElementById('lightboxCaption');
+  const closeBtn = dialog.querySelector('.lightbox-close');
+
+  // Make every image inside .img-grid clickable
+  document.querySelectorAll('.img-grid img').forEach((img) => {
+    img.style.cursor = 'zoom-in';
+
+    img.addEventListener('click', () => {
+      // Set the preview image + caption
+      imgEl.src = img.src;
+      imgEl.alt = img.alt || 'Image preview';
+
+      const fig = img.closest('figure');
+      const caption = fig ? fig.querySelector('figcaption') : null;
+      capEl.textContent = caption ? caption.innerText.trim() : '';
+
+      dialog.classList.remove('zoomed');
+      dialog.showModal();
+    });
+  });
+
+  // Close button
+  closeBtn.addEventListener('click', () => dialog.close());
+
+  // Click outside the image closes (clicking the backdrop)
+  dialog.addEventListener('click', (e) => {
+    const rect = dialog.getBoundingClientRect();
+    const clickedInDialog =
+      e.clientX >= rect.left && e.clientX <= rect.right &&
+      e.clientY >= rect.top  && e.clientY <= rect.bottom;
+
+    // If they clicked outside the dialog box area, close
+    if (!clickedInDialog) dialog.close();
+  });
+
+  // Pressing Escape closes automatically (dialog default behavior)
+
+  // Click the big preview image to toggle zoom mode
+  imgEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dialog.classList.toggle('zoomed');
+  });
+})();
+
+    
   </script>
 </body>
 </html>
