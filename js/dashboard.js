@@ -829,20 +829,34 @@ async function downloadSheetMusic(songId, songSlug) {
     const originalText = btn?.textContent;
     if (btn) btn.textContent = '⏳ Loading...';
 
-    const { data, error } = await window.supabase.functions.invoke(
-      'get-sheet-music-url',
-      { body: { songSlug } }
+    // Get the session token
+    const { data: { session } } = await window.supabase.auth.getSession();
+    if (!session) throw new Error('Not logged in');
+
+    // Call edge function with fetch directly to get the PDF blob
+    const response = await fetch(
+      `https://lyqpxcilniqzurevetae.supabase.co/functions/v1/get-sheet-music-url`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ songSlug })
+      }
     );
 
-    console.log('📦 Edge function response:', { data, error });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Edge function error:', errorText);
+      throw new Error(`Failed to download: ${response.status}`);
+    }
 
-    if (error) throw error;
-
-    // The edge function now returns the PDF directly as a blob
-    // We need to create a download link
-    const blob = new Blob([data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
+    // Get the PDF as a blob
+    const blob = await response.blob();
     
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${songSlug}.pdf`;
@@ -852,6 +866,8 @@ async function downloadSheetMusic(songId, songSlug) {
     window.URL.revokeObjectURL(url);
 
     if (btn) btn.textContent = originalText;
+    
+    console.log('✅ PDF downloaded successfully!');
   } catch (err) {
     console.error('Download PDF error:', err);
     alert("Couldn't load the PDF. Please try again.");
