@@ -824,6 +824,11 @@ async function downloadSheetMusic(songId, songSlug) {
   try {
     console.log('📥 Downloading PDF for:', { songId, songSlug });
 
+    // Show loading message
+    const btn = event?.target;
+    const originalText = btn?.textContent;
+    if (btn) btn.textContent = '⏳ Loading...';
+
     const { data, error } = await window.supabase.functions.invoke(
       'get-sheet-music-url',
       { body: { songSlug } }
@@ -833,13 +838,25 @@ async function downloadSheetMusic(songId, songSlug) {
 
     if (error) throw error;
 
-    const url = data?.url;
-    if (!url) throw new Error('No URL returned');
+    // The edge function now returns the PDF directly as a blob
+    // We need to create a download link
+    const blob = new Blob([data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${songSlug}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
 
-    window.open(url, '_blank', 'noopener');
+    if (btn) btn.textContent = originalText;
   } catch (err) {
     console.error('Download PDF error:', err);
     alert("Couldn't load the PDF. Please try again.");
+    const btn = event?.target;
+    if (btn) btn.textContent = '📄 PDF';
   }
 }
 
