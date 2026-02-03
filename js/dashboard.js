@@ -771,7 +771,7 @@ try {
   // 1) Fetch purchased songs (same logic as your songs list)
   const { data: purchases, error } = await window.supabase
     .from('purchases')
-    .select('song_id, created_at')
+    .select('song_slug, created_at')
     .eq('user_id', userId)
     .eq('status', 'paid')
     .neq('song_id', 'bundle_credits')
@@ -791,14 +791,16 @@ try {
   }
 
   // 2) ✅ Deduplicate song IDs to prevent showing the same song multiple times
-  const uniqueSongIds = [...new Set(purchases.map(p => p.song_id))];
+  const uniqueSongSlugs = [...new Set(purchases.map(p => p.song_slug))];
+
 
   // 3) Render each unique purchased song with a download button
-  container.innerHTML = uniqueSongIds.map(songId => {
-    const songName = SONG_NAMES[songId] || songId.replace('song:', '');
-
+  container.innerHTML = uniqueSongIds.map(songSlug => {
+    const songId = `song:${songSlug}`;
+    const songName = SONG_NAMES[songId] || songSlug;
+  
     return `
-      <div class="song-item" data-sheet-song-id="${songId}">
+      <div class="song-item" data-sheet-song-id="${songSlug}">
         <div class="song-info">
           <div class="song-title">${songName}</div>
           <div class="song-meta">PDF download for your purchase</div>
@@ -811,6 +813,7 @@ try {
       </div>
     `;
   }).join('');
+  
 
 } catch (err) {
   console.error('Error loading sheet music:', err);
