@@ -1354,83 +1354,55 @@
     let allPurchases = [];
     let allBundles = [];
     let userToDelete = null;
-let allPDFs = [];
+    let allPDFs = [];
 
     // ═══════════════════════════════════════════════════════
-    // SHEET MUSIC MANAGEMENT
+    // SHEET MUSIC MANAGEMENT  (all calls routed through admin-edge)
     // ═══════════════════════════════════════════════════════
+
+    // 👉 This is your edge function URL — constructed from SUPABASE_URL so it stays in sync.
+    const ADMIN_EDGE_URL = `${SUPABASE_URL}/functions/v1/admin-edge`;
+
+    // Generic helper: calls admin-edge with the given action.
+    // body can be: null (GET), a plain object (sent as JSON), or a FormData (sent as multipart for uploads).
+    async function edgeRequest(action, body = null) {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const url = `${ADMIN_EDGE_URL}?action=${action}`;
+
+      const options = {
+        method: body ? "POST" : "GET",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      };
+
+      if (body instanceof FormData) {
+        // Upload: let the browser set Content-Type with the multipart boundary
+        options.body = body;
+      } else if (body) {
+        options.headers["Content-Type"] = "application/json";
+        options.body = JSON.stringify(body);
+      }
+
+      const res = await fetch(url, options);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      return res.json();
+    }
 
     async function loadSheetMusic() {
+      const grid = document.getElementById('pdfGrid');
+      grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
+
       try {
-        console.log('🔍 Loading PDFs from sheet-music/songs...');
-        const grid = document.getElementById('pdfGrid');
-        grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
-    
-        // Get current session for auth
-        const { data: { session } } = await window.supabase.auth.getSession();
-        
-        if (!session) {
-          throw new Error('Not authenticated');
-        }
-    
-        // Create admin client with service role key simulation via RLS
-        const { data: files, error } = await window.supabase.storage
-          .from('sheet-music')
-          .list('songs', {
-            limit: 1000,
-            sortBy: { column: 'name', order: 'asc' }
-          });
-    
-        console.log('📦 Files response:', { files, error });
-    
-        if (error) {
-          console.error('❌ Storage error:', error);
-          
-          // Try alternative: list root and look for songs folder
-          console.log('🔄 Trying alternative method...');
-          const { data: rootFiles, error: rootError } = await window.supabase.storage
-            .from('sheet-music')
-            .list('', {
-              limit: 1000,
-              sortBy: { column: 'name', order: 'asc' }
-            });
-          
-          console.log('📦 Root files:', { rootFiles, rootError });
-          
-          if (rootError) throw error;
-          
-          // If files are in root instead of songs folder
-          if (rootFiles && rootFiles.length > 0) {
-            allPDFs = rootFiles.filter(f => f.name && f.name.endsWith('.pdf'));
-            console.log('✅ Found PDFs in root:', allPDFs.map(p => p.name));
-            
-            if (allPDFs.length > 0) {
-              renderPDFs(allPDFs);
-              return;
-            }
-          }
-          
-          throw error;
-        }
-    
-        if (!files || files.length === 0) {
-          console.log('⚠️ No files found in songs folder, checking root...');
-          
-          const { data: rootFiles } = await window.supabase.storage
-            .from('sheet-music')
-            .list('', {
-              limit: 1000
-            });
-          
-          if (rootFiles && rootFiles.length > 0) {
-            allPDFs = rootFiles.filter(f => f.name && f.name.endsWith('.pdf'));
-            if (allPDFs.length > 0) {
-              console.log('✅ Found PDFs in root:', allPDFs.map(p => p.name));
-              renderPDFs(allPDFs);
-              return;
-            }
-          }
-          
+        const result = await edgeRequest("list");
+        allPDFs = result.files || [];
+
+        if (allPDFs.length === 0) {
           grid.innerHTML = `
             <div class="empty-state">
               <div class="empty-state-icon">📄</div>
@@ -1439,25 +1411,11 @@ let allPDFs = [];
             </div>`;
           return;
         }
-    
-        allPDFs = files.filter(f => f.name && f.name.endsWith('.pdf'));
-        console.log('✅ Found PDFs:', allPDFs.map(p => p.name));
-        
-        if (allPDFs.length === 0) {
-          grid.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📄</div>
-              <p>No PDF files found (found ${files.length} non-PDF files)</p>
-            </div>`;
-          return;
-        }
-    
+
         renderPDFs(allPDFs);
       } catch (e) {
         console.error('💥 Error loading PDFs:', e);
-        document.getElementById('pdfGrid').innerHTML = 
-          `<div class="error-message">Error loading PDFs: ${e.message}<br><br>
-          <small>Check browser console for details</small></div>`;
+        grid.innerHTML = `<div class="error-message">Error loading PDFs: ${e.message}</div>`;
       }
     }
 
@@ -1478,7 +1436,7 @@ let allPDFs = [];
           <div class="pdf-icon">📄</div>
           <div class="pdf-name">${pdf.name}</div>
           <div style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">
-            ${(pdf.metadata.size / 1024).toFixed(1)} KB
+            ${pdf.metadata && pdf.metadata.size ? (pdf.metadata.size / 1024).toFixed(1) + ' KB' : 'Unknown size'}
           </div>
           <div class="pdf-actions">
             <button class="btn-view" onclick="viewPDF('${pdf.name}')">👁️ View</button>
@@ -1498,12 +1456,8 @@ let allPDFs = [];
 
     async function viewPDF(filename) {
       try {
-        const { data, error } = await window.supabase.storage
-          .from('sheet-music')
-          .createSignedUrl(`songs/${filename}`, 300);
-
-        if (error) throw error;
-        window.open(data.signedUrl, '_blank');
+        const result = await edgeRequest("view", { filename });
+        window.open(result.url, '_blank');
       } catch (e) {
         alert('❌ Error viewing PDF: ' + e.message);
       }
@@ -1515,12 +1469,7 @@ let allPDFs = [];
       }
 
       try {
-        const { error } = await window.supabase.storage
-          .from('sheet-music')
-          .remove([`songs/${filename}`]);
-
-        if (error) throw error;
-
+        await edgeRequest("delete", { filename });
         alert('✅ PDF deleted successfully!');
         await loadSheetMusic();
       } catch (e) {
@@ -1551,15 +1500,12 @@ let allPDFs = [];
           status.textContent = `Uploading ${uploaded + 1}/${total}: ${file.name}`;
           bar.style.width = `${(uploaded / total) * 100}%`;
 
-          const { error } = await window.supabase.storage
-            .from('sheet-music')
-            .upload(`songs/${file.name}`, file, {
-              upsert: true,
-              contentType: 'application/pdf'
-            });
+          // Send as multipart FormData so the edge function receives the actual file bytes
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("filename", file.name);
 
-          if (error) throw error;
-
+          await edgeRequest("upload", formData);
           uploaded++;
         } catch (e) {
           alert(`❌ Error uploading "${file.name}": ${e.message}`);
