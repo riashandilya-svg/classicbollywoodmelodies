@@ -122,13 +122,14 @@ const userEmailEl = document.getElementById('userEmail');
 if (userEmailEl) userEmailEl.textContent = '';
 
         // Load all dashboard data
-      await Promise.all([
+ await Promise.all([
   loadStats(user.id),
   loadBookStatus(user.id),
   loadSongs(user.id),
-  loadSheetMusic(user.id),      // ✅ ADD THIS
+  loadSheetMusic(user.id),   // ✅ ADD THIS
   loadPurchaseHistory(user.id)
 ]);
+
 
 
     } catch (error) {
@@ -711,6 +712,91 @@ async function loadSongs(userId) {
         console.error('Error loading songs:', error);
         document.getElementById('songsList').innerHTML = '<p style="color: red;">Error loading songs</p>';
     }
+}
+// Load sheet music PDFs for purchased songs
+async function loadSheetMusic(userId) {
+  try {
+    const container = document.getElementById('sheetMusicList');
+    if (!container) return;
+
+    // 1) Get all PAID song purchases for this user (no bundles)
+    const { data: purchases, error: purchasesError } = await window.supabase
+      .from('purchases')
+      .select('song_id, created_at')
+      .eq('user_id', userId)
+      .eq('status', 'paid')
+      .neq('song_id', 'bundle_credits')
+      .neq('song_id', 'pack:5')
+      .order('created_at', { ascending: false });
+
+    if (purchasesError) throw purchasesError;
+
+    if (!purchases || purchases.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">🎼</div>
+          <p>No sheet music yet. Buy a song to unlock PDFs.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Deduplicate song_ids (in case of re-purchases)
+    const uniqueSongIds = [...new Set(purchases.map(p => p.song_id))];
+
+    // 2) For each purchased song, ask Supabase for a SIGNED PDF URL
+    const rows = [];
+    for (const songId of uniqueSongIds) {
+      const songName = SONG_NAMES[songId] || songId.replace('song:', '');
+
+      const { data, error } = await window.supabase.functions.invoke(
+        'get-sheet-music-url',
+        { body: { songId } }
+      );
+
+      // If user owns the song but PDF mapping fails, show a helpful message
+      if (error || !data?.url) {
+        rows.push(`
+          <div class="song-item">
+            <div class="song-info">
+              <div class="song-title">${songName}</div>
+              <div class="song-meta">PDF not available (check filename/path)</div>
+            </div>
+            <div class="song-actions">
+              <button class="play-btn" disabled style="opacity:.6; cursor:not-allowed;">
+                PDF Missing
+              </button>
+            </div>
+          </div>
+        `);
+        continue;
+      }
+
+      // 3) Render a download button (signed URL)
+      rows.push(`
+        <div class="song-item">
+          <div class="song-info">
+            <div class="song-title">${songName}</div>
+            <div class="song-meta">Sheet music PDF</div>
+          </div>
+          <div class="song-actions">
+            <a class="play-btn" href="${data.url}" target="_blank" rel="noopener">
+              Open PDF
+            </a>
+          </div>
+        </div>
+      `);
+    }
+
+    container.innerHTML = rows.join('');
+
+  } catch (err) {
+    console.error('Error loading sheet music:', err);
+    const container = document.getElementById('sheetMusicList');
+    if (container) {
+      container.innerHTML = `<p style="color:red;">Error loading sheet music</p>`;
+    }
+  }
 }
 
 // Update song progress
