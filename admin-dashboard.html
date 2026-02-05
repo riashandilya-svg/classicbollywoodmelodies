@@ -2321,20 +2321,31 @@ async function loadPurchases() {
     // BUNDLES
     // ═══════════════════════════════════════════════════════
 
-async function loadBundles() {
-  try {
-    document.getElementById('bundlesTableBody').innerHTML =
-      '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
-    await loadBundlesData();
-    updateSortHeaders('bundles');
-    renderBundles(sortArray(allBundles, 'bundles'));
-  } catch (e) {
-    console.error('Error:', e);
-    document.getElementById('bundlesTableBody').innerHTML =
-      `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`;
-  }
-}
-
+    // ═══════════════════════════════════════════════════════
+    // BUNDLES
+    // ═══════════════════════════════════════════════════════
+    
+    async function loadBundlesData() {
+      const { data, error } = await window.supabase
+        .from('purchases').select('*').eq('song_id', 'pack:5').order('created_at', { ascending: false });
+      if (error) throw error;
+      allBundles = data || [];
+    }
+    
+    async function loadBundles() {
+      try {
+        document.getElementById('bundlesTableBody').innerHTML =
+          '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
+        await loadBundlesData();
+        updateSortHeaders('bundles');
+        renderBundles(sortArray(allBundles, 'bundles'));
+      } catch (e) {
+        console.error('Error:', e);
+        document.getElementById('bundlesTableBody').innerHTML =
+          `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+      }
+    }
+    
     function renderBundles(list) {
       const data = list || allBundles;
       const tbody = document.getElementById('bundlesTableBody');
@@ -2353,8 +2364,8 @@ async function loadBundles() {
         </tr>`;
       }).join('');
     }
-
-function loadBundles() {
+    
+    function filterBundles() {
       const q = document.getElementById('bundleSearch').value.toLowerCase();
       const filtered = allBundles.filter(b => {
         const profile = getProfile(b.user_id);
