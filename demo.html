@@ -203,7 +203,8 @@ const STEPS = [
   title: "Connect your keyboard (USB)",
   text: "You can use this app on a laptop, tablet, or mobile device. You can play notes using your mouse or touch as well.\n\nFor the best experience, connect a piano or MIDI keyboard to your device using a USB cable (usually USB-B on the keyboard side). When you play on the keyboard, the app automatically detects and shows the notes you’re playing on the screen.",
   selector: null,
-  video: null
+  video: null,
+    hideBack: true
 },
 
 {
@@ -827,6 +828,9 @@ setOverlayDim(step.dim !== false);
     stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
 
     backBtn.disabled = idx === 0;
+    // Hide Back button only for steps that request it
+backBtn.style.display = (STEPS[idx].hideBack) ? "none" : "inline-block";
+
 nextBtn.textContent =
   (idx === STEPS.length - 1)
     ? (STEPS[idx].nextLabel || "Done")
