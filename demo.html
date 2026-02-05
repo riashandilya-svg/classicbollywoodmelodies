@@ -102,12 +102,6 @@
   border: 1px solid rgba(0,0,0,0.10);
 }
 
-#demoImage img{
-  width:100%;
-  height:auto;
-  display:block;
-}
-
     #demoControls{
       display:flex;
       gap:10px;
@@ -177,9 +171,10 @@
   width: 100%;
   height: auto;
   display: block;
-  max-height: 220px;       /* smaller */
-  object-fit: contain;     /* keep it nice */
+  max-height: 220px;
+  object-fit: contain;
 }
+
 
   </style>
 </head>
@@ -213,7 +208,7 @@
 
   <div id="demoCard">
     <h3 id="demoTitle"></h3>
-    <p id="demoText"></p>
+<div id="demoText"></div>
     <div id="demoActionStatus" style="margin: 6px 0 10px 0; font-size: 13px; font-weight: 700;"></div>
 
 <div id="demoImage">
@@ -242,7 +237,6 @@
   // If a selector isn't found, the step will still show, but without highlight.
 const STEPS = [
   
-{
 {
   title: "Connect your keyboard (USB)",
   html: `
@@ -1058,7 +1052,9 @@ if (data.type === "tour:resume") {
   // If this step has a custom resume message, show it
   if (step && step.resume) {
     titleEl.textContent = step.resume.title || step.title || "";
-textEl.textContent = step.resume.text || step.text || "";
+if (step.resume && step.resume.html) textEl.innerHTML = step.resume.html;
+else if (step.html) textEl.innerHTML = step.html;
+else textEl.textContent = step.resume.text || step.text || "";
     setStatus("", false); // clear the action status line
 
     // keep highlight positioned
