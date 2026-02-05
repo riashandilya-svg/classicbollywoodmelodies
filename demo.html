@@ -91,6 +91,21 @@
       object-fit: cover;
       display:block;
     }
+#demoImage{
+  width: 100%;
+  border-radius: 12px;
+  background: #fff;
+  display:none;
+  margin: 8px 0 10px 0;
+  overflow:hidden;
+  border: 1px solid rgba(0,0,0,0.10);
+}
+
+#demoImage img{
+  width:100%;
+  height:auto;
+  display:block;
+}
 
     #demoControls{
       display:flex;
@@ -176,6 +191,9 @@
     <p id="demoText"></p>
     <div id="demoActionStatus" style="margin: 6px 0 10px 0; font-size: 13px; font-weight: 700;"></div>
 
+<div id="demoImage">
+  <img id="demoImageEl" alt="" />
+</div>
 
     <div id="demoVideo">
       <video id="demoVideoEl" controls playsinline></video>
@@ -201,11 +219,21 @@ const STEPS = [
   
 {
   title: "Connect your keyboard (USB)",
-  text: "You can use this app on a laptop, tablet, or mobile device. You can play notes using your mouse or touch as well.\n\nFor the best experience, connect a piano or MIDI keyboard to your device using a USB cable (usually USB-B on the keyboard side). When you play on the keyboard, the app automatically detects and shows the notes you’re playing on the screen.",
+  text:
+    "For the best experience, connect a piano/MIDI keyboard to your device using a USB cable (usually USB-B on the keyboard side).\n\n" +
+    "If you see the MIDI permission popup, select “Continue allowing…” and click Done.\n\n" +
+    "If it doesn’t show up:\n" +
+    "• Click the lock icon (or site controls) near the address bar\n" +
+    "• Open Site settings / Permissions\n" +
+    "• Find “MIDI devices” and set it to Allow\n\n" +
+    "Then refresh the page and try again.",
   selector: null,
   video: null,
-    hideBack: true
+  image: "midi-permission.png",
+  imageAlt: "Chrome MIDI permission popup showing Done button",
+  hideBack: true
 },
+
 
 {
   title: "Choose which hand to practice",
@@ -428,6 +456,24 @@ text: "You can slow things down or speed them up anytime. Try tapping + or - onc
 
   const videoWrap = document.getElementById("demoVideo");
   const videoEl = document.getElementById("demoVideoEl");
+const imageWrap = document.getElementById("demoImage");
+const imageEl = document.getElementById("demoImageEl");
+
+function stopImage(){
+  imageEl.removeAttribute("src");
+  imageEl.alt = "";
+  imageWrap.style.display = "none";
+}
+
+function showImage(src, altText){
+  if (!src){
+    stopImage();
+    return;
+  }
+  imageEl.src = src;
+  imageEl.alt = altText || "";
+  imageWrap.style.display = "block";
+}
 
   const startBtn = document.getElementById("startTourBtn");
   const stopBtn = document.getElementById("stopTourBtn");
@@ -836,12 +882,16 @@ nextBtn.textContent =
     ? (STEPS[idx].nextLabel || "Done")
     : "Next";
 
+stopVideo();
+stopImage();
 
-    stopVideo();
-    const rect = highlight(step.selector);
-    placeCardNear(rect);
-    setupActionWatcher(step.action);
-    playVideo(step.video);
+const rect = highlight(step.selector);
+placeCardNear(rect);
+
+setupActionWatcher(step.action);
+playVideo(step.video);
+showImage(step.image, step.imageAlt);
+
     // if this step requires clicking the feature, wait for it
 if (step.waitForClick) {
   setupWaitForClick(step.selector);
