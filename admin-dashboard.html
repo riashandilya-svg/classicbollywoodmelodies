@@ -2256,8 +2256,6 @@ async function loadPurchases() {
     document.getElementById('purchasesTableBody').innerHTML =
       '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
     await loadPurchasesData();
-    
-    // Don't call loadUsers - just render with what we have
     updateSortHeaders('purchases');
     renderPurchases(sortArray(allPurchases, 'purchases'));
     calculateRevenue();
@@ -2323,20 +2321,11 @@ async function loadPurchases() {
     // BUNDLES
     // ═══════════════════════════════════════════════════════
 
-    async function loadBundlesData() {
-      const { data, error } = await window.supabase
-        .from('purchases').select('*').eq('song_id', 'pack:5').order('created_at', { ascending: false });
-      if (error) throw error;
-      allBundles = data || [];
-    }
-
-async function loadBundles() {
+function loadBundles() {
   try {
     document.getElementById('bundlesTableBody').innerHTML =
       '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
     await loadBundlesData();
-    
-    // Don't call loadUsers - just render with what we have
     updateSortHeaders('bundles');
     renderBundles(sortArray(allBundles, 'bundles'));
   } catch (e) {
