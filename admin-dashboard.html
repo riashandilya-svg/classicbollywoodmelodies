@@ -2256,6 +2256,8 @@ async function loadPurchases() {
     document.getElementById('purchasesTableBody').innerHTML =
       '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
     await loadPurchasesData();
+    
+    // Don't call loadUsers - just render with what we have
     updateSortHeaders('purchases');
     renderPurchases(sortArray(allPurchases, 'purchases'));
     calculateRevenue();
@@ -2333,6 +2335,8 @@ async function loadBundles() {
     document.getElementById('bundlesTableBody').innerHTML =
       '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
     await loadBundlesData();
+    
+    // Don't call loadUsers - just render with what we have
     updateSortHeaders('bundles');
     renderBundles(sortArray(allBundles, 'bundles'));
   } catch (e) {
@@ -2341,6 +2345,7 @@ async function loadBundles() {
       `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`;
   }
 }
+
     function renderBundles(list) {
       const data = list || allBundles;
       const tbody = document.getElementById('bundlesTableBody');
