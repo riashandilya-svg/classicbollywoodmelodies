@@ -1063,14 +1063,14 @@
               <th>Actions</th>
             </tr>
           </thead>
-              <tbody id="purchasesTableBody">
-                <tr>
-                  <td colspan="5" class="loading">
-                    <div class="spinner"></div>
-                    Loading purchases...
-                  </td>
-                </tr>
-              </tbody>
+     <tbody id="purchasesTableBody">
+  <tr>
+    <td colspan="6" class="loading">
+      <div class="spinner"></div>
+      Loading purchases...
+    </td>
+  </tr>
+</tbody>
             </table>
           </div>
         </div>
@@ -2251,26 +2251,22 @@ async function removeSongAccessForever() {
       allPurchases = data || [];
     }
 
-    async function loadPurchases() {
-      try {
-        document.getElementById('purchasesTableBody').innerHTML =
-          '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
-        await loadPurchasesData();
-        
-        // Make sure users are loaded first
-        if (allUsers.length === 0) {
-          await loadUsers();
-        }
-        
-        updateSortHeaders('purchases');
-        renderPurchases(sortArray(allPurchases, 'purchases'));
-        calculateRevenue();
-      } catch (e) {
-        console.error('Error:', e);
-        document.getElementById('purchasesTableBody').innerHTML =
-          `<tr><td colspan="5"><div class="error-message">Error: ${e.message}</div></td></tr>`;
-      }
-    }
+async function loadPurchases() {
+  try {
+    document.getElementById('purchasesTableBody').innerHTML =
+      '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
+    await loadPurchasesData();
+    updateSortHeaders('purchases');
+    renderPurchases(sortArray(allPurchases, 'purchases'));
+    calculateRevenue();
+  } catch (e) {
+    console.error('Error:', e);
+    document.getElementById('purchasesTableBody').innerHTML =
+      `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+  }
+}
+
+    
     function renderPurchases(list) {
       const data = list || allPurchases;
       const tbody = document.getElementById('purchasesTableBody');
@@ -2332,26 +2328,19 @@ async function removeSongAccessForever() {
       allBundles = data || [];
     }
 
-    async function loadBundles() {
-      try {
-        document.getElementById('bundlesTableBody').innerHTML =
-          '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
-        await loadBundlesData();
-        
-        // Make sure users are loaded first
-        if (allUsers.length === 0) {
-          await loadUsers();
-        }
-        
-        updateSortHeaders('bundles');
-        renderBundles(sortArray(allBundles, 'bundles'));
-      } catch (e) {
-        console.error('Error:', e);
-        document.getElementById('bundlesTableBody').innerHTML =
-          `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`;
-      }
-    }
-
+async function loadBundles() {
+  try {
+    document.getElementById('bundlesTableBody').innerHTML =
+      '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
+    await loadBundlesData();
+    updateSortHeaders('bundles');
+    renderBundles(sortArray(allBundles, 'bundles'));
+  } catch (e) {
+    console.error('Error:', e);
+    document.getElementById('bundlesTableBody').innerHTML =
+      `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+  }
+}
     function renderBundles(list) {
       const data = list || allBundles;
       const tbody = document.getElementById('bundlesTableBody');
