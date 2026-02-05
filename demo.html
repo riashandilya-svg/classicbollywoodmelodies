@@ -50,18 +50,19 @@
     }
 
     /* Tooltip card */
-    #demoCard{
-      position: fixed;
-      width: min(420px, calc(100vw - 28px));
-      background: var(--demo-card);
-      border: 1px solid var(--demo-border);
-      border-radius: 16px;
-      padding: 14px;
-      color: var(--demo-text);
-      box-shadow: 0 18px 60px rgba(0,0,0,0.35);
-      z-index: 1000001;
-      display:none;
-    }
+#demoCard{
+  position: fixed;
+  width: min(720px, calc(100vw - 40px)); /* wider, landscape */
+  background: var(--demo-card);
+  border: 1px solid var(--demo-border);
+  border-radius: 18px;
+  padding: 18px;
+  color: var(--demo-text);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+  z-index: 1000001;
+  display:none;
+}
+
 
     #demoTitle{
       font-weight: 800;
@@ -155,6 +156,30 @@
       gap:10px;
       align-items:center;
     }
+/* nicer spacing for text + bullets */
+#demoText{
+  margin: 0 0 10px 0;
+  line-height: 1.45;
+  font-size: 14px;
+}
+
+#demoText ul{
+  margin: 10px 0 0 18px;
+  padding: 0;
+}
+
+#demoText li{
+  margin: 8px 0; /* space between bullets */
+}
+
+/* Make the image a bit smaller */
+#demoImage img{
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 220px;       /* smaller */
+  object-fit: contain;     /* keep it nice */
+}
 
   </style>
 </head>
@@ -218,21 +243,33 @@
 const STEPS = [
   
 {
+{
   title: "Connect your keyboard (USB)",
-  text:
-    "For the best experience, connect a piano/MIDI keyboard to your device using a USB cable (usually USB-B on the keyboard side).\n\n" +
-    "If you see the MIDI permission popup, select “Continue allowing…” and click Done.\n\n" +
-    "If it doesn’t show up:\n" +
-    "• Click the lock icon (or site controls) near the address bar\n" +
-    "• Open Site settings / Permissions\n" +
-    "• Find “MIDI devices” and set it to Allow\n\n" +
-    "Then refresh the page and try again.",
+  html: `
+    <p style="margin:0 0 10px 0;">
+      For the best experience, connect a piano/MIDI keyboard to your device using a USB cable
+      (usually USB-B on the keyboard side).
+    </p>
+
+    <p style="margin:0 0 10px 0;">
+      If you see the MIDI permission popup, select <b>“Continue allowing…”</b> and click <b>Done</b>.
+    </p>
+
+    <p style="margin:0 0 6px 0;"><b>If it doesn’t show up:</b></p>
+    <ul>
+      <li>Click the lock icon (or site controls) near the address bar</li>
+      <li>Open <b>Site settings</b> / <b>Permissions</b></li>
+      <li>Find <b>MIDI devices</b> and set it to <b>Allow</b></li>
+      <li>Refresh the page and try again</li>
+    </ul>
+  `,
   selector: null,
   video: null,
   image: "midi-permission.png",
   imageAlt: "Chrome MIDI permission popup showing Done button",
   hideBack: true
 },
+
 
 
 {
@@ -586,13 +623,17 @@ setOverlayDim(true);
       
       left = Math.min(Math.max(14, rect.left), window.innerWidth - card.offsetWidth - 14);
 } else {
-  // No highlight target (selector: null) — place card lower so it won't cover top bar
+  // No highlight target (selector: null) — center the card, landscape style
   const topBar = document.getElementById("demoTopBar");
   const topBarH = topBar ? topBar.getBoundingClientRect().height : 0;
 
-  top = 28 + topBarH + 16;  // move it down below the top bar
-  left = window.innerWidth - card.offsetWidth - 28;
+  const cardW = card.offsetWidth || 720;
+  left = Math.max(14, (window.innerWidth - cardW) / 2);
+
+  // place it visually centered, but not overlapping top bar
+  top = Math.max(28 + topBarH + 16, (window.innerHeight * 0.18));
 }
+
 
 
     card.style.top = top + "px";
@@ -870,7 +911,9 @@ if (action.type === "click") {
 setOverlayDim(step.dim !== false);
 
     titleEl.textContent = step.title;
-    textEl.textContent = step.text;
+// allow HTML for steps that provide it (bullets, links, etc.)
+if (step.html) textEl.innerHTML = step.html;
+else textEl.textContent = step.text || "";
     stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
 
     backBtn.disabled = idx === 0;
