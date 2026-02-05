@@ -431,7 +431,71 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+/* Manage Songs Button */
+.manage-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--primary);
+  background: white;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
 
+.manage-btn:hover {
+  background: rgba(155, 110, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Song Management Modal Styles */
+.song-list {
+  margin: 20px 0;
+}
+
+.song-item {
+  background: rgba(155, 110, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.song-item-info {
+  flex: 1;
+}
+
+.song-item-id {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.song-item-date {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.song-item-remove {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--error);
+  background: white;
+  color: var(--error);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.song-item-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
     .search-box {
       width: 100%;
       padding: 12px 16px;
@@ -1334,6 +1398,91 @@
     </div>
   </div>
 
+  <!-- Manage Songs Modal -->
+<div id="manageSongsModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color: var(--primary);">🎵 Manage Song Access</h2>
+      <p class="modal-subtitle" id="manageSongsUserName"></p>
+    </div>
+
+    <div id="songsList" class="song-list">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading songs...</p>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeManageSongsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Remove Song Confirmation Modal -->
+<div id="removeSongModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">⚠️ Remove Song Access</h2>
+      <p class="modal-subtitle">This action cannot be undone</p>
+    </div>
+
+    <div id="removeSongStep1" class="confirmation-step">
+      <p class="step-number">Step 1 of 3</p>
+      <p class="confirmation-text">
+        You are about to remove song access for:<br>
+        <strong id="removeSongUserDisplay"></strong><br>
+        <br>
+        Song ID: <span class="code-display" id="removeSongId"></span>
+      </p>
+      <div class="warning-box">
+        <h3>⚠️ This will:</h3>
+        <ul>
+          <li>Remove the song from their purchased songs list</li>
+          <li>Revoke their download access</li>
+          <li>Delete their entitlement for this song</li>
+          <li><strong>NOT refund any payment</strong></li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeRemoveSongModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmRemoveSongStep2()">Continue to Step 2</button>
+      </div>
+    </div>
+
+    <div id="removeSongStep2" class="confirmation-step hidden">
+      <p class="step-number">Step 2 of 3</p>
+      <p class="confirmation-text">
+        Are you absolutely sure you want to remove this song access?<br>
+        <strong>The user will no longer be able to download or access this song.</strong>
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeRemoveSongModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmRemoveSongStep3()">Yes, Continue to Step 3</button>
+      </div>
+    </div>
+
+    <div id="removeSongStep3" class="confirmation-step hidden">
+      <p class="step-number">Step 3 of 3 - FINAL CONFIRMATION</p>
+      <p class="confirmation-text">
+        <strong style="color: var(--error); font-size: 18px;">LAST CHANCE TO CANCEL!</strong><br><br>
+        Once you click "REMOVE ACCESS", the user will permanently lose access to this song.
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeRemoveSongModal()">Cancel - Don't Remove</button>
+        <button class="btn btn-danger" onclick="removeSongAccessForever()">REMOVE ACCESS</button>
+      </div>
+    </div>
+
+    <div id="removingSongStep" class="confirmation-step hidden">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Removing song access...</p>
+      </div>
+    </div>
+  </div>
+</div>
+  
   <!-- Media Lightbox Modal (photo + video) -->
   <div id="mediaModal" class="media-modal-overlay hidden" onclick="closeMediaModal()">
     <img id="mediaModalImg" src="" alt="Book verification photo" style="display:none;">
@@ -1355,7 +1504,8 @@
     let allBundles = [];
     let userToDelete = null;
     let allPDFs = [];
-
+let currentManageUser = null;
+let songToRemove = null;
     // ═══════════════════════════════════════════════════════
     // SHEET MUSIC MANAGEMENT  (all calls routed through admin-edge)
     // ═══════════════════════════════════════════════════════
@@ -1857,9 +2007,12 @@ const ADMIN_EDGE_URL = `${SUPABASE_URL}/functions/v1/admin-list-pdfs`;
           ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>`
           : '<span style="color: var(--muted); font-size: 13px;">None</span>';
 
-        const deleteButton = isAdmin
-          ? '<span class="badge badge-warning">ADMIN</span>'
-          : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+          const actionButtons = isAdmin
+  ? '<span class="badge badge-warning">ADMIN</span>'
+  : songs.length > 0
+    ? `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
+       <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`
+    : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
 
         return `<tr>
           <td>${userInfoHTML(user.display_name, user.email)}</td>
@@ -1870,7 +2023,7 @@ const ADMIN_EDGE_URL = `${SUPABASE_URL}/functions/v1/admin-list-pdfs`;
           <td>${photoHTML}</td>
           <td>${videoHTML}</td>
           <td>${new Date(user.created_at).toLocaleDateString()}</td>
-          <td>${deleteButton}</td>
+<td>${actionButtons}</td>
         </tr>`;
       }).join('');
     }
@@ -2489,6 +2642,135 @@ function switchTab(tabName, btn) {
     document.getElementById('startDate').valueAsDate = _startDate;
 
     checkAdminAccess();
+    // ═══════════════════════════════════════════════════════
+// MANAGE SONGS MODAL
+// ═══════════════════════════════════════════════════════
+
+function openManageSongsModal(user) {
+  currentManageUser = user;
+  document.getElementById('manageSongsUserName').textContent = 
+    `${user.display_name || 'User'} (${user.email})`;
+  
+  document.getElementById('manageSongsModal').classList.remove('hidden');
+  loadUserSongs(user.id);
+}
+
+function loadUserSongs(userId) {
+  const songsList = document.getElementById('songsList');
+  songsList.innerHTML = '<div class="loading"><div class="spinner"></div>Loading songs...</div>';
+
+  // Get all songs for this user (excluding bundles)
+  const userSongs = allPurchases.filter(p => 
+    p.user_id === userId && p.song_id !== 'pack:5'
+  );
+
+  if (userSongs.length === 0) {
+    songsList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎵</div>
+        <p>No songs purchased</p>
+      </div>`;
+    return;
+  }
+
+  songsList.innerHTML = userSongs.map(purchase => `
+    <div class="song-item">
+      <div class="song-item-info">
+        <div class="song-item-id">${purchase.song_id}</div>
+        <div class="song-item-date">Purchased: ${new Date(purchase.created_at).toLocaleDateString()}</div>
+      </div>
+      <button class="song-item-remove" onclick="openRemoveSongModal('${purchase.song_id}')">
+        🗑️ Remove Access
+      </button>
+    </div>
+  `).join('');
+}
+
+function closeManageSongsModal() {
+  document.getElementById('manageSongsModal').classList.add('hidden');
+  currentManageUser = null;
+  // Refresh user data
+  loadUsers();
+}
+
+// ═══════════════════════════════════════════════════════
+// REMOVE SONG CONFIRMATION
+// ═══════════════════════════════════════════════════════
+
+function openRemoveSongModal(songId) {
+  if (!currentManageUser) return;
+  
+  songToRemove = { userId: currentManageUser.id, songId };
+  
+  document.getElementById('removeSongUserDisplay').textContent = 
+    `${currentManageUser.display_name || 'User'} (${currentManageUser.email})`;
+  document.getElementById('removeSongId').textContent = songId;
+
+  document.getElementById('removeSongStep1').classList.remove('hidden');
+  document.getElementById('removeSongStep2').classList.add('hidden');
+  document.getElementById('removeSongStep3').classList.add('hidden');
+  document.getElementById('removingSongStep').classList.add('hidden');
+  
+  document.getElementById('removeSongModal').classList.remove('hidden');
+}
+
+function confirmRemoveSongStep2() {
+  document.getElementById('removeSongStep1').classList.add('hidden');
+  document.getElementById('removeSongStep2').classList.remove('hidden');
+}
+
+function confirmRemoveSongStep3() {
+  document.getElementById('removeSongStep2').classList.add('hidden');
+  document.getElementById('removeSongStep3').classList.remove('hidden');
+}
+
+function closeRemoveSongModal() {
+  document.getElementById('removeSongModal').classList.add('hidden');
+  songToRemove = null;
+}
+
+async function removeSongAccessForever() {
+  if (!songToRemove) return;
+
+  document.getElementById('removeSongStep3').classList.add('hidden');
+  document.getElementById('removingSongStep').classList.remove('hidden');
+
+  try {
+    const { data: { session } } = await window.supabase.auth.getSession();
+    
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/remove-song-access`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: songToRemove.userId,
+        songId: songToRemove.songId,
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to remove song access');
+    }
+
+    alert(`✅ Song access removed successfully!\n\nSong: ${songToRemove.songId}\nUser: ${currentManageUser.email}`);
+    
+    closeRemoveSongModal();
+    
+    // Refresh data
+    await Promise.all([loadPurchasesData(), loadBundlesData()]);
+    loadUserSongs(currentManageUser.id);
+    calculateRevenue();
+    
+  } catch (e) {
+    console.error('Remove song error:', e);
+    alert('❌ Error: ' + e.message);
+    closeRemoveSongModal();
+  }
+}
   </script>
 </body>
 </html>
