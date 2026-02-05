@@ -881,7 +881,15 @@ nextBtn.addEventListener("click", () => {
 
 
   backBtn.addEventListener("click", () => goTo(idx - 1));
-  skipBtn.addEventListener("click", hideTour);
+skipBtn.addEventListener("click", () => {
+  // Skip only the current step and move to the next one
+  if (idx < STEPS.length - 1) {
+    goTo(idx + 1);
+  } else {
+    hideTour();
+  }
+});
+
 
   window.addEventListener("resize", () => {
     if (running) render();
