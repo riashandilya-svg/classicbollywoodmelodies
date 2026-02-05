@@ -2243,29 +2243,28 @@ async function removeSongAccessForever() {
     // ═══════════════════════════════════════════════════════
     // PURCHASES
     // ═══════════════════════════════════════════════════════
-
+    
     async function loadPurchasesData() {
       const { data, error } = await window.supabase
         .from('purchases').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       allPurchases = data || [];
     }
-
-async function loadPurchases() {
-  try {
-    document.getElementById('purchasesTableBody').innerHTML =
-      '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
-    await loadPurchasesData();
-    updateSortHeaders('purchases');
-    renderPurchases(sortArray(allPurchases, 'purchases'));
-    calculateRevenue();
-  } catch (e) {
-    console.error('Error:', e);
-    document.getElementById('purchasesTableBody').innerHTML =
-      `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`;
-  }
-}
-
+    
+    async function loadPurchases() {
+      try {
+        document.getElementById('purchasesTableBody').innerHTML =
+          '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
+        await loadPurchasesData();
+        updateSortHeaders('purchases');
+        renderPurchases(sortArray(allPurchases, 'purchases'));
+        calculateRevenue();
+      } catch (e) {
+        console.error('Error:', e);
+        document.getElementById('purchasesTableBody').innerHTML =
+          `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+      }
+    }
     
     function renderPurchases(list) {
       const data = list || allPurchases;
@@ -2280,7 +2279,6 @@ async function loadPurchases() {
         const origCurrency = p.currency || 'INR';
         const convertedLabel = origCurrency !== 'INR' ? ` <span style="font-size:11px;color:var(--muted);">(was ${CURRENCY_SYMBOLS[origCurrency] || origCurrency}${origCurrency === 'JPY' ? (p.amount/100).toFixed(0) : (p.amount/100).toFixed(2)})</span>` : '';
         
-        // Check if user has any songs (for manage button)
         const userSongs = getSongsForUser(p.user_id);
         const isAdmin = ADMIN_EMAILS.includes(profile?.email);
         const manageButton = !isAdmin && userSongs.length > 0
@@ -2297,7 +2295,7 @@ async function loadPurchases() {
         </tr>`;
       }).join('');
     }
-
+    
     function filterPurchases() {
       const q = document.getElementById('purchaseSearch').value.toLowerCase();
       const filtered = allPurchases.filter(p => {
@@ -2311,7 +2309,7 @@ async function loadPurchases() {
       });
       if (!filtered.length) {
         document.getElementById('purchasesTableBody').innerHTML =
-          '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">🔍</div><p>No purchases match your search</p></td></tr>';
+          '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🔍</div><p>No purchases match your search</p></td></tr>';
         return;
       }
       renderPurchases(filtered);
