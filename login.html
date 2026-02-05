@@ -226,9 +226,11 @@
       <label for="email">Email</label>
       <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
 
-      <div class="row">
-        <button id="discord" class="btn" type="button">Continue with Discord</button>
-      </div>
+   <div class="row">
+  <button id="google" class="btn" type="button">Continue with Google</button>
+  <button id="discord" class="btn" type="button">Continue with Discord</button>
+</div>
+
 
       <div class="row">
         <button id="send" class="btn" type="button">Send login link</button>
@@ -260,6 +262,18 @@
         ? "Logged in as: " + result.data.session.user.email
         : "Not logged in";
     });
+    
+// Google
+document.getElementById("google").addEventListener("click", function() {
+  msg.textContent = "Opening Google login…";
+  sb.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: REDIRECT_URL }
+  }).then(function(result) {
+    if (result.error) { msg.textContent = "Google error: " + result.error.message; return; }
+    if (result.data && result.data.url) window.location.href = result.data.url;
+  });
+});
 
     // Discord
     document.getElementById("discord").addEventListener("click", function() {
