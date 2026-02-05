@@ -1053,15 +1053,16 @@
           <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by name, email, or song ID..." onkeyup="filterPurchases()">
           <div class="table-wrapper">
             <table>
-              <thead>
-                <tr>
-                  <th data-sortable data-col="name" data-table="purchases">Name & Email <span class="sort-arrow">▲</span></th>
-                  <th data-sortable data-col="song" data-table="purchases">Song ID <span class="sort-arrow">▲</span></th>
-                  <th data-sortable data-col="amount" data-table="purchases">Amount <span class="sort-arrow">▲</span></th>
-                  <th>Credits Remaining</th>
-                  <th data-sortable data-col="date" data-table="purchases" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
-                </tr>
-              </thead>
+            <thead>
+            <tr>
+              <th data-sortable data-col="name" data-table="purchases">Name & Email <span class="sort-arrow">▲</span></th>
+              <th data-sortable data-col="song" data-table="purchases">Song ID <span class="sort-arrow">▲</span></th>
+              <th data-sortable data-col="amount" data-table="purchases">Amount <span class="sort-arrow">▲</span></th>
+              <th>Credits Remaining</th>
+              <th data-sortable data-col="date" data-table="purchases" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
               <tbody id="purchasesTableBody">
                 <tr>
                   <td colspan="5" class="loading">
@@ -2255,6 +2256,12 @@ async function removeSongAccessForever() {
         document.getElementById('purchasesTableBody').innerHTML =
           '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>';
         await loadPurchasesData();
+        
+        // Make sure users are loaded first
+        if (allUsers.length === 0) {
+          await loadUsers();
+        }
+        
         updateSortHeaders('purchases');
         renderPurchases(sortArray(allPurchases, 'purchases'));
         calculateRevenue();
@@ -2264,12 +2271,11 @@ async function removeSongAccessForever() {
           `<tr><td colspan="5"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
-
     function renderPurchases(list) {
       const data = list || allPurchases;
       const tbody = document.getElementById('purchasesTableBody');
       if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">💳</div><p>No purchases found</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">💳</div><p>No purchases found</p></td></tr>';
         return;
       }
       tbody.innerHTML = data.map(p => {
@@ -2278,12 +2284,20 @@ async function removeSongAccessForever() {
         const origCurrency = p.currency || 'INR';
         const convertedLabel = origCurrency !== 'INR' ? ` <span style="font-size:11px;color:var(--muted);">(was ${CURRENCY_SYMBOLS[origCurrency] || origCurrency}${origCurrency === 'JPY' ? (p.amount/100).toFixed(0) : (p.amount/100).toFixed(2)})</span>` : '';
         
+        // Check if user has any songs (for manage button)
+        const userSongs = getSongsForUser(p.user_id);
+        const isAdmin = ADMIN_EMAILS.includes(profile?.email);
+        const manageButton = !isAdmin && userSongs.length > 0
+          ? `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(profile).replace(/'/g, "&#39;")})'  style="padding: 6px 12px; font-size: 12px;">🎵 Manage</button>`
+          : '';
+        
         return `<tr>
           <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
           <td><span class="code-display">${p.song_id}</span></td>
           <td>${formatAmount(amountINR, 'INR')}${convertedLabel}</td>
           <td>${p.credits_remaining !== null && p.credits_remaining !== undefined ? p.credits_remaining : 'N/A'}</td>
           <td>${new Date(p.created_at).toLocaleString()}</td>
+          <td>${manageButton}</td>
         </tr>`;
       }).join('');
     }
@@ -2323,6 +2337,12 @@ async function removeSongAccessForever() {
         document.getElementById('bundlesTableBody').innerHTML =
           '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
         await loadBundlesData();
+        
+        // Make sure users are loaded first
+        if (allUsers.length === 0) {
+          await loadUsers();
+        }
+        
         updateSortHeaders('bundles');
         renderBundles(sortArray(allBundles, 'bundles'));
       } catch (e) {
