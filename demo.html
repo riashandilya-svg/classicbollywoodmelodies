@@ -537,10 +537,15 @@ setOverlayDim(true);
       }
       
       left = Math.min(Math.max(14, rect.left), window.innerWidth - card.offsetWidth - 14);
-    } else {
-      top = 28;
-      left = window.innerWidth - card.offsetWidth - 28;
-    }
+} else {
+  // No highlight target (selector: null) — place card lower so it won't cover top bar
+  const topBar = document.getElementById("demoTopBar");
+  const topBarH = topBar ? topBar.getBoundingClientRect().height : 0;
+
+  top = 28 + topBarH + 16;  // move it down below the top bar
+  left = window.innerWidth - card.offsetWidth - 28;
+}
+
 
     card.style.top = top + "px";
     card.style.left = left + "px";
