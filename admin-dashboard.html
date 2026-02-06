@@ -985,21 +985,27 @@
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr>
-                  <th data-sortable data-col="name" data-table="users">Name & Email <span class="sort-arrow">▲</span></th>
-                  <th>Book Owner</th>
-                  <th>Books Owned</th>
-                  <th>Songs Purchased</th>
-                  <th>Bundles</th>
-                  <th>Photo</th>
-                  <th>Video</th>
-                  <th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
-                  <th>Actions</th>
-                </tr>
+         <tr>
+  <th data-sortable data-col="name" data-table="users">Name & Email <span class="sort-arrow">▲</span></th>
+  <th>Gender</th>
+  <th>Level</th>
+  <th>Song Suggestion</th>
+  <th>Opt-in</th>
+
+  <th>Book Owner</th>
+  <th>Books Owned</th>
+  <th>Songs Purchased</th>
+  <th>Bundles</th>
+  <th>Photo</th>
+  <th>Video</th>
+  <th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
+  <th>Actions</th>
+</tr>
+
               </thead>
               <tbody id="usersTableBody">
                 <tr>
-                  <td colspan="9" class="loading">
+                  <td colspan="13" class="loading">
                     <div class="spinner"></div>
                     Loading users...
                   </td>
@@ -2101,7 +2107,7 @@ async function removeSongAccessForever() {
     async function loadUsers() {
       try {
         const tbody = document.getElementById('usersTableBody');
-        tbody.innerHTML = '<tr><td colspan="9" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
+tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
 
         const { data: profiles, error } = await window.supabase
           .from('profiles').select('*').order('created_at', { ascending: false });
@@ -2119,49 +2125,136 @@ async function removeSongAccessForever() {
     }
 
     function renderUsers(list) {
-      const tbody = document.getElementById('usersTableBody');
-      if (!list.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
-        return;
+        const tbody = document.getElementById('usersTableBody');
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
+          return;
+        }
+      
+        tbody.innerHTML = list.map(user => {
+          const isAdmin = ADMIN_EMAILS.includes(user.email);
+          const songs = getSongsForUser(user.id);
+          const bundleCount = getBundleCountForUser(user.id);
+          const photoUrl = photoCache[user.id] || null;
+          const videoUrl = videoCache[user.id] || null;
+      
+          const songsHTML = songs.length
+            ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>`
+            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+      
+          const photoHTML = photoUrl
+            ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openMediaModal('photo','${photoUrl}')">`
+            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+      
+          const videoHTML = videoUrl
+            ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>`
+            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+      
+          const actionButtons = isAdmin
+            ? '<span class="badge badge-warning">ADMIN</span>'
+            : songs.length > 0
+              ? `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
+                 <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`
+              : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+          
+          const gender = user.gender || '-';
+          const level = user.difficulty_level || '-';
+      
+          const songSuggestion = user.song_suggestion
+            ? user.song_suggestion
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;")
+            : '-';
+      
+          const optIn = user.marketing_opt_in
+            ? '<span class="badge badge-success">Yes</span>'
+            : '<span class="badge badge-error">No</span>';
+      
+          const booksOwnedHTML = user.books_owned && user.books_owned.length
+            ? user.books_owned.join(', ')
+            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+      
+          return `<tr>
+            <td>${userInfoHTML(user.display_name, user.email)}</td>
+            <td>${gender}</td>
+            <td>${level}</td>
+            <td>${songSuggestion}</td>
+            <td>${optIn}</td>
+            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+            <td>${booksOwnedHTML}</td>
+            <td>${songsHTML}</td>
+            <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
+            <td>${photoHTML}</td>
+            <td>${videoHTML}</td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>${actionButtons}</td>
+          </tr>`;
+        }).join('');
       }
-
-      tbody.innerHTML = list.map(user => {
-        const isAdmin = ADMIN_EMAILS.includes(user.email);
-        const songs = getSongsForUser(user.id);
-        const bundleCount = getBundleCountForUser(user.id);
-        const photoUrl = photoCache[user.id] || null;
-        const videoUrl = videoCache[user.id] || null;
-
-        const songsHTML = songs.length
-          ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>`
-          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-
-        const photoHTML = photoUrl
-          ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openMediaModal('photo','${photoUrl}')">`
-          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-
-        const videoHTML = videoUrl
-          ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>`
-          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-
-    const actionButtons = isAdmin
-  ? '<span class="badge badge-warning">ADMIN</span>'
-  : songs.length > 0
-    ? `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
-       <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`
-    : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+         
+                 : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+          
+          const gender = user.gender || '-';
+          const level = user.difficulty_level || '-';
+      
+          const songSuggestion = user.song_suggestion
+            ? user.song_suggestion.replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            : '-';
+      
+          const optIn = user.marketing_opt_in
+            ? '<span class="badge badge-success">Yes</span>'
+            : '<span class="badge badge-error">No</span>';
+      
+          return `<tr>
+            <td>${userInfoHTML(user.display_name, user.email)}</td>
+            <td>${gender}</td>
+            <td>${level}</td>
+            <td>${songSuggestion}</td>
+            <td>${optIn}</td>
+            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+            <td>${user.books_owned && user.books_owned.length ? user.books_owned.join(', ') : 'None'}</td>
+            <td>${songsHTML}</td>
+            <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
+            <td>${photoHTML}</td>
+            <td>${videoHTML}</td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>${actionButtons}</td>
+          </tr>`;
+        }).join('');
+      }
+    
+       : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
         
-        return `<tr>
-          <td>${userInfoHTML(user.display_name, user.email)}</td>
-          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
-          <td>${user.books_owned && user.books_owned.length ? user.books_owned.join(', ') : 'None'}</td>
-          <td>${songsHTML}</td>
-          <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
-          <td>${photoHTML}</td>
-          <td>${videoHTML}</td>
-          <td>${new Date(user.created_at).toLocaleDateString()}</td>
-<td>${actionButtons}</td>
-        </tr>`;
+     const gender = user.gender || '-';
+const level = user.difficulty_level || '-';
+
+const songSuggestion = user.song_suggestion
+  ? user.song_suggestion.replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  : '-';
+
+const optIn = user.marketing_opt_in
+  ? '<span class="badge badge-success">Yes</span>'
+  : '<span class="badge badge-error">No</span>';
+
+return `<tr>
+  <td>${userInfoHTML(user.display_name, user.email)}</td>
+  <td>${gender}</td>
+  <td>${level}</td>
+  <td>${songSuggestion}</td>
+  <td>${optIn}</td>
+
+  <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+  <td>${user.books_owned && user.books_owned.length ? user.books_owned.join(', ') : 'None'}</td>
+  <td>${songsHTML}</td>
+  <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
+  <td>${photoHTML}</td>
+  <td>${videoHTML}</td>
+  <td>${new Date(user.created_at).toLocaleDateString()}</td>
+  <td>${actionButtons}</td>
+</tr>`;
       }).join('');
     }
 
