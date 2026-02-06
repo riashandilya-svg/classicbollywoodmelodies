@@ -90,7 +90,7 @@ padding: 0;
       padding: 8px 10px;
       border-radius: 12px;
       white-space: nowrap;
-      line-height: 1; /* this often fixes “extra” vertical space */
+      line-height: 1; /* this often fixes "extra" vertical space */
     }
     .banner-link:hover{ text-decoration: underline; }
     
@@ -893,6 +893,299 @@ padding: 0;
       .profile-modal { width: 94%; padding: 26px 20px 22px; }
     }
 
+    /* ===== Bonus Video Section ===== */
+    .bonus-video-section {
+      margin-top: 14px;
+      padding: 20px;
+      border-radius: var(--radius);
+      border: 2px solid rgba(255, 200, 100, 0.35);
+      background: linear-gradient(135deg, 
+        rgba(255, 200, 100, 0.12), 
+        rgba(255, 180, 80, 0.08)
+      );
+      box-shadow: 0 10px 30px rgba(255, 165, 0, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bonus-video-section::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: -70px;
+      width: 200px;
+      height: 200px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 40% 40%,
+        rgba(255, 200, 100, 0.28),
+        rgba(255, 165, 0, 0.14),
+        transparent 65%);
+      pointer-events: none;
+    }
+
+    .bonus-video-section > * { position: relative; z-index: 1; }
+
+    .bonus-video-section h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #d97706;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bonus-video-section p {
+      margin: 0 0 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(26, 26, 31, 0.82);
+    }
+
+    .bonus-claim-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 165, 0, 0.4);
+      background: linear-gradient(135deg,
+        rgba(255, 200, 100, 0.32),
+        rgba(255, 165, 0, 0.24)
+      );
+      color: #92400e;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 8px 22px rgba(255, 165, 0, 0.18);
+      font-family: inherit;
+    }
+
+    .bonus-claim-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+      box-shadow: 0 12px 30px rgba(255, 165, 0, 0.24);
+    }
+
+    /* ===== Bonus Video Modal ===== */
+    .bonus-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(22, 10, 35, 0.38);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .bonus-modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .bonus-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.94);
+      z-index: 10001;
+      width: 90%;
+      max-width: 540px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 24px;
+      padding: 32px 28px 28px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(18px);
+      border: 2px solid rgba(255, 165, 0, 0.28);
+      box-shadow: 0 28px 60px rgba(255, 165, 0, 0.22);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .bonus-modal::before {
+      content: "";
+      position: absolute;
+      top: -60px;
+      right: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 40% 40%,
+        rgba(255, 200, 100, 0.35),
+        rgba(255, 165, 0, 0.18),
+        transparent 65%);
+      pointer-events: none;
+    }
+
+    .bonus-modal > * { position: relative; z-index: 1; }
+
+    .bonus-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .bonus-modal h3 {
+      margin: 0 0 8px;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      font-size: 28px;
+      color: #d97706;
+    }
+
+    .bonus-modal .modal-sub {
+      margin: 0 0 20px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .bonus-modal .consent-box {
+      margin: 18px 0;
+      padding: 16px;
+      background: rgba(155, 110, 255, 0.06);
+      border: 1px solid rgba(155, 110, 255, 0.22);
+      border-radius: 12px;
+    }
+
+    .bonus-modal .consent-box a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .bonus-modal .consent-box a:hover {
+      text-decoration: underline;
+    }
+
+    .bonus-modal .file-upload-area {
+      margin: 18px 0;
+    }
+
+    .bonus-modal .file-upload-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      border: 2px dashed rgba(255, 165, 0, 0.35);
+      border-radius: 14px;
+      cursor: pointer;
+      background: rgba(255, 200, 100, 0.08);
+      transition: all 0.2s;
+    }
+
+    .bonus-modal .file-upload-label:hover {
+      border-color: rgba(255, 165, 0, 0.55);
+      background: rgba(255, 200, 100, 0.14);
+    }
+
+    .bonus-modal .file-upload-label.has-file {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .bonus-modal .checkbox-consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 18px 0;
+      padding: 14px;
+      background: rgba(255, 200, 100, 0.06);
+      border: 1px solid rgba(255, 165, 0, 0.22);
+      border-radius: 10px;
+    }
+
+    .bonus-modal .checkbox-consent input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .bonus-modal .checkbox-consent label {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(26, 26, 31, 0.86);
+      cursor: pointer;
+      margin: 0;
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: 500;
+    }
+
+    .bonus-modal .modal-feedback {
+      min-height: 20px;
+      margin: 14px 0;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .bonus-modal .modal-feedback.success { color: #059669; }
+    .bonus-modal .modal-feedback.error { color: #dc2626; }
+
+    .bonus-modal .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .bonus-modal .btn-cancel {
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(140, 120, 160, 0.22);
+      background: rgba(255, 255, 255, 0.72);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: rgba(43, 17, 64, 0.72);
+      cursor: pointer;
+      transition: background 0.14s ease;
+    }
+
+    .bonus-modal .btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .bonus-modal .btn-upload {
+      padding: 10px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 165, 0, 0.4);
+      background: linear-gradient(135deg,
+        rgba(255, 200, 100, 0.32),
+        rgba(255, 165, 0, 0.24)
+      );
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #92400e;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(255, 165, 0, 0.18);
+      transition: transform 0.14s ease, filter 0.14s ease;
+    }
+
+    .bonus-modal .btn-upload:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    .bonus-modal .btn-upload:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @media (max-width: 580px) {
+      .bonus-modal { width: 94%; padding: 26px 20px 22px; }
+    }
+
   </style>
 </head>
 
@@ -931,8 +1224,18 @@ padding: 0;
           </div>
         </div>
       </div>
+
+      <!-- Bonus Video Section (shows only if not claimed) -->
+      <div id="bonusVideoSection" class="bonus-video-section" style="display: none;">
+        <h3>🎁 Bonus: Get 1 Free Song!</h3>
+        <p>Upload a short video of you enjoying the book and get 1 free song credit instantly!</p>
+        <button class="bonus-claim-btn" id="openBonusModalBtn" type="button">
+          🎥 Claim Your Free Song
+        </button>
+      </div>
     </div>
 
+    <!-- Profile Modal -->
     <div id="profileModalOverlay" class="profile-modal-overlay"></div>
     <div id="profileModal" class="profile-modal" role="dialog" aria-modal="true" aria-label="Edit Profile">
       <h3>Edit Profile</h3>
@@ -955,6 +1258,45 @@ padding: 0;
       <div class="modal-actions">
         <button class="btn-cancel" id="profileCancelBtn" type="button">Cancel</button>
         <button class="btn-save"   id="profileSaveBtn"   type="button">Save</button>
+      </div>
+    </div>
+
+    <!-- Bonus Video Modal -->
+    <div id="bonusModalOverlay" class="bonus-modal-overlay"></div>
+    <div id="bonusModal" class="bonus-modal" role="dialog" aria-modal="true" aria-label="Claim Free Song">
+      <h3>🎁 Get Your Free Song!</h3>
+      <p class="modal-sub">Share a quick video of you enjoying the book to claim 1 free song credit.</p>
+
+      <div class="consent-box">
+        <p style="margin: 0 0 8px; font-size: 13px; font-weight: 600;">📹 Before You Upload</p>
+        <p style="margin: 0; font-size: 13px; line-height: 1.6;">
+          Please review our <a href="./video-consent-terms.html" target="_blank">video consent terms</a> 
+          to understand how we may use your video for promotional purposes.
+        </p>
+      </div>
+
+      <div class="file-upload-area">
+        <input type="file" id="bonusVideoInput" accept="video/*" style="display: none;" />
+        <label for="bonusVideoInput" class="file-upload-label" id="bonusVideoLabel">
+          <span style="font-size: 24px;">🎥</span>
+          <span id="bonusVideoText">Choose video...</span>
+        </label>
+        <div id="bonusVideoName" style="font-size: 13px; color: var(--muted); margin-top: 8px;"></div>
+      </div>
+
+      <div class="checkbox-consent">
+        <input type="checkbox" id="bonusVideoConsent" />
+        <label for="bonusVideoConsent">
+          I confirm that my video is appropriate, features me discussing the book, and I accept all terms 
+          regarding video submissions including potential public usage as outlined in the video consent terms.
+        </label>
+      </div>
+
+      <div class="modal-feedback" id="bonusFeedback"></div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" id="bonusCancelBtn" type="button">Cancel</button>
+        <button class="btn-upload" id="bonusUploadBtn" type="button">Upload & Claim Credit</button>
       </div>
     </div>
 
