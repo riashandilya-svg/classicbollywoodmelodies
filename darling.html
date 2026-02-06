@@ -1047,6 +1047,20 @@ function updateTrainingProgress() {
     document.getElementById('trainingProgressText').textContent =
         percent + "%";
 }
+
+function hardStopUserNote() {
+    if (!synth) return;
+
+    if (activeMidiNote !== null) {
+        synth.triggerRelease(getNoteName(activeMidiNote));
+    }
+
+    synth.releaseAll();
+
+    activeMidiNote = null;
+    noteHoldStartTime = null;
+    midiPressedNotes.clear();
+}
 let trainingActive = false;
 let trainingIndex = 0;
 let waitingForInput = false;
@@ -1073,8 +1087,6 @@ let freeModeReleaseTimer = null;
 let lastMouseMidi = null;
 let touchActive = false; // Track if touch is active
 let activeTouches = new Map(); // Track multiple touches by touch identifier
-    
-    if (!synth) return;
 
     if (activeMidiNote !== null) {
         synth.triggerRelease(getNoteName(activeMidiNote));
