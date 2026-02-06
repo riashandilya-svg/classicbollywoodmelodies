@@ -95,12 +95,13 @@ async function initDashboard() {
     // Get user's display name
     const { data: profile } = await window.supabase
       .from('profiles')
-      .select('display_name, is_book_owner')
+      .select('display_name, is_book_owner, video_bonus_claimed')
       .eq('id', user.id)
       .maybeSingle();
     
     console.log('🔍 Profile data:', profile);
     console.log('📚 is_book_owner:', profile?.is_book_owner);
+    console.log('🎁 video_bonus_claimed:', profile?.video_bonus_claimed);
 
     const displayName = profile?.display_name || user.email.split('@')[0];
     
@@ -128,8 +129,22 @@ async function initDashboard() {
         verifyBookLink.style.display = 'inline-flex'; // Show if not verified
       }
     }
+
+    // Show/hide bonus video section
+    const bonusSection = document.getElementById('bonusVideoSection');
+    if (bonusSection) {
+      // Show only if user is a book owner AND hasn't claimed the video bonus yet
+      if (profile?.is_book_owner === true && profile?.video_bonus_claimed !== true) {
+        console.log('🎁 Showing bonus video section');
+        bonusSection.style.display = 'block';
+      } else {
+        console.log('🚫 Hiding bonus video section (already claimed or not book owner)');
+        bonusSection.style.display = 'none';
+      }
+    }
     
     setupProfileModal(user);
+    setupBonusVideoModal(user);
     
     // Optional: you can keep userEmail empty or hide it
     const userEmailEl = document.getElementById('userEmail');
@@ -237,6 +252,176 @@ function setupProfileModal(user) {
     } finally {
       saveBtn.disabled    = false;
       saveBtn.textContent = 'Save';
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// BONUS VIDEO MODAL: upload video for free credit
+// ─────────────────────────────────────────────
+function setupBonusVideoModal(user) {
+  const openBtn     = document.getElementById('openBonusModalBtn');
+  const modal       = document.getElementById('bonusModal');
+  const overlay     = document.getElementById('bonusModalOverlay');
+  const videoInput  = document.getElementById('bonusVideoInput');
+  const videoLabel  = document.getElementById('bonusVideoLabel');
+  const videoText   = document.getElementById('bonusVideoText');
+  const videoName   = document.getElementById('bonusVideoName');
+  const consentBox  = document.getElementById('bonusVideoConsent');
+  const uploadBtn   = document.getElementById('bonusUploadBtn');
+  const cancelBtn   = document.getElementById('bonusCancelBtn');
+  const feedback    = document.getElementById('bonusFeedback');
+
+  if (!openBtn || !modal) return;
+
+  let selectedVideoFile = null;
+
+  // Open modal
+  openBtn.addEventListener('click', () => {
+    // Reset form
+    videoInput.value = '';
+    selectedVideoFile = null;
+    videoLabel.classList.remove('has-file');
+    videoText.textContent = 'Choose video...';
+    videoName.textContent = '';
+    consentBox.checked = false;
+    feedback.textContent = '';
+    feedback.className = '';
+
+    modal.classList.add('open');
+    overlay.classList.add('open');
+  });
+
+  // Close modal
+  function closeModal() {
+    modal.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  overlay.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+
+  // Handle video selection
+  videoInput.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      selectedVideoFile = file;
+      videoLabel.classList.add('has-file');
+      videoText.textContent = '✓ Video selected';
+      videoName.textContent = file.name;
+    } else {
+      selectedVideoFile = null;
+      videoLabel.classList.remove('has-file');
+      videoText.textContent = 'Choose video...';
+      videoName.textContent = '';
+    }
+  });
+
+  // Upload video
+  uploadBtn.addEventListener('click', async () => {
+    feedback.textContent = '';
+    feedback.className = '';
+
+    // Validation
+    if (!selectedVideoFile) {
+      feedback.textContent = 'Please select a video file.';
+      feedback.className = 'error';
+      return;
+    }
+
+    if (!consentBox.checked) {
+      feedback.textContent = 'Please accept the video consent terms.';
+      feedback.className = 'error';
+      return;
+    }
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading...';
+
+    try {
+      const userId = user.id;
+
+      // Upload video to storage
+      const videoExt = selectedVideoFile.name.split('.').pop();
+      const videoPath = `${userId}/bonus-video-${Date.now()}.${videoExt}`;
+
+      const { error: uploadError } = await window.supabase.storage
+        .from('book-videos')
+        .upload(videoPath, selectedVideoFile);
+
+      if (uploadError) throw uploadError;
+
+      // Check if bonus already claimed (double-check)
+      const { data: profile } = await window.supabase
+        .from('profiles')
+        .select('video_bonus_claimed')
+        .eq('id', userId)
+        .single();
+
+      if (profile?.video_bonus_claimed === true) {
+        throw new Error('Bonus already claimed previously.');
+      }
+
+      // Add 1 credit to user_credits
+      const { data: existingCredits } = await window.supabase
+        .from('user_credits')
+        .select('balance')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existingCredits) {
+        // Update existing balance
+        const newBalance = existingCredits.balance + 1;
+        const { error: updateError } = await window.supabase
+          .from('user_credits')
+          .update({ 
+            balance: newBalance,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new record
+        const { error: insertError } = await window.supabase
+          .from('user_credits')
+          .insert({ 
+            user_id: userId,
+            balance: 1,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      // Mark bonus as claimed
+      const { error: markError } = await window.supabase
+        .from('profiles')
+        .update({ video_bonus_claimed: true })
+        .eq('id', userId);
+
+      if (markError) throw markError;
+
+      feedback.textContent = '🎉 Success! 1 free song credit added to your account!';
+      feedback.className = 'success';
+
+      // Hide the bonus section
+      const bonusSection = document.getElementById('bonusVideoSection');
+      if (bonusSection) bonusSection.style.display = 'none';
+
+      // Reload stats to show new credit
+      await loadStats(userId);
+      await loadBookStatus(userId);
+
+      setTimeout(closeModal, 2000);
+
+    } catch (err) {
+      console.error('Bonus video upload error:', err);
+      feedback.textContent = err.message || 'Failed to process video. Please try again.';
+      feedback.className = 'error';
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload & Claim Credit';
     }
   });
 }
