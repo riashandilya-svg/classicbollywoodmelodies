@@ -1072,7 +1072,7 @@
           <tr>
             <th>Type</th>
             <th>Message</th>
-            <th>User ID</th>
+<th>User</th>
             <th class="sort-desc">Created</th>
           </tr>
         </thead>
@@ -1776,6 +1776,18 @@ const ADMIN_EDGE_URL = `${SUPABASE_URL}/functions/v1/admin-list-pdfs`;
     function getProfile(userId) {
       return allUsers.find(u => u.id === userId);
     }
+function getProfileById(userId) {
+  return allUsers.find(u => u.id === userId) || null;
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
     function getSongsForUser(userId) {
       return allPurchases
@@ -2463,14 +2475,20 @@ function renderFeedbackRequests(list) {
         ? `<span class="badge badge-success">Song Request</span>`
         : `<span class="badge badge-warning">${escHTML(r.type)}</span>`;
 
-    return `
-      <tr>
-        <td>${typeBadge}</td>
-        <td style="white-space: pre-wrap;">${escHTML(r.message)}</td>
-        <td><span class="code-display">${escHTML(r.user_id)}</span></td>
-        <td>${new Date(r.created_at).toLocaleString()}</td>
-      </tr>
-    `;
+const p = getProfile(r.user_id);
+const userCell = p
+  ? userInfoHTML(escHTML(p.display_name || 'Unknown'), escHTML(p.email || 'Unknown'))
+  : `<span class="code-display">${escHTML(r.user_id || '')}</span>`;
+
+return `
+  <tr>
+    <td>${typeBadge}</td>
+    <td style="white-space: pre-wrap;">${escHTML(r.message)}</td>
+    <td>${userCell}</td>
+    <td>${new Date(r.created_at).toLocaleString()}</td>
+  </tr>
+`;
+
   }).join('');
 }
 
@@ -2741,7 +2759,7 @@ function filterFeedbackRequests() {
     // TABS
     // ═══════════════════════════════════════════════════════
 
-function switchTab(tabName, btn) {
+async function switchTab(tabName, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
@@ -2753,9 +2771,11 @@ function switchTab(tabName, btn) {
   if (tabName === 'sheetmusic') {
     loadSheetMusic();
   }
-  if (tabName === 'requests') {
-    loadFeedbackRequests();
-  }
+if (tabName === 'requests') {
+  if (!allUsers || allUsers.length === 0) await loadUsers();
+  loadFeedbackRequests();
+}
+
 }
 
 
