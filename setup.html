@@ -318,6 +318,16 @@
       <label for="name">Your name (What should I call you?)</label>
       <input id="name" type="text" placeholder="e.g., Aanya" maxlength="40" />
 
+      <div>
+  <label for="gender">Gender</label>
+  <select id="gender">
+    <option value="">Select…</option>
+    <option value="M">M</option>
+    <option value="F">F</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+
       <div class="grid">
         <div>
           <label for="age">Age bracket</label>
@@ -435,13 +445,14 @@
     async function prefillIfExists(user) {
       const { data, error } = await sb
         .from("profiles")
-        .select("display_name, age_bracket, difficulty_level, books_owned, song_suggestion, marketing_opt_in")
+.select("display_name, gender, age_bracket, difficulty_level, books_owned, song_suggestion, marketing_opt_in")
         .eq("id", user.id)
         .single();
 
       if (error || !data) return;
 
       if (data.display_name) document.getElementById("name").value = data.display_name;
+      if (data.gender) document.getElementById("gender").value = data.gender;
       if (data.age_bracket) document.getElementById("age").value = data.age_bracket;
       if (data.difficulty_level) document.getElementById("level").value = data.difficulty_level;
       if (Array.isArray(data.books_owned)) {
@@ -456,6 +467,7 @@
 
     async function saveProfile(user) {
       const display_name = document.getElementById("name").value.trim();
+      const gender = document.getElementById("gender").value;
       const age_bracket = document.getElementById("age").value;
       const difficulty_level = document.getElementById("level").value;
       const books_owned = getCheckedBooks();
@@ -479,6 +491,7 @@
         .update({
           display_name,
           age_bracket: age_bracket || null,
+          gender: gender || null,
           difficulty_level: difficulty_level || null,
           books_owned,  // Just tracking - does NOT give discounts
           song_suggestion,
