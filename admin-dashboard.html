@@ -1068,17 +1068,19 @@
 
     <div class="table-wrapper">
       <table>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Message</th>
+      <thead>
+  <tr>
+<th>Type</th>
+<th>Message</th>
 <th>User</th>
-            <th class="sort-desc">Created</th>
-          </tr>
-        </thead>
+<th>Song Suggestion</th>
+<th class="sort-desc">Created</th>
+  </tr>
+</thead>
+
         <tbody id="feedbackTableBody">
           <tr>
-            <td colspan="4" class="loading">
+<td colspan="5" class="loading">
               <div class="spinner"></div>
               Loading requests...
             </td>
@@ -1145,7 +1147,7 @@
               </thead>
               <tbody id="bundlesTableBody">
                 <tr>
-                  <td colspan="4" class="loading">
+<td colspan="5" class="loading">
                     <div class="spinner"></div>
                     Loading bundles...
                   </td>
@@ -2450,7 +2452,7 @@ async function loadFeedbackRequests() {
       errEl.textContent = `Error loading requests: ${e.message}`;
       errEl.classList.remove('hidden');
     }
-    if (tbody) tbody.innerHTML = `<tr><td colspan="4">Failed to load</td></tr>`;
+if (tbody) tbody.innerHTML = `<tr><td colspan="5">Failed to load</td></tr>`;
   }
 }
 
@@ -2461,7 +2463,7 @@ function renderFeedbackRequests(list) {
   if (!list || list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="4" class="empty-state">
+<td colspan="5" class="empty-state">
           <div class="empty-state-icon">💬</div>
           <p>No requests yet</p>
         </td>
@@ -2480,14 +2482,20 @@ const userCell = p
   ? userInfoHTML(escHTML(p.display_name || 'Unknown'), escHTML(p.email || 'Unknown'))
   : `<span class="code-display">${escHTML(r.user_id || '')}</span>`;
 
+const suggestionCell = p?.song_suggestion
+  ? `<span style="white-space: pre-wrap;">${escHTML(p.song_suggestion)}</span>`
+  : `<span style="color: var(--muted); font-size: 13px;">-</span>`;
+
 return `
   <tr>
     <td>${typeBadge}</td>
     <td style="white-space: pre-wrap;">${escHTML(r.message)}</td>
     <td>${userCell}</td>
+    <td>${suggestionCell}</td>
     <td>${new Date(r.created_at).toLocaleString()}</td>
   </tr>
 `;
+
 
   }).join('');
 }
@@ -2522,7 +2530,7 @@ function filterFeedbackRequests() {
     async function loadBundles() {
       try {
         document.getElementById('bundlesTableBody').innerHTML =
-          '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
+          '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>';
         await loadBundlesData();
         updateSortHeaders('bundles');
         renderBundles(sortArray(allBundles, 'bundles'));
@@ -2537,7 +2545,7 @@ function filterFeedbackRequests() {
       const data = list || allBundles;
       const tbody = document.getElementById('bundlesTableBody');
       if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundle purchases found</p></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundle purchases found</p></td></tr>';
         return;
       }
       tbody.innerHTML = data.map(b => {
