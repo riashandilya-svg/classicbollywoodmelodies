@@ -511,6 +511,100 @@
       .welcomeText{ animation: none !important; }
       #glitter{ display:none !important; }
     }
+    /* Feedback floating button + modal */
+.feedbackBtn{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9999;
+  display: none; /* only show when logged in */
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(155,110,255,0.30);
+  background: rgba(255,255,255,0.80);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 40px rgba(22,10,35,0.10);
+  font-weight: 750;
+  cursor: pointer;
+}
+.feedbackBtn:hover{ transform: translateY(-1px); }
+
+.modalOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.50);
+  backdrop-filter: blur(4px);
+}
+.modalCard{
+  width: 100%;
+  max-width: 520px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.30);
+  padding: 22px;
+}
+.modalTitle{
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 800;
+}
+.modalSub{
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.fieldLabel{
+  display: block;
+  margin: 10px 0 6px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.fieldInput{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background: white;
+}
+.fieldInput:focus{
+  outline: none;
+  border-color: rgba(155,110,255,0.65);
+}
+.modalActions{
+  display:flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.modalBtn{
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: white;
+  font-weight: 750;
+  cursor: pointer;
+}
+.modalBtn.primary{
+  border-color: rgba(16,185,129,0.55);
+  background: rgba(16,185,129,0.12);
+}
+.hidden{ display:none; }
+
+.modalStatus{
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 650;
+  color: rgba(26,26,31,0.78);
+}
+
+
   </style>
 </head>
 
@@ -651,6 +745,47 @@
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function openFeedbackModal(){
+  document.getElementById('feedbackStatus').textContent = '';
+  document.getElementById('feedbackMessage').value = '';
+  document.getElementById('feedbackType').value = 'song_request';
+  document.getElementById('feedbackModal').classList.remove('hidden');
+}
+
+function closeFeedbackModal(){
+  document.getElementById('feedbackModal').classList.add('hidden');
+}
+
+async function submitFeedback(){
+  const statusEl = document.getElementById('feedbackStatus');
+  const type = document.getElementById('feedbackType').value;
+  const message = (document.getElementById('feedbackMessage').value || '').trim();
+
+  if (!message){
+    statusEl.textContent = 'Please write a message first.';
+    return;
+  }
+
+  statusEl.textContent = 'Sending...';
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.user){
+    statusEl.textContent = 'Please log in first.';
+    return;
+  }
+
+  const { error } = await sb
+    .from('feedback_requests')
+    .insert([{ user_id: session.user.id, type, message }]);
+
+  if (error){
+    statusEl.textContent = `Error: ${error.message}`;
+    return;
+  }
+
+  statusEl.textContent = '✅ Sent! Thank you.';
+  setTimeout(closeFeedbackModal, 800);
+}
 
     function setYear(){
       const el = document.getElementById("year");
@@ -665,6 +800,7 @@
         const welcomeText = document.getElementById("welcomeText");
         const authRow = document.getElementById("authRow");
         const loginLink = document.getElementById("loginLink");
+        const feedbackBtn = document.getElementById("feedbackBtn");
 
         if (session && session.user) {
           const userId = session.user.id;
@@ -692,7 +828,8 @@
 
           accountDock.style.display = "block";
           authRow.style.display = "none";
-          
+          if (feedbackBtn) feedbackBtn.style.display = "inline-flex";
+
           const verifyBookLink = document.getElementById("verifyBookLink");
           if (verifyBookLink) {
             if (prof && prof.is_book_owner === true) {
@@ -705,6 +842,7 @@
           accountDock.style.display = "none";
           authRow.style.display = "flex";
           if (loginLink) loginLink.style.display = "inline-flex";
+          if (feedbackBtn) feedbackBtn.style.display = "none";
         }
       } catch (e){
         console.log("renderAuthUI error:", e);
@@ -713,6 +851,15 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       setYear();
+const feedbackBtn = document.getElementById('feedbackBtn');
+const feedbackModal = document.getElementById('feedbackModal');
+
+if (feedbackBtn) {
+  feedbackBtn.addEventListener('click', openFeedbackModal);
+}
+if (feedbackModal) {
+  feedbackModal.addEventListener('click', closeFeedbackModal); // click outside closes
+}
 
       const logoutBtn = document.getElementById("logoutBtn");
       if (logoutBtn) {
@@ -840,5 +987,30 @@
       tick();
     })();
   </script>
+  <button id="feedbackBtn" class="feedbackBtn" type="button">💬 Request / Feedback</button>
+
+<div id="feedbackModal" class="modalOverlay hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+  <div class="modalCard" onclick="event.stopPropagation()">
+    <h3 id="feedbackTitle" class="modalTitle">💬 Request a Song / Feedback</h3>
+    <p class="modalSub">Tell me what you want next, or what you’d like improved.</p>
+
+    <label class="fieldLabel" for="feedbackType">Type</label>
+    <select id="feedbackType" class="fieldInput">
+      <option value="song_request">Song Request</option>
+      <option value="feedback">Feedback</option>
+    </select>
+
+    <label class="fieldLabel" for="feedbackMessage">Message</label>
+    <textarea id="feedbackMessage" class="fieldInput" rows="5" placeholder="Write here..."></textarea>
+
+    <div class="modalActions">
+      <button class="modalBtn" type="button" onclick="closeFeedbackModal()">Cancel</button>
+      <button class="modalBtn primary" type="button" onclick="submitFeedback()">Send</button>
+    </div>
+
+    <div id="feedbackStatus" class="modalStatus"></div>
+  </div>
+</div>
+
 </body>
 </html>
