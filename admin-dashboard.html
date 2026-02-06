@@ -1061,7 +1061,7 @@
       type="text"
       class="search-box"
       id="feedbackSearch"
-      placeholder="Search by message, type, or user id..."
+placeholder="Search by message, request type, or user..."
       onkeyup="filterFeedbackRequests()"
     >
 
@@ -2497,13 +2497,12 @@ function renderFeedbackRequests(list) {
 
   tbody.innerHTML = list.map(r => {
 
-  const typeBadge =
+const typeBadge =
   r.type === 'song_request'
     ? `<span class="badge badge-success">Song Request</span>`
     : r.type === 'setup_suggestion'
-      ? `<span class="badge badge-warning">Setup Suggestion</span>`
+      ? `<span class="badge badge-warning">Setup Song Suggestion</span>`
       : `<span class="badge badge-warning">${escHTML(r.type)}</span>`;
-
 
 const p = getProfile(r.user_id);
 const userCell = p
