@@ -2420,41 +2420,67 @@ function escHTML(s) {
 }
 
 async function loadFeedbackRequests() {
-  const tbody = document.getElementById('feedbackTableBody');
-  const errEl = document.getElementById('feedbackError');
-
-  if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
-  if (tbody) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="loading">
-          <div class="spinner"></div>
-          Loading requests...
-        </td>
-      </tr>`;
-  }
-
-  try {
-    // If RLS blocks SELECT for anon/admin mismatch, you'll see an error here.
-    const { data, error } = await window.supabase
-      .from('feedback_requests')
-      .select('id, user_id, type, message, created_at')
-      .order('created_at', { ascending: false })
-      .limit(500);
-
-    if (error) throw error;
-
-    allFeedback = data || [];
-    renderFeedbackRequests(allFeedback);
-  } catch (e) {
-    console.error('Error loading feedback_requests:', e);
-    if (errEl) {
-      errEl.textContent = `Error loading requests: ${e.message}`;
-      errEl.classList.remove('hidden');
+    const tbody = document.getElementById('feedbackTableBody');
+    const errEl = document.getElementById('feedbackError');
+  
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="loading">
+            <div class="spinner"></div>
+            Loading requests...
+          </td>
+        </tr>`;
     }
-if (tbody) tbody.innerHTML = `<tr><td colspan="5">Failed to load</td></tr>`;
+  
+    try {
+      // 1) Normal song requests / feedback from index
+      const { data: feedbackRows, error: fbErr } = await window.supabase
+        .from('feedback_requests')
+        .select('id, user_id, type, message, created_at')
+        .order('created_at', { ascending: false })
+        .limit(500);
+  
+      if (fbErr) throw fbErr;
+  
+      // 2) Setup form song suggestions from profiles
+      const { data: suggestionProfiles, error: profErr } = await window.supabase
+        .from('profiles')
+        .select('id, song_suggestion, created_at')
+        .not('song_suggestion', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(2000);
+  
+      if (profErr) throw profErr;
+  
+      // Convert profile suggestions into "request-like" rows
+      const setupSuggestionRows = (suggestionProfiles || [])
+        .filter(p => String(p.song_suggestion || '').trim().length > 0)
+        .map(p => ({
+          id: `setup-${p.id}`,              // unique id for UI
+          user_id: p.id,
+          type: 'setup_suggestion',
+          message: p.song_suggestion,
+          created_at: p.created_at          // best we have unless you store a separate timestamp
+        }));
+  
+      // Merge + sort newest first
+      allFeedback = [...(feedbackRows || []), ...setupSuggestionRows].sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+  
+      renderFeedbackRequests(allFeedback);
+    } catch (e) {
+      console.error('Error loading merged requests:', e);
+      if (errEl) {
+        errEl.textContent = `Error loading requests: ${e.message}`;
+        errEl.classList.remove('hidden');
+      }
+      if (tbody) tbody.innerHTML = `<tr><td colspan="4">Failed to load</td></tr>`;
+    }
   }
-}
+  
 
 function renderFeedbackRequests(list) {
   const tbody = document.getElementById('feedbackTableBody');
@@ -2472,10 +2498,14 @@ function renderFeedbackRequests(list) {
   }
 
   tbody.innerHTML = list.map(r => {
-    const typeBadge =
-      r.type === 'song_request'
-        ? `<span class="badge badge-success">Song Request</span>`
-        : `<span class="badge badge-warning">${escHTML(r.type)}</span>`;
+
+  const typeBadge =
+  r.type === 'song_request'
+    ? `<span class="badge badge-success">Song Request</span>`
+    : r.type === 'setup_suggestion'
+      ? `<span class="badge badge-warning">Setup Suggestion</span>`
+      : `<span class="badge badge-warning">${escHTML(r.type)}</span>`;
+
 
 const p = getProfile(r.user_id);
 const userCell = p
