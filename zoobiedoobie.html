@@ -2907,23 +2907,6 @@ holdEl.innerHTML =
 }
 loadSongMidi();
 </script>
-    <script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
-
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-window.location.replace("/login.html");
-    }
-  }
-
-  // First load
-  await requireLogin();
-
-  // When coming back via Back button
-  window.addEventListener("pageshow", requireLogin);
-</script>
-    
 <!-- 1) Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -2938,7 +2921,7 @@ window.location.replace("/login.html");
   async function requireLogin() {
     const { data } = await window.supabase.auth.getSession();
     if (!data.session) {
-      window.location.replace("/classicbollywoodmelodies/login.html");
+      window.location.replace("/login.html");
     }
   }
 
@@ -2949,14 +2932,11 @@ window.location.replace("/login.html");
 <!-- 5) Call paywall for THIS song -->
 <script>
   window.showPaywall({
-    productId: "song:zoobiedoobie",  // ← CHANGE THIS FOR EACH SONG!
+    productId: "song:aehairate",
     title: "This song is locked",
     body: "Please buy to unlock this lesson."
   });
 </script>
-
-</body>
-</html>
 
 </body>
 </html>
