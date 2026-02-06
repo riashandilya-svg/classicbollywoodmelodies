@@ -10,7 +10,6 @@
 
 
 <style>
-    /* Fixed brand bar */
 /* Fixed brand bar */
 #brandBar{
   position: fixed;
@@ -786,7 +785,7 @@ freeModeButton.classList.add('side-floating');
 setControlsEnabled(true); // ✅ buttons enabled immediately
 // 🎵 Auto-load built-in song
 (async () => {
-    await loadSongMidi();
+  await loadSongMidi();
 })();
 
 
@@ -2872,32 +2871,7 @@ holdEl.innerHTML =
 }
 loadSongMidi();
 </script>
-<script type="module" src="/classicbollywoodmelodies/js/supabaseClient.js"></script>
 
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-      window.location.replace("/classicbollywoodmelodies/login.html");
-    }
-  }
-
-  // First load
-  await requireLogin();
-
-  // When coming back via Back button
-  window.addEventListener("pageshow", requireLogin);
-</script>
-<!-- 1) Supabase library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- 2) Your Supabase client -->
-<script src="/js/supabaseClient.js"></script>
-
-<!-- 3) Paywall logic -->
-<script src="/js/paywall.js?v=20260203"></script>
-
-<!-- 4) Login check -->
 <script type="module">
   async function requireLogin() {
     const { data } = await window.supabase.auth.getSession();
@@ -2920,7 +2894,5 @@ window.location.replace("/login.html");
   });
 </script>
 
-</body>
-</html>
 </body>
 </html>
