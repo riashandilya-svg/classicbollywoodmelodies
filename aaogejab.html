@@ -418,7 +418,7 @@ canvas {
 </head>
 <body>
 <div id="brandBar">
-  <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html" id="brandLink">
+  <a href="/index.html" id="brandLink">
     <span>Ria Om Shandilya</span>
   </a>
 </div>
@@ -505,8 +505,10 @@ canvas {
 <div id="notesDisplay" style="display: none;">
     <h2>Note Numbers:</h2>
     <div class="note-list" id="noteList"></div>
-</div>   <!-- closes bottomDock -->
-</div>   <!-- closes midiDisplay -->
+</div> <!-- notesDisplay -->
+</div> <!-- bottomDock -->
+</div> <!-- midiDisplay -->
+</div> <!-- app -->
 
 
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
@@ -2710,15 +2712,18 @@ feedback.classList.remove('correct', 'wrong', 'show');
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
 
-    // 💬 Confirm reset
+// 💬 Confirm reset
     feedback.textContent = 'All reset — ready!';
     console.log('✅ All reset');
     document.getElementById('pressedNoteCircle').textContent = '';
 document.getElementById('pressedNoteCircle').className = 'note-circle';
 
 document.getElementById('correctNoteCircle').textContent = '';
-}
 
+    // ✅ Re-enable Stop button
+    stopButton.disabled = true;
+}
+    
 function startFullSongPlayback() {
     
     const visualBaseline = performance.now() + 16;
@@ -2804,8 +2809,7 @@ if (isNoteOn) {
 
     processUserNoteOn(note);
 }
-
-    // -------- NOTE OFF --------
+// -------- NOTE OFF --------
     if (isNoteOff) {
 // 🎹 FREE MODE — release immediately
 if (freeMode && note === freeModeActiveNote) {
@@ -2816,27 +2820,39 @@ if (freeMode && note === freeModeActiveNote) {
     return;
 }
 
-        if (note !== activeMidiNote || noteHoldStartTime === null) return;
-// ❌ Ignore releases of wrong notes
-if (getNoteName(note) !== currentTrainingNote) {
-    activeMidiNote = null;
-    noteHoldStartTime = null;
-    return;
-}
+        // ✅ For chords: only process release if this note is part of the chord
+        if (!currentChordNotes.has(note)) return;
+        
+        // Remove from pressed notes
+        midiPressedNotes.delete(note);
+        
+        // Release the audio
+        synth.triggerRelease(getNoteName(note));
+        
+        // ✅ Only check hold duration when ALL notes have been released
+        if (midiPressedNotes.size > 0) return; // Still holding some notes
+        
+        // All notes released - check if held long enough
+        if (noteHoldStartTime === null) return;
 
         const heldTime = performance.now() - noteHoldStartTime;
-        synth.triggerRelease(getNoteName(note));
 
         if (heldTime >= expectedHoldDuration) {
-            feedback.textContent = 'Good!';
+   feedback.textContent = 'Good!';
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
 feedback.classList.add('correct', 'show');
-    explanationLocked = false;
+explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
-    trainingIndex++;
+    
+    // 🔓 Clear chord highlights on success
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    
+    // ✅ Skip ALL notes in the chord
+    trainingIndex += currentChordNotes.size;
 updateTrainingProgress();
     // clear only AFTER success
     document.getElementById('holdInfo').textContent = '';
@@ -2872,12 +2888,21 @@ holdEl.innerHTML =
 loadSongMidi();
 </script>
 
+<!-- 1) Supabase library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- 2) Your Supabase client (must set window.supabase) -->
+<script src="/js/supabaseClient.js"></script>
+
+<!-- 3) Paywall logic -->
+<script src="/js/paywall.js?v=20260203"></script>
+
+<!-- 4) Login check (ONLY ONCE) -->
 <script type="module">
   async function requireLogin() {
     const { data } = await window.supabase.auth.getSession();
     if (!data.session) {
-window.location.replace("/login.html");
-
+      window.location.replace("/login.html");
     }
   }
 
@@ -2885,10 +2910,10 @@ window.location.replace("/login.html");
   window.addEventListener("pageshow", requireLogin);
 </script>
 
-<!-- 5) Call paywall for THIS song -->
+<!-- 5) Paywall call (ONLY ONCE) -->
 <script>
   window.showPaywall({
-    productId: "song:aaogejab",  // ← CHANGE THIS FOR EACH SONG!
+    productId: "song:aaogejab",
     title: "This song is locked",
     body: "Please buy to unlock this lesson."
   });
