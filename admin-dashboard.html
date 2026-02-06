@@ -2123,7 +2123,6 @@ tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></d
           `<tr><td colspan="9"><div class="error-message">Error: ${e.message}</div></td></tr>`;
       }
     }
-
     function renderUsers(list) {
         const tbody = document.getElementById('usersTableBody');
         if (!list.length) {
@@ -2156,6 +2155,46 @@ tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></d
               ? `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
                  <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`
               : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+          
+          const gender = user.gender || '-';
+          const level = user.difficulty_level || '-';
+      
+          const songSuggestion = user.song_suggestion
+            ? user.song_suggestion
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;")
+            : '-';
+      
+          const optIn = user.marketing_opt_in
+            ? '<span class="badge badge-success">Yes</span>'
+            : '<span class="badge badge-error">No</span>';
+      
+          const booksOwnedHTML = user.books_owned && user.books_owned.length
+            ? user.books_owned.join(', ')
+            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+      
+          return `<tr>
+            <td>${userInfoHTML(user.display_name, user.email)}</td>
+            <td>${gender}</td>
+            <td>${level}</td>
+            <td>${songSuggestion}</td>
+            <td>${optIn}</td>
+            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+            <td>${booksOwnedHTML}</td>
+            <td>${songsHTML}</td>
+            <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
+            <td>${photoHTML}</td>
+            <td>${videoHTML}</td>
+            <td>${new Date(user.created_at).toLocaleDateString()}</td>
+            <td>${actionButtons}</td>
+          </tr>`;
+        }).join('');
+      }
+      
+                 : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
           
           const gender = user.gender || '-';
           const level = user.difficulty_level || '-';
