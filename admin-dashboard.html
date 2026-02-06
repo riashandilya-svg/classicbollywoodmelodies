@@ -970,6 +970,7 @@
         <button class="tab" onclick="switchTab('codes', this)">🎫 Book Codes</button>
         <button class="tab" onclick="switchTab('purchases', this)">💳 Purchases</button>
         <button class="tab" onclick="switchTab('bundles', this)">📦 Bundles</button>
+        <button class="tab" onclick="switchTab('requests', this)">💬 Song Requests</button>
           <button class="tab" onclick="switchTab('sheetmusic', this)">📄 Sheet Music</button>
         <button class="tab" onclick="switchTab('pricing', this)">💰 Pricing</button>
       </div>
@@ -1049,6 +1050,48 @@
         </div>
       </div>
 
+<!-- Song Requests Tab -->
+<div id="requestsTab" class="tab-content hidden">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">💬 Song Requests / Feedback</h2>
+      <button class="refresh-btn" onclick="loadFeedbackRequests()">↻ Refresh</button>
+    </div>
+
+    <input
+      type="text"
+      class="search-box"
+      id="feedbackSearch"
+      placeholder="Search by message, type, or user id..."
+      onkeyup="filterFeedbackRequests()"
+    >
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Message</th>
+            <th>User ID</th>
+            <th class="sort-desc">Created</th>
+          </tr>
+        </thead>
+        <tbody id="feedbackTableBody">
+          <tr>
+            <td colspan="4" class="loading">
+              <div class="spinner"></div>
+              Loading requests...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="feedbackError" class="error-message hidden"></div>
+  </div>
+</div>
+
+      
       <!-- Purchases Tab -->
       <div id="purchasesTab" class="tab-content hidden">
         <div class="card">
@@ -1509,7 +1552,8 @@ let allPurchases = [];
 let allBundles = [];
 let userToDelete = null;
 let allPDFs = [];
-    
+    let allFeedback = [];
+
     // ═══════════════════════════════════════════════════════
     // SHEET MUSIC MANAGEMENT  (all calls routed through admin-edge)
     // ═══════════════════════════════════════════════════════
@@ -2348,9 +2392,103 @@ function renderPurchases(list) {
       renderPurchases(filtered);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // BUNDLES
-    // ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════
+// SONG REQUESTS / FEEDBACK (feedback_requests table)
+// ═══════════════════════════════════════════════════════
+
+function escHTML(s) {
+  return String(s ?? '')
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function loadFeedbackRequests() {
+  const tbody = document.getElementById('feedbackTableBody');
+  const errEl = document.getElementById('feedbackError');
+
+  if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="loading">
+          <div class="spinner"></div>
+          Loading requests...
+        </td>
+      </tr>`;
+  }
+
+  try {
+    // If RLS blocks SELECT for anon/admin mismatch, you'll see an error here.
+    const { data, error } = await window.supabase
+      .from('feedback_requests')
+      .select('id, user_id, type, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+
+    allFeedback = data || [];
+    renderFeedbackRequests(allFeedback);
+  } catch (e) {
+    console.error('Error loading feedback_requests:', e);
+    if (errEl) {
+      errEl.textContent = `Error loading requests: ${e.message}`;
+      errEl.classList.remove('hidden');
+    }
+    if (tbody) tbody.innerHTML = `<tr><td colspan="4">Failed to load</td></tr>`;
+  }
+}
+
+function renderFeedbackRequests(list) {
+  const tbody = document.getElementById('feedbackTableBody');
+  if (!tbody) return;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="empty-state">
+          <div class="empty-state-icon">💬</div>
+          <p>No requests yet</p>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(r => {
+    const typeBadge =
+      r.type === 'song_request'
+        ? `<span class="badge badge-success">Song Request</span>`
+        : `<span class="badge badge-warning">${escHTML(r.type)}</span>`;
+
+    return `
+      <tr>
+        <td>${typeBadge}</td>
+        <td style="white-space: pre-wrap;">${escHTML(r.message)}</td>
+        <td><span class="code-display">${escHTML(r.user_id)}</span></td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterFeedbackRequests() {
+  const q = (document.getElementById('feedbackSearch')?.value || '').toLowerCase().trim();
+  if (!q) {
+    renderFeedbackRequests(allFeedback);
+    return;
+  }
+
+  const filtered = allFeedback.filter(r =>
+    (r.type || '').toLowerCase().includes(q) ||
+    (r.user_id || '').toLowerCase().includes(q) ||
+    (r.message || '').toLowerCase().includes(q)
+  );
+
+  renderFeedbackRequests(filtered);
+}
 
     // ═══════════════════════════════════════════════════════
     // BUNDLES
@@ -2608,14 +2746,18 @@ function switchTab(tabName, btn) {
   btn.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
   document.getElementById(tabName + 'Tab').classList.remove('hidden');
-  
+
   if (tabName === 'pricing') {
     loadPricingData();
   }
   if (tabName === 'sheetmusic') {
     loadSheetMusic();
   }
+  if (tabName === 'requests') {
+    loadFeedbackRequests();
+  }
 }
+
 
     // ═══════════════════════════════════════════════════════
     // MEDIA LIGHTBOX
