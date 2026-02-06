@@ -95,13 +95,12 @@ async function initDashboard() {
     // Get user's display name
     const { data: profile } = await window.supabase
       .from('profiles')
-      .select('display_name, is_book_owner, video_bonus_claimed')
+      .select('display_name, is_book_owner')
       .eq('id', user.id)
       .maybeSingle();
     
     console.log('🔍 Profile data:', profile);
     console.log('📚 is_book_owner:', profile?.is_book_owner);
-    console.log('🎁 video_bonus_claimed:', profile?.video_bonus_claimed);
 
     const displayName = profile?.display_name || user.email.split('@')[0];
     
@@ -129,22 +128,9 @@ async function initDashboard() {
         verifyBookLink.style.display = 'inline-flex'; // Show if not verified
       }
     }
-
-    // Show/hide bonus video section
-    const bonusSection = document.getElementById('bonusVideoSection');
-    if (bonusSection) {
-      // Show only if user is a book owner AND hasn't claimed the video bonus yet
-      if (profile?.is_book_owner === true && profile?.video_bonus_claimed !== true) {
-        console.log('🎁 Showing bonus video section');
-        bonusSection.style.display = 'block';
-      } else {
-        console.log('🚫 Hiding bonus video section (already claimed or not book owner)');
-        bonusSection.style.display = 'none';
-      }
-    }
     
     setupProfileModal(user);
-    setupBonusVideoModal(user);
+    setupBonusVideoModal(user.id); // ✅ Setup bonus video modal
     
     // Optional: you can keep userEmail empty or hide it
     const userEmailEl = document.getElementById('userEmail');
@@ -257,168 +243,137 @@ function setupProfileModal(user) {
 }
 
 // ─────────────────────────────────────────────
-// BONUS VIDEO MODAL: upload video for free credit
+// BONUS VIDEO MODAL: setup and upload
 // ─────────────────────────────────────────────
-function setupBonusVideoModal(user) {
-  const openBtn     = document.getElementById('openBonusModalBtn');
-  const modal       = document.getElementById('bonusModal');
-  const overlay     = document.getElementById('bonusModalOverlay');
-  const videoInput  = document.getElementById('bonusVideoInput');
-  const videoLabel  = document.getElementById('bonusVideoLabel');
-  const videoText   = document.getElementById('bonusVideoText');
-  const videoName   = document.getElementById('bonusVideoName');
-  const consentBox  = document.getElementById('bonusVideoConsent');
-  const uploadBtn   = document.getElementById('bonusUploadBtn');
-  const cancelBtn   = document.getElementById('bonusCancelBtn');
-  const feedback    = document.getElementById('bonusFeedback');
+function setupBonusVideoModal(userId) {
+  const openBtn = document.getElementById('openBonusModalBtn');
+  const modal = document.getElementById('bonusModal');
+  const overlay = document.getElementById('bonusModalOverlay');
+  const videoInput = document.getElementById('bonusVideoInput');
+  const videoLabel = document.getElementById('bonusVideoLabel');
+  const videoText = document.getElementById('bonusVideoText');
+  const videoName = document.getElementById('bonusVideoName');
+  const consentBox = document.getElementById('bonusVideoConsent');
+  const uploadBtn = document.getElementById('bonusUploadBtn');
+  const cancelBtn = document.getElementById('bonusCancelBtn');
+  const feedback = document.getElementById('bonusFeedback');
 
-  if (!openBtn || !modal) return;
-
-  let selectedVideoFile = null;
+  if (!openBtn) return;
 
   // Open modal
   openBtn.addEventListener('click', () => {
-    // Reset form
-    videoInput.value = '';
-    selectedVideoFile = null;
-    videoLabel.classList.remove('has-file');
-    videoText.textContent = 'Choose video...';
-    videoName.textContent = '';
-    consentBox.checked = false;
-    feedback.textContent = '';
-    feedback.className = '';
-
     modal.classList.add('open');
     overlay.classList.add('open');
+    feedback.textContent = '';
+    feedback.className = 'modal-feedback';
   });
 
   // Close modal
   function closeModal() {
     modal.classList.remove('open');
     overlay.classList.remove('open');
+    videoInput.value = '';
+    videoText.textContent = 'Choose video...';
+    videoName.textContent = '';
+    videoLabel.classList.remove('has-file');
+    consentBox.checked = false;
+    feedback.textContent = '';
   }
+
   overlay.addEventListener('click', closeModal);
   cancelBtn.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => { 
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); 
+  });
 
-  // Handle video selection
+  // File selection
   videoInput.addEventListener('change', (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      selectedVideoFile = file;
-      videoLabel.classList.add('has-file');
       videoText.textContent = '✓ Video selected';
       videoName.textContent = file.name;
+      videoLabel.classList.add('has-file');
     } else {
-      selectedVideoFile = null;
-      videoLabel.classList.remove('has-file');
       videoText.textContent = 'Choose video...';
       videoName.textContent = '';
+      videoLabel.classList.remove('has-file');
     }
   });
 
-  // Upload video
+  // Upload
   uploadBtn.addEventListener('click', async () => {
-    feedback.textContent = '';
-    feedback.className = '';
-
-    // Validation
-    if (!selectedVideoFile) {
+    const file = videoInput.files?.[0];
+    
+    if (!file) {
       feedback.textContent = 'Please select a video file.';
-      feedback.className = 'error';
+      feedback.className = 'modal-feedback error';
       return;
     }
 
     if (!consentBox.checked) {
-      feedback.textContent = 'Please accept the video consent terms.';
-      feedback.className = 'error';
+      feedback.textContent = 'Please accept the terms to continue.';
+      feedback.className = 'modal-feedback error';
+      return;
+    }
+
+    // File size check (max 100MB)
+    const maxSize = 100 * 1024 * 1024;
+    if (file.size > maxSize) {
+      feedback.textContent = 'Video must be under 100MB.';
+      feedback.className = 'modal-feedback error';
       return;
     }
 
     uploadBtn.disabled = true;
     uploadBtn.textContent = 'Uploading...';
+    feedback.textContent = '';
 
     try {
-      const userId = user.id;
-
       // Upload video to storage
-      const videoExt = selectedVideoFile.name.split('.').pop();
-      const videoPath = `${userId}/bonus-video-${Date.now()}.${videoExt}`;
+      const ext = file.name.split('.').pop() || 'mp4';
+      const filePath = `${userId}/bonus-video-${Date.now()}.${ext}`;
 
       const { error: uploadError } = await window.supabase.storage
-        .from('book-videos')
-        .upload(videoPath, selectedVideoFile);
+        .from('bonus-videos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
-      // Check if bonus already claimed (double-check)
-      const { data: profile } = await window.supabase
-        .from('profiles')
-        .select('video_bonus_claimed')
-        .eq('id', userId)
-        .single();
-
-      if (profile?.video_bonus_claimed === true) {
-        throw new Error('Bonus already claimed previously.');
-      }
-
-      // Add 1 credit to user_credits
-      const { data: existingCredits } = await window.supabase
-        .from('user_credits')
-        .select('balance')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (existingCredits) {
-        // Update existing balance
-        const newBalance = existingCredits.balance + 1;
-        const { error: updateError } = await window.supabase
-          .from('user_credits')
-          .update({ 
-            balance: newBalance,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new record
-        const { error: insertError } = await window.supabase
-          .from('user_credits')
-          .insert({ 
-            user_id: userId,
-            balance: 1,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      // Mark bonus as claimed
-      const { error: markError } = await window.supabase
+      // Mark as claimed
+      const { error: updateError } = await window.supabase
         .from('profiles')
         .update({ video_bonus_claimed: true })
         .eq('id', userId);
 
-      if (markError) throw markError;
+      if (updateError) throw updateError;
 
-      feedback.textContent = '🎉 Success! 1 free song credit added to your account!';
-      feedback.className = 'success';
+      // Add 1 credit to user_credits using RPC function
+      const { error: creditError } = await window.supabase.rpc('add_user_credit', { 
+        p_user_id: userId, 
+        p_amount: 1 
+      });
 
-      // Hide the bonus section
-      const bonusSection = document.getElementById('bonusVideoSection');
-      if (bonusSection) bonusSection.style.display = 'none';
+      if (creditError) {
+        console.error('Credit add error:', creditError);
+        // Don't throw - video is uploaded, we'll add credit manually if needed
+      }
 
-      // Reload stats to show new credit
-      await loadStats(userId);
-      await loadBookStatus(userId);
+      feedback.textContent = '🎉 Success! 1 free song credit added!';
+      feedback.className = 'modal-feedback success';
 
-      setTimeout(closeModal, 2000);
+      setTimeout(() => {
+        closeModal();
+        // Reload dashboard to update UI
+        location.reload();
+      }, 2000);
 
     } catch (err) {
       console.error('Bonus video upload error:', err);
-      feedback.textContent = err.message || 'Failed to process video. Please try again.';
-      feedback.className = 'error';
+      feedback.textContent = 'Upload failed. Please try again.';
+      feedback.className = 'modal-feedback error';
     } finally {
       uploadBtn.disabled = false;
       uploadBtn.textContent = 'Upload & Claim Credit';
@@ -636,7 +591,7 @@ async function loadStats(userId) {
   }
 }
 
-// ✅ UPDATED: Load book verification status with images and add-to-collection feature
+// ✅ UPDATED: Load book verification status with bonus video visibility
 async function loadBookStatus(userId) {
   try {
     const { data: profile, error } = await window.supabase
@@ -646,6 +601,17 @@ async function loadBookStatus(userId) {
       .single();
 
     if (error) throw error;
+
+    // ✅ Show/hide bonus video section based on claim status
+    const bonusSection = document.getElementById('bonusVideoSection');
+    if (bonusSection) {
+      // Show if user is a book owner AND hasn't claimed the bonus yet
+      if (profile?.is_book_owner === true && profile?.video_bonus_claimed !== true) {
+        bonusSection.style.display = 'block';
+      } else {
+        bonusSection.style.display = 'none';
+      }
+    }
 
     // ✅ FIXED: Also check for book bonus credits with .maybeSingle()
     const { data: creditsData } = await window.supabase
