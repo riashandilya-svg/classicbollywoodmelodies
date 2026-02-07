@@ -51,19 +51,17 @@
 }
 
 
-:root {
-  --bg-main: #F7F9FC;
-  --bg-surface: #FFFFFF;
+    :root {
+    --bg-main: #F7F9FC;
+    --bg-surface: #FFFFFF;
 
-  --accent-primary: #3B82F6;   /* blue */
-  --accent-success: #22C55E;   /* green */
-  --accent-error: #EF4444;     /* red */
+    --accent-primary: #3B82F6;   /* blue */
+    --accent-success: #22C55E;   /* green */
+    --accent-error: #EF4444;     /* red */
 
-  --text-main: #1F2937;
-  --border-soft: #CBD5E1;
+    --text-main: #1F2937;
+    --border-soft: #CBD5E1;
 }
-
-  
 body {
     margin: 0;
     padding: 80px 0 40px 0; /* room for brand bar + heading */
@@ -75,7 +73,8 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    
+    background-color: var(--bg-main);
+    color: var(--text-main);
 }
 h1 {
     font-size: clamp(32px, 6vw, 60px);
@@ -1255,18 +1254,17 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-  ctx.fillStyle = "#FFECB3"; // ☀️ yellow
+    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
 } else if (isBass) {
-  ctx.fillStyle = "#BBF7D0"; // 🍏 green
+    ctx.fillStyle = "#BBF7D0"; // 🍏 green
 } else {
-  ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#ffffff";
 }
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
 
         ctx.strokeStyle = "#000";
         ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
-
-        // White key note name
+// White key note name
 if (showNoteNames) {
     ctx.fillStyle = "#000";
     ctx.font = "12px Arial";
@@ -1304,13 +1302,12 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-  ctx.fillStyle = "#FF9800"; // yellow/orange
+    ctx.fillStyle = "#FF9800"; // yellow/orange
 } else if (isBass) {
-  ctx.fillStyle = "#16A34A"; // green
+    ctx.fillStyle = "#16A34A"; // green
 } else {
-  ctx.fillStyle = "#000";
+    ctx.fillStyle = "#000";
 }
-
 
     ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
 
@@ -1500,20 +1497,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
     if (track === TREBLE) {
-  // ☀️ TRUE PIANO YELLOW
-  gradient.addColorStop(0.00, "#FFF9C4");
-  gradient.addColorStop(0.25, "#FFF176");
-  gradient.addColorStop(0.55, "#FFEB3B");
-  gradient.addColorStop(1.00, "#FBC02D");
+    // ☀️ TRUE PIANO YELLOW
+    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
+    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
+    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
+    gradient.addColorStop(1.00, "#FBC02D"); // base
 } else if (track === BASS) {
-  // 🍏 TRUE PIANO GREEN
-  gradient.addColorStop(0.00, "#D9FBE8");
-  gradient.addColorStop(0.25, "#86EFAC");
-  gradient.addColorStop(0.55, "#4ADE80");
-  gradient.addColorStop(1.00, "#22C55E");
+    // 🍏 TRUE PIANO GREEN
+    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
+    gradient.addColorStop(0.25, "#86EFAC"); // light green
+    gradient.addColorStop(0.55, "#4ADE80"); // pure green
+    gradient.addColorStop(1.00, "#22C55E"); // base
 }
-
-      
 
 fallingRectangles.push({
     midi: midiNumber,
