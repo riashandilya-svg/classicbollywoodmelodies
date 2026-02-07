@@ -1498,18 +1498,22 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
+const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
+
 if (track === TREBLE) {
-    // 💙 LIGHT BLUE
-    gradient.addColorStop(0.00, "#E0F4FF"); // very light blue highlight
-    gradient.addColorStop(0.25, "#B0E0FF"); // pale blue
-    gradient.addColorStop(0.55, "#87CEEB"); // sky blue
-    gradient.addColorStop(1.00, "#5FB3D9"); // light blue base
+    gradient.addColorStop(0.00, "#E0F4FF");
+    gradient.addColorStop(0.25, "#B0E0FF");
+    gradient.addColorStop(0.55, "#87CEEB");
+    gradient.addColorStop(1.00, "#5FB3D9");
 } else if (track === BASS) {
-    // 🔵 DENIM BLUE
-    gradient.addColorStop(0.00, "#A4C8E1"); // light denim highlight
-    gradient.addColorStop(0.25, "#7BA8CC"); // medium denim
-    gradient.addColorStop(0.55, "#4682B4"); // steel blue (denim)
-    gradient.addColorStop(1.00, "#36648B"); // dark denim base
+    gradient.addColorStop(0.00, "#A4C8E1");
+    gradient.addColorStop(0.25, "#7BA8CC");
+    gradient.addColorStop(0.55, "#4682B4");
+    gradient.addColorStop(1.00, "#36648B");
+} else {
+    // Fallback gray
+    gradient.addColorStop(0, "#CCCCCC");
+    gradient.addColorStop(1, "#888888");
 }
 
 fallingRectangles.push({
