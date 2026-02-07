@@ -1495,45 +1495,38 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
-    // 🌈 Vibrant glossy gradient
-    const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
-
+// 🌈 Vibrant glossy gradient
 const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
 if (track === TREBLE) {
+    // 💙 LIGHT BLUE
     gradient.addColorStop(0.00, "#E0F4FF");
     gradient.addColorStop(0.25, "#B0E0FF");
     gradient.addColorStop(0.55, "#87CEEB");
     gradient.addColorStop(1.00, "#5FB3D9");
 } else if (track === BASS) {
+    // 🔵 DENIM BLUE
     gradient.addColorStop(0.00, "#A4C8E1");
     gradient.addColorStop(0.25, "#7BA8CC");
     gradient.addColorStop(0.55, "#4682B4");
     gradient.addColorStop(1.00, "#36648B");
-} else {
-    // Fallback gray
-    gradient.addColorStop(0, "#CCCCCC");
-    gradient.addColorStop(1, "#888888");
 }
 
 fallingRectangles.push({
     midi: midiNumber,
     noteName: getNoteName(midiNumber),
-    track,                 // ✅ ← THIS WAS MISSING
+    track,
     isMidi: true,
-
     x,
     y: startY,
     startY,
     endY,
     width: getWhiteKeyWidth() * 0.86,
     height,
-
-    gradient,
+    gradient,  // ← saves the gradient here
     startTime: noteStartTime,
     landed: false,
 });
-}
 
 
 function spawnTrainingNote(noteObj) {
@@ -1837,12 +1830,13 @@ ctx.lineTo(rect.x, rect.y + r);
 ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
 ctx.closePath();
 ctx.fill();
+            
 /* ✨ FULL-BODY GLOSS (soft vertical sheen) */
 ctx.save();
 ctx.globalCompositeOperation = "screen";
 ctx.globalAlpha = 0.22;
 
-const gloss = ctx.createLinearGradient(
+const gloss = ctx.createLinearGradient(  // ← THIS IS FINE
     rect.x,
     rect.y,
     rect.x + rect.width,
@@ -1861,11 +1855,8 @@ ctx.restore();
 
 /* 🌊 SUBTLE SHIMMER (animated light pass) */
 const shimmerSpeed = 0.0015 * speedMultiplier;
-const shimmerPhase =
-    (performance.now() * shimmerSpeed) % 1;
-
-const shimmerY =
-    rect.y + shimmerPhase * rect.height;
+const shimmerPhase = (performance.now() * shimmerSpeed) % 1;
+const shimmerY = rect.y + shimmerPhase * rect.height;
 
 // 🟢 DOWNBEAT ACCENT (beat 1)
 const isDownbeat = metronomeRunning && (metroBeat % 4 === 0);
@@ -1874,7 +1865,7 @@ ctx.save();
 ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
 ctx.globalCompositeOperation = "lighter";
 
-const shimmerGradient = ctx.createLinearGradient(
+const shimmerGradient = ctx.createLinearGradient(  // ← CHECK IF THIS SAYS "gradient" instead of "shimmerGradient"
     0,
     shimmerY - 20,
     0,
