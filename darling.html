@@ -25,7 +25,7 @@
 
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-soft);
+border-bottom: 1px solid rgba(255, 193, 7, 0.18);
 
   z-index: 10000;
 }
@@ -64,17 +64,22 @@
   text-decoration: underline;
 }
 
-    :root {
-    --bg-main: #F7F9FC;
-    --bg-surface: #FFFFFF;
+:root {
+    --bg-main: #ffffff;
+    --bg-surface: rgba(255,255,255,0.86);
 
-    --accent-primary: #3B82F6;   /* blue */
+    --yellow1: rgba(255, 193, 7, 0.22);
+    --yellow2: rgba(255, 235, 59, 0.16);
+    --softBlack: rgba(0, 0, 0, 0.10);
+
+    --accent-primary: #FFC107;   /* yellow */
     --accent-success: #22C55E;   /* green */
     --accent-error: #EF4444;     /* red */
 
-    --text-main: #1F2937;
-    --border-soft: #CBD5E1;
+    --text-main: #1A1A1F;
+    --border-soft: rgba(255, 193, 7, 0.18);
 }
+    
 body {
     margin: 0;
     padding: 80px 0 40px 0; /* room for brand bar + heading */
@@ -85,8 +90,13 @@ body {
     align-items: center;
     min-height: 100vh;
 
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-main);
+font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(900px 520px at 20% 0%, var(--yellow1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--yellow2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(255, 193, 7, 0.10), transparent 60%),
+      var(--bg-main);
     color: var(--text-main);
 }
 h1 {
@@ -112,7 +122,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-    background-color: #2563EB;
+    background-color: #FFB300;
     transform: translateY(-1px);
 }
 
@@ -201,7 +211,7 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #22C55E; /* GREEN */
+    background: #FFC107; /* YELLOW */
     color: white;
 }
 
@@ -396,7 +406,7 @@ canvas {
   width: min(420px, 92%);
   padding: 16px 18px;
   margin: 14px auto;
-  border: 1px solid rgba(235,50,70,0.22);
+border: 1px solid rgba(255, 193, 7, 0.22);
   border-radius: 16px;
   background: rgba(255,255,255,0.88);
   box-shadow: 0 10px 26px rgba(0,0,0,0.08);
@@ -1258,9 +1268,10 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
+if (isTreble) {
+    ctx.fillStyle = "#FFF9C4"; // ☀️ light yellow
 } else if (isBass) {
-    ctx.fillStyle = "#BBF7D0"; // 🍏 green
+    ctx.fillStyle = "#757575"; // 🖤 gray
 } else {
     ctx.fillStyle = "#ffffff";
 }
@@ -1306,9 +1317,9 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#FF9800"; // yellow/orange
+    ctx.fillStyle = "#FBC02D"; // ☀️ medium yellow
 } else if (isBass) {
-    ctx.fillStyle = "#16A34A"; // green
+    ctx.fillStyle = "#424242"; // 🖤 dark gray
 } else {
     ctx.fillStyle = "#000";
 }
@@ -1500,18 +1511,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-    if (track === TREBLE) {
-    // ☀️ TRUE PIANO YELLOW
-    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
-    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
-    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
-    gradient.addColorStop(1.00, "#FBC02D"); // base
+if (track === TREBLE) {
+    // ☀️ LIGHT YELLOW
+    gradient.addColorStop(0.00, "#FFFDE7"); // very light yellow
+    gradient.addColorStop(0.25, "#FFF59D"); // light yellow
+    gradient.addColorStop(0.55, "#FFEB3B"); // medium yellow
+    gradient.addColorStop(1.00, "#FBC02D"); // base yellow
 } else if (track === BASS) {
-    // 🍏 TRUE PIANO GREEN
-    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
-    gradient.addColorStop(0.25, "#86EFAC"); // light green
-    gradient.addColorStop(0.55, "#4ADE80"); // pure green
-    gradient.addColorStop(1.00, "#22C55E"); // base
+    // 🖤 BLACK/GRAY
+    gradient.addColorStop(0.00, "#616161"); // light gray
+    gradient.addColorStop(0.25, "#424242"); // medium gray
+    gradient.addColorStop(0.55, "#212121"); // dark gray
+    gradient.addColorStop(1.00, "#000000"); // pure black
 }
 
 fallingRectangles.push({
@@ -1892,11 +1903,18 @@ if (!rect.landed) {
     // shimmer code
 }
 
-    if (showNoteNames && rect.isMidi && rect.noteName) {
-        ctx.fillStyle = "rgba(0,0,0,0.85)";
-ctx.font = "bold 15px Arial";
-ctx.shadowColor = "rgba(255,255,255,0.6)";
-ctx.shadowBlur = 2;
+if (showNoteNames && rect.isMidi && rect.noteName) {
+        // White text for bass (black notes), Black text for treble (yellow notes)
+        if (rect.track === BASS) {
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.9)";
+            ctx.shadowColor = "rgba(255,255,255,0.7)";
+        }
+        
+        ctx.font = "bold 15px Arial";
+        ctx.shadowBlur = 2;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
