@@ -52,20 +52,20 @@
 
 
 :root{
-    --bg-main: #ffffff;          /* ✅ keep WHITE background */
-    --bg-surface: rgba(255,255,255,0.86);
-  
-    --violet: rgba(155,110,255,0.22);
-    --navy: rgba(10, 20, 60, 0.10);
-    --yellow: rgba(255, 210, 0, 0.16);
-  
-  --accent-primary: #7E57C2;   /* soft violet */
-    --accent-success: #22C55E;
-    --accent-error: #EF4444;
-  
-    --text-main: #1A1A1F;
-    --border-soft: rgba(140,120,160,0.18);
-  }
+  --bg-main: #ffffff;          /* white background */
+  --bg-surface: rgba(255,255,255,0.86);
+
+  --light-blue: rgba(173, 216, 230, 0.25);
+  --sky-blue: rgba(135, 206, 235, 0.20);
+  --navy: rgba(10, 20, 60, 0.10);
+
+  --accent-primary: #3B82F6;   /* blue */
+  --accent-success: #22C55E;
+  --accent-error: #EF4444;
+
+  --text-main: #1A1A1F;
+  --border-soft: rgba(173, 216, 230, 0.3);
+}
 
 body {
     margin: 0;
@@ -78,12 +78,12 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background:
-    radial-gradient(900px 520px at 20% 0%, var(--violet), transparent 60%),
-    radial-gradient(900px 520px at 85% 10%, var(--yellow), transparent 62%),
-    radial-gradient(780px 480px at 50% 80%, rgba(155,110,255,0.12), transparent 60%),
-    radial-gradient(520px 320px at 35% 55%, var(--navy), transparent 60%),
-    var(--bg-main);
+background:
+  radial-gradient(900px 520px at 20% 0%, var(--light-blue), transparent 60%),
+  radial-gradient(900px 520px at 85% 10%, var(--sky-blue), transparent 62%),
+  radial-gradient(780px 480px at 50% 80%, rgba(173, 216, 230, 0.15), transparent 60%),
+  radial-gradient(520px 320px at 35% 55%, var(--navy), transparent 60%),
+  var(--bg-main);
     color: var(--text-main);
 }
 h1 {
@@ -1256,9 +1256,9 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFF59D"; // 🌟 true golden
+    ctx.fillStyle = "rgba(173, 216, 230, 0.4)"; // 💙 light blue (faded)
 } else if (isBass) {
-    ctx.fillStyle = "#D1C4E9"; // 💜 soft violet
+    ctx.fillStyle = "rgba(70, 130, 180, 0.35)"; // 🔵 denim blue (faded)
 } else {
     ctx.fillStyle = "#ffffff";
 }
@@ -1304,9 +1304,9 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#FBC02D"; // 🌟 true golden
+    ctx.fillStyle = "#87CEEB"; // 💙 light blue
 } else if (isBass) {
-    ctx.fillStyle = "#7E57C2"; // 💜 soft violet
+    ctx.fillStyle = "#4682B4"; // 🔵 denim blue
 } else {
     ctx.fillStyle = "#000";
 }
@@ -1498,19 +1498,19 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-    if (track === TREBLE) {
-        // 🌟 TRUE GOLDEN
-        gradient.addColorStop(0.00, "#FFFDE7"); // bright highlight
-        gradient.addColorStop(0.25, "#FFF59D"); // light golden
-        gradient.addColorStop(0.55, "#FFEB3B"); // pure golden
-        gradient.addColorStop(1.00, "#FBC02D"); // base golden
-    } else if (track === BASS) {
-        // 💜 SOFT VIOLET
-        gradient.addColorStop(0.00, "#EDE7F6"); // very light violet
-        gradient.addColorStop(0.25, "#B39DDB"); // soft violet
-        gradient.addColorStop(0.55, "#7E57C2"); // medium violet
-        gradient.addColorStop(1.00, "#5E35B1"); // base violet
-    }
+if (track === TREBLE) {
+    // 💙 LIGHT BLUE
+    gradient.addColorStop(0.00, "#E0F4FF"); // very light blue highlight
+    gradient.addColorStop(0.25, "#B0E0FF"); // pale blue
+    gradient.addColorStop(0.55, "#87CEEB"); // sky blue
+    gradient.addColorStop(1.00, "#5FB3D9"); // light blue base
+} else if (track === BASS) {
+    // 🔵 DENIM BLUE
+    gradient.addColorStop(0.00, "#A4C8E1"); // light denim highlight
+    gradient.addColorStop(0.25, "#7BA8CC"); // medium denim
+    gradient.addColorStop(0.55, "#4682B4"); // steel blue (denim)
+    gradient.addColorStop(1.00, "#36648B"); // dark denim base
+}
 
 fallingRectangles.push({
     midi: midiNumber,
