@@ -23,8 +23,8 @@
   align-items: center;
   justify-content: center;
 
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 14, 20, 0.78);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-soft);
 
   z-index: 10000;
@@ -34,6 +34,7 @@
     font-family: 'Cormorant Garamond', serif;
     font-weight: 1000;
     letter-spacing: 0.6px;
+    color: var(--text-main);
 }
 
 #brandLink{
@@ -51,31 +52,50 @@
 }
 
 
-    :root {
-    --bg-main: #F7F9FC;
-    --bg-surface: #FFFFFF;
-
-    --accent-primary: #3B82F6;   /* blue */
-    --accent-success: #22C55E;   /* green */
-    --accent-error: #EF4444;     /* red */
-
-    --text-main: #1F2937;
-    --border-soft: #CBD5E1;
-}
-body {
+:root{
+    /* Base */
+    --bg-main: #0B0F14;                 /* deep charcoal */
+    --bg-surface: rgba(15, 20, 28, 0.78);
+  
+    /* Yellow accents */
+    --y1: rgba(255, 214, 10, 0.28);     /* strong yellow glow */
+    --y2: rgba(255, 214, 10, 0.16);     /* softer yellow glow */
+  
+    /* Soft blacks */
+    --softBlack1: rgba(0, 0, 0, 0.35);
+    --softBlack2: rgba(0, 0, 0, 0.18);
+  
+    /* UI */
+    --accent-primary: #FFD60A;          /* yellow */
+    --accent-success: #22C55E;
+    --accent-error: #EF4444;
+  
+    --text-main: #F3F4F6;              /* near-white */
+    --border-soft: rgba(255, 214, 10, 0.18);
+  }
+  
+  body{
     margin: 0;
-    padding: 80px 0 40px 0; /* room for brand bar + heading */
-    /* 🔼 nudges everything up */
+    padding: 80px 0 40px 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
     min-height: 100vh;
-
+  
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-main);
+  
+    /* ✅ same style as your red design, but black/yellow */
+    background:
+      radial-gradient(900px 520px at 18% 0%, var(--y1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softBlack1), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--y2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, var(--softBlack2), transparent 60%),
+      var(--bg-main);
+      label { color: var(--text-main); }
     color: var(--text-main);
-}
+  }
+  
 h1 {
     font-size: clamp(32px, 6vw, 60px);
     color: var(--text-main);
@@ -84,24 +104,25 @@ h1 {
     margin-top: 12px;      /* 🔽 kills the huge gap */
     margin-bottom: 13px;  /* slightly tighter */
 }
-button {
+button{
     padding: clamp(8px, 2vw, 15px) clamp(14px, 4vw, 30px);
     font-size: clamp(14px, 2.2vw, 18px);
-
+  
     background-color: var(--accent-primary);
-    color: white;
-
+    color: #111;
+  
     border: none;
     border-radius: 10px;
     cursor: pointer;
-
+  
     transition: background-color 0.2s, transform 0.15s;
-}
-
-button:hover:not(:disabled) {
-    background-color: #2563EB;
+  }
+  
+  button:hover:not(:disabled){
+    background-color: #FBBF24; /* warm yellow */
     transform: translateY(-1px);
-}
+  }
+  
 
 button:disabled {
     background-color: #cccccc;
@@ -188,9 +209,10 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #22C55E; /* GREEN */
-    color: white;
-}
+    background: #FFD60A;
+    color: #111;
+  }
+  
 
 .note-circle.wrong {
     background: #EF4444; /* RED */
@@ -1254,12 +1276,13 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
+    ctx.fillStyle = "#FFE066"; // ✅ yellow (RH)
 } else if (isBass) {
-    ctx.fillStyle = "#BBF7D0"; // 🍏 green
+    ctx.fillStyle = "#2B2F36"; // ✅ charcoal (LH)
 } else {
     ctx.fillStyle = "#ffffff";
 }
+
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
 
         ctx.strokeStyle = "#000";
@@ -1302,12 +1325,13 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#FF9800"; // yellow/orange
+    ctx.fillStyle = "#FFD60A"; // ✅ strong yellow (RH)
 } else if (isBass) {
-    ctx.fillStyle = "#16A34A"; // green
+    ctx.fillStyle = "#111827"; // ✅ soft-black (LH)
 } else {
     ctx.fillStyle = "#000";
 }
+
 
     ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
 
@@ -1497,18 +1521,19 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
     if (track === TREBLE) {
-    // ☀️ TRUE PIANO YELLOW
-    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
-    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
-    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
-    gradient.addColorStop(1.00, "#FBC02D"); // base
-} else if (track === BASS) {
-    // 🍏 TRUE PIANO GREEN
-    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
-    gradient.addColorStop(0.25, "#86EFAC"); // light green
-    gradient.addColorStop(0.55, "#4ADE80"); // pure green
-    gradient.addColorStop(1.00, "#22C55E"); // base
-}
+        // ✅ YELLOW (Right hand)
+        gradient.addColorStop(0.00, "#FFF7CC");
+        gradient.addColorStop(0.25, "#FFE066");
+        gradient.addColorStop(0.55, "#FFD60A");
+        gradient.addColorStop(1.00, "#FBBF24");
+      } else if (track === BASS) {
+        // ✅ CHARCOAL (Left hand) - not pure black
+        gradient.addColorStop(0.00, "#6B7280");
+        gradient.addColorStop(0.25, "#374151");
+        gradient.addColorStop(0.55, "#1F2937");
+        gradient.addColorStop(1.00, "#111827");
+      }
+      
 
 fallingRectangles.push({
     midi: midiNumber,
@@ -1888,21 +1913,23 @@ if (!rect.landed) {
     // shimmer code
 }
 
-    if (showNoteNames && rect.isMidi && rect.noteName) {
-        ctx.fillStyle = "rgba(0,0,0,0.85)";
-ctx.font = "bold 15px Arial";
-ctx.shadowColor = "rgba(255,255,255,0.6)";
-ctx.shadowBlur = 2;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.fillText(
-            rect.noteName,
-            rect.x + rect.width / 2,
-            rect.y + rect.height / 2
-        );
-        ctx.shadowBlur = 0;
+if (showNoteNames && rect.isMidi && rect.noteName) {
+    if (rect.track === BASS) {
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.shadowColor = "rgba(0,0,0,0.55)";
+    } else {
+      ctx.fillStyle = "rgba(0,0,0,0.90)";
+      ctx.shadowColor = "rgba(255,255,255,0.65)";
     }
+  
+    ctx.font = "bold 15px Arial";
+    ctx.shadowBlur = 2;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(rect.noteName, rect.x + rect.width / 2, rect.y + rect.height / 2);
+    ctx.shadowBlur = 0;
+  }
+  
 
     return true;
 });
