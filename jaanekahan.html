@@ -1262,8 +1262,9 @@ const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
     ctx.fillStyle = "#FFF9C4"; // ☀️ light yellow
 } else if (isBass) {
-    ctx.fillStyle = "#757575"; // 🖤 gray
-} else {
+    ctx.fillStyle = "#424242"; // CHANGE THIS
+}
+else {
     ctx.fillStyle = "#ffffff";
 }
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
@@ -1509,11 +1510,11 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         gradient.addColorStop(0.55, "#FFEB3B"); // medium yellow
         gradient.addColorStop(1.00, "#FBC02D"); // base yellow
     } else if (track === BASS) {
-        // 🖤 BLACK/GRAY
-        gradient.addColorStop(0.00, "#616161"); // light gray
-        gradient.addColorStop(0.25, "#424242"); // medium gray
-        gradient.addColorStop(0.55, "#212121"); // dark gray
-        gradient.addColorStop(1.00, "#000000"); // pure black
+        // 🖤 BLACK/GRAY - CHANGE THESE 4 LINES
+        gradient.addColorStop(0.00, "#616161"); 
+        gradient.addColorStop(0.25, "#424242"); 
+        gradient.addColorStop(0.55, "#212121"); 
+        gradient.addColorStop(1.00, "#000000"); 
     }
 
 fallingRectangles.push({
@@ -1897,9 +1898,10 @@ if (!rect.landed) {
 if (showNoteNames && rect.isMidi && rect.noteName) {
     // White text for bass (black notes), Black text for treble (yellow notes)
     if (rect.track === BASS) {
-        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.fillStyle = "rgba(255,255,255,0.95)"; // Change to black if using light colors
         ctx.shadowColor = "rgba(0,0,0,0.5)";
-    } else {
+    } 
+    else {
         ctx.fillStyle = "rgba(0,0,0,0.9)";
         ctx.shadowColor = "rgba(255,255,255,0.7)";
     }
