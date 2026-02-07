@@ -51,17 +51,22 @@
 }
 
 
-    :root {
-    --bg-main: #F7F9FC;
-    --bg-surface: #FFFFFF;
+:root{
+    --bg-main: #ffffff;          /* ✅ keep WHITE background */
+    --bg-surface: rgba(255,255,255,0.86);
+  
+    --violet: rgba(155,110,255,0.22);
+    --navy: rgba(10, 20, 60, 0.10);
+    --yellow: rgba(255, 210, 0, 0.16);
+  
+  --accent-primary: #7E57C2;   /* soft violet */
+    --accent-success: #22C55E;
+    --accent-error: #EF4444;
+  
+    --text-main: #1A1A1F;
+    --border-soft: rgba(140,120,160,0.18);
+  }
 
-    --accent-primary: #3B82F6;   /* blue */
-    --accent-success: #22C55E;   /* green */
-    --accent-error: #EF4444;     /* red */
-
-    --text-main: #1F2937;
-    --border-soft: #CBD5E1;
-}
 body {
     margin: 0;
     padding: 80px 0 40px 0; /* room for brand bar + heading */
@@ -73,7 +78,12 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-main);
+    background:
+    radial-gradient(900px 520px at 20% 0%, var(--violet), transparent 60%),
+    radial-gradient(900px 520px at 85% 10%, var(--yellow), transparent 62%),
+    radial-gradient(780px 480px at 50% 80%, rgba(155,110,255,0.12), transparent 60%),
+    radial-gradient(520px 320px at 35% 55%, var(--navy), transparent 60%),
+    var(--bg-main);
     color: var(--text-main);
 }
 h1 {
@@ -1246,9 +1256,9 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
+    ctx.fillStyle = "#FFF59D"; // 🌟 true golden
 } else if (isBass) {
-    ctx.fillStyle = "#BBF7D0"; // 🍏 green
+    ctx.fillStyle = "#D1C4E9"; // 💜 soft violet
 } else {
     ctx.fillStyle = "#ffffff";
 }
@@ -1294,9 +1304,9 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#FF9800"; // yellow/orange
+    ctx.fillStyle = "#FBC02D"; // 🌟 true golden
 } else if (isBass) {
-    ctx.fillStyle = "#16A34A"; // green
+    ctx.fillStyle = "#7E57C2"; // 💜 soft violet
 } else {
     ctx.fillStyle = "#000";
 }
@@ -1489,18 +1499,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
     if (track === TREBLE) {
-    // ☀️ TRUE PIANO YELLOW
-    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
-    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
-    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
-    gradient.addColorStop(1.00, "#FBC02D"); // base
-} else if (track === BASS) {
-    // 🍏 TRUE PIANO GREEN
-    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
-    gradient.addColorStop(0.25, "#86EFAC"); // light green
-    gradient.addColorStop(0.55, "#4ADE80"); // pure green
-    gradient.addColorStop(1.00, "#22C55E"); // base
-}
+        // 🌟 TRUE GOLDEN
+        gradient.addColorStop(0.00, "#FFFDE7"); // bright highlight
+        gradient.addColorStop(0.25, "#FFF59D"); // light golden
+        gradient.addColorStop(0.55, "#FFEB3B"); // pure golden
+        gradient.addColorStop(1.00, "#FBC02D"); // base golden
+    } else if (track === BASS) {
+        // 💜 SOFT VIOLET
+        gradient.addColorStop(0.00, "#EDE7F6"); // very light violet
+        gradient.addColorStop(0.25, "#B39DDB"); // soft violet
+        gradient.addColorStop(0.55, "#7E57C2"); // medium violet
+        gradient.addColorStop(1.00, "#5E35B1"); // base violet
+    }
 
 fallingRectangles.push({
     midi: midiNumber,
