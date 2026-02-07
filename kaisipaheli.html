@@ -53,26 +53,50 @@
 
 
 :root{
-    /* Base */
-    --bg-main: #0B0F14;                 /* deep charcoal */
-    --bg-surface: rgba(15, 20, 28, 0.78);
+    /* ✅ MAIN BASE MUST STAY WHITE */
+    --bg-main: #ffffff;
   
-    /* Yellow accents */
-    --y1: rgba(255, 214, 10, 0.28);     /* strong yellow glow */
-    --y2: rgba(255, 214, 10, 0.16);     /* softer yellow glow */
+    /* Right side yellow glows */
+    --y1: rgba(255, 214, 10, 0.26);
+    --y2: rgba(255, 214, 10, 0.14);
   
-    /* Soft blacks */
-    --softBlack1: rgba(0, 0, 0, 0.35);
-    --softBlack2: rgba(0, 0, 0, 0.18);
+    /* Left side soft “blackish” (not too black) */
+    --k1: rgba(0, 0, 0, 0.12);
+    --k2: rgba(0, 0, 0, 0.07);
   
     /* UI */
-    --accent-primary: #FFD60A;          /* yellow */
+    --accent-primary: #FFD60A;
     --accent-success: #22C55E;
     --accent-error: #EF4444;
   
-    --text-main: #F3F4F6;              /* near-white */
-    --border-soft: rgba(255, 214, 10, 0.18);
+    --text-main: #1A1A1F; /* ✅ on white */
+    --border-soft: rgba(0, 0, 0, 0.10);
   }
+  
+  body{
+    margin: 0;
+    padding: 80px 0 40px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+  
+    font-family: system-ui, -apple-system, sans-serif;
+    color: var(--text-main);
+  
+    /* ✅ WHITE base, blackish LEFT, yellow RIGHT */
+    background:
+      radial-gradient(900px 520px at 85% 8%,  var(--y1), transparent 62%),   /* yellow right */
+      radial-gradient(780px 480px at 75% 78%, var(--y2), transparent 60%),   /* yellow lower-right */
+      radial-gradient(900px 520px at 18% 10%, var(--k1), transparent 62%),   /* blackish left */
+      radial-gradient(520px 320px at 28% 70%, var(--k2), transparent 60%),   /* blackish lower-left */
+      var(--bg-main);
+  }
+  
+  /* ✅ MUST be OUTSIDE body{} */
+  label{ color: var(--text-main); }
+  
   
   body{
     margin: 0;
