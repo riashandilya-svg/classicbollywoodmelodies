@@ -1446,18 +1446,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-    if (track === TREBLE) {
-    // ☀️ TRUE PIANO YELLOW
-    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
-    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
-    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
-    gradient.addColorStop(1.00, "#FBC02D"); // base
+if (track === TREBLE) {
+    // ☀️ LIGHT YELLOW
+    gradient.addColorStop(0.00, "#FFFDE7"); // very light yellow
+    gradient.addColorStop(0.25, "#FFF59D"); // light yellow
+    gradient.addColorStop(0.55, "#FFEB3B"); // medium yellow
+    gradient.addColorStop(1.00, "#FBC02D"); // base yellow
 } else if (track === BASS) {
-    // 🍏 TRUE PIANO GREEN
-    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
-    gradient.addColorStop(0.25, "#86EFAC"); // light green
-    gradient.addColorStop(0.55, "#4ADE80"); // pure green
-    gradient.addColorStop(1.00, "#22C55E"); // base
+    // 🖤 BLACK/GRAY
+    gradient.addColorStop(0.00, "#616161"); // light gray
+    gradient.addColorStop(0.25, "#424242"); // medium gray
+    gradient.addColorStop(0.55, "#212121"); // dark gray
+    gradient.addColorStop(1.00, "#000000"); // pure black
 }
 
 fallingRectangles.push({
@@ -1838,11 +1838,18 @@ if (!rect.landed) {
     // shimmer code
 }
 
-    if (showNoteNames && rect.isMidi && rect.noteName) {
-        ctx.fillStyle = "rgba(0,0,0,0.85)";
-ctx.font = "bold 15px Arial";
-ctx.shadowColor = "rgba(255,255,255,0.6)";
-ctx.shadowBlur = 2;
+if (showNoteNames && rect.isMidi && rect.noteName) {
+        // White text for bass (black notes), Black text for treble (yellow notes)
+        if (rect.track === BASS) {
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.9)";
+            ctx.shadowColor = "rgba(255,255,255,0.7)";
+        }
+        
+        ctx.font = "bold 15px Arial";
+        ctx.shadowBlur = 2;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
