@@ -25,7 +25,7 @@
 
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border-soft);
+border-bottom: 1px solid rgba(59, 130, 246, 0.18);
 
   z-index: 10000;
 }
@@ -49,19 +49,58 @@
 #brandLink:hover{
   text-decoration: underline;
 }
-
-
-    :root {
-    --bg-main: #F7F9FC;
-    --bg-surface: #FFFFFF;
-
-    --accent-primary: #3B82F6;   /* blue */
-    --accent-success: #22C55E;   /* green */
-    --accent-error: #EF4444;     /* red */
-
-    --text-main: #1F2937;
-    --border-soft: #CBD5E1;
+/* YouTube button - right side, larger text */
+#youtubeBtn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  background: #3B82F6;  /* Blue */
+  color: #ffffff;  /* White text for readability */
+  text-decoration: none;
+  
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
 }
+
+#youtubeBtn:hover {
+  background: #2563EB;
+  transform: translateY(-50%) translateY(-1px);
+  text-decoration: none;
+}
+
+#youtubeBtn span {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+:root {
+    --bg-main: #ffffff;
+    --bg-surface: rgba(255,255,255,0.86);
+
+    --blue1: rgba(59, 130, 246, 0.22);      /* light blue for gradients */
+    --blue2: rgba(147, 197, 253, 0.16);     /* very light blue */
+    --softWhite: rgba(255, 255, 255, 0.10); /* soft white */
+
+    --accent-primary: #3B82F6;   /* blue - buttons */
+    --accent-success: #22C55E;   /* green - success messages */
+    --accent-error: #EF4444;     /* red - error messages */
+
+    --text-main: #1A1A1F;
+    --border-soft: rgba(59, 130, 246, 0.18); /* blue border */
+}
+    
 body {
     margin: 0;
     padding: 80px 0 40px 0; /* room for brand bar + heading */
@@ -73,9 +112,15 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-main);
+    background:
+      radial-gradient(900px 520px at 20% 0%, var(--blue1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softWhite), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--blue2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(59, 130, 246, 0.10), transparent 60%),
+      var(--bg-main);
     color: var(--text-main);
 }
+    
 h1 {
     font-size: clamp(32px, 6vw, 60px);
     color: var(--text-main);
@@ -188,7 +233,7 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #22C55E; /* GREEN */
+    background: #FFC107; /* YELLOW */
     color: white;
 }
 
@@ -312,7 +357,25 @@ button:disabled {
     flex-direction: column;
     align-items: stretch;
 }
+/* Mobile: stack YouTube button below brand name */
+#brandBar {
+  height: auto;
+  min-height: 56px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 14px;
+}
 
+#youtubeBtn {
+  position: static;
+  transform: none;
+  width: auto;
+  margin: 0 auto;
+}
+
+#youtubeBtn:hover {
+  transform: translateY(-1px);
+}
 #practiceControls {
     flex-direction: column;
     align-items: stretch;
@@ -383,7 +446,7 @@ canvas {
   width: min(420px, 92%);
   padding: 16px 18px;
   margin: 14px auto;
-  border: 1px solid rgba(235,50,70,0.22);
+border: 1px solid rgba(59, 130, 246, 0.22);
   border-radius: 16px;
   background: rgba(255,255,255,0.88);
   box-shadow: 0 10px 26px rgba(0,0,0,0.08);
@@ -422,7 +485,12 @@ canvas {
   <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html" id="brandLink">
     <span>Ria Om Shandilya</span>
   </a>
+  
+  <a href="YOUR_YOUTUBE_URL_HERE" id="youtubeBtn" target="_blank">
+    <span>Quick Guide to Measures & Sheet</span>
+  </a>
 </div>
+    
     <h1>Chookar Mere Mann Ko</h1><div id="paywall"></div>
 <div id="app">
     
@@ -1255,9 +1323,9 @@ const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFECB3"; // ☀️ yellow
+    ctx.fillStyle = "#FFF9C4"; // ☀️ light yellow
 } else if (isBass) {
-    ctx.fillStyle = "#BBF7D0"; // 🍏 green
+    ctx.fillStyle = "#BFDBFE"; // 💙 light blue
 } else {
     ctx.fillStyle = "#ffffff";
 }
@@ -1305,7 +1373,7 @@ const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
     ctx.fillStyle = "#FF9800"; // yellow/orange
 } else if (isBass) {
-    ctx.fillStyle = "#16A34A"; // green
+    ctx.fillStyle = "#3B82F6"; // blue
 } else {
     ctx.fillStyle = "#000";
 }
@@ -1497,18 +1565,18 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-    if (track === TREBLE) {
-    // ☀️ TRUE PIANO YELLOW
-    gradient.addColorStop(0.00, "#FFF9C4"); // bright highlight
-    gradient.addColorStop(0.25, "#FFF176"); // warm yellow
-    gradient.addColorStop(0.55, "#FFEB3B"); // pure yellow
-    gradient.addColorStop(1.00, "#FBC02D"); // base
+if (track === TREBLE) {
+    // ☀️ LIGHT YELLOW
+    gradient.addColorStop(0.00, "#FFFDE7"); // very light yellow
+    gradient.addColorStop(0.25, "#FFF59D"); // light yellow
+    gradient.addColorStop(0.55, "#FFEB3B"); // medium yellow
+    gradient.addColorStop(1.00, "#FBC02D"); // base yellow
 } else if (track === BASS) {
-    // 🍏 TRUE PIANO GREEN
-    gradient.addColorStop(0.00, "#D9FBE8"); // mint highlight
-    gradient.addColorStop(0.25, "#86EFAC"); // light green
-    gradient.addColorStop(0.55, "#4ADE80"); // pure green
-    gradient.addColorStop(1.00, "#22C55E"); // base
+    // 💙 BLUE
+    gradient.addColorStop(0.00, "#DBEAFE"); // very light blue
+    gradient.addColorStop(0.25, "#93C5FD"); // light blue
+    gradient.addColorStop(0.55, "#60A5FA"); // medium blue
+    gradient.addColorStop(1.00, "#3B82F6"); // base blue
 }
 
 fallingRectangles.push({
@@ -1889,11 +1957,18 @@ if (!rect.landed) {
     // shimmer code
 }
 
-    if (showNoteNames && rect.isMidi && rect.noteName) {
-        ctx.fillStyle = "rgba(0,0,0,0.85)";
-ctx.font = "bold 15px Arial";
-ctx.shadowColor = "rgba(255,255,255,0.6)";
-ctx.shadowBlur = 2;
+if (showNoteNames && rect.isMidi && rect.noteName) {
+        // Black text for treble (yellow notes), Black text for bass (blue notes)
+        if (rect.track === BASS) {
+            ctx.fillStyle = "rgba(0,0,0,0.9)";
+            ctx.shadowColor = "rgba(255,255,255,0.7)";
+        } else {
+            ctx.fillStyle = "rgba(0,0,0,0.9)";
+            ctx.shadowColor = "rgba(255,255,255,0.7)";
+        }
+        
+        ctx.font = "bold 15px Arial";
+        ctx.shadowBlur = 2;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
