@@ -49,32 +49,40 @@ border-bottom: 1px solid rgba(235, 50, 70, 0.18);
 #brandLink:hover{
   text-decoration: underline;
 }
-/* YouTube button */
-/* YouTube button - left side */
+
+/* YouTube button - EXACT copy of Start Demo style */
 #youtubeBtn {
-  color: #E57373;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  background: #ff0000;
+  color: #fff;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 0 12px;
-  margin-right: 20px;
+  
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  
   font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  border-right: 1px solid rgba(235, 50, 70, 0.18);
-  transition: background-color 0.2s;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
 }
 
 #youtubeBtn:hover {
-  background-color: rgba(235, 50, 70, 0.08);
+  background: #cc0000;
+  transform: translateY(-50%) translateY(-1px);
   text-decoration: none;
 }
 
 #youtubeBtn span {
   font-family: 'Cormorant Garamond', serif;
-  font-weight: 600;
+  font-weight: 700;
 }
 
    :root{
@@ -350,23 +358,26 @@ button:disabled {
     align-items: stretch;
 }
     
-/* Stack brand bar on mobile */
-
-brandBar {
+/* Mobile: stack YouTube button below brand name */
+#brandBar {
   height: auto;
   min-height: 56px;
   flex-direction: column;
   gap: 8px;
-  padding: 8px 0;
+  padding: 8px 14px;
+  position: relative;
 }
 
 #youtubeBtn {
-  margin-right: 0;
-  border-right: none;
-  border-bottom: 1px solid rgba(235, 50, 70, 0.18);
-  padding-bottom: 8px;
+  position: static;
+  transform: none;
+  width: auto;
+  margin: 0 auto;
 }
 
+#youtubeBtn:hover {
+  transform: translateY(-1px);
+}
 
 #practiceControls {
     flex-direction: column;
@@ -478,12 +489,12 @@ canvas {
 </head>
 <body>
 <div id="brandBar">
-  <a href="YOUR_YOUTUBE_URL_HERE" id="youtubeBtn" target="_blank">
-    <span>▶ What are measures?</span>
-  </a>
-  
   <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html" id="brandLink">
     <span>Ria Om Shandilya</span>
+  </a>
+  
+  <a href="YOUR_YOUTUBE_URL_HERE" id="youtubeBtn" target="_blank">
+    <span>What are measures?</span>
   </a>
 </div>
 
