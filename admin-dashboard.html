@@ -2204,40 +2204,42 @@ function closeGrantSongModal() {
 
 async function grantSongAccessForever() {
   if (!songToGrant) return;
-
   document.getElementById('grantSongStep3').classList.add('hidden');
   document.getElementById('grantingSongStep').classList.remove('hidden');
-
   try {
     const { data: { session } } = await window.supabase.auth.getSession();
     
     if (!session || !session.user) {
       throw new Error('Not authenticated');
     }
-
+    
     console.log('Calling grant_song_access:', {
-      userId: songToGrant.userId,
-      songId: songToGrant.songId,
-      email: session.user.email
+      userEmail: currentManageUser.email,
+      songSlug: songToGrant.songId
     });
-
-    const { data, error } = await window.supabase.rpc('grant_song_access', {
-      p_user_id: songToGrant.userId,
-      p_song_id: songToGrant.songId,
-      p_admin_email: session.user.email
+    
+    // ✅ FIXED: Call edge function instead of database RPC
+    const response = await fetch('https://lyqpxcilniqzurevetae.supabase.co/functions/v1/grant_song_access', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis'
+      },
+      body: JSON.stringify({
+        userEmail: currentManageUser.email,
+        songSlug: songToGrant.songId
+      })
     });
-
-    console.log('Response:', { data, error });
-
-    if (error) {
-      console.error('Supabase error:', error);
-      throw new Error(error.message);
+    
+    const data = await response.json();
+    
+    console.log('Response:', data);
+    
+    if (!response.ok || data.error) {
+      throw new Error(data.error || data.details || 'Failed to grant access');
     }
     
-    if (data && data.error) {
-      throw new Error(data.error);
-    }
-
     alert(`✅ Song access granted successfully!\n\nSong: ${songToGrant.songId}\nUser: ${currentManageUser.email}`);
     
     closeGrantSongModal();
