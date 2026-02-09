@@ -2300,74 +2300,74 @@ tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></d
     }
 
     function renderUsers(list) {
-        const tbody = document.getElementById('usersTableBody');
-        if (!list.length) {
-          tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
-          return;
-        }
-      
-        tbody.innerHTML = list.map(user => {
-          const isAdmin = ADMIN_EMAILS.includes(user.email);
-          const songs = getSongsForUser(user.id);
-          const bundleCount = getBundleCountForUser(user.id);
-          const photoUrl = photoCache[user.id] || null;
-          const videoUrl = videoCache[user.id] || null;
-      
-          const songsHTML = songs.length
-            ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>`
-            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-      
-          const photoHTML = photoUrl
-            ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openMediaModal('photo','${photoUrl}')">`
-            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-      
-          const videoHTML = videoUrl
-            ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>`
-            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-      
-          const actionButtons = isAdmin
-            ? '<span class="badge badge-warning">ADMIN</span>'
-            : songs.length > 0
-              ? `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
-                 <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`
-              : `<button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
-          
-          const gender = user.gender || '-';
-          const level = user.difficulty_level || '-';
-      
-          const songSuggestion = user.song_suggestion
-            ? user.song_suggestion
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#39;")
-            : '-';
-      
-          const optIn = user.marketing_opt_in
-            ? '<span class="badge badge-success">Yes</span>'
-            : '<span class="badge badge-error">No</span>';
-      
-          const booksOwnedHTML = user.books_owned && user.books_owned.length
-            ? user.books_owned.join(', ')
-            : '<span style="color: var(--muted); font-size: 13px;">None</span>';
-      
-          return `<tr>
-            <td>${userInfoHTML(user.display_name, user.email)}</td>
-            <td>${gender}</td>
-            <td>${level}</td>
-            <td>${optIn}</td>
-            <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
-            <td>${booksOwnedHTML}</td>
-            <td>${songsHTML}</td>
-            <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
-            <td>${photoHTML}</td>
-            <td>${videoHTML}</td>
-            <td>${new Date(user.created_at).toLocaleDateString()}</td>
-            <td>${actionButtons}</td>
-          </tr>`;
-        }).join('');
+      const tbody = document.getElementById('usersTableBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>';
+        return;
       }
+    
+      tbody.innerHTML = list.map(user => {
+        const isAdmin = ADMIN_EMAILS.includes(user.email);
+        const songs = getSongsForUser(user.id);
+        const bundleCount = getBundleCountForUser(user.id);
+        const photoUrl = photoCache[user.id] || null;
+        const videoUrl = videoCache[user.id] || null;
+    
+        const songsHTML = songs.length
+          ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>`
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+    
+        const photoHTML = photoUrl
+          ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openMediaModal('photo','${photoUrl}')">`
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+    
+        const videoHTML = videoUrl
+          ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>`
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+    
+        // UPDATE THIS PART - Show both buttons for all non-admin users
+        const actionButtons = isAdmin
+          ? '<span class="badge badge-warning">ADMIN</span>'
+          : `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
+             <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+        
+        const gender = user.gender || '-';
+        const level = user.difficulty_level || '-';
+    
+        const songSuggestion = user.song_suggestion
+          ? user.song_suggestion
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;")
+          : '-';
+    
+        const optIn = user.marketing_opt_in
+          ? '<span class="badge badge-success">Yes</span>'
+          : '<span class="badge badge-error">No</span>';
+    
+        const booksOwnedHTML = user.books_owned && user.books_owned.length
+          ? user.books_owned.join(', ')
+          : '<span style="color: var(--muted); font-size: 13px;">None</span>';
+    
+        return `<tr>
+          <td>${userInfoHTML(user.display_name, user.email)}</td>
+          <td>${gender}</td>
+          <td>${level}</td>
+          <td>${optIn}</td>
+          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${booksOwnedHTML}</td>
+          <td>${songsHTML}</td>
+          <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
+          <td>${photoHTML}</td>
+          <td>${videoHTML}</td>
+          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>${actionButtons}</td>
+        </tr>`;
+      }).join('');
+    }
+
     function filterUsers() {
       const q = document.getElementById('userSearch').value.toLowerCase();
       const filtered = allUsers.filter(u =>
