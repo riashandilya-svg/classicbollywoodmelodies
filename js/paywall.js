@@ -190,40 +190,54 @@ async function detectCurrency() {
       console.log("[PAYWALL] ❌ No session");
       return false;
     }
-
+  
     // Check if owner
     const email = normalizeEmail(session.user.email);
     if (OWNER_EMAILS.includes(email)) {
       console.log("[PAYWALL] ✅ User is owner - granting access");
       return true;
     }
-
+  
     const userId = session.user.id;
     const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
-
-    // 🚨 CRITICAL: ONLY check if user owns THIS SPECIFIC SONG
-    // DO NOT check for bundle - bundle only gives CREDITS, not access!
+  
     console.log(`[PAYWALL] 🔍 Checking ownership for song_slug: ${songSlug}`);
+    console.log(`[PAYWALL] 👤 User ID: ${userId}`);
     
     try {
-      const { data: songData, error: songError } = await window.supabase
-        .from("purchases")
-        .select("id, provider")
+      // 🚨 FIX: Check ENTITLEMENTS table instead of purchases
+      const { data: entitlementData, error: entitlementError } = await window.supabase
+        .from("entitlements")
+        .select("id, product_id")
         .eq("user_id", userId)
-        .eq("song_slug", songSlug)
-        .eq("status", "paid")
+        .eq("product_id", songSlug)
         .maybeSingle();
-
-      if (songError) {
-        console.warn("[PAYWALL] ⚠️ Error checking song ownership:", songError);
+  
+      console.log("[PAYWALL] 🔍 Entitlement check result:", { entitlementData, entitlementError });
+  
+      if (entitlementError) {
+        console.warn("[PAYWALL] ⚠️ Error checking entitlement:", entitlementError);
         return false;
       }
-
-      if (songData) {
-        console.log(`[PAYWALL] ✅ User owns this song (provider: ${songData.provider})`);
+  
+      if (entitlementData) {
+        console.log(`[PAYWALL] ✅ User has entitlement for this song`);
         return true;
       }
-
+  
+      // Also check purchases table as fallback (for old purchases)
+      const { data: purchaseData, error: purchaseError } = await window.supabase
+        .from("purchases")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("song_id", songSlug)
+        .maybeSingle();
+  
+      if (purchaseData) {
+        console.log(`[PAYWALL] ✅ User owns this song (via purchases table)`);
+        return true;
+      }
+  
       console.log("[PAYWALL] ❌ User does NOT own this song");
       return false;
       
