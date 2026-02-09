@@ -896,9 +896,9 @@ async function loadSongs(userId) {
             <div class="song-meta">From: ${bookName} • Purchased: ${purchaseDate}</div>
           </div>
           <div class="song-actions">
-            <button class="download-pdf-btn" onclick="downloadSheetMusic('${songId}', '${songSlug}')" title="Download sheet music PDF">
-              📄 PDF
-            </button>
+    <button class="download-pdf-btn" onclick="downloadSheetMusic('${songId}', '${songId.replace('song:', '')}')" title="Download sheet music PDF">
+  📄 PDF
+</button>
             <div class="progress-selector">
               <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}" 
                       onclick="updateProgress('${songId}', 'not_started')">
