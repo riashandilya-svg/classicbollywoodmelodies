@@ -210,7 +210,7 @@ async function detectCurrency() {
         .from("entitlements")
         .select("id, product_id")
         .eq("user_id", userId)
-        .eq("product_id", songSlug)
+        .eq("product_id", productId) 
         .maybeSingle();
   
       console.log("[PAYWALL] 🔍 Entitlement check result:", { entitlementData, entitlementError });
@@ -230,7 +230,7 @@ async function detectCurrency() {
         .from("purchases")
         .select("id")
         .eq("user_id", userId)
-        .eq("song_id", songSlug)
+        .eq("song_id", productId) 
         .maybeSingle();
   
       if (purchaseData) {
