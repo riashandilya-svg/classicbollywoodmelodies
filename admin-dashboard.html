@@ -2143,6 +2143,118 @@ async function removeSongAccessForever() {
     document.getElementById('removeSongStep3').classList.remove('hidden');
   }
 }
+// ═══════════════════════════════════════════════════════
+// GRANT SONG ACCESS MODAL
+// ═══════════════════════════════════════════════════════
+
+let songToGrant = null;
+
+function openGrantSongModal() {
+  if (!currentManageUser) return;
+  
+  document.getElementById('grantSongUserDisplay').textContent = 
+    `${currentManageUser.display_name || 'User'} (${currentManageUser.email})`;
+  
+  document.getElementById('grantSongIdInput').value = '';
+  document.getElementById('grantSongStep1').classList.remove('hidden');
+  document.getElementById('grantSongStep2').classList.add('hidden');
+  document.getElementById('grantSongStep3').classList.add('hidden');
+  document.getElementById('grantingSongStep').classList.add('hidden');
+  
+  document.getElementById('grantSongModal').classList.remove('hidden');
+}
+
+function confirmGrantSongStep2() {
+  const songId = document.getElementById('grantSongIdInput').value.trim();
+  
+  if (!songId) {
+    alert('⚠️ Please enter a song ID');
+    return;
+  }
+
+  // Check if user already has this song
+  const alreadyHas = allPurchases.some(p => 
+    p.user_id === currentManageUser.id && p.song_id === songId
+  );
+
+  if (alreadyHas) {
+    alert('⚠️ This user already has access to this song!');
+    return;
+  }
+
+  songToGrant = { userId: currentManageUser.id, songId };
+  
+  document.getElementById('grantSongIdConfirm').textContent = songId;
+  document.getElementById('grantSongUserConfirm').textContent = 
+    `${currentManageUser.display_name || 'User'} (${currentManageUser.email})`;
+
+  document.getElementById('grantSongStep1').classList.add('hidden');
+  document.getElementById('grantSongStep2').classList.remove('hidden');
+}
+
+function confirmGrantSongStep3() {
+  document.getElementById('grantSongStep2').classList.add('hidden');
+  document.getElementById('grantSongStep3').classList.remove('hidden');
+}
+
+function closeGrantSongModal() {
+  document.getElementById('grantSongModal').classList.add('hidden');
+  songToGrant = null;
+}
+
+async function grantSongAccessForever() {
+  if (!songToGrant) return;
+
+  document.getElementById('grantSongStep3').classList.add('hidden');
+  document.getElementById('grantingSongStep').classList.remove('hidden');
+
+  try {
+    const { data: { session } } = await window.supabase.auth.getSession();
+    
+    if (!session || !session.user) {
+      throw new Error('Not authenticated');
+    }
+
+    console.log('Calling grant_song_access:', {
+      userId: songToGrant.userId,
+      songId: songToGrant.songId,
+      email: session.user.email
+    });
+
+    const { data, error } = await window.supabase.rpc('grant_song_access', {
+      p_user_id: songToGrant.userId,
+      p_song_id: songToGrant.songId,
+      p_admin_email: session.user.email
+    });
+
+    console.log('Response:', { data, error });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw new Error(error.message);
+    }
+    
+    if (data && data.error) {
+      throw new Error(data.error);
+    }
+
+    alert(`✅ Song access granted successfully!\n\nSong: ${songToGrant.songId}\nUser: ${currentManageUser.email}`);
+    
+    closeGrantSongModal();
+    
+    // Reload data
+    await Promise.all([loadPurchasesData(), loadBundlesData()]);
+    loadUserSongs(currentManageUser.id);
+    calculateRevenue();
+    
+  } catch (e) {
+    console.error('Grant song error:', e);
+    alert('❌ Error: ' + e.message);
+    
+    document.getElementById('grantingSongStep').classList.add('hidden');
+    document.getElementById('grantSongStep3').classList.remove('hidden');
+  }
+}
     // ═══════════════════════════════════════════════════════
     // AUTH + INIT
     // ═══════════════════════════════════════════════════════
