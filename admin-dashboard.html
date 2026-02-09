@@ -879,6 +879,19 @@
       background: rgba(239, 68, 68, 0.1);
     }
 
+    /* Grant modal success color override */
+#grantSongModal .modal-title {
+  color: var(--success) !important;
+}
+
+#grantSongModal .warning-box {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: var(--success);
+}
+
+#grantSongModal .warning-box h3 {
+  color: var(--success);
+}
   </style>
 </head>
 <body>
@@ -1532,6 +1545,94 @@ placeholder="Search by message, request type, or user..."
     </div>
   </div>
 </div>
+  <!-- Grant Song Access Modal -->
+<div id="grantSongModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color: var(--success);">✅ Grant Song Access</h2>
+      <p class="modal-subtitle">Add a new song to this user's library</p>
+    </div>
+
+    <div id="grantSongStep1" class="confirmation-step">
+      <p class="step-number">Step 1 of 3</p>
+      
+      <p class="confirmation-text">
+        Granting access for: <strong id="grantSongUserDisplay"></strong>
+      </p>
+
+      <div style="margin: 20px 0;">
+        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Enter Song ID:</label>
+        <input 
+          type="text" 
+          id="grantSongIdInput" 
+          class="search-box" 
+          placeholder="e.g., kalho, tujhemeri, etc." 
+          style="margin: 0;"
+        >
+        <p style="font-size: 13px; color: var(--muted); margin-top: 8px;">
+          Enter the exact song slug/ID from your song catalog
+        </p>
+      </div>
+
+      <div class="warning-box" style="background: rgba(16, 185, 129, 0.08); border-color: var(--success);">
+        <h3 style="color: var(--success);">ℹ️ This will:</h3>
+        <ul>
+          <li>Add the song to their purchased songs list</li>
+          <li>Grant immediate download access</li>
+          <li>Create an entitlement record</li>
+          <li><strong>NOT charge the user any payment</strong></li>
+        </ul>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeGrantSongModal()">Cancel</button>
+        <button class="btn" style="background: var(--success); color: white;" onclick="confirmGrantSongStep2()">
+          Continue to Step 2
+        </button>
+      </div>
+    </div>
+
+    <div id="grantSongStep2" class="confirmation-step hidden">
+      <p class="step-number">Step 2 of 3</p>
+      <p class="confirmation-text">
+        You are about to grant access to:<br>
+        Song ID: <span class="code-display" id="grantSongIdConfirm"></span><br>
+        <br>
+        For user: <strong id="grantSongUserConfirm"></strong>
+        <br><br>
+        Are you sure this is correct?
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeGrantSongModal()">Cancel</button>
+        <button class="btn" style="background: var(--success); color: white;" onclick="confirmGrantSongStep3()">
+          Yes, Continue to Step 3
+        </button>
+      </div>
+    </div>
+
+    <div id="grantSongStep3" class="confirmation-step hidden">
+      <p class="step-number">Step 3 of 3 - FINAL CONFIRMATION</p>
+      <p class="confirmation-text">
+        <strong style="color: var(--success); font-size: 18px;">FINAL STEP!</strong><br><br>
+        Once you click "GRANT ACCESS", the user will immediately gain access to this song without any payment.
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeGrantSongModal()">Cancel - Don't Grant</button>
+        <button class="btn" style="background: var(--success); color: white;" onclick="grantSongAccessForever()">
+          GRANT ACCESS
+        </button>
+      </div>
+    </div>
+
+    <div id="grantingSongStep" class="confirmation-step hidden">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Granting song access...</p>
+      </div>
+    </div>
+  </div>
+</div>
+  
   <!-- Media Lightbox Modal (photo + video) -->
   <div id="mediaModal" class="media-modal-overlay hidden" onclick="closeMediaModal()">
     <img id="mediaModalImg" src="" alt="Book verification photo" style="display:none;">
@@ -1909,26 +2010,43 @@ function loadUserSongs(userId) {
     p.user_id === userId && p.song_id !== 'pack:5'
   );
 
-  if (userSongs.length === 0) {
-    songsList.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🎵</div>
-        <p>No songs purchased</p>
-      </div>`;
-    return;
-  }
-
-  songsList.innerHTML = userSongs.map(purchase => `
-    <div class="song-item">
-      <div class="song-item-info">
-        <div class="song-item-id">${purchase.song_id}</div>
-        <div class="song-item-date">Purchased: ${new Date(purchase.created_at).toLocaleDateString()}</div>
-      </div>
-      <button class="song-item-remove" onclick="openRemoveSongModal('${purchase.song_id}')">
-        🗑️ Remove Access
+  let html = '';
+  
+  // Add "Grant Access" button at the top
+  html += `
+    <div style="margin-bottom: 20px;">
+      <button 
+        class="btn" 
+        style="width: 100%; background: var(--success); color: white; padding: 14px;" 
+        onclick="openGrantSongModal()"
+      >
+        ➕ Grant New Song Access
       </button>
     </div>
-  `).join('');
+  `;
+
+  if (userSongs.length === 0) {
+    html += `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎵</div>
+        <p>No songs purchased yet</p>
+        <p style="font-size: 13px; color: var(--muted);">Use the button above to grant access</p>
+      </div>`;
+  } else {
+    html += userSongs.map(purchase => `
+      <div class="song-item">
+        <div class="song-item-info">
+          <div class="song-item-id">${purchase.song_id}</div>
+          <div class="song-item-date">Purchased: ${new Date(purchase.created_at).toLocaleDateString()}</div>
+        </div>
+        <button class="song-item-remove" onclick="openRemoveSongModal('${purchase.song_id}')">
+          🗑️ Remove Access
+        </button>
+      </div>
+    `).join('');
+  }
+
+  songsList.innerHTML = html;
 }
 
 function closeManageSongsModal() {
