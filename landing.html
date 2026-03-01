@@ -740,8 +740,15 @@
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   document.getElementById('yr').textContent = new Date().getFullYear();
-  const obs = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } }); }, { threshold: 0.01 });
+  const obs = new IntersectionObserver(entries => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } }); }, { threshold: 0, rootMargin: '0px 0px -20px 0px' });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  // Fallback: reveal elements already in viewport
+  setTimeout(function(){
+    document.querySelectorAll('.reveal:not(.in)').forEach(function(el){
+      const r = el.getBoundingClientRect();
+      if(r.top < window.innerHeight) el.classList.add('in');
+    });
+  }, 200);
 
   (function(){
     const cv = document.getElementById('aurora'), cx = cv.getContext('2d'); let W, H;
@@ -777,4 +784,11 @@
   });
 
   const headings=document.querySelectorAll('.section-heading');
-  const headObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.backgroundImage='linear-gradient(135deg, #160d22 0%, rgba(85,55,190,0.85) 50%, #160d22 100%)';e.target.style.backgroundSize='200% auto';e.target.style.webkitBackgroundClip='text';e.targe
+  const headObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.backgroundImage='linear-gradient(135deg, #160d22 0%, rgba(85,55,190,0.85) 50%, #160d22 100%)';e.target.style.backgroundSize='200% auto';e.target.style.webkitBackgroundClip='text';e.target.style.backgroundClip='text';e.target.style.webkitTextFillColor='transparent';e.target.style.animation='gradShift 5s ease infinite'; headObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  headings.forEach(h => headObs.observe(h));
+</script>
+</body>
+</html>
