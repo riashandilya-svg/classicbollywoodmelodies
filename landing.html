@@ -320,7 +320,14 @@
     .stagger-5 { transition-delay: 0.40s; } .stagger-6 { transition-delay: 0.48s; }
     .stagger-7 { transition-delay: 0.56s; } .stagger-8 { transition-delay: 0.64s; }
 
-    @media (max-width: 800px) {
+    @media (max-width: 640px) {
+      .why-bollywood-grid { grid-template-columns: 1fr !important; }
+      .why-bollywood-divider { display: none !important; }
+      .is-for-me-grid { grid-template-columns: 1fr !important; }
+      .for-me-card { grid-template-columns: 1fr !important; }
+      .story-inner { grid-template-columns: 1fr !important; }
+      .story-vertical-text { writing-mode: horizontal-tb !important; transform: none !important; font-size: 2rem !important; }
+    }
       nav { padding: 0 1.5rem; grid-template-columns: auto 1fr auto; }
       .nav-center { display: none; }
       .hero, .demo-wrap, .features, .songs-section, .how-section, .testimonials, .compare-section, .pricing, .final { padding-left: 1.5rem; padding-right: 1.5rem; }
@@ -419,7 +426,7 @@
 
     <h2 class="section-heading" style="text-align:left;margin-bottom:2rem;font-size:clamp(2rem,4vw,3rem);">Why Bollywood?</h2>
 
-    <div style="display:grid;grid-template-columns:1fr 1px 1fr;gap:3rem;align-items:start;">
+    <div class="why-bollywood-grid" style="display:grid;grid-template-columns:1fr 1px 1fr;gap:3rem;align-items:start;">
 
       <!-- Left: emotional prose -->
       <div style="display:flex;flex-direction:column;gap:1.2rem;">
@@ -429,14 +436,14 @@
       </div>
 
       <!-- Divider -->
-      <div style="background:linear-gradient(to bottom,transparent,rgba(155,110,255,0.25),transparent);height:100%;min-height:200px;"></div>
+      <div class="why-bollywood-divider" style="background:linear-gradient(to bottom,transparent,rgba(155,110,255,0.25),transparent);height:100%;min-height:200px;"></div>
 
       <!-- Right: structured credentials -->
       <div style="display:flex;flex-direction:column;gap:1.2rem;">
-        <p style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;line-height:1.9;color:rgba(22,13,34,0.75);">You learn them at a <strong style="color:#160d22;font-weight:700;">Grade 2–5 international standard,</strong> aligned with globally recognised boards like <em>Trinity College London</em> and <em>ABRSM</em>.</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;line-height:1.9;color:rgba(22,13,34,0.75);">You learn them at a <strong style="color:#160d22;font-weight:700;">Grade 2–4 international standard</strong> — aligned with globally recognised boards like <em>Trinity College London</em> and <em>ABRSM</em>.</p>
 
         <div style="display:flex;flex-direction:column;gap:0.5rem;">
-          <p style="font-size:0.78rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(85,55,190,0.7);margin-bottom:0.3rem;">This isn't casual playing. It's: </p>
+          <p style="font-size:0.78rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:rgba(85,55,190,0.7);margin-bottom:0.3rem;">This isn't casual playing. It's —</p>
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
             <span style="padding:5px 14px;border-radius:100px;background:rgba(155,110,255,0.08);border:1px solid rgba(155,110,255,0.2);font-size:0.8rem;color:rgba(85,55,190,0.85);font-weight:400;">Structured musicianship</span>
             <span style="padding:5px 14px;border-radius:100px;background:rgba(155,110,255,0.08);border:1px solid rgba(155,110,255,0.2);font-size:0.8rem;color:rgba(85,55,190,0.85);font-weight:400;">Technique</span>
@@ -445,7 +452,7 @@
           </div>
         </div>
 
-        <p style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;line-height:1.85;color:rgba(22,13,34,0.65);">You're not choosing between discipline and emotion. You're building a real, internationally recognised foundation, through songs that feel like home.</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;line-height:1.85;color:rgba(22,13,34,0.65);">You're not choosing between discipline and emotion. You're building a real, internationally recognised foundation — through songs that feel like home.</p>
 
         <p style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-style:italic;color:rgba(155,110,255,0.8);letter-spacing:0.01em;">And no one else builds piano learning this way.</p>
       </div>
@@ -456,29 +463,113 @@
 <!-- IS THIS FOR ME -->
 <section class="how-section reveal" style="margin-top:1rem;">
   <h2 class="section-heading">Is this for me?</h2>
-  <p class="section-sub">If any of these sound like you, yes.</p>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:0.5rem;">
+  <p class="section-sub">If any of these sound like you — yes.</p>
+  <div class="is-for-me-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:1rem;">
 
-    <div class="feat-card reveal stagger-1" style="text-align:center;">
-      <span class="feat-icon" style="font-size:2.2rem;">🎹</span>
-      <div class="feat-title">You love Bollywood music</div>
-      <p class="feat-desc" style="font-style:italic;color:rgba(22,13,34,0.45);">The songs you grew up with, finally on piano</p>
+    <!-- Card 1: Violet -->
+    <div class="for-me-card reveal stagger-1" style="--card-color:155,110,255;--card-deep:85,55,190;">
+      <div class="for-me-blob"></div>
+      <div class="for-me-ring-wrap">
+        <div class="for-me-ring"></div>
+        <span class="for-me-icon" style="animation-delay:0s;">🎹</span>
+      </div>
+      <div class="for-me-title">You love Bollywood music</div>
+      <p class="for-me-desc">The songs you grew up with, finally on piano</p>
     </div>
 
-    <div class="feat-card reveal stagger-2" style="text-align:center;">
-      <span class="feat-icon" style="font-size:2.2rem;">🔰</span>
-      <div class="feat-title">You're a beginner or intermediate player</div>
-      <p class="feat-desc" style="font-style:italic;color:rgba(22,13,34,0.45);">From first-time players to grade students brushing up</p>
+    <!-- Card 2: Rose-pink -->
+    <div class="for-me-card reveal stagger-2" style="--card-color:255,90,160;--card-deep:180,40,100;">
+      <div class="for-me-blob"></div>
+      <div class="for-me-ring-wrap">
+        <div class="for-me-ring"></div>
+        <span class="for-me-icon" style="animation-delay:1s;">🔰</span>
+      </div>
+      <div class="for-me-title">You're a beginner or intermediate player</div>
+      <p class="for-me-desc">From first-time players to grade students brushing up</p>
     </div>
 
-    <div class="feat-card reveal stagger-3" style="text-align:center;">
-      <span class="feat-icon" style="font-size:2.2rem;">🎯</span>
-      <div class="feat-title">You want to practise, not just study</div>
-      <p class="feat-desc" style="font-style:italic;color:rgba(22,13,34,0.45);">Our falling notes system makes it feel like a game</p>
+    <!-- Card 3: Indigo -->
+    <div class="for-me-card reveal stagger-3" style="--card-color:100,80,220;--card-deep:55,35,160;">
+      <div class="for-me-blob"></div>
+      <div class="for-me-ring-wrap">
+        <div class="for-me-ring"></div>
+        <span class="for-me-icon" style="animation-delay:2s;">🎯</span>
+      </div>
+      <div class="for-me-title">You want to practise, not just study</div>
+      <p class="for-me-desc">Our falling notes system makes it feel like a game</p>
     </div>
 
   </div>
 </section>
+
+<style>
+.for-me-card {
+  position: relative;
+  background: rgba(255,255,255,0.78);
+  border: 1px solid rgba(var(--card-color),0.18);
+  border-radius: 24px;
+  padding: 2.2rem 1.6rem 2rem;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgba(var(--card-color),0.10), inset 0 1px 0 rgba(255,255,255,0.9);
+  overflow: hidden;
+  text-align: center;
+  cursor: default;
+  transition: transform 0.1s ease, box-shadow 0.3s ease;
+}
+.for-me-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(var(--card-color),0.7), transparent);
+}
+.for-me-blob {
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--card-color),0.18), transparent 70%);
+  pointer-events: none;
+  transition: transform 0.4s ease;
+}
+.for-me-card:hover .for-me-blob { transform: scale(1.4); }
+.for-me-ring-wrap {
+  position: relative;
+  width: 88px; height: 88px;
+  margin: 0 auto 1.4rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.for-me-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(
+    rgba(var(--card-color),0.9) 0%,
+    rgba(var(--card-color),0.2) 40%,
+    rgba(var(--card-color),0.05) 60%,
+    rgba(var(--card-color),0.9) 100%
+  );
+  -webkit-mask: radial-gradient(circle, transparent 62%, black 63%);
+  mask: radial-gradient(circle, transparent 62%, black 63%);
+  animation: spinRing 4s linear infinite;
+}
+@keyframes spinRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.for-me-icon {
+  font-size: 2rem;
+  display: block;
+  animation: iconFloat 3s ease-in-out infinite;
+  position: relative; z-index: 1;
+}
+.for-me-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 600;
+  color: var(--text); margin-bottom: 0.6rem;
+  line-height: 1.3; letter-spacing: -0.01em;
+}
+.for-me-desc {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-style: italic;
+  color: rgba(22,13,34,0.45); line-height: 1.6;
+  font-weight: 400;
+}
+</style>
 
 <!-- HOW IT WORKS -->
 <section class="how-section reveal" id="how">
@@ -496,7 +587,7 @@
   <div class="songs-head reveal">
     <div>
       <h2 class="section-heading" style="margin-bottom:0.2rem">The songs</h2>
-      <p class="section-sub" style="margin-bottom:0">20+ songs & growing</p>
+      <p class="section-sub" style="margin-bottom:0">30+ songs & growing</p>
     </div>
     <button onclick="document.getElementById('songs-modal').classList.add('open')" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;cursor:pointer;border:none;font-family:inherit;">View all →</button>
   </div>
@@ -526,7 +617,7 @@
       <div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div>
     </div>
     <div class="song-card reveal stagger-5">
-      <span class="mood-chip mood-classic">Classic</span>
+      <span class="mood-chip mood-romantic">Romantic</span>
       <div class="song-name">Gulaabi Aankhen</div>
       <div class="song-film">The Train</div>
       <div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div>
@@ -619,13 +710,12 @@
   <div class="story-card reveal">
     <div class="story-glow"></div>
     <div class="story-inner">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;line-height:1;letter-spacing:0.05em;background:linear-gradient(135deg,rgba(85,55,190,0.15),rgba(155,110,255,0.12),rgba(255,90,160,0.1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(155,110,255,0.25);writing-mode:vertical-lr;transform:rotate(180deg);user-select:none;padding:0 0.5rem;flex-shrink:0;">रियाज़</div>
+      <div class="story-vertical-text" style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;line-height:1;letter-spacing:0.05em;background:linear-gradient(135deg,rgba(85,55,190,0.15),rgba(155,110,255,0.12),rgba(255,90,160,0.1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:1px rgba(155,110,255,0.25);writing-mode:vertical-lr;transform:rotate(180deg);user-select:none;padding:0 0.5rem;flex-shrink:0;">रियाज़</div>
       <div class="story-body">
         <img src="logo.png" alt="riaaz logo" style="height:200px;object-fit:contain;opacity:0.9;display:block;margin-top:-75px;margin-bottom:-50px;">
         <p class="story-line">In Indian classical tradition, riyaaz is the sacred daily practice, the hours a musician puts in before the world wakes up. It is not performance. It is devotion. It is the quiet love of returning to the same note, again and again, until sound becomes soul.</p>
         <p class="story-line">We named this <strong>riaaz</strong> with one intentional shift, because <strong>Ria</strong> lives within it. She built this on a simple, steadfast belief that practice, done with love and patience, becomes music long before anyone hears it.</p>
         <p class="story-line">This is where discipline becomes poetry. Where returning each day is an act of love.</p>
-        <p class="story-sig">— Ria Om Shandilya™</p>
       </div>
       </div>
     </div>
@@ -682,7 +772,7 @@
     (function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life--;if(p.life<=0){particles.splice(i,1);continue;} p.vx*=0.986;p.vy*=0.986;p.vy+=0.018;p.x+=p.vx;p.y+=p.vy;p.tw+=0.18; const twinkle=0.6+Math.sin(p.tw)*0.4,fade=Math.min(1,p.life/20),a=p.alpha*fade*twinkle; let color; if(p.hue==='pink')color=`rgba(255,90,160,${a*0.65})`;else if(p.hue==='white')color=`rgba(255,240,250,${a*0.55})`;else color=`rgba(155,110,255,${a*0.65})`; ctx.fillStyle=color; if(p.shape==='star'){drawStar(p.x,p.y,p.size*1.2,p.tw);ctx.fill();}else{ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();} ctx.beginPath();ctx.fillStyle=`rgba(255,248,255,${a*0.5})`;ctx.arc(p.x,p.y,p.size*0.4,0,Math.PI*2);ctx.fill();} requestAnimationFrame(tick);})();
   })();
 
-  document.querySelectorAll('.feat-card,.song-card,.testi-card,.price-card').forEach(card=>{
+  document.querySelectorAll('.feat-card,.song-card,.testi-card,.price-card,.for-me-card').forEach(card=>{
     card.addEventListener('mousemove',e=>{const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-0.5,y=(e.clientY-r.top)/r.height-0.5;card.style.transform=`translateY(-5px) scale(1.01) rotateX(${-y*6}deg) rotateY(${x*6}deg)`;card.style.transition='transform 0.1s ease';});
     card.addEventListener('mouseleave',()=>{card.style.transform='';card.style.transition='transform 0.4s cubic-bezier(.34,1.56,.64,1)';});
   });
