@@ -428,7 +428,7 @@
       <h2 class="section-heading" style="margin-bottom:0.2rem">The songs</h2>
       <p class="section-sub" style="margin-bottom:0">21 songs and growing every month</p>
     </div>
-    <a href="./index.html" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px">View all →</a>
+    <button onclick="document.getElementById('songs-modal').classList.add('open')" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px;cursor:pointer;border:none;font-family:inherit;">View all →</button>
   </div>
   <div class="songs-grid">
     <div class="song-card reveal stagger-1">
@@ -621,5 +621,101 @@
   const headObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.backgroundImage='linear-gradient(135deg, #160d22 0%, rgba(85,55,190,0.85) 50%, #160d22 100%)';e.target.style.backgroundSize='200% auto';e.target.style.webkitBackgroundClip='text';e.target.style.backgroundClip='text';e.target.style.webkitTextFillColor='transparent';e.target.style.animation='gradShift 5s ease infinite';headObs.unobserve(e.target);}});},{ threshold: 0.5 });
   headings.forEach(h => headObs.observe(h));
 </script>
+<!-- ALL SONGS MODAL -->
+<div id="songs-modal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:1.5rem;">
+  <div onclick="document.getElementById('songs-modal').classList.remove('open')" style="position:absolute;inset:0;background:rgba(22,10,35,0.5);backdrop-filter:blur(6px);"></div>
+  <div style="position:relative;z-index:1;background:rgba(253,248,255,0.97);border:1px solid rgba(155,110,255,0.2);border-radius:24px;max-width:860px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 40px 100px rgba(22,10,35,0.2);padding:2.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.8rem;">
+      <div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:#160d22;letter-spacing:-0.02em;">All Songs</h2>
+        <p style="font-size:0.83rem;color:rgba(22,13,34,0.5);font-weight:300;margin-top:0.2rem;">21 songs across 4 books</p>
+      </div>
+      <button onclick="document.getElementById('songs-modal').classList.remove('open')" style="background:none;border:1px solid rgba(155,110,255,0.2);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1rem;color:rgba(22,13,34,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+
+    <!-- Category: Classic -->
+    <div style="margin-bottom:1.8rem;">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.9rem;">
+        <span style="display:inline-block;font-size:0.65rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;padding:3px 12px;border-radius:100px;background:rgba(120,90,200,0.1);color:rgba(85,55,190,0.9);border:1px solid rgba(120,90,200,0.2);">Classic</span>
+        <span style="font-size:0.75rem;color:rgba(22,13,34,0.35);font-weight:300;">Classic Bollywood Melodies</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0.6rem;">
+        <div class="modal-song-card">Kal Ho Naa Ho</div>
+        <div class="modal-song-card">Ek Ladki Bheegi Bhaagi Si</div>
+        <div class="modal-song-card">Hai Apna Dil Toh Awaara</div>
+        <div class="modal-song-card">Gulaabi Aankhen</div>
+        <div class="modal-song-card">Chookar Mere Mann Ko</div>
+        <div class="modal-song-card">Aaoge Jab Tum Sajna</div>
+      </div>
+    </div>
+
+    <!-- Category: Romantic -->
+    <div style="margin-bottom:1.8rem;">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.9rem;">
+        <span style="display:inline-block;font-size:0.65rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;padding:3px 12px;border-radius:100px;background:rgba(255,60,120,0.08);color:#7a1040;border:1px solid rgba(255,60,120,0.18);">Romantic</span>
+        <span style="font-size:0.75rem;color:rgba(22,13,34,0.35);font-weight:300;">Romantic Bollywood Melodies</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0.6rem;">
+        <div class="modal-song-card">Bade Achhe Lagte Hain</div>
+        <div class="modal-song-card">Aaj Kal Tere Mere Pyaar Ke Charche</div>
+        <div class="modal-song-card">Piyu Bole</div>
+        <div class="modal-song-card">Raat Kali Ek Khwaab Mein Aayi</div>
+        <div class="modal-song-card">Khwaab ho Tum Ya Koi Haqeeqat</div>
+        <div class="modal-song-card">Mere Saamne Wali Khidki</div>
+      </div>
+    </div>
+
+    <!-- Category: Soulful -->
+    <div style="margin-bottom:1.8rem;">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.9rem;">
+        <span style="display:inline-block;font-size:0.65rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;padding:3px 12px;border-radius:100px;background:rgba(60,150,200,0.09);color:#154060;border:1px solid rgba(60,150,200,0.18);">Soulful</span>
+        <span style="font-size:0.75rem;color:rgba(22,13,34,0.35);font-weight:300;">Soulful Bollywood Melodies</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0.6rem;">
+        <div class="modal-song-card">Jashn-e-Bahaara</div>
+        <div class="modal-song-card">Allah Ke Bande</div>
+        <div class="modal-song-card">Ae Hairate Aashiqui</div>
+      </div>
+    </div>
+
+    <!-- Category: Peppy -->
+    <div style="margin-bottom:0.5rem;">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.9rem;">
+        <span style="display:inline-block;font-size:0.65rem;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;padding:3px 12px;border-radius:100px;background:rgba(255,100,60,0.08);color:#8b2a00;border:1px solid rgba(255,100,60,0.18);">Peppy</span>
+        <span style="font-size:0.75rem;color:rgba(22,13,34,0.35);font-weight:300;">Peppy Bollywood Melodies</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:0.6rem;">
+        <div class="modal-song-card">Jaane Kahan Mera Jigar Gaya Ji</div>
+        <div class="modal-song-card">Kaisi Paheli Zindagani</div>
+        <div class="modal-song-card">Gore Gore Baanke Chorre</div>
+        <div class="modal-song-card">Darling</div>
+        <div class="modal-song-card">Pal Pal Har Pal</div>
+        <div class="modal-song-card">Zoobie Doobie</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #songs-modal { display: none; }
+  #songs-modal.open { display: flex; }
+  .modal-song-card {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem; font-weight: 500;
+    color: #160d22; padding: 0.7rem 1rem;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid rgba(155,110,255,0.14);
+    border-radius: 12px;
+    cursor: default;
+    transition: all 0.18s ease;
+    line-height: 1.35;
+  }
+  .modal-song-card:hover {
+    background: rgba(155,110,255,0.07);
+    border-color: rgba(155,110,255,0.28);
+    transform: translateY(-2px);
+  }
+</style>
+
 </body>
 </html>
