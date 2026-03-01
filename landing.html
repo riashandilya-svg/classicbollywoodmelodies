@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ria Om Shandilya™ — Bollywood Piano</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.80);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.62);
+      --border: rgba(140,120,160,0.18);
+      --shadow: 0 18px 44px rgba(22,10,35,0.09);
+      --btnText: #2b1140;
+      --violet: 155,110,255;
+      --violetDeep: 85,55,190;
+      --pink: 255,120,160;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.14), transparent 60%),
+        radial-gradient(520px 320px at 35% 55%, rgba(255,90,210,0.12), transparent 60%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    /* Glitter canvas */
+    #glitter {
+      position: fixed; inset: 0; z-index: 9998;
+      pointer-events: none; mix-blend-mode: multiply;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 999;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(140,120,160,0.18);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; min-height: 64px;
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text); text-decoration: none;
+    }
+    .nav-right {
+      display: flex; align-items: center; gap: 1.5rem;
+    }
+    .nav-link {
+      font-size: 0.85rem; font-weight: 500;
+      color: rgba(26,26,31,0.65); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--text); }
+    .nav-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 18px; border-radius: 12px;
+      font-size: 0.85rem; font-weight: 600;
+      color: var(--btnText); text-decoration: none;
+      border: 1px solid rgba(155,110,255,0.30);
+      background: linear-gradient(135deg, rgba(255,120,160,0.22), rgba(155,110,255,0.16), rgba(255,90,210,0.12));
+      transition: transform 0.14s, filter 0.14s;
+    }
+    .nav-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 900px; margin: 0 auto;
+      padding: 7rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 0.75rem; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(var(--violetDeep),0.9);
+      margin-bottom: 1.6rem;
+      opacity: 0; animation: riseIn 0.7s 0.1s ease forwards;
+    }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 600; line-height: 1.04;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      opacity: 0; animation: riseIn 0.7s 0.2s ease forwards;
+    }
+    .hero h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, rgba(var(--violetDeep),1) 0%, rgba(var(--violet),1) 50%, rgba(255,120,160,1) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero-sub {
+      margin: 1.8rem auto 0; max-width: 480px;
+      font-size: 1.05rem; line-height: 1.75;
+      color: var(--muted); font-weight: 300;
+      opacity: 0; animation: riseIn 0.7s 0.35s ease forwards;
+    }
+    .hero-actions {
+      display: flex; gap: 0.8rem; justify-content: center;
+      flex-wrap: wrap; margin-top: 2.4rem;
+      opacity: 0; animation: riseIn 0.7s 0.5s ease forwards;
+    }
+    .btn-main {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px; border-radius: 14px;
+      font-size: 0.9rem; font-weight: 600;
+      color: var(--btnText); text-decoration: none;
+      border: 1px solid rgba(155,110,255,0.35);
+      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20), rgba(255,90,210,0.14));
+      box-shadow: 0 8px 28px rgba(155,110,255,0.15);
+      transition: transform 0.14s, filter 0.14s, box-shadow 0.14s;
+    }
+    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(155,110,255,0.22); }
+    .btn-ghost {
+      display: inline-flex; align-items: center;
+      padding: 13px 22px; border-radius: 14px;
+      font-size: 0.9rem; font-weight: 500;
+      color: var(--muted); text-decoration: none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.55);
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.85); color: var(--text); }
+
+    /* ── PIANO DEMO ── */
+    .demo-wrap {
+      max-width: 840px; margin: 4rem auto 0;
+      opacity: 0; animation: riseIn 0.8s 0.65s ease forwards;
+    }
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    .demo-topbar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(140,120,160,0.14);
+      background: rgba(255,255,255,0.55);
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .demo-url {
+      font-size: 0.72rem; color: rgba(26,26,31,0.35);
+      margin-left: 6px; letter-spacing: 0.02em;
+    }
+    .demo-body {
+      height: 300px; position: relative; overflow: hidden;
+      background: linear-gradient(180deg, rgba(245,240,255,0.6) 0%, rgba(255,235,245,0.4) 100%);
+      display: flex; flex-direction: column;
+    }
+    .demo-info {
+      padding: 1.2rem 1.5rem 0; display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .demo-song-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem; font-weight: 600; color: var(--text);
+    }
+    .demo-song-film { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .demo-stats {
+      display: flex; gap: 1.2rem; font-size: 0.75rem;
+    }
+    .stat-val { font-weight: 600; color: rgba(var(--violetDeep),0.9); }
+    .stat-lbl { color: var(--muted); }
+
+    .roll-area {
+      flex: 1; position: relative; overflow: hidden;
+      margin: 0.5rem 1.5rem 0;
+    }
+    .lane {
+      position: absolute; top: 0; bottom: 0;
+      border-radius: 6px;
+      background: rgba(155,110,255,0.05);
+      border: 1px solid rgba(155,110,255,0.08);
+    }
+    .note-block {
+      position: absolute; left: 3px; right: 3px;
+      border-radius: 7px; opacity: 0;
+      animation: dropNote linear infinite;
+    }
+    @keyframes dropNote {
+      0%   { top: -80px; opacity: 0; }
+      6%   { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    .keys-strip {
+      height: 52px; padding: 0 1.5rem;
+      display: flex; gap: 4px; align-items: flex-end;
+      border-top: 1px solid rgba(140,120,160,0.12);
+      background: rgba(255,255,255,0.5);
+    }
+    .key-white {
+      flex: 1; height: 46px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid rgba(140,120,160,0.22);
+      border-radius: 0 0 8px 8px;
+      transition: background 0.1s, transform 0.1s;
+    }
+    .yt-wrap {
+      position: relative; width: 100%; padding-bottom: 56.25%;
+      background: #000;
+    }
+    .yt-wrap iframe {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: 0; display: block;
+    }
+
+    /* ── DIVIDER TEXT ── */
+    .divider-text {
+      text-align: center; padding: 5rem 2rem 1rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      font-style: italic; color: rgba(26,26,31,0.35);
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+
+    /* ── FEATURE STRIP ── */
+    .features {
+      max-width: 860px; margin: 2rem auto;
+      padding: 0 2rem;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+    }
+    @media (max-width: 640px) { .features { grid-template-columns: 1fr; } }
+    .feat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 1.8rem;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+      transition: transform 0.16s, box-shadow 0.16s;
+    }
+    .feat-card::before {
+      content: '';
+      position: absolute; inset: -60px -70px auto auto;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,120,160,0.35), rgba(155,110,255,0.22), transparent 65%);
+      pointer-events: none;
+    }
+    .feat-card:hover { transform: translateY(-3px); box-shadow: 0 24px 55px rgba(22,10,35,0.12); }
+    .feat-icon { font-size: 1.6rem; margin-bottom: 0.9rem; display: block; }
+    .feat-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.5rem;
+    }
+    .feat-desc { font-size: 0.87rem; color: var(--muted); line-height: 1.65; }
+
+    /* ── HOW IT WORKS ── */
+    .how-section {
+      max-width: 760px; margin: 4rem auto;
+      padding: 0 2rem; text-align: center;
+    }
+    .section-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 600; letter-spacing: -0.02em;
+      color: var(--text); margin-bottom: 0.6rem;
+    }
+    .section-sub {
+      font-size: 0.9rem; color: var(--muted); margin-bottom: 2.5rem;
+    }
+    .steps {
+      display: flex; gap: 0;
+      counter-reset: step;
+    }
+    @media (max-width: 580px) { .steps { flex-direction: column; gap: 1rem; } }
+    .step {
+      flex: 1; text-align: center; padding: 0 1.2rem;
+      position: relative;
+    }
+    .step + .step::before {
+      content: '';
+      position: absolute; left: -1px; top: 22px;
+      width: 2px; height: 24px;
+      background: rgba(155,110,255,0.2);
+    }
+    @media (max-width: 580px) { .step + .step::before { display: none; } }
+    .step-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem; font-weight: 700;
+      background: linear-gradient(135deg, rgba(255,120,160,0.22), rgba(155,110,255,0.18));
+      border: 1px solid rgba(155,110,255,0.25);
+      color: rgba(var(--violetDeep),0.9);
+      margin-bottom: 1rem;
+    }
+    .step h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .step p { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── SONGS ── */
+    .songs-section {
+      max-width: 900px; margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .songs-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.8rem;
+    }
+    .songs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+    .song-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.3rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 28px rgba(22,10,35,0.07);
+      transition: transform 0.16s, box-shadow 0.16s;
+      position: relative; overflow: hidden; cursor: pointer;
+    }
+    .song-card::after {
+      content: '';
+      position: absolute; inset: -60px -70px auto auto;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,120,160,0.3), rgba(155,110,255,0.18), transparent 65%);
+      pointer-events: none;
+    }
+    .song-card:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(22,10,35,0.11); }
+    .mood-chip {
+      display: inline-block; font-size: 0.68rem;
+      font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 999px;
+      margin-bottom: 0.75rem;
+      background: rgba(155,110,255,0.12);
+      color: rgba(var(--violetDeep),0.9);
+      border: 1px solid rgba(155,110,255,0.2);
+    }
+    .mood-peppy    { background: rgba(255,120,80,0.1); color: #a03000; border-color: rgba(255,120,80,0.2); }
+    .mood-romantic { background: rgba(255,80,130,0.1); color: #8b1a4a; border-color: rgba(255,80,130,0.2); }
+    .mood-classic  { background: rgba(140,100,200,0.12); color: rgba(var(--violetDeep),0.9); border-color: rgba(140,100,200,0.22); }
+    .mood-soulful  { background: rgba(80,160,200,0.1); color: #1a5070; border-color: rgba(80,160,200,0.2); }
+    .song-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem; font-weight: 600;
+      color: var(--text); margin-bottom: 0.2rem;
+    }
+    .song-film { font-size: 0.76rem; color: var(--muted); }
+    .song-foot {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 0.9rem;
+    }
+    .difficulty { font-size: 0.7rem; color: rgba(26,26,31,0.38); }
+    .play-circle {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(155,110,255,0.12);
+      border: 1px solid rgba(155,110,255,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; color: rgba(var(--violetDeep),0.9);
+      transition: background 0.2s;
+    }
+    .song-card:hover .play-circle { background: rgba(155,110,255,0.25); }
+    .more-card {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 2rem;
+      border-style: dashed;
+    }
+    .more-card span { font-size: 0.83rem; color: var(--muted); line-height: 1.5; }
+    .more-card strong { font-size: 0.8rem; color: rgba(var(--violetDeep),0.8); display: block; margin-top: 0.4rem; }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials {
+      max-width: 860px; margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .testi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.2rem; margin-top: 1.8rem;
+    }
+    .testi-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 1.6rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 28px rgba(22,10,35,0.07);
+    }
+    .stars { font-size: 0.8rem; letter-spacing: 2px; color: rgba(200,150,50,0.9); margin-bottom: 0.9rem; }
+    .testi-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem; font-style: italic;
+      color: var(--text); line-height: 1.65; margin-bottom: 1rem;
+    }
+    .testi-who { font-size: 0.75rem; color: var(--muted); }
+    .testi-who strong { color: rgba(26,26,31,0.7); display: block; }
+
+    /* ── COMPARE ── */
+    .compare-section {
+      max-width: 700px; margin: 4rem auto;
+      padding: 0 2rem; text-align: center;
+    }
+    .compare-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 22px; overflow: hidden;
+      box-shadow: var(--shadow); backdrop-filter: blur(10px);
+      margin-top: 1.8rem;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 1rem 1.4rem; font-size: 0.76rem; font-weight: 600;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      border-bottom: 2px solid rgba(140,120,160,0.15);
+      text-align: left; color: var(--muted);
+    }
+    th:last-child { color: rgba(var(--violetDeep),0.85); }
+    td {
+      padding: 0.85rem 1.4rem; font-size: 0.87rem;
+      border-bottom: 1px solid rgba(140,120,160,0.1);
+      text-align: left;
+    }
+    td:first-child { color: rgba(26,26,31,0.55); }
+    td:last-child { color: var(--text); font-weight: 500; }
+    .yes { color: rgba(20,160,100,0.9); font-weight: 600; }
+    .no  { color: rgba(26,26,31,0.28); }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(155,110,255,0.03); }
+
+    /* ── PRICING ── */
+    .pricing {
+      max-width: 700px; margin: 4rem auto;
+      padding: 0 2rem; text-align: center;
+    }
+    .price-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.2rem; margin-top: 1.8rem;
+    }
+    .price-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 22px; padding: 2rem;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow); text-align: left;
+      position: relative; overflow: hidden;
+      transition: transform 0.16s;
+    }
+    .price-card::before {
+      content: '';
+      position: absolute; inset: -60px -70px auto auto;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,120,160,0.32), rgba(155,110,255,0.22), transparent 65%);
+      pointer-events: none;
+    }
+    .price-card.highlight { border-color: rgba(155,110,255,0.35); }
+    .price-card:hover { transform: translateY(-3px); }
+    .price-tier { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.8rem; }
+    .price-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem; font-weight: 700; line-height: 1;
+      color: var(--text);
+    }
+    .price-num sup { font-size: 1.3rem; vertical-align: super; }
+    .price-period { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; margin-bottom: 1.4rem; }
+    .price-features { list-style: none; margin-bottom: 1.6rem; }
+    .price-features li {
+      font-size: 0.86rem; color: rgba(26,26,31,0.7);
+      padding: 0.35rem 0; display: flex; gap: 0.5rem; align-items: flex-start;
+    }
+    .price-features li::before { content: '✓'; color: rgba(20,160,100,0.8); font-weight: 600; flex-shrink: 0; }
+    .price-free-note { font-size: 0.73rem; color: var(--muted); margin-top: 0.4rem; }
+
+    /* ── FINAL CTA ── */
+    .final {
+      max-width: 600px; margin: 5rem auto 2rem;
+      padding: 0 2rem; text-align: center;
+    }
+    .final h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 600; letter-spacing: -0.02em;
+      color: var(--text); line-height: 1.12; margin-bottom: 1.2rem;
+    }
+    .final p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; margin-bottom: 2rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      max-width: 980px; margin: 0 auto;
+      padding: 2rem 2rem 3rem; text-align: center;
+      border-top: 1px solid rgba(140,120,160,0.14);
+      margin-top: 3rem;
+    }
+    .footer-socials { display: flex; justify-content: center; gap: 10px; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .social-btn {
+      width: 38px; height: 38px;
+      display: inline-grid; place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(26,26,31,0.12);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(22,10,35,0.07);
+      text-decoration: none; transition: transform 0.14s, box-shadow 0.14s;
+    }
+    .social-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(22,10,35,0.1); }
+    .social-btn svg { width: 18px; height: 18px; display: block; }
+    .social-btn svg, .social-btn svg * { fill: rgba(26,26,31,0.8) !important; }
+    .footer-copy { font-size: 0.8rem; color: rgba(26,26,31,0.45); }
+    .footer-copy a { color: rgba(26,26,31,0.65); text-decoration: none; border-bottom: 1px solid rgba(155,110,255,0.2); }
+    .footer-copy a:hover { border-color: rgba(155,110,255,0.5); }
+
+    /* ── REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @media (max-width: 680px) {
+      nav { padding: 0 1rem; }
+      .nav-link { display: none; }
+      .hero { padding: 5rem 1.5rem 3rem; }
+      .features { padding: 0 1.5rem; }
+      .songs-section, .how-section, .testimonials, .compare-section, .pricing, .final { padding: 0 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<canvas id="glitter" aria-hidden="true"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Ria Om Shandilya™</a>
+  <div class="nav-right">
+    <a href="#songs" class="nav-link">Songs</a>
+    <a href="#pricing" class="nav-link">Pricing</a>
+    <a href="./demo.html" class="nav-btn">Try Demo →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-eyebrow">🎹 Bollywood · Piano · Real MIDI</span>
+  <h1>The Bollywood songs<br>you love,<br><em>finally on piano.</em></h1>
+  <p class="hero-sub">Play along with real-time falling notes and instant note detection — connected directly to your MIDI keyboard. No theory required.</p>
+  <div class="hero-actions">
+    <a href="./demo.html" class="btn-main">🎵 Try it free</a>
+    <a href="#songs" class="btn-ghost">Browse songs ↓</a>
+  </div>
+</section>
+
+
+<!-- VIDEO DEMO -->
+<div class="demo-wrap reveal">
+  <div class="demo-card">
+    <div class="demo-topbar">
+      <div class="dot" style="background:#ff5f56"></div>
+      <div class="dot" style="background:#ffbd2e"></div>
+      <div class="dot" style="background:#27c93f"></div>
+      <span class="demo-url">See it in action</span>
+    </div>
+    <div class="yt-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/F5oWi0UIy1U?rel=0&modestbranding=1&color=white"
+        title="Ria Om Shandilya — Bollywood Piano Demo"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- DIVIDER -->
+<p class="divider-text reveal">What makes it different</p>
+
+<!-- FEATURES -->
+<div class="features reveal">
+  <div class="feat-card">
+    <span class="feat-icon">🎹</span>
+    <div class="feat-title">Real MIDI keyboard</div>
+    <p class="feat-desc">Plug in any MIDI keyboard and the app knows every key you press, instantly. No on-screen tapping.</p>
+  </div>
+  <div class="feat-card">
+    <span class="feat-icon">🎯</span>
+    <div class="feat-title">Note detection</div>
+    <p class="feat-desc">The app listens to your keyboard and tells you in real time whether you hit the right note or not.</p>
+  </div>
+  <div class="feat-card">
+    <span class="feat-icon">🎬</span>
+    <div class="feat-title">Falling notes</div>
+    <p class="feat-desc">Watch notes fall toward the keys like a visual guide. See what's coming, play along, feel the music.</p>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how-section reveal" id="how">
+  <h2 class="section-heading">Three steps, that's it</h2>
+  <p class="section-sub">You don't need music theory. You just need to love the songs.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Pick a song</h3>
+      <p>Browse by mood — Soulful, Peppy, Romantic, Classic. There's always something for how you feel today.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Connect your keyboard</h3>
+      <p>Plug in any MIDI keyboard. The app detects it immediately — no setup, no drivers.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Play along</h3>
+      <p>Notes fall in real time. You see what to press. The app tells you if you got it right.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SONGS -->
+<section class="songs-section reveal" id="songs">
+  <div class="songs-head">
+    <div>
+      <h2 class="section-heading" style="margin-bottom:0.2rem">The songs</h2>
+      <p class="section-sub" style="margin-bottom:0">21 songs and growing every month</p>
+    </div>
+    <a href="./index.html" class="btn-ghost" style="font-size:0.82rem;padding:9px 16px">View all →</a>
+  </div>
+  <div class="songs-grid">
+    <div class="song-card">
+      <span class="mood-chip mood-romantic">Romantic</span>
+      <div class="song-name">Tum Hi Ho</div>
+      <div class="song-film">Aashiqui 2</div>
+      <div class="song-foot"><span class="difficulty">⬤⬤○○○ Beginner</span><div class="play-circle">▶</div></div>
+    </div>
+    <div class="song-card">
+      <span class="mood-chip mood-soulful">Soulful</span>
+      <div class="song-name">Kal Ho Naa Ho</div>
+      <div class="song-film">Kal Ho Naa Ho</div>
+      <div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div>
+    </div>
+    <div class="song-card">
+      <span class="mood-chip mood-classic">Classic</span>
+      <div class="song-name">Lag Ja Gale</div>
+      <div class="song-film">Woh Kaun Thi</div>
+      <div class="song-foot"><span class="difficulty">⬤⬤○○○ Beginner</span><div class="play-circle">▶</div></div>
+    </div>
+    <div class="song-card">
+      <span class="mood-chip mood-peppy">Peppy</span>
+      <div class="song-name">Badtameez Dil</div>
+      <div class="song-film">Yeh Jawaani Hai Deewani</div>
+      <div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div>
+    </div>
+    <div class="song-card">
+      <span class="mood-chip mood-soulful">Soulful</span>
+      <div class="song-name">Ae Dil Hai Mushkil</div>
+      <div class="song-film">Ae Dil Hai Mushkil</div>
+      <div class="song-foot"><span class="difficulty">⬤⬤⬤⬤○ Advanced</span><div class="play-circle">▶</div></div>
+    </div>
+    <div class="song-card more-card">
+      <div style="font-size:1.4rem;margin-bottom:0.6rem">🎵</div>
+      <span>New songs added every month<strong>Request yours →</strong></span>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials reveal">
+  <h2 class="section-heading" style="text-align:center">What students say</h2>
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">"A gem for any Bollywood lover learning piano. Incredibly helpful — the arrangements truly resemble the original songs."</p>
+      <div class="testi-who"><strong>Verified Buyer</strong>Amazon Review</div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">"Very high quality both in content and print. You can actually recognise the song from the notes — that's rare."</p>
+      <div class="testi-who"><strong>Verified Buyer</strong>Amazon Review</div>
+    </div>
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">"My daughter learned two songs in a week and performed one at her Spring recital. We couldn't believe it."</p>
+      <div class="testi-who"><strong>Parent</strong>Amazon Review</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="compare-section reveal">
+  <h2 class="section-heading">Nothing else does this</h2>
+  <p class="section-sub">Every other piano app is built for Western music. This one isn't.</p>
+  <div class="compare-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Other apps</th>
+          <th>Ria Om Shandilya™</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Bollywood songs</td><td class="no">✗ Almost none</td><td class="yes">✓ Bollywood at heart</td></tr>
+        <tr><td>Real MIDI support</td><td class="no">✗ On-screen only</td><td class="yes">✓ Full integration</td></tr>
+        <tr><td>Falling notes visual</td><td class="no">✗ Rarely</td><td class="yes">✓ Synthesia-style</td></tr>
+        <tr><td>Real-time note detection</td><td class="no">✗ Rarely</td><td class="yes">✓ Every note</td></tr>
+        <tr><td>Professionally arranged</td><td class="no">✗ Generic exports</td><td class="yes">✓ Curated by a musician</td></tr>
+        <tr><td>Cultural authenticity</td><td class="no">✗ Western-centric</td><td class="yes">✓ Made by someone who lives it</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing reveal" id="pricing">
+  <h2 class="section-heading">Simple pricing</h2>
+  <p class="section-sub">Start free. No credit card needed.</p>
+  <div class="price-grid">
+    <div class="price-card">
+      <div class="price-tier">Free</div>
+      <div class="price-num">₹0</div>
+      <div class="price-period">forever</div>
+      <ul class="price-features">
+        <li>3 songs to explore</li>
+        <li>Falling notes system</li>
+        <li>MIDI keyboard support</li>
+        <li>No credit card needed</li>
+      </ul>
+      <a href="./demo.html" class="btn-ghost" style="display:block;text-align:center;padding:11px">Start free</a>
+    </div>
+    <div class="price-card highlight">
+      <div class="price-tier">Premium</div>
+      <div class="price-num">₹<sup style="font-size:1.4rem">X</sup></div>
+      <div class="price-period">per month</div>
+      <ul class="price-features">
+        <li>All 21 songs — and growing</li>
+        <li>Real-time note detection</li>
+        <li>Falling notes on every song</li>
+        <li>New songs added monthly</li>
+        <li>Song request priority</li>
+      </ul>
+      <a href="./pricing.html" class="btn-main" style="display:block;text-align:center;justify-content:center">Get Premium</a>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final reveal">
+  <h2>Ready to play your<br><em style="font-style:italic;background:linear-gradient(135deg,rgba(85,55,190,1),rgba(155,110,255,1),rgba(255,120,160,1));-webkit-background-clip:text;background-clip:text;color:transparent">first Bollywood song?</em></h2>
+  <p>No sheet music. No theory. Just you, your keyboard, and the songs you've always loved.</p>
+  <div class="hero-actions" style="opacity:1;animation:none">
+    <a href="./demo.html" class="btn-main">🎹 Try it free</a>
+    <a href="./index.html" class="btn-ghost">Browse all songs</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-socials">
+    <a class="social-btn" href="https://www.youtube.com/riashandilya" target="_blank" rel="noopener" aria-label="YouTube">
+      <svg viewBox="0 0 461 461"><path d="M365,67H96C43,67,0,110,0,163v135c0,53,43,96,96,96h270c53,0,96-43,96-96V163C461,110,418,67,365,67z M301,237l-126,60c-3,2-7-1-7-5V169c0-4,4-6,7-5l126,64C305,230,305,235,301,237z"/></svg>
+    </a>
+    <a class="social-btn" href="https://www.instagram.com/riaomshandilya/" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg viewBox="0 0 551 551"><path d="M387,0H164C74,0,0,74,0,164v223c0,91,74,164,164,164h223c91,0,164-73,164-164V164C551,74,477,0,387,0z M496,387c0,60-49,109-109,109H164c-60,0-109-49-109-109V164c0-60,49-109,109-109h223c60,0,109,49,109,109V387z"/><path d="M276,133c-79,0-143,64-143,143s64,143,143,143s142-64,142-143S355,133,276,133z M276,363c-48,0-87-39-87-87s39-87,87-87c48,0,87,39,87,87C363,324,324,363,276,363z"/><circle cx="418" cy="134" r="34"/></svg>
+    </a>
+    <a class="social-btn" href="https://linktr.ee/riashandilya" target="_blank" rel="noopener" aria-label="Linktree">
+      <svg viewBox="0 0 24 24"><path d="m13.736 5.853 4.005-4.117 2.325 2.38-4.2 4.005h5.908v3.305h-5.937l4.229 4.108-2.325 2.334-5.74-5.769-5.741 5.769-2.325-2.325 4.229-4.108H2.226V8.121h5.909l-4.2-4.004 2.324-2.381 4.005 4.117V0h3.472v5.853zM10.229 24v-6.3h3.473V24h-3.473z"/></svg>
+    </a>
+  </div>
+  <div class="footer-copy">
+    © <span id="yr"></span> Ria Om Shandilya™. All rights reserved. &nbsp;·&nbsp;
+    <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+
+
+  // ── Scroll reveal ──
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // ── Cursor glitter (matching the app exactly) ──
+  (function(){
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if (reduced) return;
+    const canvas = document.getElementById('glitter');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(innerWidth * dpr);
+      canvas.height = Math.floor(innerHeight * dpr);
+      canvas.style.width = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize, { passive: true });
+    resize();
+
+    const particles = [];
+    const MAX = 300;
+
+    function spark(x, y, intensity=1){
+      for (let i = 0; i < Math.floor(6 * intensity); i++){
+        if (particles.length > MAX) particles.shift();
+        const angle = Math.random() * Math.PI * 2;
+        const speed = (0.3 + Math.random() * 1.8) * intensity;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.2,
+          life: 32 + Math.random() * 28,
+          size: 1 + Math.random() * 2.6,
+          tw: Math.random() * Math.PI * 2,
+          alpha: 0.45 + Math.random() * 0.35,
+          hue: Math.random() < 0.6 ? 'violet' : 'pink'
+        });
+      }
+    }
+
+    let last = { x: innerWidth/2, y: innerHeight/2 };
+    window.addEventListener('pointermove', e => {
+      const d = Math.min(30, Math.hypot(e.clientX - last.x, e.clientY - last.y));
+      spark(e.clientX, e.clientY, Math.max(0.7, d / 14));
+      last = { x: e.clientX, y: e.clientY };
+    }, { passive: true });
+    window.addEventListener('pointerdown', e => spark(e.clientX, e.clientY, 1.8), { passive: true });
+
+    (function tick(){
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--){
+        const p = particles[i];
+        p.life--;
+        if (p.life <= 0){ particles.splice(i, 1); continue; }
+        p.vx *= 0.988; p.vy *= 0.988; p.vy += 0.016;
+        p.x += p.vx; p.y += p.vy;
+        p.tw += 0.2;
+        const twinkle = 0.65 + Math.sin(p.tw) * 0.35;
+        const fade = Math.min(1, p.life / 40);
+        const a = p.alpha * fade * twinkle;
+        const color = p.hue === 'pink'
+          ? `rgba(255,120,160,${a * 0.6})`
+          : `rgba(155,110,255,${a * 0.6})`;
+        ctx.beginPath(); ctx.fillStyle = color;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle = `rgba(255,255,255,${a * 0.4})`;
+        ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2); ctx.fill();
+      }
+      requestAnimationFrame(tick);
+    })();
+  })();
+</script>
+</body>
+</html>
