@@ -112,19 +112,34 @@
       text-align: center; position: relative; z-index: 2;
     }
 
-    /* riaaz big logo above eyebrow */
+    /* riaaz big display above eyebrow */
     .hero-brand {
       display: block;
-      width: 90%;
-      max-width: 900px;
-      margin: 0 auto 1.2rem;
-      animation: riseIn 0.6s 0s ease forwards;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.2rem;
+      background: linear-gradient(135deg,
+        rgba(var(--violetDeep),1) 0%,
+        rgba(var(--violet),1) 35%,
+        rgba(var(--pink),1) 65%,
+        rgba(var(--rose),1) 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      background-size: 200% auto;
+      animation: gradShift 4s ease infinite, riseIn 0.6s 0s ease forwards;
       opacity: 0;
+      position: relative;
     }
-    .hero-brand img {
-      width: 100%;
-      height: auto;
+    /* subtle piano keys underline decoration */
+    .hero-brand::after {
+      content: '';
       display: block;
+      width: 80px; height: 3px;
+      margin: 0.5rem auto 0;
+      border-radius: 2px;
+      background: linear-gradient(90deg, rgba(var(--pink),0.7), rgba(var(--violet),0.7));
     }
 
     .hero-whisper {
@@ -1991,8 +2006,8 @@ z"/>
     <span class="fn" style="left:50%;top:8%;font-size:1.2rem;--r:3deg;animation-duration:7s;animation-delay:3s;">♪</span>
   </div>
 
-  <!-- Big riaaz logo -->
-  <span class="hero-brand"><img src="logo.png" alt="riaaz" /></span>
+  <!-- Big riaaz wordmark -->
+  <span class="hero-brand">riaaz</span>
 
   <p class="hero-whisper"><span class="hindi">रियाज़</span> &nbsp;:&nbsp; Hindi for practice. Spelled with Ria, because she built it.</p>
 
@@ -2062,17 +2077,86 @@ z"/>
       <p class="section-sub" style="margin-bottom:0">21 songs and growing every month</p>
     </div>
     <a href="./index.html" class="btn-ghost" style="font-size:0.8rem;padding:8px 16px">View all →</a>
-  </div>
   <div class="songs-grid">
-      <div class="song-card reveal stagger-1"><span class="mood-chip mood-classic">Peppy</span><div class="song-name">Señorita</div><div class="song-film">Zindagi Na Milegi Dobara</div><div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div></div>
-	  <div class="song-card reveal stagger-2"><span class="mood-chip mood-romantic">Romantic</span><div class="song-name">Aaj Kal Tere Mere Pyaar Ke Charche</div><div class="song-film">Brahmachari</div><div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div></div>
-        <div class="song-card reveal stagger-3"><span class="mood-chip mood-romantic">Romantic</span><div class="song-name">Gulaabi Aankhen</div><div class="song-film">The Train </div><div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div></div>
-	  <div class="song-card reveal stagger-4"><span class="mood-chip mood-soulful">Classic</span><div class="song-name">Kal Ho Naa Ho</div><div class="song-film">Kal Ho Naa Ho</div><div class="song-foot"><span class="difficulty">⬤⬤○○○ Beginner</span><div class="play-circle">▶</div></div></div>
-    <div class="song-card reveal stagger-5"><span class="mood-chip mood-peppy">Peppy</span><div class="song-name">Darling</div><div class="song-film">7 Khoon Maaf</div><div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div></div>
-    <div class="song-card reveal stagger-6"><span class="mood-chip mood-soulful">Soulful</span><div class="song-name">Jashn-e-Bahaara</div><div class="song-film">Jodha Akhbar</div><div class="song-foot"><span class="difficulty">⬤⬤⬤○○ Intermediate</span><div class="play-circle">▶</div></div></div>
-    <div class="song-card reveal stagger-7"><span class="mood-chip mood-romantic">Soulful</span><div class="song-name">Srivalli</div><div class="song-film">Pushpa</div><div class="song-foot"><span class="difficulty">⬤⬤○○○ Beginner</span><div class="play-circle">▶</div></div></div>
-    <div class="song-card more-card reveal stagger-8"><div style="font-size:1.5rem;margin-bottom:0.6rem">🎵</div><span>New songs added every month<strong>Request yours →</strong></span></div>
+
+  <!-- Beginner -->
+  <div class="song-card reveal stagger-1">
+    <span class="mood-chip mood-soulful">Classic</span>
+    <div class="song-name">Kal Ho Naa Ho</div>
+    <div class="song-film">Kal Ho Naa Ho</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤○○○ Beginner</span>
+      <div class="play-circle">▶</div>
+    </div>
   </div>
+
+  <div class="song-card reveal stagger-2">
+    <span class="mood-chip mood-romantic">Soulful</span>
+    <div class="song-name">Srivalli</div>
+    <div class="song-film">Pushpa</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤○○○ Beginner</span>
+      <div class="play-circle">▶</div>
+    </div>
+  </div>
+
+  <!-- Intermediate -->
+  <div class="song-card reveal stagger-3">
+    <span class="mood-chip mood-classic">Peppy</span>
+    <div class="song-name">Señorita</div>
+    <div class="song-film">Zindagi Na Milegi Dobara</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤⬤○○ Intermediate</span>
+      <div class="play-circle">▶</div>
+    </div>
+  </div>
+
+  <div class="song-card reveal stagger-4">
+    <span class="mood-chip mood-romantic">Romantic</span>
+    <div class="song-name">Aaj Kal Tere Mere Pyaar Ke Charche</div>
+    <div class="song-film">Brahmachari</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤⬤○○ Intermediate</span>
+      <div class="play-circle">▶</div>
+    </div>
+  </div>
+
+  <div class="song-card reveal stagger-5">
+    <span class="mood-chip mood-romantic">Romantic</span>
+    <div class="song-name">Gulaabi Aankhen</div>
+    <div class="song-film">The Train</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤⬤○○ Intermediate</span>
+      <div class="play-circle">▶</div>
+    </div>
+  </div>
+
+  <div class="song-card reveal stagger-6">
+    <span class="mood-chip mood-soulful">Soulful</span>
+    <div class="song-name">Jashn-e-Bahaara</div>
+    <div class="song-film">Jodha Akhbar</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤⬤○○ Intermediate</span>
+      <div class="play-circle">▶</div>
+    </div>
+  </div>
+
+  <div class="song-card reveal stagger-7">
+    <span class="mood-chip mood-romantic">Romantic</span>
+    <div class="song-name">Naina Da Kya Kasoor</div>
+    <div class="song-film">Andhadhun</div>
+    <div class="song-foot">
+      <span class="difficulty">⬤⬤⬤○○ Intermediate</span>
+      <div class="play-circle">▶</div>
+    </div>
+  </div>
+
+  <div class="song-card more-card reveal stagger-8">
+    <div style="font-size:1.5rem;margin-bottom:0.6rem">🎵</div>
+    <span>New songs added every month<strong>Request yours →</strong></span>
+  </div>
+
+</div>
 </section>
 
 <!-- TESTIMONIALS -->
