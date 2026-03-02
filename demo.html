@@ -642,6 +642,199 @@ window.addEventListener("resize", () => { if (running) render(); });
 frame.addEventListener("load", () => {
   const iframeDoc = frame.contentWindow?.document;
   if (!iframeDoc) return;
+
+  /* ── Inject Google Fonts + riaaz design system into the app iframe ── */
+  try {
+    // Font link
+    const fontLink = iframeDoc.createElement("link");
+    fontLink.rel = "stylesheet";
+    fontLink.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600;1,700&family=DM+Sans:ital,wght@0,200;0,300;0,400;0,500;1,300&display=swap";
+    iframeDoc.head.appendChild(fontLink);
+
+    // Style injection — wrapped in function so we can retry
+    function injectStyles() {
+      if (iframeDoc.getElementById("riaaz-design-injection")) return;
+    const style = iframeDoc.createElement("style");
+    style.id = "riaaz-design-injection";
+    style.textContent = `
+      /* ── Global font ── */
+      body, input, select, button, label {
+        font-family: 'DM Sans', system-ui, sans-serif !important;
+      }
+
+      /* ── Song title ── */
+      h1, .song-title, [class*="title"]:not(button):not(label) {
+        font-family: 'Cormorant Garamond', serif !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.03em !important;
+      }
+
+      /* Specifically target the big song name heading */
+      h1 {
+        font-family: 'Cormorant Garamond', serif !important;
+        font-size: clamp(1.8rem, 5vw, 3.2rem) !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.04em !important;
+        line-height: 1.05 !important;
+      }
+
+      /* ── DEMO · TRIAL VERSION pill ── */
+      [class*="demo"], [class*="trial"], .demo-label,
+      p:has(+ h1), div:has(> [class*="demo"]) > p {
+        font-family: 'DM Sans', sans-serif !important;
+        letter-spacing: 0.18em !important;
+        font-size: 0.65rem !important;
+        font-weight: 500 !important;
+        text-transform: uppercase !important;
+      }
+
+      /* ── All buttons ── */
+      button, [role="button"], input[type="button"], input[type="submit"] {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 500 !important;
+        border-radius: 100px !important;
+        letter-spacing: 0.01em !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+      }
+
+      /* Primary action button (Start Practice, Play Full Song) */
+      #startPracticeButton, #playSongButton {
+        border-radius: 100px !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
+      }
+      #startPracticeButton:hover, #playSongButton:hover {
+        transform: translateY(-1px) !important;
+      }
+
+      /* Stop, Reset, Free Mode, Hide Note Names — secondary pill buttons */
+      #stopButton, #resetButton, #freeModeButton, #toggleNamesButton {
+        border-radius: 100px !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.01em !important;
+      }
+      #stopButton:hover, #resetButton:hover, #freeModeButton:hover, #toggleNamesButton:hover {
+        transform: translateY(-1px) !important;
+      }
+
+      /* Toggle buttons: Beat, Counting, 1&2&, EN */
+      #beatToggle, #countToggle, #subdivisionToggle, #languageToggle {
+        border-radius: 100px !important;
+        font-family: 'DM Sans', sans-serif !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
+      }
+
+      /* Speed controls: – + display */
+      #speedDisplay {
+        font-family: 'Cormorant Garamond', serif !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        letter-spacing: -0.01em !important;
+      }
+
+      /* Hand dropdown */
+      #handSelect, select {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 400 !important;
+        border-radius: 12px !important;
+        letter-spacing: 0.01em !important;
+      }
+
+      /* Measure inputs */
+      #startMeasureInput, #endMeasureInput, input[type="number"], input[type="text"] {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 400 !important;
+        border-radius: 10px !important;
+        letter-spacing: 0.01em !important;
+      }
+
+      /* Labels next to inputs */
+      label {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 400 !important;
+        font-size: 0.88rem !important;
+        letter-spacing: 0.01em !important;
+      }
+
+      /* Feedback / note info text */
+      #feedback, .feedback, [id*="feedback"] {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 300 !important;
+        font-size: 0.875rem !important;
+        line-height: 1.6 !important;
+      }
+
+      /* Side note feedback: "You pressed" / "Correct note" */
+      #sideNoteFeedback, [id*="note"], [class*="note-feedback"] {
+        font-family: 'Cormorant Garamond', serif !important;
+        font-style: italic !important;
+        font-size: 0.95rem !important;
+      }
+
+      /* "You pressed" / "Correct note" labels */
+      #sideNoteFeedback span, #sideNoteFeedback p,
+      [id*="pressed"], [id*="correct"] {
+        font-family: 'DM Sans', sans-serif !important;
+        font-style: normal !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+      }
+
+      /* Note name labels on keys */
+      .key-label, [class*="note-name"], [class*="key-name"] {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 0.6rem !important;
+        letter-spacing: 0.04em !important;
+      }
+
+      /* Checkbox labels */
+      #skipRepeatsCheckbox + label, #loopCheckbox + label,
+      input[type="checkbox"] + label, input[type="checkbox"] + span {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 400 !important;
+        font-size: 0.86rem !important;
+      }
+
+      /* "Note Numbers:" heading and any sub-headings */
+      h2, h3, h4 {
+        font-family: 'Cormorant Garamond', serif !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.02em !important;
+      }
+
+      /* Progress bar / percentage text */
+      [id*="progress"], [class*="progress"] {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 400 !important;
+        font-size: 0.78rem !important;
+      }
+
+      /* nav / header link */
+      nav a, header a, .nav-link, [class*="nav"] a {
+        font-family: 'DM Sans', sans-serif !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.02em !important;
+      }
+    `;
+    iframeDoc.head.appendChild(style);
+    } // end injectStyles
+
+    injectStyles();
+    setTimeout(injectStyles, 600);   // retry after fonts may have loaded
+    setTimeout(injectStyles, 1800);  // final retry for slow connections
+
+  } catch(e) {
+    // cross-origin injection not available — silently skip
+  }
+
   iframeDoc.addEventListener("scroll", () => { if (running && currentHighlightedElement) updateHighlightPosition(); }, true);
   let rafId;
   const updateLoop = () => { if (running && currentHighlightedElement) updateHighlightPosition(); rafId = requestAnimationFrame(updateLoop); };
