@@ -187,20 +187,20 @@
 
 /* "What are measures?" link button */
 .measures-link {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 7px 12px;
-  background: #fff3e0;
-  color: #e65100;
-  border: 1.5px solid #ffb74d;
-  border-radius: 8px;
-  font-size: 13px;
+  display: none; /* hidden by default, shown via JS when relevant */
+  padding: 10px 12px;
+  background: var(--demo-accent);
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 .measures-link:hover {
-  background: #ffe0b2;
+  background: #6a3fbf;
 }
 
   </style>
@@ -249,7 +249,8 @@
     <div id="demoControls">
       <button class="btn ghost" id="backBtn">Back</button>
       <div id="demoStep"></div>
-      <div style="display:flex; gap:10px;">
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+        <a class="measures-link" id="measuresLink" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
         <button class="btn secondary" id="skipBtn">Skip</button>
         <button class="btn" id="nextBtn">Next</button>
       </div>
@@ -305,10 +306,8 @@ const STEPS = [
 },
 {
   title: "Pick your start measure",
-  html: `
-    <p style="margin:0 0 8px 0;">Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.</p>
-    <a class="measures-link" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
-  `,
+  text: "Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.",
+  showMeasuresLink: true,
   selector: "#startMeasureInput",
   dim: false,
   video: null,
@@ -321,10 +320,8 @@ const STEPS = [
 },
 {
   title: "Pick your end measure",
-  html: `
-    <p style="margin:0 0 8px 0;">Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.</p>
-    <a class="measures-link" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
-  `,
+  text: "Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.",
+  showMeasuresLink: true,
   selector: "#endMeasureInput",
   dim: false,
   video: null,
@@ -951,6 +948,10 @@ nextBtn.textContent =
 
 stopVideo();
 stopImage();
+
+// Show/hide "What are measures?" button
+const measuresLink = document.getElementById("measuresLink");
+measuresLink.style.display = step.showMeasuresLink ? "inline-block" : "none";
 
 const rect = highlight(step.selector);
 placeCardNear(rect);
