@@ -144,9 +144,13 @@
       right: 14px;
       z-index: 1000002;
       display:flex;
-      gap:10px;
+      gap:8px;
       align-items:center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: calc(100vw - 28px);
     }
+
 /* nicer spacing for text + bullets */
 #demoText{
   margin: 0 0 10px 0;
@@ -163,6 +167,41 @@
   margin: 8px 0; /* space between bullets */
 }
 
+/* Mobile nav fixes */
+@media (max-width: 480px) {
+  #demoTopBar {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+  .btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+  #appFrame {
+    /* Push iframe down so nav doesn't overlap content */
+    margin-top: 0;
+  }
+}
+
+/* "What are measures?" link button */
+.measures-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 7px 12px;
+  background: #fff3e0;
+  color: #e65100;
+  border: 1.5px solid #ffb74d;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.measures-link:hover {
+  background: #ffe0b2;
+}
 
   </style>
 </head>
@@ -234,10 +273,10 @@ const STEPS = [
     </p>
 
     <p style="margin:0 0 10px 0;">
-      If you see the MIDI permission popup, select <b>“Continue allowing…”</b> and click <b>Done</b>.
+      If you see the MIDI permission popup, select <b>"Continue allowing…"</b> and click <b>Done</b>.
     </p>
 
-    <p style="margin:0 0 6px 0;"><b>If it doesn’t show up:</b></p>
+    <p style="margin:0 0 6px 0;"><b>If it doesn't show up:</b></p>
     <ul>
       <li>Click the lock icon (or site controls) near the address bar</li>
       <li>Open <b>Site settings</b> / <b>Permissions</b></li>
@@ -266,7 +305,10 @@ const STEPS = [
 },
 {
   title: "Pick your start measure",
-  text: "Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.",
+  html: `
+    <p style="margin:0 0 8px 0;">Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.</p>
+    <a class="measures-link" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
+  `,
   selector: "#startMeasureInput",
   dim: false,
   video: null,
@@ -279,7 +321,10 @@ const STEPS = [
 },
 {
   title: "Pick your end measure",
-  text: "Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.",
+  html: `
+    <p style="margin:0 0 8px 0;">Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.</p>
+    <a class="measures-link" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
+  `,
   selector: "#endMeasureInput",
   dim: false,
   video: null,
