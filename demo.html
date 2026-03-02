@@ -3,1110 +3,703 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Interactive Demo</title>
+  <title>riaaz · Interactive Demo</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600;1,700&family=DM+Sans:ital,wght@0,200;0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --demo-bg: rgba(10,10,20,0.55);
-      --demo-card: rgba(255,255,255,0.92);
-      --demo-border: rgba(140,120,160,0.30);
-      --demo-accent: #7E57C2;
-      --demo-text: #111;
+    :root {
+      --bg: #fdf8ff;
+      --surface: rgba(255,255,255,0.94);
+      --text: #160d22;
+      --muted: rgba(22,13,34,0.52);
+      --border: rgba(155,110,255,0.22);
+      --btnText: #2b1140;
+      --violet: 155,110,255;
+      --violetDeep: 85,55,190;
+      --pink: 255,90,160;
+      --rose: 255,60,120;
     }
 
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:#fff;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
     }
 
-    /* The real app */
-    #appFrame{
-      width: 100vw;
-      height: 100vh;
-      border: 0;
-      display:block;
+    #aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.38; }
+
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.45;
     }
 
-    /* Overlay */
-    #demoOverlay{
+    #appFrame {
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      border: 0; display: block; z-index: 2;
+    }
+
+    /* ── TOP NAV ── */
+    #demoTopBar {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000002; height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.8rem;
+      background: rgba(253,248,255,0.82);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(155,110,255,0.13);
+      box-shadow: 0 2px 24px rgba(22,10,35,0.07);
+    }
+
+    .nav-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em;
+      background: linear-gradient(135deg,
+        rgba(var(--violetDeep),1) 0%,
+        rgba(var(--violet),1) 40%,
+        rgba(var(--pink),1) 80%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-decoration: none; line-height: 1;
+    }
+
+    .nav-pill {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.63rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(var(--violetDeep), 0.8);
+      padding: 3px 10px; border-radius: 100px;
+      background: rgba(155,110,255,0.08); border: 1px solid rgba(155,110,255,0.2);
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 0.55rem; }
+
+    .nbtn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 16px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.01em;
+      cursor: pointer; border: 0; text-decoration: none;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .nbtn-ghost {
+      color: var(--muted);
+      border: 1px solid rgba(22,13,34,0.13) !important;
+      background: rgba(255,255,255,0.6);
+    }
+    .nbtn-ghost:hover { background: rgba(255,255,255,0.95); color: var(--text); transform: translateY(-1px); }
+    .nbtn-primary {
+      color: var(--btnText);
+      border: 1px solid rgba(155,110,255,0.32) !important;
+      background: linear-gradient(135deg, rgba(255,90,160,0.24), rgba(155,110,255,0.18));
+      box-shadow: 0 4px 16px rgba(155,110,255,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .nbtn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(155,110,255,0.22), inset 0 1px 0 rgba(255,255,255,0.7); }
+    .nbtn-red { color: #fff; background: #dd0000; border: 1px solid rgba(200,0,0,0.35) !important; box-shadow: 0 4px 14px rgba(200,0,0,0.18); }
+    .nbtn-red:hover { background: #bb0000; transform: translateY(-1px); }
+
+    /* ── OVERLAY ── */
+    #demoOverlay {
+      position: fixed; inset: 0;
+      background: rgba(10,5,20,0.52);
+      display: none; z-index: 999999; pointer-events: none;
+    }
+
+    /* ── HIGHLIGHT ── */
+    #demoHighlight {
       position: fixed;
-      inset: 0;
-      background: var(--demo-bg);
-      display:none;
-      z-index: 999999;
-      pointer-events: none;
-    }
-
-    /* Highlight rectangle */
-    #demoHighlight{
-      position: absolute;
-      border: 3px solid var(--demo-accent);
+      border: 2px solid rgba(var(--violet), 0.88);
       border-radius: 14px;
-      box-shadow: 0 0 0 6px rgba(126,87,194,0.18), 0 18px 50px rgba(0,0,0,0.35);
-      pointer-events: none;
-      display:none;
-      z-index: 1000000;
+      box-shadow:
+        0 0 0 5px rgba(155,110,255,0.16),
+        0 0 0 10px rgba(155,110,255,0.07),
+        0 16px 48px rgba(22,10,35,0.28);
+      pointer-events: none; display: none; z-index: 1000000;
     }
 
-    /* Tooltip card */
-#demoCard{
-  position: fixed;
-  width: min(720px, calc(100vw - 40px)); /* wider, landscape */
-  background: var(--demo-card);
-  border: 1px solid var(--demo-border);
-  border-radius: 18px;
-  padding: 18px;
-  color: var(--demo-text);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
-  z-index: 1000001;
-  display:none;
-}
-
-
-    #demoTitle{
-      font-weight: 800;
-      font-size: 16px;
-      margin: 0 0 6px 0;
-    }
-
-    #demoText{
-      margin: 0 0 10px 0;
-      line-height: 1.35;
-      font-size: 14px;
-    }
-
-#demoVideo{
-  width: 100%;
-  max-height: 260px;
-  max-width: 520px;            /* ✅ add */
-  border-radius: 12px;
-  background: #000;
-  display:none;
-  margin: 10px auto 12px auto; /* ✅ change */
-  overflow:hidden;
-  border: 1px solid rgba(0,0,0,0.10);
-}
-
-
-#demoVideo video{
-  width: 100%;
-  height: auto;                /* preserve natural aspect ratio */
-  max-height: 260px;
-  object-fit: contain;         /* no cropping */
-  display:block;
-  background:#000;
-}
-    
-
-    #demoControls{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content: space-between;
-      margin-top: 8px;
-    }
-
-    .btn{
-      border: 0;
-      background: var(--demo-accent);
-      color: #fff;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .btn.secondary{
-      background: #111;
-    }
-
-    .btn.ghost{
-      background: transparent;
-      color: #111;
-      border: 1px solid rgba(0,0,0,0.18);
-    }
-.btn.youtube{
-  background: #ff0000;
-}
-
-    #demoStep{
-      font-size: 13px;
-      opacity: 0.8;
-      font-weight: 600;
-    }
-
-    /* Small top bar for starting the tour */
-    #demoTopBar{
+    /* ── CARD ── */
+    #demoCard {
       position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 1000002;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      max-width: calc(100vw - 28px);
+      width: min(680px, calc(100vw - 28px));
+      background: rgba(253,248,255,0.97);
+      border: 1px solid rgba(155,110,255,0.2);
+      border-radius: 24px;
+      padding: 22px 22px 16px;
+      color: var(--text);
+      box-shadow: 0 28px 80px rgba(22,10,35,0.14), inset 0 1px 0 rgba(255,255,255,0.95);
+      backdrop-filter: blur(24px) saturate(160%);
+      z-index: 1000001; display: none;
+      overflow: hidden;
+    }
+    #demoCard::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg,
+        rgba(var(--pink),0.7), rgba(var(--violet),0.85), rgba(var(--pink),0.4));
     }
 
-/* nicer spacing for text + bullets */
-#demoText{
-  margin: 0 0 10px 0;
-  line-height: 1.45;
-  font-size: 14px;
-}
+    /* Progress bar strip */
+    #demoProgressBar {
+      position: absolute; top: 2px; left: 0; height: 2px;
+      background: linear-gradient(90deg, rgba(var(--pink),0.9), rgba(var(--violet),0.9));
+      transition: width 0.4s cubic-bezier(.4,0,.2,1);
+      border-radius: 0 2px 2px 0;
+    }
 
-#demoText ul{
-  margin: 10px 0 0 18px;
-  padding: 0;
-}
+    /* Step badge */
+    #demoStepBadge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.65rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(var(--violetDeep),0.7);
+      padding: 3px 10px; border-radius: 100px;
+      background: rgba(155,110,255,0.07); border: 1px solid rgba(155,110,255,0.18);
+      margin-bottom: 10px;
+    }
 
-#demoText li{
-  margin: 8px 0; /* space between bullets */
-}
+    #demoTitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.28rem; font-weight: 600; line-height: 1.2;
+      letter-spacing: -0.015em; margin: 0 0 9px 0;
+      background: linear-gradient(135deg,
+        rgba(var(--violetDeep),1) 0%,
+        rgba(var(--violet),1)    50%,
+        rgba(var(--pink),0.9)    100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
 
-/* Mobile nav fixes */
-@media (max-width: 480px) {
-  #demoTopBar {
-    top: 8px;
-    right: 8px;
-    gap: 6px;
-  }
-  .btn {
-    padding: 8px 10px;
-    font-size: 12px;
-    border-radius: 8px;
-  }
-  #appFrame {
-    /* Push iframe down so nav doesn't overlap content */
-    margin-top: 0;
-  }
-}
+    #demoText {
+      font-size: 0.875rem; line-height: 1.65;
+      color: rgba(22,13,34,0.70); font-weight: 300;
+      margin: 0 0 8px 0;
+    }
+    #demoText p { margin-bottom: 7px; }
+    #demoText p:last-child { margin-bottom: 0; }
+    #demoText ul { margin: 7px 0 0 18px; padding: 0; }
+    #demoText li { margin: 5px 0; font-size: 0.855rem; color: rgba(22,13,34,0.62); }
+    #demoText b, #demoText strong { font-weight: 600; color: var(--text); }
 
-/* "What are measures?" link button */
-.measures-link {
-  display: none; /* hidden by default, shown via JS when relevant */
-  padding: 10px 12px;
-  background: var(--demo-accent);
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.measures-link:hover {
-  background: #6a3fbf;
-}
+    #demoActionStatus {
+      font-size: 0.775rem; font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      margin: 4px 0 6px; min-height: 16px;
+      opacity: 0; transition: opacity 0.2s;
+    }
 
+    #demoVideo {
+      width: 100%; max-width: 480px; max-height: 230px;
+      border-radius: 14px; background: #0d0010; display: none;
+      margin: 10px auto 12px; overflow: hidden;
+      border: 1px solid rgba(155,110,255,0.13);
+    }
+    #demoVideo video { width: 100%; height: auto; max-height: 230px; object-fit: contain; display: block; }
+
+    #demoImage { display: none; margin: 10px 0 12px; }
+    #demoImage img { width: 100%; border-radius: 12px; border: 1px solid var(--border); }
+
+    /* Controls row */
+    #demoControls {
+      display: flex; gap: 7px; align-items: center;
+      justify-content: space-between; margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(155,110,255,0.1);
+    }
+
+    .cbtn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 8px 16px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem; font-weight: 500; letter-spacing: 0.01em;
+      cursor: pointer; border: 0;
+      transition: all 0.18s; white-space: nowrap;
+    }
+    .cbtn-ghost {
+      color: var(--muted);
+      border: 1px solid rgba(22,13,34,0.13) !important;
+      background: rgba(255,255,255,0.7);
+    }
+    .cbtn-ghost:hover { background: #fff; color: var(--text); }
+    .cbtn-ghost:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+    .cbtn-dark {
+      color: rgba(253,248,255,0.9); background: rgba(22,13,34,0.88);
+      border: 1px solid rgba(22,13,34,0.5) !important;
+    }
+    .cbtn-dark:hover { background: rgba(42,21,69,0.95); }
+
+    .cbtn-primary {
+      color: var(--btnText);
+      background: linear-gradient(135deg, rgba(255,90,160,0.28), rgba(155,110,255,0.22));
+      border: 1px solid rgba(155,110,255,0.35) !important;
+      box-shadow: 0 4px 14px rgba(155,110,255,0.16), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+    .cbtn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(155,110,255,0.24); }
+    .cbtn-primary:disabled { opacity: 0.38; cursor: not-allowed; transform: none; pointer-events: none; }
+
+    /* Measures link */
+    .measures-link {
+      display: none;
+      padding: 8px 14px; border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.77rem; font-weight: 500;
+      color: var(--btnText); text-decoration: none;
+      background: linear-gradient(135deg, rgba(155,110,255,0.14), rgba(255,90,160,0.1));
+      border: 1px solid rgba(155,110,255,0.28) !important;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .measures-link:hover {
+      background: linear-gradient(135deg, rgba(155,110,255,0.24), rgba(255,90,160,0.18));
+      transform: translateY(-1px);
+    }
+
+    /* Step counter */
+    #demoStep {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem; font-style: italic;
+      color: var(--muted); flex-shrink: 0;
+    }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      #demoTopBar { padding: 0 1rem; height: 52px; }
+      .nav-brand { font-size: 1.25rem; }
+      .nav-pill { display: none; }
+      .nbtn { padding: 6px 11px; font-size: 0.72rem; }
+      #demoCard { padding: 18px 16px 14px; border-radius: 18px; }
+      #demoTitle { font-size: 1.1rem; }
+      #demoText { font-size: 0.84rem; }
+    }
   </style>
 </head>
-
 <body>
-  <!-- Your real app loads here -->
-  <iframe id="appFrame" title="App"></iframe>
 
-  <!-- Quick start button always visible -->
+<canvas id="aurora" aria-hidden="true"></canvas>
+<iframe id="appFrame" title="riaaz App"></iframe>
+
+<!-- NAV BAR -->
 <div id="demoTopBar">
-  <!-- NEW: YouTube button (left of Start Demo) -->
-<a class="btn youtube" id="youtubeBtn"
-   href="https://www.youtube.com/watch?v=F5oWi0UIy1U"
-   target="_blank" rel="noopener">
-  Demo Video
-</a>
-
-
-  <button class="btn" id="startTourBtn">Start Demo</button>
-
-  <button class="btn ghost" id="loginBtn" type="button">Login</button>
-
-  <button class="btn ghost" id="stopTourBtn" style="display:none;">Exit</button>
+  <div style="display:flex;align-items:center;gap:0.75rem;">
+    <span class="nav-brand">riaaz</span>
+    <span class="nav-pill">✦ Interactive Demo</span>
+  </div>
+  <div class="nav-right">
+    <a class="nbtn nbtn-red" href="https://www.youtube.com/watch?v=F5oWi0UIy1U" target="_blank" rel="noopener">▶ Demo Video</a>
+    <button class="nbtn nbtn-primary" id="startTourBtn">Start Demo</button>
+    <button class="nbtn nbtn-ghost" id="loginBtn" type="button">Login</button>
+    <button class="nbtn nbtn-ghost" id="stopTourBtn" style="display:none;">✕ Exit</button>
+  </div>
 </div>
 
+<div id="demoOverlay"></div>
+<div id="demoHighlight"></div>
 
-
-  <!-- Overlay + highlight + card -->
-  <div id="demoOverlay"></div>
-  <div id="demoHighlight"></div>
-
-  <div id="demoCard">
-    <h3 id="demoTitle"></h3>
-<div id="demoText"></div>
-    <div id="demoActionStatus" style="margin: 6px 0 10px 0; font-size: 13px; font-weight: 700;"></div>
-
-<div id="demoImage">
-  <img id="demoImageEl" alt="" />
-</div>
-
-    <div id="demoVideo">
-      <video id="demoVideoEl" controls playsinline></video>
-    </div>
-
-    <div id="demoControls">
-      <button class="btn ghost" id="backBtn">Back</button>
-      <div id="demoStep"></div>
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-        <a class="measures-link" id="measuresLink" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
-        <button class="btn secondary" id="skipBtn">Skip</button>
-        <button class="btn" id="nextBtn">Next</button>
-      </div>
+<!-- TOUR CARD -->
+<div id="demoCard">
+  <div id="demoProgressBar"></div>
+  <div id="demoStepBadge">Step <span id="demoStepNum">1</span> of <span id="demoStepTotal">20</span></div>
+  <h3 id="demoTitle"></h3>
+  <div id="demoText"></div>
+  <div id="demoActionStatus"></div>
+  <div id="demoImage"><img id="demoImageEl" alt="" /></div>
+  <div id="demoVideo"><video id="demoVideoEl" controls playsinline></video></div>
+  <div id="demoControls">
+    <button class="cbtn cbtn-ghost" id="backBtn">← Back</button>
+    <span id="demoStep"></span>
+    <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+      <a class="measures-link" id="measuresLink" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
+      <button class="cbtn cbtn-dark" id="skipBtn">Skip</button>
+      <button class="cbtn cbtn-primary" id="nextBtn">Next →</button>
     </div>
   </div>
+</div>
 
 <script>
-  // STEP 1: SET YOUR REAL APP PAGE HERE
-  const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/demo-app.html";
+const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/demo-app.html";
 
-  // STEP 2: Define demo steps using CSS selectors that exist on the app page.
-  // If a selector isn't found, the step will still show, but without highlight.
 const STEPS = [
-  
-{
-  title: "Connect your keyboard (USB)- Optional but Highly recommended",
-  html: `
-    <p style="margin:0 0 10px 0;">
-      You may use your device's touch screen/mouse to learn, but for the best experience, connect a piano/MIDI keyboard to your device using a USB cable
-      (usually USB-B on the keyboard side).
-    </p>
-
-    <p style="margin:0 0 10px 0;">
-      If you see the MIDI permission popup, select <b>"Continue allowing…"</b> and click <b>Done</b>.
-    </p>
-
-    <p style="margin:0 0 6px 0;"><b>If it doesn't show up:</b></p>
-    <ul>
-      <li>Click the lock icon (or site controls) near the address bar</li>
-      <li>Open <b>Site settings</b> / <b>Permissions</b></li>
-      <li>Find <b>MIDI devices</b> and set it to <b>Allow</b></li>
-      <li>Refresh the page and try again</li>
-    </ul>
-  `,
-  selector: null,
-  video: "midi-permission.mp4",
-  hideBack: true
-},
-
-
-{
-  title: "Choose which hand to practice",
-  text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you're ready.",
-  selector: "#handSelect",
-  dim: false,
-  video: null,
-  action: {
-    type: "change",
-    selector: "#handSelect",
-    prompt: "Try switching the hand option once.",
-    doneText: "Done ✅ Hand selected."
-  }
-},
-{
-  title: "Pick your start measure",
-  text: "Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.",
-  showMeasuresLink: true,
-  selector: "#startMeasureInput",
-  dim: false,
-  video: null,
-  action: {
-    type: "input",
-    selector: "#startMeasureInput",
-    prompt: "Try typing a start measure (example: 1).",
-    doneText: "Done ✅ Start measure set."
-  }
-},
-{
-  title: "Pick your end measure",
-  text: "Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.",
-  showMeasuresLink: true,
-  selector: "#endMeasureInput",
-  dim: false,
-  video: null,
-  action: {
-    type: "input",
-    selector: "#endMeasureInput",
-    prompt: "Try typing an end measure (example: 2).",
-    doneText: "Done ✅ End measure set."
-  }
-},
-
-{
-  title: "Start practice",
-  text: "Click Start Practice. The app will first play the selected measures, then wait for your input.",
-  selector: "#startPracticeButton",
-  dim: false,
-  video: null,
-
-  waitForClick: true,   // ✅ disables Next until they click the button
-
-  action: {
-    type: "click",
-    selector: "#startPracticeButton",
-    prompt: "Click Start Practice to begin.",
-    doneText: "Practice started ▶️",
-    hideCardAfterClick: true
+  {
+    title: "Connect your keyboard (USB) — Optional but highly recommended",
+    html: `<p>You may use your device's touch screen or mouse to learn, but for the best experience, connect a piano/MIDI keyboard using a USB cable (usually USB-B on the keyboard side).</p><p>If you see the MIDI permission popup, select <b>"Continue allowing…"</b> and click <b>Done</b>.</p><p><b>If it doesn't show up:</b></p><ul><li>Click the lock icon near the address bar</li><li>Open <b>Site settings / Permissions</b></li><li>Find <b>MIDI devices</b> and set it to <b>Allow</b></li><li>Refresh the page and try again</li></ul>`,
+    selector: null, video: "midi-permission.mp4", hideBack: true
   },
-  resume: {
-    title: "Well done 🎉",
-    text: "Nice work. Now let's look at the next feature. Click Next when you're ready."
-  }
-},
-
-
-{
-  title: "Understanding mistakes",
-text: "As you play, messages will appear here telling you whether each note was played correctly. If something isn't right, you'll also see an explanation of why.\n\nIf you'd like to try this yourself, you can click Back, choose a short section, and start practice again. Otherwise, click Next to continue.",
-  selector: "#feedback",
-  dim: false,
-  video: null
-},
-{
-  title: "Stop",
-  text: "Click Stop anytime to stop playback or training. It's useful if you want to pause, fix a setting, or take a break.",
-  selector: "#stopButton",
-  dim: false,
-  video: null
-},
-
-{
-  title: "Reset",
-  text: "Reset puts everything back to the default state (hand, measures, speed, toggles). Use this if you want a clean start.",
-  selector: "#resetButton",
-  dim: false,
-  video: null,
-  action: {
-    type: "click",
-    selector: "#resetButton",
-    prompt: "Optional: click Reset to return everything to default.",
-    doneText: "Done ✅ Reset."
-  }
-},
-{
-  title: "Hide note names",
-  text: "Use this to hide or show the note names on the keyboard. It's great when you want to test yourself without hints.",
-  selector: "#toggleNamesButton",
-  dim: false,
-  video: null,
-  action: {
-    type: "click",
-    selector: "#toggleNamesButton",
-    prompt: "Optional: click it once to hide/show the note names.",
-    doneText: "Done ✅ Toggled note names."
-  }
-},
   {
-  title: "Beat",
-  text: "Turn Beat on to hear a steady metronome pulse while you play.",
-  selector: "#beatToggle",
-  dim: false,
-  video: null
-},
-{
-  title: "Counting",
-  text: "Counting speaks the count out loud to help you stay in time.",
-  selector: "#countToggle",
-  dim: false,
-  video: null
-},
-{
-  title: "1 & 2 &",
-  text: "This adds the 'and' subdivisions, which is useful for faster rhythms and tighter timing.",
-  selector: "#subdivisionToggle",
-  dim: false,
-  video: null
-},
-{
-  title: "Language",
-  text: "Switch the counting language here.",
-  selector: "#languageToggle",
-  dim: false,
-  video: null
-},
-
-{
-  title: "Skip repeats in sheet",
-  text: "If your sheet music has a repeat section, you can toggle this on or off. When it's on, repeats are skipped. When it's off, repeats will play normally.",
-  selector: "#skipRepeatsCheckbox",
-  dim: false,
-  video: null
-},
+    title: "Choose which hand to practice",
+    text: "Use this dropdown to pick Right Hand, Left Hand, or Both. Try changing it once, then click Next when you're ready.",
+    selector: "#handSelect", dim: false,
+    action: { type: "change", selector: "#handSelect", prompt: "Try switching the hand option once.", doneText: "Done ✅  Hand selected." }
+  },
   {
-  title: "Loop section",
-  text: "Turn this on to keep repeating your selected measures. After it reaches the end measure, it automatically jumps back to the start measure and continues until you press Stop.",
-  selector: "#loopCheckbox",
-  dim: false,
-  video: null
-},
+    title: "Pick your start measure",
+    text: "Type the start measure from your sheet music here (for example: 1). Then click Next when you're ready.",
+    showMeasuresLink: true, selector: "#startMeasureInput", dim: false,
+    action: { type: "input", selector: "#startMeasureInput", prompt: "Try typing a start measure (example: 1).", doneText: "Done ✅  Start measure set." }
+  },
   {
-  title: "Play full song",
-  text: "Use this to play the full song with visuals. It's helpful to listen first before practicing a section.",
-  selector: "#playSongButton",
-  dim: false,
-  video: null,
-  action: {
-    type: "click",
-    selector: "#playSongButton",
-    prompt: "Optional: click Play Full Song to try it.",
-    doneText: "Done ✅ Full song started."
+    title: "Pick your end measure",
+    text: "Now type the end measure from your sheet music (for example: 2). Then click Next when you're ready.",
+    showMeasuresLink: true, selector: "#endMeasureInput", dim: false,
+    action: { type: "input", selector: "#endMeasureInput", prompt: "Try typing an end measure (example: 2).", doneText: "Done ✅  End measure set." }
+  },
+  {
+    title: "Start practice",
+    text: "Click Start Practice. The app will first play the selected measures, then wait for your input.",
+    selector: "#startPracticeButton", dim: false, waitForClick: true,
+    action: { type: "click", selector: "#startPracticeButton", prompt: "Click Start Practice to begin.", doneText: "Practice started ▶", hideCardAfterClick: true },
+    resume: { title: "Well done 🎉", text: "Nice work. Now let's look at the next feature. Click Next when you're ready." }
+  },
+  {
+    title: "Understanding mistakes",
+    text: "As you play, messages will appear here telling you whether each note was played correctly. If something isn't right, you'll also see an explanation of why.\n\nIf you'd like to try this yourself, click Back, choose a short section, and start practice again. Otherwise, click Next to continue.",
+    selector: "#feedback", dim: false
+  },
+  { title: "Stop", text: "Click Stop anytime to stop playback or training. It's useful if you want to pause, fix a setting, or take a break.", selector: "#stopButton", dim: false },
+  {
+    title: "Reset",
+    text: "Reset puts everything back to the default state — hand, measures, speed, toggles. Use this if you want a clean start.",
+    selector: "#resetButton", dim: false,
+    action: { type: "click", selector: "#resetButton", prompt: "Optional: click Reset to return everything to default.", doneText: "Done ✅  Reset." }
+  },
+  {
+    title: "Hide note names",
+    text: "Use this to hide or show the note names on the keyboard. It's great when you want to test yourself without hints.",
+    selector: "#toggleNamesButton", dim: false,
+    action: { type: "click", selector: "#toggleNamesButton", prompt: "Optional: click it once to hide/show note names.", doneText: "Done ✅  Toggled note names." }
+  },
+  { title: "Beat", text: "Turn Beat on to hear a steady metronome pulse while you play.", selector: "#beatToggle", dim: false },
+  { title: "Counting", text: "Counting speaks the count out loud to help you stay in time.", selector: "#countToggle", dim: false },
+  { title: "1 & 2 &", text: "This adds the 'and' subdivisions, which is useful for faster rhythms and tighter timing.", selector: "#subdivisionToggle", dim: false },
+  { title: "Language", text: "Switch the counting language here.", selector: "#languageToggle", dim: false },
+  { title: "Skip repeats in sheet", text: "If your sheet music has a repeat section, you can toggle this on or off. When it's on, repeats are skipped. When it's off, repeats will play normally.", selector: "#skipRepeatsCheckbox", dim: false },
+  { title: "Loop section", text: "Turn this on to keep repeating your selected measures. After it reaches the end measure, it automatically jumps back to the start measure and continues until you press Stop.", selector: "#loopCheckbox", dim: false },
+  {
+    title: "Play full song",
+    text: "Use this to play the full song with visuals. It's helpful to listen first before practising a section.",
+    selector: "#playSongButton", dim: false,
+    action: { type: "click", selector: "#playSongButton", prompt: "Optional: click Play Full Song to try it.", doneText: "Done ✅  Full song started." }
+  },
+  {
+    title: "Speed",
+    text: "You can slow things down or speed them up anytime. Try tapping + or − once. If you want to feel the difference more clearly, click Back, play the full song, then change the speed while it plays. Click Next when you're ready.",
+    selector: "#speedDisplay", dim: false,
+    action: { type: "observeTextChange", selector: "#speedDisplay", prompt: "Try clicking + or − to change the speed.", doneText: "Done ✅  Speed changed." }
+  },
+  { title: "Instant note feedback", text: "On the right, you'll see what you played under 'You pressed'. Under 'Correct note', you'll see the note you're supposed to play.", selector: "#sideNoteFeedback", dim: false },
+  {
+    title: "Free Mode",
+    text: "Free Mode lets you play freely — with your MIDI keyboard or by clicking notes with your mouse.",
+    selector: "#freeModeButton", dim: false,
+    action: { type: "click", selector: "#freeModeButton", prompt: "Optional: click Free Mode to try it.", doneText: "Done ✅  Free Mode toggled." }
+  },
+  {
+    title: "Demo complete 🎉",
+    text: "You've reached the end of the demo.\n\nThis was a trial version of the song, designed to show you how practice, feedback, and playback work.\n\nTo unlock the full song, please log in first.",
+    selector: null, dim: true, nextLabel: "Login →",
+    nextUrl: "https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html"
   }
-},
-
-{
-  title: "Speed",
-text: "You can slow things down or speed them up anytime. Try tapping + or - once. If you want to feel the difference more clearly, click Back and play the full song, then try changing the speed while it plays. Click Next when you're ready.",
-  selector: "#speedDisplay",
-  dim: false,
-  video: null,
-  action: {
-    type: "observeTextChange",
-    selector: "#speedDisplay",
-    prompt: "Try clicking + or - to change the speed.",
-    doneText: "Done ✅ Speed changed."
-  }
-},
-
-{
-  title: "Instant note feedback",
-  text: "On the right, you'll see what you played under 'You pressed'. Under 'Correct note', you'll see the note you're supposed to play.",
-  selector: "#sideNoteFeedback",
-  dim: false,
-  video: null
-},
-  
-{
-  title: "Free Mode",
-  text: "Free Mode lets you play freely. You can play using your MIDI keyboard, or even click notes with your mouse.",
-  selector: "#freeModeButton",
-  dim: false,
-  video: null,
-  action: {
-    type: "click",
-    selector: "#freeModeButton",
-    prompt: "Optional: click Free Mode to try it.",
-    doneText: "Done ✅ Free Mode toggled."
-  }
-},
-{
-  title: "Demo complete 🎉",
-  text: "You've reached the end of the demo.\n\nThis was a trial version of the song, designed to show you how practice, feedback, and playback work.\n\nTo unlock the full song, please log in first.",
-  selector: null,
-  dim: true,
-  video: null,
-  nextLabel: "Login first",
-  nextUrl: "https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html"
-}
 ];
 
+/* DOM refs */
+const frame      = document.getElementById("appFrame");
+const overlay    = document.getElementById("demoOverlay");
+const hi         = document.getElementById("demoHighlight");
+const card       = document.getElementById("demoCard");
+const titleEl    = document.getElementById("demoTitle");
+const textEl     = document.getElementById("demoText");
+const stepEl     = document.getElementById("demoStep");
+const stepNumEl  = document.getElementById("demoStepNum");
+const stepTotEl  = document.getElementById("demoStepTotal");
+const statusEl   = document.getElementById("demoActionStatus");
+const progressBar= document.getElementById("demoProgressBar");
+const videoWrap  = document.getElementById("demoVideo");
+const videoEl    = document.getElementById("demoVideoEl");
+const imageWrap  = document.getElementById("demoImage");
+const imageEl    = document.getElementById("demoImageEl");
+const startBtn   = document.getElementById("startTourBtn");
+const stopBtn    = document.getElementById("stopTourBtn");
+const nextBtn    = document.getElementById("nextBtn");
+const backBtn    = document.getElementById("backBtn");
+const skipBtn    = document.getElementById("skipBtn");
+const loginBtn   = document.getElementById("loginBtn");
 
+stepTotEl.textContent = STEPS.length;
 
-  const frame = document.getElementById("appFrame");
-  const overlay = document.getElementById("demoOverlay");
-  const hi = document.getElementById("demoHighlight");
-  const card = document.getElementById("demoCard");
-  const titleEl = document.getElementById("demoTitle");
-  const textEl = document.getElementById("demoText");
-  const stepEl = document.getElementById("demoStep");
-  const statusEl = document.getElementById("demoActionStatus");
-
-
-  const videoWrap = document.getElementById("demoVideo");
-  const videoEl = document.getElementById("demoVideoEl");
-const imageWrap = document.getElementById("demoImage");
-const imageEl = document.getElementById("demoImageEl");
-
-function stopImage(){
-  imageEl.removeAttribute("src");
-  imageEl.alt = "";
-  imageWrap.style.display = "none";
-}
-
-function showImage(src, altText){
-  if (!src){
-    stopImage();
-    return;
-  }
-  imageEl.src = src;
-  imageEl.alt = altText || "";
-  imageWrap.style.display = "block";
-}
-
-  const startBtn = document.getElementById("startTourBtn");
-  const stopBtn = document.getElementById("stopTourBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const backBtn = document.getElementById("backBtn");
-  const skipBtn = document.getElementById("skipBtn");
-  const loginBtn = document.getElementById("loginBtn");
 loginBtn.addEventListener("click", () => {
   window.location.href = "https://riashandilya-svg.github.io/classicbollywoodmelodies/login.html";
 });
 
+let idx = 0, running = false, currentHighlightedElement = null;
+let waitCleanup = null, waitSatisfied = false;
+let actionCleanup = null, actionDone = false;
 
-let idx = 0;
-let running = false;
-let currentHighlightedElement = null;
+frame.src = APP_URL;
 
-// for "wait until user clicks"
-let waitCleanup = null;
-let waitSatisfied = false;
-let actionCleanup = null;
-let actionDone = false;
+function stopImage() { imageEl.removeAttribute("src"); imageWrap.style.display = "none"; }
+function showImage(src, alt) {
+  if (!src) { stopImage(); return; }
+  imageEl.src = src; imageEl.alt = alt || ""; imageWrap.style.display = "block";
+}
+function stopVideo() {
+  videoEl.pause(); videoEl.removeAttribute("src"); videoEl.load();
+  videoWrap.style.display = "none";
+}
+function playVideo(src) {
+  if (!src) { stopVideo(); return; }
+  videoEl.src = src; videoWrap.style.display = "block";
+  videoEl.currentTime = 0; videoEl.play().catch(() => {});
+}
+function setStatus(msg, done = false) {
+  statusEl.textContent = msg || "";
+  statusEl.style.color = done ? "rgba(15,150,90,0.9)" : "rgba(22,13,34,0.62)";
+  statusEl.style.opacity = msg ? "1" : "0";
+}
+function setNextEnabled(enabled) { nextBtn.disabled = !enabled; }
+function setOverlayDim(dim) {
+  overlay.style.display = "block";
+  overlay.style.background = dim ? "rgba(10,5,20,0.52)" : "transparent";
+}
 
-
-  frame.src = APP_URL;
-
-  function showTour(){
-    running = true;
-setOverlayDim(true);
-
-    card.style.display = "block";
-    stopBtn.style.display = "inline-block";
-    startBtn.style.display = "none";
-    goTo(0);
-  }
-
-  function hideTour(){
+function showTour() {
+  running = true; setOverlayDim(true);
+  card.style.display = "block";
+  stopBtn.style.display = "inline-flex"; startBtn.style.display = "none";
+  goTo(0);
+}
+function hideTour() {
   running = false;
-
-  overlay.style.display = "none";
-  hi.style.display = "none";
-  card.style.display = "none";
-
-  stopBtn.style.display = "none";
-  startBtn.style.display = "inline-block";
-
+  overlay.style.display = "none"; hi.style.display = "none"; card.style.display = "none";
+  stopBtn.style.display = "none"; startBtn.style.display = "inline-flex";
   stopVideo();
-
-  // cleanup wait listener
-  if (waitCleanup) {
-    waitCleanup();
-    waitCleanup = null;
-  }
+  if (waitCleanup) { waitCleanup(); waitCleanup = null; }
   waitSatisfied = false;
-
-  // cleanup action listener
-  if (actionCleanup) {
-    actionCleanup();
-    actionCleanup = null;
-  }
-  actionDone = false;
-  setStatus("");
-
-  setNextEnabled(true);
+  if (actionCleanup) { actionCleanup(); actionCleanup = null; }
+  actionDone = false; setStatus(""); setNextEnabled(true);
   currentHighlightedElement = null;
 }
 
-  function stopVideo(){
-    videoEl.pause();
-    videoEl.removeAttribute("src");
-    videoEl.load();
-    videoWrap.style.display = "none";
-  }
-
-  function playVideo(src){
-    if (!src){
-      stopVideo();
-      return;
-    }
-    videoEl.src = src;
-    videoWrap.style.display = "block";
-    videoEl.currentTime = 0;
-    videoEl.play().catch(()=>{});
-  }
-
-  function placeCardNear(rect){
-    let top = 24;
-    let left = 24;
-
-    if (rect){
-      const cardHeight = card.offsetHeight || 300; // estimate if not yet rendered
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      
-      // For dropdown elements (like #handSelect), prefer placing above to avoid overlap
-      const isDropdown = currentHighlightedElement?.tagName === 'SELECT';
-      
-      if (isDropdown && spaceAbove > cardHeight + 60) {
-        // Place above dropdown with extra spacing
-        top = Math.max(14, rect.top - cardHeight - 40);
-      } else if (spaceBelow > cardHeight + 40) {
-        // Place below with spacing
-        top = rect.bottom + 14;
-      } else if (spaceAbove > cardHeight + 40) {
-        // Place above with spacing
-        top = Math.max(14, rect.top - cardHeight - 14);
-      } else {
-        // Not enough space either way, place to the side
-        top = Math.max(14, Math.min(rect.top, window.innerHeight - cardHeight - 14));
-      }
-      
-      left = Math.min(Math.max(14, rect.left), window.innerWidth - card.offsetWidth - 14);
-} else {
-  // No highlight target (selector: null) — center the card, landscape style
-  const topBar = document.getElementById("demoTopBar");
-  const topBarH = topBar ? topBar.getBoundingClientRect().height : 0;
-
-  const cardW = card.offsetWidth || 720;
-  left = Math.max(14, (window.innerWidth - cardW) / 2);
-
-  // place it visually centered, but not overlapping top bar
-top = Math.max(28 + topBarH + 16, (window.innerHeight * 0.12));
+function computeHighlightRect(el) {
+  const r = el.getBoundingClientRect();
+  const fr = frame.getBoundingClientRect();
+  const pad = 9;
+  const rect = { left: fr.left+r.left, top: fr.top+r.top, right: fr.left+r.right, bottom: fr.top+r.bottom, width: r.width, height: r.height };
+  hi.style.display = "block";
+  hi.style.left   = (rect.left  - pad) + "px";
+  hi.style.top    = (rect.top   - pad) + "px";
+  hi.style.width  = (rect.width + pad*2) + "px";
+  hi.style.height = (rect.height + pad*2) + "px";
+  return rect;
 }
-
-
-
-    card.style.top = top + "px";
-    card.style.left = left + "px";
-  }
-
-  function updateHighlightPosition(){
-    if (!currentHighlightedElement || !running) return;
-
-    const doc = frame.contentWindow?.document;
-    if (!doc) return;
-
-    const r = currentHighlightedElement.getBoundingClientRect();
-    const frameRect = frame.getBoundingClientRect();
-
-    const rect = {
-      left: frameRect.left + r.left,
-      top: frameRect.top + r.top,
-      right: frameRect.left + r.right,
-      bottom: frameRect.top + r.bottom,
-      width: r.width,
-      height: r.height
-    };
-
-    const pad = 8;
-    hi.style.left = (rect.left - pad) + "px";
-    hi.style.top = (rect.top - pad) + "px";
-    hi.style.width = (rect.width + pad*2) + "px";
-    hi.style.height = (rect.height + pad*2) + "px";
-
-    // Also update card position when highlight moves
-    placeCardNear(rect);
-
-    return rect;
-  }
-
-  function highlight(selector){
-    const doc = frame.contentWindow?.document;
-    if (!doc || !selector) {
-      currentHighlightedElement = null;
-      return null;
-    }
-
-    const el = doc.querySelector(selector);
-    if (!el) {
-      currentHighlightedElement = null;
-      return null;
-    }
-
-    currentHighlightedElement = el;
-    const r = el.getBoundingClientRect();
-    const frameRect = frame.getBoundingClientRect();
-
-    const rect = {
-      left: frameRect.left + r.left,
-      top: frameRect.top + r.top,
-      right: frameRect.left + r.right,
-      bottom: frameRect.top + r.bottom,
-      width: r.width,
-      height: r.height
-    };
-
-    const pad = 8;
-    hi.style.display = "block";
-    hi.style.left = (rect.left - pad) + "px";
-    hi.style.top = (rect.top - pad) + "px";
-    hi.style.width = (rect.width + pad*2) + "px";
-    hi.style.height = (rect.height + pad*2) + "px";
-
-    return rect;
-  }
-function setNextEnabled(enabled){
-  nextBtn.disabled = !enabled;
-  nextBtn.style.opacity = enabled ? "1" : "0.55";
-  nextBtn.style.cursor = enabled ? "pointer" : "not-allowed";
-}
-
-function setupWaitForClick(selector){
-  // clean up any previous waiting listener
-  if (waitCleanup) {
-    waitCleanup();
-    waitCleanup = null;
-  }
-  waitSatisfied = false;
-
-  // If no selector, nothing to wait for
-  if (!selector) {
-    setNextEnabled(true);
-    return;
-  }
-
+function highlight(selector) {
   const doc = frame.contentWindow?.document;
-  if (!doc) {
-    setNextEnabled(true);
-    return;
-  }
-
+  if (!doc || !selector) { hi.style.display = "none"; currentHighlightedElement = null; return null; }
   const el = doc.querySelector(selector);
-  if (!el) {
-    // If element not found, don't block the demo
-    setNextEnabled(true);
-    return;
+  if (!el) { hi.style.display = "none"; currentHighlightedElement = null; return null; }
+  currentHighlightedElement = el;
+  return computeHighlightRect(el);
+}
+function updateHighlightPosition() {
+  if (!currentHighlightedElement || !running) return;
+  const rect = computeHighlightRect(currentHighlightedElement);
+  placeCardNear(rect);
+}
+function placeCardNear(rect) {
+  const cardH = card.offsetHeight || 260;
+  const cardW = card.offsetWidth  || 680;
+  const navH  = 58;
+  let top, left;
+  if (rect) {
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top - navH;
+    const isDD = currentHighlightedElement?.tagName === "SELECT";
+    if (isDD && spaceAbove > cardH + 50) top = Math.max(navH + 10, rect.top - cardH - 36);
+    else if (spaceBelow > cardH + 36)   top = rect.bottom + 12;
+    else if (spaceAbove > cardH + 36)   top = Math.max(navH + 10, rect.top - cardH - 12);
+    else                                top = Math.max(navH + 10, Math.min(rect.top, window.innerHeight - cardH - 12));
+    left = Math.min(Math.max(14, rect.left), window.innerWidth - cardW - 14);
+  } else {
+    left = Math.max(14, (window.innerWidth - cardW) / 2);
+    top  = Math.max(navH + 20, window.innerHeight * 0.14);
   }
-
-  // Disable Next until they click the target
-  setNextEnabled(false);
-
-  const onClick = (e) => {
-    waitSatisfied = true;
-    setNextEnabled(true);
-
-    // remove listener after first click
-    el.removeEventListener("click", onClick, true);
-    waitCleanup = null;
-  };
-
-  // Use capture so we catch it even if the app stops propagation
-  el.addEventListener("click", onClick, true);
-
-  // cleanup function for when user goes back/next/exit
-  waitCleanup = () => {
-    el.removeEventListener("click", onClick, true);
-  };
-}
-function setOverlayDim(dim){
-  overlay.style.display = "block";
-  overlay.style.background = dim ? "var(--demo-bg)" : "transparent";
-}
-function setStatus(msg, done=false){
-  const el = document.getElementById("demoActionStatus");
-  if (!el) return;
-
-  el.textContent = msg || "";
-  el.style.color = done ? "#1B5E20" : "#111";
-  el.style.opacity = msg ? "1" : "0";
+  card.style.top  = top  + "px";
+  card.style.left = left + "px";
 }
 
-function setupActionWatcher(action){
-  // clear previous watcher
-  if (actionCleanup) {
-    actionCleanup();
-    actionCleanup = null;
-  }
-  actionDone = false;
-
-  if (!action) {
-    setStatus("");
-    return;
-  }
-
+function setupWaitForClick(selector) {
+  if (waitCleanup) { waitCleanup(); waitCleanup = null; }
+  waitSatisfied = false;
+  if (!selector) { setNextEnabled(true); return; }
   const doc = frame.contentWindow?.document;
-  if (!doc) {
-    setStatus("");
-    return;
-  }
+  if (!doc) { setNextEnabled(true); return; }
+  const el = doc.querySelector(selector);
+  if (!el) { setNextEnabled(true); return; }
+  setNextEnabled(false);
+  const onClick = () => {
+    waitSatisfied = true; setNextEnabled(true);
+    el.removeEventListener("click", onClick, true); waitCleanup = null;
+  };
+  el.addEventListener("click", onClick, true);
+  waitCleanup = () => el.removeEventListener("click", onClick, true);
+}
 
+function setupActionWatcher(action) {
+  if (actionCleanup) { actionCleanup(); actionCleanup = null; }
+  actionDone = false;
+  if (!action) { setStatus(""); return; }
+  const doc = frame.contentWindow?.document;
+  if (!doc) { setStatus(""); return; }
   const el = doc.querySelector(action.selector);
-  if (!el) {
-    setStatus("");
-    return;
-  }
-
-  // show prompt text
+  if (!el) { setStatus(""); return; }
   setStatus(action.prompt || "Try this now…", false);
-
   const markDone = () => {
-    if (actionDone) return;
-    actionDone = true;
+    if (actionDone) return; actionDone = true;
     setStatus(action.doneText || "Done ✅", true);
   };
-
   if (action.type === "change") {
     el.addEventListener("change", markDone, true);
     actionCleanup = () => el.removeEventListener("change", markDone, true);
-    return;
-  }
-
-if (action.type === "click") {
-  const onClick = () => {
-    markDone();
-
-    // If this action wants the card to hide, hide it after click
-    if (action.hideCardAfterClick) {
-      card.style.display = "none";
-    }
-  };
-
-  el.addEventListener("click", onClick, true);
-  actionCleanup = () => el.removeEventListener("click", onClick, true);
-  return;
-}
-
-
-  if (action.type === "input") {
-    // done when they type something non-empty
-    const onInput = () => {
-      const v = (el.value ?? "").toString().trim();
-      if (v.length) markDone();
-    };
-    el.addEventListener("input", onInput, true);
-    actionCleanup = () => el.removeEventListener("input", onInput, true);
-    return;
-  }
-  if (action.type === "observeTextChange") {
-  const initial = (el.textContent || "").trim();
-
-  const checkDone = () => {
-    const now = (el.textContent || "").trim();
-    return now && now !== initial;
-  }
-
-  if (checkDone()) {
-    markDone();
-    return;
-  }
-
-  const obs = new MutationObserver(() => {
-    if (checkDone()) {
-      markDone();
-      obs.disconnect();
-      actionCleanup = null;
-    }
-  });
-
-  obs.observe(el, { childList: true, subtree: true, characterData: true });
-
-  actionCleanup = () => obs.disconnect();
-  return;
-}
-
-  if (action.type === "observe") {
-    const checkDone = () => {
-      if (action.classIncludes) {
-        if (!el.classList.contains(action.classIncludes)) return false;
-      }
-      if (action.textIncludes) {
-        const t = (el.textContent || "").trim();
-        if (!t.includes(action.textIncludes)) return false;
-      }
+  } else if (action.type === "click") {
+    const fn = () => { markDone(); if (action.hideCardAfterClick) card.style.display = "none"; };
+    el.addEventListener("click", fn, true);
+    actionCleanup = () => el.removeEventListener("click", fn, true);
+  } else if (action.type === "input") {
+    const fn = () => { if ((el.value ?? "").toString().trim().length) markDone(); };
+    el.addEventListener("input", fn, true);
+    actionCleanup = () => el.removeEventListener("input", fn, true);
+  } else if (action.type === "observeTextChange") {
+    const init = (el.textContent || "").trim();
+    const check = () => { const n = (el.textContent || "").trim(); return n && n !== init; };
+    if (check()) { markDone(); return; }
+    const obs = new MutationObserver(() => { if (check()) { markDone(); obs.disconnect(); actionCleanup = null; } });
+    obs.observe(el, { childList: true, subtree: true, characterData: true });
+    actionCleanup = () => obs.disconnect();
+  } else if (action.type === "observe") {
+    const check = () => {
+      if (action.classIncludes && !el.classList.contains(action.classIncludes)) return false;
+      if (action.textIncludes && !(el.textContent || "").trim().includes(action.textIncludes)) return false;
       return true;
     };
-
-    // if it's already in the done state, mark done immediately
-    if (checkDone()) {
-      markDone();
-      return;
-    }
-
-    const obs = new MutationObserver(() => {
-      if (checkDone()) {
-        markDone();
-        obs.disconnect();
-        actionCleanup = null;
-      }
-    });
-
-    obs.observe(el, {
-      attributes: true,
-      attributeFilter: ["class"],
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-
+    if (check()) { markDone(); return; }
+    const obs = new MutationObserver(() => { if (check()) { markDone(); obs.disconnect(); actionCleanup = null; } });
+    obs.observe(el, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true, characterData: true });
     actionCleanup = () => obs.disconnect();
-    return;
-  }
-
-  // unknown action type
-  setStatus("");
+  } else { setStatus(""); }
 }
 
-  function render(){
-    const step = STEPS[idx];
-setOverlayDim(step.dim !== false);
+function render() {
+  const step = STEPS[idx];
+  setOverlayDim(step.dim !== false);
 
-    titleEl.textContent = step.title;
-// allow HTML for steps that provide it (bullets, links, etc.)
-if (step.html) textEl.innerHTML = step.html;
-else textEl.textContent = step.text || "";
-    stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
+  /* Progress bar */
+  progressBar.style.width = ((idx + 1) / STEPS.length * 100) + "%";
+  stepNumEl.textContent = idx + 1;
 
-    backBtn.disabled = idx === 0;
-    // Hide Back button only for steps that request it
-backBtn.style.display = (STEPS[idx].hideBack) ? "none" : "inline-block";
+  titleEl.textContent = step.title;
+  if (step.html) textEl.innerHTML = step.html;
+  else textEl.innerHTML = (step.text || "").split("\n\n").map(p => `<p>${p}</p>`).join("");
 
-nextBtn.textContent =
-  (idx === STEPS.length - 1)
-    ? (STEPS[idx].nextLabel || "Done")
-    : "Next";
+  stepEl.textContent = `${idx + 1} of ${STEPS.length}`;
+  backBtn.disabled = idx === 0;
+  backBtn.style.display = STEPS[idx].hideBack ? "none" : "inline-flex";
+  nextBtn.textContent = (idx === STEPS.length - 1) ? (STEPS[idx].nextLabel || "Done") : "Next →";
 
-stopVideo();
-stopImage();
+  stopVideo(); stopImage();
 
-// Show/hide "What are measures?" button
-const measuresLink = document.getElementById("measuresLink");
-measuresLink.style.display = step.showMeasuresLink ? "inline-block" : "none";
+  const measuresLink = document.getElementById("measuresLink");
+  measuresLink.style.display = step.showMeasuresLink ? "inline-flex" : "none";
 
-const rect = highlight(step.selector);
-placeCardNear(rect);
+  const rect = highlight(step.selector);
+  if (!step.selector) hi.style.display = "none";
+  placeCardNear(rect);
 
-setupActionWatcher(step.action);
-playVideo(step.video);
-showImage(step.image, step.imageAlt);
+  setupActionWatcher(step.action);
+  playVideo(step.video);
+  showImage(step.image, step.imageAlt);
 
-    // if this step requires clicking the feature, wait for it
-if (step.waitForClick) {
-  setupWaitForClick(step.selector);
-} else {
-  // normal steps: Next is available
-  if (waitCleanup) {
-    waitCleanup();
-    waitCleanup = null;
+  if (step.waitForClick) {
+    setupWaitForClick(step.selector);
+  } else {
+    if (waitCleanup) { waitCleanup(); waitCleanup = null; }
+    waitSatisfied = false; setNextEnabled(true);
   }
-  waitSatisfied = false;
-  setNextEnabled(true);
 }
 
-  }
+function goTo(n) { idx = Math.max(0, Math.min(STEPS.length - 1, n)); render(); }
 
-  function goTo(newIndex){
-    idx = Math.max(0, Math.min(STEPS.length - 1, newIndex));
-    render();
-  }
-
-  startBtn.addEventListener("click", showTour);
-  stopBtn.addEventListener("click", hideTour);
-
-
+startBtn.addEventListener("click", showTour);
+stopBtn.addEventListener("click", hideTour);
 nextBtn.addEventListener("click", () => {
   const step = STEPS[idx];
+  if (step && step.nextUrl && idx === STEPS.length - 1) { window.location.href = step.nextUrl; return; }
+  if (idx === STEPS.length - 1) hideTour(); else goTo(idx + 1);
+});
+backBtn.addEventListener("click", () => goTo(idx - 1));
+skipBtn.addEventListener("click", () => { if (idx < STEPS.length - 1) goTo(idx + 1); else hideTour(); });
+window.addEventListener("resize", () => { if (running) render(); });
 
-  // If this step defines a link (like login), go there
-  if (step && step.nextUrl && idx === STEPS.length - 1) {
-    window.location.href = step.nextUrl;
-    return;
-  }
-
-  if (idx === STEPS.length - 1) hideTour();
-  else goTo(idx + 1);
+frame.addEventListener("load", () => {
+  const iframeDoc = frame.contentWindow?.document;
+  if (!iframeDoc) return;
+  iframeDoc.addEventListener("scroll", () => { if (running && currentHighlightedElement) updateHighlightPosition(); }, true);
+  let rafId;
+  const updateLoop = () => { if (running && currentHighlightedElement) updateHighlightPosition(); rafId = requestAnimationFrame(updateLoop); };
+  const _show = showTour;
+  showTour = function () { _show(); rafId = requestAnimationFrame(updateLoop); };
+  const _hide = hideTour;
+  hideTour = function () { _hide(); if (rafId) cancelAnimationFrame(rafId); };
 });
 
-
-  backBtn.addEventListener("click", () => goTo(idx - 1));
-skipBtn.addEventListener("click", () => {
-  // Skip only the current step and move to the next one
-  if (idx < STEPS.length - 1) {
-    goTo(idx + 1);
-  } else {
-    hideTour();
-  }
-});
-
-
-  window.addEventListener("resize", () => {
-    if (running) render();
-  });
-  
-  // Update highlight position on iframe scroll or any scroll within iframe
-  frame.addEventListener("load", () => {
-    const iframeWin = frame.contentWindow;
-    const iframeDoc = iframeWin?.document;
-    
-    if (iframeDoc) {
-      // Listen for scroll on the document and all scrollable elements
-      iframeDoc.addEventListener("scroll", () => {
-        if (running && currentHighlightedElement) {
-          updateHighlightPosition();
-        }
-      }, true); // Use capture to catch scroll on any element
-      
-      // Also use requestAnimationFrame to continuously update position
-      let rafId;
-      const updateLoop = () => {
-        if (running && currentHighlightedElement) {
-          updateHighlightPosition();
-        }
-        rafId = requestAnimationFrame(updateLoop);
-      };
-      
-      // Start the update loop when tour is running
-      const originalShowTour = showTour;
-      showTour = function() {
-        originalShowTour();
-        rafId = requestAnimationFrame(updateLoop);
-      };
-      
-      const originalHideTour = hideTour;
-      hideTour = function() {
-        originalHideTour();
-        if (rafId) cancelAnimationFrame(rafId);
-      };
-    }
-  });
-
-  // Also update on main window scroll
-  window.addEventListener("scroll", () => {
-    if (running && currentHighlightedElement) {
-      updateHighlightPosition();
-    }
-  }, true);
-
-  // Continuous position update using animation frame
-  function startPositionTracking() {
-    if (!running || !currentHighlightedElement) return;
-    
-    updateHighlightPosition();
-    requestAnimationFrame(startPositionTracking);
-  }
-
-window.addEventListener("load", () => {
-  // do not auto-start demo
-});
+window.addEventListener("scroll", () => { if (running && currentHighlightedElement) updateHighlightPosition(); }, true);
 
 window.addEventListener("message", (event) => {
-  // Only accept messages from the iframe page
   if (event.source !== frame.contentWindow) return;
-
   const data = event.data || {};
-if (data.type === "tour:resume") {
-  const step = STEPS[idx];
-
-  // show the card again
-  card.style.display = "block";
-
-  // If this step has a custom resume message, show it
-  if (step && step.resume) {
-    titleEl.textContent = step.resume.title || step.title || "";
-if (step.resume && step.resume.html) textEl.innerHTML = step.resume.html;
-else if (step.html) textEl.innerHTML = step.html;
-else textEl.textContent = step.resume.text || step.text || "";
-    setStatus("", false); // clear the action status line
-
-    // keep highlight positioned
-    const rect = highlight(step.selector);
-    placeCardNear(rect);
-
-    // keep step counter + buttons correct
-    stepEl.textContent = `${idx + 1} / ${STEPS.length}`;
-    backBtn.disabled = idx === 0;
-    nextBtn.textContent = (idx === STEPS.length - 1) ? "Done" : "Next";
-
-    return; // don't call full render()
+  if (data.type === "tour:resume") {
+    const step = STEPS[idx];
+    card.style.display = "block";
+    if (step && step.resume) {
+      titleEl.textContent = step.resume.title || step.title || "";
+      if (step.resume.html) textEl.innerHTML = step.resume.html;
+      else textEl.innerHTML = (step.resume.text || "").split("\n\n").map(p => `<p>${p}</p>`).join("");
+      setStatus("", false);
+      const rect = highlight(step.selector);
+      placeCardNear(rect);
+      stepEl.textContent = `${idx + 1} of ${STEPS.length}`;
+      backBtn.disabled = idx === 0;
+      nextBtn.textContent = idx === STEPS.length - 1 ? "Done" : "Next →";
+      return;
+    }
+    render();
   }
-
-  // fallback
-  render();
-}
-
 });
 
+/* Aurora canvas — identical to landing page */
+(function () {
+  const cv = document.getElementById("aurora"), cx = cv.getContext("2d"); let W, H;
+  function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  window.addEventListener("resize", resize, { passive: true }); resize();
+  const orbs = [
+    { x:.15, y:.10, r:.42, col:[255,90,160],  vx:.00012, vy:.00008, t:0 },
+    { x:.80, y:.08, r:.44, col:[155,110,255], vx:-.0001,  vy:.00007, t:2 },
+    { x:.50, y:.88, r:.36, col:[255,60,120],  vx:.00006, vy:-.00009, t:4 },
+    { x:.30, y:.55, r:.28, col:[200,130,255], vx:.00009, vy:.00011,  t:1 },
+  ];
+  function tick() {
+    cx.clearRect(0,0,W,H);
+    for (const o of orbs) {
+      o.t += .004; o.x += Math.sin(o.t*1.3)*o.vx+o.vx*.3; o.y += Math.cos(o.t*.9)*o.vy+o.vy*.2;
+      o.x=((o.x%1)+1)%1; o.y=((o.y%1)+1)%1;
+      const gx=o.x*W, gy=o.y*H, gr=o.r*Math.min(W,H), g=cx.createRadialGradient(gx,gy,0,gx,gy,gr);
+      const [r,gb,b]=o.col;
+      g.addColorStop(0,`rgba(${r},${gb},${b},0.18)`); g.addColorStop(.4,`rgba(${r},${gb},${b},0.07)`); g.addColorStop(1,`rgba(${r},${gb},${b},0)`);
+      cx.fillStyle=g; cx.beginPath(); cx.arc(gx,gy,gr,0,Math.PI*2); cx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
 </script>
-
 </body>
 </html>
