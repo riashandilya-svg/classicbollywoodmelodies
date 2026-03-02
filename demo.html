@@ -712,20 +712,24 @@ frame.addEventListener("load", () => {
           padding: 8px 18px !important;
         }
 
-        /* ── Free Mode: circular pill button ── */
+        /* ── Free Mode: circular, properly inset from corner ── */
         #freeModeButton {
-          font-size: 0.72rem !important;
+          font-size: 0.68rem !important;
           padding: 0 !important;
-          width: 52px !important;
-          height: 52px !important;
+          width: 58px !important;
+          height: 58px !important;
           border-radius: 50% !important;
           display: inline-flex !important;
           align-items: center !important;
           justify-content: center !important;
           text-align: center !important;
-          line-height: 1.1 !important;
+          line-height: 1.2 !important;
           font-weight: 600 !important;
           letter-spacing: 0.01em !important;
+          position: fixed !important;
+          top: 16px !important;
+          right: 16px !important;
+          z-index: 9999 !important;
         }
 
         #resetButton, #toggleNamesButton {
@@ -792,40 +796,56 @@ frame.addEventListener("load", () => {
           line-height: 1.6 !important;
         }
 
-        /* ── Side note feedback: aligned vertical column ── */
+        /* ── Side note feedback: strict vertical center column ── */
         #sideNoteFeedback {
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          justify-content: flex-start !important;
-          gap: 4px !important;
+          justify-content: center !important;
+          gap: 6px !important;
           text-align: center !important;
+          width: 100% !important;
         }
 
-        /* Labels: "YOU PRESSED" and "Correct note" — same style */
-        #sideNoteFeedback > *:first-child,
-        #sideNoteFeedback > *:nth-child(3),
-        [id*="pressed-label"], [id*="correct-label"],
-        [id*="pressedLabel"], [id*="correctLabel"] {
-          font-family: 'DM Sans', sans-serif !important;
-          font-size: 0.6rem !important;
-          font-weight: 600 !important;
-          letter-spacing: 0.12em !important;
-          text-transform: uppercase !important;
-          opacity: 0.55 !important;
-          display: block !important;
+        /* Every direct child: center it */
+        #sideNoteFeedback > * {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
           width: 100% !important;
           text-align: center !important;
         }
 
-        /* Circle indicators — same size and alignment */
-        #sideNoteFeedback > *:nth-child(2),
-        #sideNoteFeedback > *:nth-child(4),
-        [id*="pressed-circle"], [id*="correct-circle"],
-        [id*="pressedCircle"], [id*="correctCircle"] {
-          display: block !important;
-          margin: 2px auto !important;
+        /* ALL text labels inside sideNoteFeedback — force identical uppercase style */
+        #sideNoteFeedback span,
+        #sideNoteFeedback p,
+        #sideNoteFeedback div,
+        #sideNoteFeedback label,
+        #sideNoteFeedback h2,
+        #sideNoteFeedback h3,
+        #sideNoteFeedback h4 {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 0.6rem !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.13em !important;
+          text-transform: uppercase !important;
+          opacity: 0.5 !important;
           text-align: center !important;
+          display: block !important;
+          width: 100% !important;
+          margin: 0 !important;
+        }
+
+        /* Override for circle elements — don't apply label styles to them */
+        #sideNoteFeedback canvas,
+        #sideNoteFeedback svg,
+        #sideNoteFeedback img {
+          opacity: 1 !important;
+          letter-spacing: normal !important;
+          text-transform: none !important;
+          display: block !important;
+          margin: 0 auto !important;
         }
 
         [class*="note-name"], [class*="key-name"], [class*="key-label"] {
