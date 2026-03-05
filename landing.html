@@ -1294,7 +1294,11 @@ Always feel helpful, never like a sales funnel.`;
     if (busy) return;
     busy = true;
     rcAddUser(text);
-    history.push({ role: 'user', parts: [{ text: text }] });
+
+    // On first message, prepend the system prompt so Gemini v1 understands context
+    var userText = history.length === 0 ? SYS + '\n\n---\n\nUser question: ' + text : text;
+    history.push({ role: 'user', parts: [{ text: userText }] });
+
     var typing = rcAddTyping();
     document.getElementById('rc-send').disabled = true;
 
@@ -1303,7 +1307,6 @@ Always feel helpful, never like a sales funnel.`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYS }] },
           contents: history,
           generationConfig: { maxOutputTokens: 400 }
         })
