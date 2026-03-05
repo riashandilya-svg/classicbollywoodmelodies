@@ -1152,11 +1152,7 @@ margin-top: -0.5rem;
 <script>
 (function () {
 
-  // ─── PASTE YOUR GROQ KEY HERE ─────────────────────────────────────────────
-  var GROQ_KEY = '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';
-  // ──────────────────────────────────────────────────────────────────────────
-
-  var GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+var GROQ_URL = 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/groq-proxy';
 
   var SYS = `You are the assistant on the riaaz landing page. Your job is to help visitors understand the app quickly and feel confident trying it. Think of yourself as a friendly person standing at a product demo booth — clear, warm, confident, never salesy.
 
@@ -1253,22 +1249,17 @@ FORMATTING: Use short paragraphs. Put a blank line between each thought. Never w
     var typing = rcAddTyping();
     document.getElementById('rc-send').disabled = true;
 
-    try {
+  try {
       var res = await fetch(GROQ_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + GROQ_KEY
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
           messages: [{ role: 'system', content: SYS }].concat(history),
-          max_tokens: 400,
-          temperature: 0.7
         })
       });
       var data = await res.json();
-
       if (data.error) {
         typing.remove();
         rcAddBot("Error: " + data.error.message);
