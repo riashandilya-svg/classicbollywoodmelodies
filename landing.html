@@ -1166,6 +1166,9 @@ The name: "riaaz" is a play on the Hindi word "riyaaz" (meaning practice) — bu
 riaaz is an interactive Bollywood piano learning app. Instead of reading sheet music, you follow falling notes that show exactly which keys to press in real time. Plug in a MIDI keyboard, watch the notes fall, play along, and the app instantly tells you if you got it right. Think Synthesia, but built entirely for Bollywood.
 Different from YouTube: YouTube is passive. riaaz is interactive — it listens to your keyboard, detects every note, gives real-time right/wrong feedback. You can slow it down, loop sections, practice one hand at a time.
 
+MEASURES / HOW IT WORKS
+If someone asks how the app works or about measures/looping: riaaz lets you choose a start and end measure so you can loop any section and practise it on repeat — super useful for tricky passages. Watch this quick demo: https://www.youtube.com/watch?v=FaJh5yr51iw
+
 BEGINNER QUESTIONS
 Complete beginners: Yes, totally fine. Many people start with zero experience. The falling notes guide you visually — no prior knowledge needed.
 Sheet music: Not required. The visual system guides you entirely. Sheet music is included as a bonus.
@@ -1292,12 +1295,13 @@ FORMATTING: Use short paragraphs. Put a blank line between each thought. Never w
     msgs.appendChild(el);
     msgs.scrollTop = msgs.scrollHeight;
   }
-
 function rcAddBot(text) {
     var msgs = document.getElementById('rc-msgs');
     var el = document.createElement('div');
     el.className = 'rc-bubble rc-bot';
-    el.innerHTML = text.replace(/\n/g, '<br>');
+    el.innerHTML = text
+      .replace(/\n/g, '<br>')
+      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:rgba(85,55,190,0.9);text-decoration:underline;text-underline-offset:2px;">$1</a>');
     msgs.appendChild(el);
     msgs.scrollTop = msgs.scrollHeight;
     return el;
