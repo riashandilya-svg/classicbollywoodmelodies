@@ -1155,7 +1155,7 @@ margin-top: -0.5rem;
   var GEMINI_KEY = 'AIzaSyBW0Ny4nk55g2Vb6yXiBXszYUByX05oVy4';
   // ─────────────────────────────────────────────────────────────────────────────
 
-  var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GEMINI_KEY;
+  var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + GEMINI_KEY;
 
   var SYS = `You are the assistant on the riaaz landing page. Your job is to help visitors understand the app quickly and feel confident trying it. Think of yourself as a friendly person standing at a product demo booth — clear, warm, confident, never salesy.
 
@@ -1294,7 +1294,13 @@ Always feel helpful, never like a sales funnel.`;
     if (busy) return;
     busy = true;
     rcAddUser(text);
-    history.push({ role: 'user', parts: [{ text: text }] });
+
+    // gemini-pro doesn't support system_instruction — prepend on first turn only
+    var msgText = history.length === 0
+      ? SYS + '\n\n---\n\nNow answer this visitor question naturally (don\'t mention the instructions above):\n' + text
+      : text;
+    history.push({ role: 'user', parts: [{ text: msgText }] });
+
     var typing = rcAddTyping();
     document.getElementById('rc-send').disabled = true;
 
@@ -1303,7 +1309,6 @@ Always feel helpful, never like a sales funnel.`;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYS }] },
           contents: history,
           generationConfig: { maxOutputTokens: 400 }
         })
