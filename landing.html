@@ -1205,7 +1205,8 @@ Both include: 5 songs of your choice, real-time note detection, monthly new song
 WHO MADE THIS
 Ria Om Shandilya — professional pianist who started at age 8, turned professional by 16. Currently pursuing her music degree at Trinity College of Music, London. Alumna of Delhi School of Music. She built riaaz because professional sheet music for Hindi songs barely exists compared to Western music — she wanted to fix that. Every song is arranged by her personally.
 
-TONE: After most answers, naturally mention the free demo. Never say "sign up now" or "subscribe today". Always feel helpful, never salesy.`;
+TONE: After most answers, naturally mention the free demo. Never say "sign up now" or "subscribe today". Always feel helpful, never salesy.
+FORMATTING: Use short paragraphs. Put a blank line between each thought. Never write walls of text. Max 2 sentences per paragraph.`;
 
   var history = [];
   var isOpen = false;
@@ -1299,11 +1300,11 @@ TONE: After most answers, naturally mention the free demo. Never say "sign up no
     msgs.scrollTop = msgs.scrollHeight;
   }
 
-  function rcAddBot(text) {
+function rcAddBot(text) {
     var msgs = document.getElementById('rc-msgs');
     var el = document.createElement('div');
     el.className = 'rc-bubble rc-bot';
-    el.textContent = text;
+    el.innerHTML = text.replace(/\n/g, '<br>');
     msgs.appendChild(el);
     msgs.scrollTop = msgs.scrollHeight;
     return el;
