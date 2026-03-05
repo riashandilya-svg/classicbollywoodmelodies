@@ -959,26 +959,6 @@ margin-top: -0.5rem;
     transform: translateY(-2px);
   }
 </style>
-<!-- ═══════════════════════════════════════════════════════════
-     riaaz · AI Chat Widget
-     
-     WHERE TO PASTE: In your landing.html, find the very last
-     </style> tag (the one for .modal-song-card:hover), and paste
-     this entire block on the line RIGHT AFTER it, before </body>.
-     
-     It will look like this:
-     
-       ...
-         transform: translateY(-2px);
-       }
-     </style>
-     
-     👉 PASTE HERE 👈
-     
-     </body>
-     </html>
-     
-═══════════════════════════════════════════════════════════ -->
 
 <style>
   #riaaz-launcher {
@@ -1134,13 +1114,11 @@ margin-top: -0.5rem;
   #rc-send:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 </style>
 
-<!-- Floating launcher button -->
 <button id="riaaz-launcher" aria-label="Ask about riaaz" onclick="rcToggle()">
   <div class="lnch-ring"></div>
   🎹
 </button>
 
-<!-- Chat panel -->
 <div id="riaaz-chat" role="dialog" aria-label="riaaz assistant">
   <div class="rc-header">
     <div class="rc-header-left">
@@ -1173,11 +1151,11 @@ margin-top: -0.5rem;
 <script>
 (function () {
 
-  // ─── SYSTEM PROMPT ───────────────────────────────────────────────────────────
-  // Goal: help landing page visitors understand riaaz quickly and feel confident
-  // trying the demo. Act like a friendly person at a product demo booth —
-  // clear, warm, confident. Never salesy. Always end by nudging toward the demo.
+  // ─── PASTE YOUR GEMINI KEY HERE ──────────────────────────────────────────────
+  var GEMINI_KEY = 'AIzaSyBW0Ny4nk55g2Vb6yXiBXszYUByX05oVy4';
   // ─────────────────────────────────────────────────────────────────────────────
+
+  var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + GEMINI_KEY;
 
   var SYS = `You are the assistant on the riaaz landing page. Your job is to help visitors understand the app quickly and feel confident trying it. Think of yourself as a friendly person standing at a product demo booth — clear, warm, confident, never salesy.
 
@@ -1188,31 +1166,31 @@ When someone asks a question that isn't about riaaz, gently say: "That's a bit o
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT IS RIAAZ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-riaaz is an interactive Bollywood piano learning app. Instead of reading sheet music, you follow falling notes that show exactly which keys to press — in real time. Plug in a MIDI keyboard, watch the notes fall, play along, and the app instantly tells you if you got it right. Think Synthesia, but built entirely for Bollywood.
+riaaz is an interactive Bollywood piano learning app. Instead of reading sheet music, you follow falling notes that show exactly which keys to press in real time. Plug in a MIDI keyboard, watch the notes fall, play along, and the app instantly tells you if you got it right. Think Synthesia, but built entirely for Bollywood.
 
-How it's different from YouTube: YouTube is passive — you watch. riaaz is interactive — the app listens to your keyboard, detects every note you press, and gives you real-time feedback. You can also slow it down, loop sections, and practice one hand at a time.
+How it's different from YouTube: YouTube is passive — you watch. riaaz is interactive — the app listens to your keyboard, detects every note you press, and gives real-time feedback. You can slow it down, loop sections, and practice one hand at a time.
 
 Is it like Synthesia: Yes, same concept. But Synthesia has almost no Bollywood content. riaaz is built from the ground up for Bollywood, with every song professionally arranged by a trained musician.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BEGINNER QUESTIONS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Is it beginner friendly: Yes, completely. Many people start with zero piano experience. The songs are arranged so beginners can follow along from day one — the falling notes guide you visually, so you don't need to know anything in advance.
+Is it beginner friendly: Yes, completely. Many people start with zero piano experience. The falling notes guide you visually so you don't need to know anything in advance.
 
-Do I need to read sheet music: No. The visual falling notes system guides you without any sheet music knowledge. Sheet music is included as a bonus for those who want it later.
+Do I need to read sheet music: No. The visual falling notes system guides you entirely. Sheet music is included as a bonus for those who want it later.
 
-Do I need a teacher: Not at all. riaaz is designed for self-learners. The real-time feedback the app gives you replaces a lot of what a teacher would do at the beginner stage.
+Do I need a teacher: Not at all. riaaz is designed for self-learners. The real-time feedback replaces a lot of what a teacher would do at the beginner stage.
 
-How long does it take to learn: Most beginners can play a recognisable version of Kal Ho Naa Ho or Srivalli within 1–2 weeks of daily practice. You already have the melody in your head — your fingers just need to find it on the keys.
+How long does it take: Most beginners can play a recognisable version of Kal Ho Naa Ho or Srivalli within 1–2 weeks of daily practice. You already have the melody in your head — your fingers just need to find it on the keys.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EQUIPMENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Do I need a piano or keyboard: A MIDI keyboard is highly recommended and makes the experience much better. But you can also use touch (on phone/tablet) or click with a mouse — so you can try the demo right now with no equipment at all.
+Do I need a keyboard: A MIDI keyboard is highly recommended but not required. You can try the demo right now using touch or mouse — no equipment needed at all.
 
-What kind of keyboard: Any USB MIDI keyboard works. Even a small, budget 25-key keyboard is enough to start. 49–61 keys is ideal for most songs. You don't need 88 keys.
+What kind of keyboard: Any USB MIDI keyboard works. Even a small budget 25-key keyboard is enough to start. 49–61 keys is ideal. You don't need 88 keys.
 
-How to connect: Plug your MIDI keyboard into your computer via USB. Open riaaz in Chrome or Edge. It auto-detects — no setup, no drivers needed.
+How to connect: Plug your MIDI keyboard into your computer via USB. Open riaaz in Chrome or Edge. It auto-detects — no setup or drivers needed.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SONGS
@@ -1224,84 +1202,84 @@ Soulful: Jashn-e-Bahaara, Allah Ke Bande, Ae Hairate Aashiqui, Srivalli
 Peppy: Señorita, Naina Da Kya Kasoor, Jaane Kahan Mera Jigar Gaya Ji, Kaisi Paheli Zindagani, Gore Gore Baanke Chorre, Darling, Pal Pal Har Pal, Zoobie Doobie
 New songs added every month.
 
-Are they simplified: They're arranged — professionally adapted for piano at Grade 2–5 level. The melody is faithful to the original; you'll recognise the song immediately. It's not a dumbed-down version, it's a real piano arrangement.
+Are they simplified: They're professionally arranged at Grade 2–5 piano level. The melody is faithful to the original — you'll recognise the song immediately.
 
-Are these original recordings: No — these are Ria's original piano arrangements, played as MIDI audio. Not the original Bollywood recordings.
+Are these original recordings: No — these are Ria's original piano arrangements played as MIDI audio. Not the original Bollywood recordings.
 
-Can I request a song: Yes, Premium subscribers can submit song requests. Ria reviews them and adds the most popular ones monthly.
+Can I request a song: Yes, Premium subscribers can submit song requests. Ria adds the most popular ones monthly.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TECHNICAL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Browser support: Chrome and Edge work best — they support MIDI keyboard detection. Safari and Firefox have limited MIDI support but work for touch/mouse play.
+Browser support: Chrome and Edge work best — they support MIDI keyboard detection. Safari and Firefox work for touch/mouse play.
 
-Does it work on mobile: Yes. Works on phones and tablets via touch. MIDI keyboards aren't supported on iOS, but you can tap the on-screen keys.
+Does it work on mobile: Yes — works on phones and tablets via touch. MIDI keyboards aren't supported on iOS but you can tap the on-screen keys.
 
-Do I need to download anything: No. riaaz runs entirely in your browser. Just open the link and start playing.
+Do I need to download anything: No. riaaz runs entirely in your browser.
 
-Does it work offline: Currently it needs an internet connection.
+Does it work offline: Currently requires an internet connection.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRICING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Free plan: 1 full song, falling notes, MIDI support. No account or credit card needed — just open the demo.
+Free plan: 1 full song, falling notes, MIDI support. No account or credit card needed.
 
-Premium with Bollywood Melodies Book: ₹550/month — best value (~₹110 per song). For people who already own the book.
+Premium with Bollywood Melodies Book: ₹550/month — best value (~₹110 per song).
 Premium without book: ₹850/month (~₹170 per song).
-Both plans include: any 5 songs of your choice, real-time note detection, monthly new songs, song request access.
+Both include: any 5 songs of your choice, real-time note detection, monthly new songs, song request access.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TRUST & CREDIBILITY
+WHO MADE THIS / TRUST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Who made riaaz: Ria Om Shandilya — a professional pianist who started playing at age 8 and turned professional by 16. She's currently pursuing her music degree at Trinity College of Music, London, and is an alumna of the Delhi School of Music. She built riaaz after noticing something missing: Western music has an abundance of professional sheet music, but Hindi songs are almost never written out with the same care and quality. Ria set out to fix that — to make Hindi music accessible to Indian learners without compromising on musicianship. Every song in riaaz is arranged by her personally.
+Who made riaaz: Ria Om Shandilya — a professional pianist who started playing at age 8 and turned professional by 16. She's currently pursuing her music degree at Trinity College of Music, London, and is an alumna of the Delhi School of Music. She built riaaz because professional sheet music for Hindi songs barely exists compared to Western music — she wanted to fix that. Every song is arranged by her personally.
 
-Are the arrangements professional: Yes. Songs are arranged at Grade 2–5 international standard, aligned with Trinity College London and ABRSM. This isn't casual covers — it's real musicianship.
-
-Is riaaz legit: Yes. It has real students, real reviews, and was built by a trained musician with a clear mission. The free demo lets you see the full system before paying anything.
+Is riaaz legit: Yes. Real students, real reviews, built by a trained musician. The free demo lets you see everything before paying anything.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONVERSION NUDGE GUIDANCE
+MOTIVATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-After answering most questions, naturally add something like:
-- "You can see how it works in the free demo — no sign-up needed."
-- "The demo is free and takes about 30 seconds to open."
-- "Try the demo above — it's free and you don't need a keyboard to start."
+Am I too old: Absolutely not. Many riaaz users are in their 30s, 40s, and beyond. Adults are often better learners — more focus and motivation than kids.
 
-Never say: "Sign up now", "Unlock premium", "Subscribe today". That tone is wrong.
-Always feel like a helpful person, not a sales funnel.`;
+Can I learn by myself: Yes. riaaz is designed for self-learners.
 
-  // ─── STATE ───────────────────────────────────────────────────────────────────
+Is 20 minutes enough: Yes — 20 focused minutes daily is plenty. Consistency matters more than duration.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TONE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+After most answers, naturally add something like:
+"You can try the demo free — no sign-up needed."
+"The demo is free and takes about 30 seconds to open."
+Never say "Sign up now", "Unlock premium", "Subscribe today".
+Always feel helpful, never like a sales funnel.`;
+
   var history = [];
   var isOpen = false;
   var greeted = false;
   var busy = false;
 
-  // ─── TOGGLE ──────────────────────────────────────────────────────────────────
   window.rcToggle = function () {
     isOpen = !isOpen;
     document.getElementById('riaaz-chat').classList.toggle('rc-open', isOpen);
     if (isOpen && !greeted) {
       greeted = true;
       setTimeout(function () {
-        rcAddBot("Namaste! I can help explain how riaaz works or answer any questions before you try it. What would you like to know? 🎹");
+        rcAddBot("Hi! I can help explain how riaaz works or answer any questions before you try it. What would you like to know? 🎹");
       }, 300);
     }
     if (isOpen) setTimeout(function () { document.getElementById('rc-input').focus(); }, 350);
   };
 
-  // ─── CHIP CLICK ──────────────────────────────────────────────────────────────
   window.rcSug = function (btn) {
     var chips = document.getElementById('rc-chips');
     if (chips) chips.style.display = 'none';
     rcRun(btn.textContent.trim());
   };
 
-  // ─── ENTER KEY ───────────────────────────────────────────────────────────────
   window.rcKey = function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); rcSend(); }
   };
 
-  // ─── SEND BUTTON ─────────────────────────────────────────────────────────────
   window.rcSend = function () {
     var inp = document.getElementById('rc-input');
     var text = inp.value.trim();
@@ -1312,35 +1290,33 @@ Always feel like a helpful person, not a sales funnel.`;
     rcRun(text);
   };
 
-  // ─── CORE LOGIC ──────────────────────────────────────────────────────────────
   async function rcRun(text) {
     if (busy) return;
     busy = true;
     rcAddUser(text);
-    history.push({ role: 'user', content: text });
+    history.push({ role: 'user', parts: [{ text: text }] });
     var typing = rcAddTyping();
     document.getElementById('rc-send').disabled = true;
 
     try {
-      var res = await fetch('https://api.anthropic.com/v1/messages', {
+      var res = await fetch(GEMINI_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: SYS,
-          messages: history
+          system_instruction: { parts: [{ text: SYS }] },
+          contents: history
         })
       });
       var data = await res.json();
-      var reply = (data.content || [])
-        .filter(function (b) { return b.type === 'text'; })
-        .map(function (b) { return b.text; })
-        .join('');
+      var reply = data.candidates &&
+                  data.candidates[0] &&
+                  data.candidates[0].content &&
+                  data.candidates[0].content.parts &&
+                  data.candidates[0].content.parts[0].text;
       typing.remove();
       var botText = reply || "Hmm, I didn't quite catch that — could you rephrase?";
       rcAddBot(botText);
-      history.push({ role: 'assistant', content: botText });
+      history.push({ role: 'model', parts: [{ text: botText }] });
     } catch (err) {
       typing.remove();
       rcAddBot("Something went wrong on my end. Try refreshing and asking again! 🎵");
@@ -1350,7 +1326,6 @@ Always feel like a helpful person, not a sales funnel.`;
     busy = false;
   }
 
-  // ─── DOM HELPERS ─────────────────────────────────────────────────────────────
   function rcAddUser(text) {
     var msgs = document.getElementById('rc-msgs');
     var el = document.createElement('div');
@@ -1380,7 +1355,6 @@ Always feel like a helpful person, not a sales funnel.`;
     return el;
   }
 
-  // ─── AUTO-RESIZE TEXTAREA ────────────────────────────────────────────────────
   document.getElementById('rc-input').addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 90) + 'px';
@@ -1389,5 +1363,6 @@ Always feel like a helpful person, not a sales funnel.`;
 })();
 </script>
 <!-- ══ end riaaz AI widget ══ -->
+  
 </body>
 </html>
