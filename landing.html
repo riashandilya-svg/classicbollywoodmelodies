@@ -1304,22 +1304,34 @@ Always feel helpful, never like a sales funnel.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system_instruction: { parts: [{ text: SYS }] },
-          contents: history
+          contents: history,
+          generationConfig: { maxOutputTokens: 400 }
         })
       });
       var data = await res.json();
+
+      // surface API errors clearly during testing
+      if (data.error) {
+        typing.remove();
+        rcAddBot("API error: " + data.error.message);
+        busy = false;
+        document.getElementById('rc-send').disabled = false;
+        return;
+      }
+
       var reply = data.candidates &&
                   data.candidates[0] &&
                   data.candidates[0].content &&
                   data.candidates[0].content.parts &&
+                  data.candidates[0].content.parts[0] &&
                   data.candidates[0].content.parts[0].text;
       typing.remove();
-      var botText = reply || "Hmm, I didn't quite catch that — could you rephrase?";
+      var botText = reply || "Hmm, I didn't quite get a response — try again?";
       rcAddBot(botText);
       history.push({ role: 'model', parts: [{ text: botText }] });
     } catch (err) {
       typing.remove();
-      rcAddBot("Something went wrong on my end. Try refreshing and asking again! 🎵");
+      rcAddBot("Network error: " + err.message);
     }
 
     document.getElementById('rc-send').disabled = false;
