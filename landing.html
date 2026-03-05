@@ -960,6 +960,420 @@ margin-top: -0.5rem;
   }
 </style>
 
-AIzaSyBW0Ny4nk55g2Vb6yXiBXszYUByX05oVy4
+<style>
+  #riaaz-launcher {
+    position: fixed; bottom: 28px; right: 28px; z-index: 10000;
+    width: 58px; height: 58px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,90,160,0.9), rgba(155,110,255,0.9));
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 8px 32px rgba(155,110,255,0.45), 0 2px 8px rgba(22,10,35,0.18);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s;
+    backdrop-filter: blur(10px);
+  }
+  #riaaz-launcher:hover {
+    transform: scale(1.12);
+    box-shadow: 0 14px 44px rgba(155,110,255,0.55), 0 2px 8px rgba(22,10,35,0.18);
+  }
+  #riaaz-launcher .lnch-ring {
+    position: absolute; inset: -3px; border-radius: 50%;
+    background: conic-gradient(rgba(255,90,160,0.8) 0%, rgba(155,110,255,0.8) 50%, rgba(255,90,160,0.8) 100%);
+    -webkit-mask: radial-gradient(circle, transparent 60%, black 61%);
+    mask: radial-gradient(circle, transparent 60%, black 61%);
+    animation: rcLaunchSpin 3s linear infinite;
+    opacity: 0.7;
+  }
+  @keyframes rcLaunchSpin { to { transform: rotate(360deg); } }
+
+  #riaaz-chat {
+    position: fixed; bottom: 98px; right: 28px; z-index: 10000;
+    width: 385px; max-width: calc(100vw - 40px);
+    border-radius: 24px;
+    background: rgba(253,248,255,0.94);
+    border: 1px solid rgba(155,110,255,0.22);
+    box-shadow: 0 32px 80px rgba(22,10,35,0.18), 0 0 0 1px rgba(255,255,255,0.6) inset;
+    backdrop-filter: blur(22px) saturate(180%);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.88) translateY(16px);
+    opacity: 0; pointer-events: none;
+    transition: transform 0.28s cubic-bezier(.34,1.56,.64,1), opacity 0.22s ease;
+  }
+  #riaaz-chat.rc-open {
+    transform: scale(1) translateY(0);
+    opacity: 1; pointer-events: all;
+  }
+  #riaaz-chat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, rgba(255,90,160,0.8), rgba(155,110,255,0.8), rgba(255,90,160,0.5));
+  }
+
+  .rc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid rgba(155,110,255,0.12);
+    background: rgba(255,255,255,0.5);
+    flex-shrink: 0;
+  }
+  .rc-header-left { display: flex; align-items: center; gap: 9px; }
+  .rc-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,90,160,0.85), rgba(155,110,255,0.85));
+    display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(155,110,255,0.3); flex-shrink: 0;
+  }
+  .rc-header-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-weight: 600; color: #160d22; letter-spacing: -0.01em;
+  }
+  .rc-header-sub { font-size: 0.67rem; color: rgba(22,13,34,0.42); font-weight: 300; }
+  .rc-close {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(22,13,34,0.06); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; color: rgba(22,13,34,0.45); transition: background 0.18s; flex-shrink: 0;
+  }
+  .rc-close:hover { background: rgba(22,13,34,0.1); }
+
+  .rc-msgs {
+    overflow-y: auto; padding: 14px 14px 6px;
+    display: flex; flex-direction: column; gap: 10px;
+    max-height: 320px; min-height: 80px;
+    scrollbar-width: thin; scrollbar-color: rgba(155,110,255,0.2) transparent;
+  }
+  .rc-msgs::-webkit-scrollbar { width: 4px; }
+  .rc-msgs::-webkit-scrollbar-thumb { background: rgba(155,110,255,0.2); border-radius: 4px; }
+
+  .rc-bubble {
+    max-width: 90%; padding: 10px 13px; border-radius: 16px;
+    font-size: 0.84rem; line-height: 1.65; font-family: 'DM Sans', sans-serif;
+    font-weight: 300; animation: rcBubblePop 0.22s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes rcBubblePop { from { transform: scale(0.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .rc-bubble.rc-bot {
+    align-self: flex-start;
+    background: rgba(255,255,255,0.9); border: 1px solid rgba(155,110,255,0.14);
+    color: #160d22; box-shadow: 0 4px 16px rgba(22,10,35,0.06); border-bottom-left-radius: 4px;
+  }
+  .rc-bubble.rc-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(255,90,160,0.18), rgba(155,110,255,0.14));
+    border: 1px solid rgba(155,110,255,0.2); color: #160d22; border-bottom-right-radius: 4px;
+  }
+
+  .rc-typing {
+    align-self: flex-start; display: flex; gap: 4px; align-items: center;
+    padding: 12px 14px; background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(155,110,255,0.14); border-radius: 16px; border-bottom-left-radius: 4px;
+    box-shadow: 0 4px 16px rgba(22,10,35,0.06);
+  }
+  .rc-typing span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(155,110,255,0.6); animation: rcTypingDot 1.2s ease-in-out infinite;
+  }
+  .rc-typing span:nth-child(2) { animation-delay: 0.2s; }
+  .rc-typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes rcTypingDot { 0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-5px);opacity:1;} }
+
+  .rc-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 8px 14px 10px; flex-shrink: 0;
+  }
+  .rc-chip {
+    font-size: 0.72rem; font-weight: 400; font-family: 'DM Sans', sans-serif;
+    padding: 5px 11px; border-radius: 100px; cursor: pointer;
+    border: 1px solid rgba(155,110,255,0.22); background: rgba(155,110,255,0.07);
+    color: rgba(85,55,190,0.85); transition: all 0.18s; letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  .rc-chip:hover { background: rgba(155,110,255,0.16); border-color: rgba(155,110,255,0.4); transform: translateY(-1px); }
+
+  .rc-input-row {
+    display: flex; gap: 8px; align-items: flex-end;
+    padding: 10px 12px 13px; border-top: 1px solid rgba(155,110,255,0.1);
+    background: rgba(255,255,255,0.45); flex-shrink: 0;
+  }
+  #rc-input {
+    flex: 1; border: 1px solid rgba(155,110,255,0.2); border-radius: 12px;
+    padding: 9px 12px; font-size: 0.83rem; font-family: 'DM Sans', sans-serif;
+    font-weight: 300; color: #160d22; resize: none; outline: none;
+    background: rgba(255,255,255,0.8); line-height: 1.5;
+    transition: border-color 0.18s, box-shadow 0.18s; max-height: 90px; overflow-y: auto;
+  }
+  #rc-input::placeholder { color: rgba(22,13,34,0.3); }
+  #rc-input:focus { border-color: rgba(155,110,255,0.4); box-shadow: 0 0 0 3px rgba(155,110,255,0.08); }
+  #rc-send {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(255,90,160,0.85), rgba(155,110,255,0.85));
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 0.88rem; color: white; box-shadow: 0 4px 14px rgba(155,110,255,0.35);
+    transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s;
+  }
+  #rc-send:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(155,110,255,0.45); }
+  #rc-send:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+</style>
+
+<button id="riaaz-launcher" aria-label="Ask about riaaz" onclick="rcToggle()">
+  <div class="lnch-ring"></div>
+  🎹
+</button>
+
+<div id="riaaz-chat" role="dialog" aria-label="riaaz assistant">
+  <div class="rc-header">
+    <div class="rc-header-left">
+      <div class="rc-avatar">✨</div>
+      <div>
+        <div class="rc-header-name">Ask about riaaz</div>
+        <div class="rc-header-sub">Quick answers · no fluff</div>
+      </div>
+    </div>
+    <button class="rc-close" onclick="rcToggle()" aria-label="Close">✕</button>
+  </div>
+
+  <div class="rc-msgs" id="rc-msgs"></div>
+
+  <div class="rc-chips" id="rc-chips">
+    <button class="rc-chip" onclick="rcSug(this)">What is riaaz?</button>
+    <button class="rc-chip" onclick="rcSug(this)">Is it beginner friendly?</button>
+    <button class="rc-chip" onclick="rcSug(this)">What songs are included?</button>
+    <button class="rc-chip" onclick="rcSug(this)">Do I need a keyboard?</button>
+    <button class="rc-chip" onclick="rcSug(this)">How much does it cost?</button>
+    <button class="rc-chip" onclick="rcSug(this)">Who made this?</button>
+  </div>
+
+  <div class="rc-input-row">
+    <textarea id="rc-input" rows="1" placeholder="Ask anything…" onkeydown="rcKey(event)"></textarea>
+    <button id="rc-send" onclick="rcSend()" aria-label="Send">→</button>
+  </div>
+</div>
+
+<script>
+(function () {
+
+  // ─── PASTE YOUR GEMINI KEY HERE ──────────────────────────────────────────────
+  var GEMINI_KEY = 'AIzaSyBW0Ny4nk55g2Vb6yXiBXszYUByX05oVy4';
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=' + GEMINI_KEY;
+
+  var SYS = `You are the assistant on the riaaz landing page. Your job is to help visitors understand the app quickly and feel confident trying it. Think of yourself as a friendly person standing at a product demo booth — clear, warm, confident, never salesy.
+
+Keep answers short: 2–4 sentences max unless a short list genuinely helps. End most responses with a natural nudge toward the free demo (never pushy — just helpful). Use emojis occasionally but naturally.
+
+When someone asks a question that isn't about riaaz, gently say: "That's a bit outside what I can help with here — but happy to answer anything about riaaz! 🎹"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT IS RIAAZ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+riaaz is an interactive Bollywood piano learning app. Instead of reading sheet music, you follow falling notes that show exactly which keys to press in real time. Plug in a MIDI keyboard, watch the notes fall, play along, and the app instantly tells you if you got it right. Think Synthesia, but built entirely for Bollywood.
+
+How it's different from YouTube: YouTube is passive — you watch. riaaz is interactive — the app listens to your keyboard, detects every note you press, and gives real-time feedback. You can slow it down, loop sections, and practice one hand at a time.
+
+Is it like Synthesia: Yes, same concept. But Synthesia has almost no Bollywood content. riaaz is built from the ground up for Bollywood, with every song professionally arranged by a trained musician.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BEGINNER QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Is it beginner friendly: Yes, completely. Many people start with zero piano experience. The falling notes guide you visually so you don't need to know anything in advance.
+
+Do I need to read sheet music: No. The visual falling notes system guides you entirely. Sheet music is included as a bonus for those who want it later.
+
+Do I need a teacher: Not at all. riaaz is designed for self-learners. The real-time feedback replaces a lot of what a teacher would do at the beginner stage.
+
+How long does it take: Most beginners can play a recognisable version of Kal Ho Naa Ho or Srivalli within 1–2 weeks of daily practice. You already have the melody in your head — your fingers just need to find it on the keys.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EQUIPMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Do I need a keyboard: A MIDI keyboard is highly recommended but not required. You can try the demo right now using touch or mouse — no equipment needed at all.
+
+What kind of keyboard: Any USB MIDI keyboard works. Even a small budget 25-key keyboard is enough to start. 49–61 keys is ideal. You don't need 88 keys.
+
+How to connect: Plug your MIDI keyboard into your computer via USB. Open riaaz in Chrome or Edge. It auto-detects — no setup or drivers needed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SONGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+What songs are available — 30+ across 4 categories:
+Classic: Kal Ho Naa Ho, Gulaabi Aankhen, Ek Ladki Bheegi Bhaagi Si, Hai Apna Dil Toh Awaara, Chookar Mere Mann Ko, Aaoge Jab Tum Sajna
+Romantic: Bade Achhe Lagte Hain, Aaj Kal Tere Mere Pyaar Ke Charche, Piyu Bole, Raat Kali Ek Khwaab Mein Aayi, Khwaab Ho Tum Ya Koi Haqeeqat, Mere Saamne Wali Khidki
+Soulful: Jashn-e-Bahaara, Allah Ke Bande, Ae Hairate Aashiqui, Srivalli
+Peppy: Señorita, Naina Da Kya Kasoor, Jaane Kahan Mera Jigar Gaya Ji, Kaisi Paheli Zindagani, Gore Gore Baanke Chorre, Darling, Pal Pal Har Pal, Zoobie Doobie
+New songs added every month.
+
+Are they simplified: They're professionally arranged at Grade 2–5 piano level. The melody is faithful to the original — you'll recognise the song immediately.
+
+Are these original recordings: No — these are Ria's original piano arrangements played as MIDI audio. Not the original Bollywood recordings.
+
+Can I request a song: Yes, Premium subscribers can submit song requests. Ria adds the most popular ones monthly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TECHNICAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Browser support: Chrome and Edge work best — they support MIDI keyboard detection. Safari and Firefox work for touch/mouse play.
+
+Does it work on mobile: Yes — works on phones and tablets via touch. MIDI keyboards aren't supported on iOS but you can tap the on-screen keys.
+
+Do I need to download anything: No. riaaz runs entirely in your browser.
+
+Does it work offline: Currently requires an internet connection.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRICING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Free plan: 1 full song, falling notes, MIDI support. No account or credit card needed.
+
+Premium with Bollywood Melodies Book: ₹550/month — best value (~₹110 per song).
+Premium without book: ₹850/month (~₹170 per song).
+Both include: any 5 songs of your choice, real-time note detection, monthly new songs, song request access.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHO MADE THIS / TRUST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Who made riaaz: Ria Om Shandilya — a professional pianist who started playing at age 8 and turned professional by 16. She's currently pursuing her music degree at Trinity College of Music, London, and is an alumna of the Delhi School of Music. She built riaaz because professional sheet music for Hindi songs barely exists compared to Western music — she wanted to fix that. Every song is arranged by her personally.
+
+Is riaaz legit: Yes. Real students, real reviews, built by a trained musician. The free demo lets you see everything before paying anything.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MOTIVATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Am I too old: Absolutely not. Many riaaz users are in their 30s, 40s, and beyond. Adults are often better learners — more focus and motivation than kids.
+
+Can I learn by myself: Yes. riaaz is designed for self-learners.
+
+Is 20 minutes enough: Yes — 20 focused minutes daily is plenty. Consistency matters more than duration.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TONE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+After most answers, naturally add something like:
+"You can try the demo free — no sign-up needed."
+"The demo is free and takes about 30 seconds to open."
+Never say "Sign up now", "Unlock premium", "Subscribe today".
+Always feel helpful, never like a sales funnel.`;
+
+  var history = [];
+  var isOpen = false;
+  var greeted = false;
+  var busy = false;
+
+  window.rcToggle = function () {
+    isOpen = !isOpen;
+    document.getElementById('riaaz-chat').classList.toggle('rc-open', isOpen);
+    if (isOpen && !greeted) {
+      greeted = true;
+      setTimeout(function () {
+        rcAddBot("Hi! I can help explain how riaaz works or answer any questions before you try it. What would you like to know? 🎹");
+      }, 300);
+    }
+    if (isOpen) setTimeout(function () { document.getElementById('rc-input').focus(); }, 350);
+  };
+
+  window.rcSug = function (btn) {
+    var chips = document.getElementById('rc-chips');
+    if (chips) chips.style.display = 'none';
+    rcRun(btn.textContent.trim());
+  };
+
+  window.rcKey = function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); rcSend(); }
+  };
+
+  window.rcSend = function () {
+    var inp = document.getElementById('rc-input');
+    var text = inp.value.trim();
+    if (!text || busy) return;
+    inp.value = ''; inp.style.height = '';
+    var chips = document.getElementById('rc-chips');
+    if (chips) chips.style.display = 'none';
+    rcRun(text);
+  };
+
+  async function rcRun(text) {
+    if (busy) return;
+    busy = true;
+    rcAddUser(text);
+    history.push({ role: 'user', parts: [{ text: text }] });
+    var typing = rcAddTyping();
+    document.getElementById('rc-send').disabled = true;
+
+    try {
+      var res = await fetch(GEMINI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYS }] },
+          contents: history,
+          generationConfig: { maxOutputTokens: 400 }
+        })
+      });
+      var data = await res.json();
+
+      // surface API errors clearly during testing
+      if (data.error) {
+        typing.remove();
+        rcAddBot("API error: " + data.error.message);
+        busy = false;
+        document.getElementById('rc-send').disabled = false;
+        return;
+      }
+
+      var reply = data.candidates &&
+                  data.candidates[0] &&
+                  data.candidates[0].content &&
+                  data.candidates[0].content.parts &&
+                  data.candidates[0].content.parts[0] &&
+                  data.candidates[0].content.parts[0].text;
+      typing.remove();
+      var botText = reply || "Hmm, I didn't quite get a response — try again?";
+      rcAddBot(botText);
+      history.push({ role: 'model', parts: [{ text: botText }] });
+    } catch (err) {
+      typing.remove();
+      rcAddBot("Network error: " + err.message);
+    }
+
+    document.getElementById('rc-send').disabled = false;
+    busy = false;
+  }
+
+  function rcAddUser(text) {
+    var msgs = document.getElementById('rc-msgs');
+    var el = document.createElement('div');
+    el.className = 'rc-bubble rc-user';
+    el.textContent = text;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function rcAddBot(text) {
+    var msgs = document.getElementById('rc-msgs');
+    var el = document.createElement('div');
+    el.className = 'rc-bubble rc-bot';
+    el.textContent = text;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  function rcAddTyping() {
+    var msgs = document.getElementById('rc-msgs');
+    var el = document.createElement('div');
+    el.className = 'rc-typing';
+    el.innerHTML = '<span></span><span></span><span></span>';
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return el;
+  }
+
+  document.getElementById('rc-input').addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 90) + 'px';
+  });
+
+})();
+</script>
+<!-- ══ end riaaz AI widget ══ -->
 </body>
 </html>
