@@ -320,181 +320,6 @@
 <script>
 const APP_URL = "https://riashandilya-svg.github.io/classicbollywoodmelodies/demo-app.html";
 
-/* ─────────────────────────────────────────────
-   KEYBOARD STYLE INJECTION
-   Injects Level-2-quality visual design into
-   the iframe keyboard — shape, shadow, radius,
-   depth — without touching any color values.
-───────────────────────────────────────────── */
-const KEYBOARD_STYLES = `
-/* ── Keyboard wrap ── */
-.keyboard {
-  position: relative;
-  display: flex;
-  height: 130px;
-  user-select: none;
-  padding: 0 2px;
-  background: transparent;
-}
-
-/* ── White keys ── */
-.key-white {
-  width: 38px;
-  height: 130px;
-  flex-shrink: 0;
-  border-radius: 0 0 7px 7px;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 6px;
-  font-size: 0.48rem;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  transition: background 0.07s, transform 0.05s;
-  z-index: 1;
-
-  /* Layered shadows for depth — no colour override */
-  box-shadow:
-    inset 0 -3px 0 rgba(0,0,0,0.10),
-    inset 0 1px 0 rgba(255,255,255,0.90),
-    0 2px 8px rgba(0,0,0,0.06),
-    0 1px 2px rgba(0,0,0,0.08);
-
-  border-left:   1px solid rgba(0,0,0,0.09);
-  border-right:  1px solid rgba(0,0,0,0.09);
-  border-bottom: 1px solid rgba(0,0,0,0.14);
-  border-top:    none;
-}
-
-/* Slight press sink */
-.key-white:active,
-.key-white.pressed {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 -1px 0 rgba(0,0,0,0.10),
-    inset 0 2px 4px rgba(0,0,0,0.08),
-    0 1px 3px rgba(0,0,0,0.06);
-}
-
-/* ── Black keys ── */
-.key-black {
-  width: 24px;
-  height: 80px;
-  border-radius: 0 0 6px 6px;
-  cursor: pointer;
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 5px;
-  font-size: 0.42rem;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  transition: background 0.07s, transform 0.05s;
-
-  /* Rich physical-key shadow — no colour override */
-  box-shadow:
-    2px 5px 10px rgba(0,0,0,0.36),
-    1px 3px 5px  rgba(0,0,0,0.24),
-    inset 0 1px 0 rgba(255,255,255,0.10),
-    inset 0 -2px 0 rgba(0,0,0,0.30);
-}
-
-/* Slight press sink */
-.key-black:active,
-.key-black.pressed {
-  transform: translateY(2px);
-  box-shadow:
-    1px 2px 5px  rgba(0,0,0,0.32),
-    inset 0 2px 4px rgba(0,0,0,0.28);
-}
-
-/* ── Note label spans inside keys ── */
-.key-white > span,
-.key-white > .key-label {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 0.46rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  opacity: 0.45;
-  pointer-events: none;
-  user-select: none;
-  line-height: 1;
-}
-
-.key-black > span,
-.key-black > .key-label {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 0.4rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  opacity: 0.30;
-  pointer-events: none;
-  user-select: none;
-  line-height: 1;
-}
-
-/* ── Scrollable piano wrapper ── */
-.piano-wrap,
-[class*="keyboard-wrap"],
-[class*="piano-container"],
-[class*="keys-wrap"] {
-  overflow-x: auto;
-  overflow-y: visible;
-  padding-bottom: 8px;
-  /* Elegant fade-out at scroll edges */
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black 28px,
-    black calc(100% - 28px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    black 28px,
-    black calc(100% - 28px),
-    transparent 100%
-  );
-}
-
-/* ── Thin scrollbar so the fade looks clean ── */
-.piano-wrap::-webkit-scrollbar,
-[class*="keyboard-wrap"]::-webkit-scrollbar { height: 3px; }
-.piano-wrap::-webkit-scrollbar-track,
-[class*="keyboard-wrap"]::-webkit-scrollbar-track { background: transparent; }
-.piano-wrap::-webkit-scrollbar-thumb,
-[class*="keyboard-wrap"]::-webkit-scrollbar-thumb {
-  background: rgba(155,110,255,0.22);
-  border-radius: 2px;
-}
-`;
-
-/* ─────────────────────────────────────────────
-   Inject styles once the iframe has loaded.
-   Works for same-origin iframes; for cross-origin
-   deployments, paste the KEYBOARD_STYLES string
-   directly into your demo-app.html <style> block.
-───────────────────────────────────────────── */
-function injectKeyboardStyles(iframeDoc) {
-  if (!iframeDoc) return;
-  /* Remove any previous injection to avoid doubling */
-  const prev = iframeDoc.getElementById('__riaaz_kb_styles__');
-  if (prev) prev.remove();
-
-  const tag = iframeDoc.createElement('style');
-  tag.id = '__riaaz_kb_styles__';
-  tag.textContent = KEYBOARD_STYLES;
-  (iframeDoc.head || iframeDoc.documentElement).appendChild(tag);
-}
-
 const STEPS = [
   {
     title: "Connect your keyboard (USB) — Optional but highly recommended",
@@ -814,18 +639,8 @@ backBtn.addEventListener("click", () => goTo(idx - 1));
 skipBtn.addEventListener("click", () => { if (idx < STEPS.length - 1) goTo(idx + 1); else hideTour(); });
 window.addEventListener("resize", () => { if (running) render(); });
 
-/* ── Iframe load: inject keyboard styles + wire up helpers ── */
 frame.addEventListener("load", () => {
   const iframeDoc = frame.contentWindow?.document;
-
-  /* Inject keyboard visual polish */
-  try {
-    injectKeyboardStyles(iframeDoc);
-  } catch (e) {
-    /* Cross-origin: add KEYBOARD_STYLES string directly to demo-app.html instead */
-    console.warn("[riaaz demo] Cross-origin iframe — paste KEYBOARD_STYLES into demo-app.html <style>.", e);
-  }
-
   if (!iframeDoc) return;
 
   iframeDoc.addEventListener("scroll", () => { if (running && currentHighlightedElement) updateHighlightPosition(); }, true);
@@ -861,7 +676,7 @@ window.addEventListener("message", (event) => {
   }
 });
 
-/* Aurora canvas */
+/* Aurora canvas — identical to landing page */
 (function () {
   const cv = document.getElementById("aurora"), cx = cv.getContext("2d"); let W, H;
   function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
