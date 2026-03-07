@@ -222,7 +222,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .hand-lbl.rh{color:rgba(var(--pink),0.8)}
 .hand-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
 .reading-hint{font-size:0.72rem;color:rgba(180,100,20,0.8);background:rgba(255,160,50,0.08);border:1px solid rgba(255,160,50,0.18);border-radius:8px;padding:6px 12px;margin-bottom:8px;display:inline-flex;align-items:center;gap:5px}
-.staff-canvas{width:100%;background:#fff;border-radius:9px;overflow:hidden;border:1px solid rgba(155,110,255,0.09)}
+.staff-canvas{width:100%;background:#fff;border-radius:9px;overflow:visible;border:1px solid rgba(155,110,255,0.09);min-height:240px}
 .staff-canvas svg{display:block;width:100%!important;height:auto}
 
 /* ══ TIP BLOCK ══ */
@@ -420,6 +420,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .screen.active{display:flex}
 #screen-welcome.active{display:flex}
 #screen-practice.active{display:block}
+.key-white.staff-click{background:linear-gradient(to bottom,rgba(255,160,50,0.45),rgba(255,160,50,0.25))!important;border-color:rgba(255,140,0,0.6);}
+.key-black.staff-click{background:linear-gradient(to bottom,rgba(255,140,0,0.8),rgba(200,100,0,0.7))!important;}
 </style>
 </head>
 <body>
@@ -608,11 +610,21 @@ const PHASE_START = {1:0,2:7,3:12,4:17};
 
 // ══ LEVEL 2 CURRICULUM ══
 const STAFF_INTRO_EXERCISES = [
-  { label:'The 5 Lines — EGBDF', concept:'Lines of the treble clef', isStaffLines:true, seq:['E4','G4','B4','D5','F5'], durs:['q','q','q','q','q'], lhSeq:['G2','B2','D3','F3','A3'], lhDurs:['q','q','q','q','q'], prompt:'Study the diagram. Every line from bottom to top spells <strong>E G B D F</strong> — "Every Green Bus Drives Fast."', tip:'The <strong>lines</strong> of the treble clef give you E G B D F. The bass clef lines are G B D F A — same pattern, starting one step lower.' },
-  { label:'The 4 Spaces — FACE', concept:'Spaces of the treble clef', isStaffSpaces:true, seq:['F4','A4','C5','E5'], durs:['q','q','q','q'], lhSeq:['A2','C3','E3','G3'], lhDurs:['q','q','q','q'], prompt:'The 4 spaces from bottom to top spell <strong>F A C E</strong> — they literally spell the word "face."', tip:'<strong>Spaces spell FACE.</strong> Combined with EGBDF lines, you now have all 9 staff positions covered.' },
-  { label:'Lines & Spaces Mix', concept:'All 9 positions together', isStaffMix:true, seq:['E4','F4','G4','A4','B4','C5','D5','E5','F5'], durs:['q','q','q','q','q','q','q','q','q'], prompt:'Every note from E to F: line — space — line — space — line — space — line — space — line. See the pattern?', tip:'Notes alternate <strong>line and space</strong> as they step up. This makes reading fast — you always know if a step moved line→space or stayed on the same type.' },
-];
-
+  // ── PHASE 5 — Treble & Bass Awareness ──
+  {phase:5,phaseLabel:'Treble & Bass Awareness',phaseIcon:'🎼',exInPhase:1,label:'Meet the Treble Clef',concept:'Treble clef',isTrebleIntro:true,seq:['C4','D4','E4','F4','G4'],durs:['q','q','q','q','q'],prompt:'The treble clef marks the <strong>right hand</strong> staff. It curls around the G line — that\'s why it\'s also called the G clef.',tip:'<strong>Treble clef = right hand.</strong> The curl wraps around the second line from the bottom — that line is G.'},
+  {phase:5,phaseLabel:'Treble & Bass Awareness',phaseIcon:'🎼',exInPhase:2,label:'Meet the Bass Clef',concept:'Bass clef',isBassIntro:true,seq:[],durs:[],lhSeq:['C4','B3','A3','G3'],lhDurs:['q','q','q','q'],prompt:'The bass clef marks the <strong>left hand</strong> staff. Its two dots straddle the F line — it\'s also called the F clef.',tip:'<strong>Bass clef = left hand.</strong> The two dots sit above and below the fourth line — that line is F.'},
+  {phase:5,phaseLabel:'Treble & Bass Awareness',phaseIcon:'🎼',exInPhase:3,label:'Grand Staff Bridge',concept:'Grand staff',isGrandStaff:true,seq:['C4','D4','E4','G4'],durs:['q','q','q','q'],lhSeq:['C4','G3'],lhDurs:['h','h'],prompt:'The <strong>grand staff</strong> joins treble and bass. Middle C sits on a ledger line between them — it belongs to both hands.',tip:'<strong>Middle C connects both staves.</strong> It\'s the bridge between treble and bass — one note, two hands, one piano.'},
+  // ── PHASE 6 — Playing With Both Hands ──
+  {phase:6,phaseLabel:'Playing With Both Hands',phaseIcon:'🤲',exInPhase:1,label:'Together: Middle C',concept:'Hand coordination',isTwoHandTogether:true,seq:['C4'],durs:['w'],lhSeq:['C4'],lhDurs:['w'],prompt:'Both hands play Middle C (RH: C4, LH: C3) at the <strong>same time</strong>. Focus on making both taps land together.',tip:'<strong>Coordination before complexity.</strong> Even one note played together trains your brain to think in two voices simultaneously.'},
+  {phase:6,phaseLabel:'Playing With Both Hands',phaseIcon:'🤲',exInPhase:2,label:'Echo Hands',concept:'Alternating hands',isEchoHands:true,seq:['C4','D4','E4'],durs:['q','q','q'],lhSeq:['C4','D4','E4'],lhDurs:['q','q','q'],prompt:'Right hand plays C D E, then left hand echoes C D E. Like a question and an answer — <strong>one hand at a time</strong>.',tip:'<strong>Alternating hands</strong> trains independence without the complexity of playing together.'},
+  {phase:6,phaseLabel:'Playing With Both Hands',phaseIcon:'🤲',exInPhase:3,label:'Melody + Bass',concept:'First accompaniment',isMelodyBass:true,seq:['C4','D4','E4','G4','E4','D4','C4'],durs:['q','q','q','q','q','q','h'],lhSeq:['C4','C4','C4','C4'],lhDurs:['h','h','h','h'],prompt:'Right hand plays the melody. Left hand holds a steady low C. This is your <strong>first real accompaniment</strong>.',tip:'<strong>Melody + bass = music.</strong> The left hand supports the right hand\'s melody — the foundation of every piano arrangement.'},
+  {phase:6,phaseLabel:'Playing With Both Hands',phaseIcon:'🤲',exInPhase:4,label:'Two-Hand Phrase',concept:'Two-hand playing',isTwoHandPhrase:true,seq:['C4','E4','G4','E4'],durs:['q','q','h','h'],lhSeq:['C4','G3','C4','G3'],lhDurs:['q','q','h','h'],prompt:'Four notes in each hand — RH plays the melody, LH plays the bass. Play hands separately first, then <strong>together</strong>.',tip:'<strong>Separate before together.</strong> Every pianist learns each hand alone before combining.'},
+  // ── PHASE 7 — Musical Expression ──
+  {phase:7,phaseLabel:'Musical Expression',phaseIcon:'🎭',exInPhase:1,label:'Loud vs Soft',concept:'Dynamics',isDynamics:true,seq:['C4','D4','E4','F4','G4','F4','E4','D4'],durs:['q','q','q','q','q','q','q','q'],dynamicMarks:['f','f','f','f','p','p','p','p'],prompt:'Play the first 4 notes <strong>loudly (f)</strong> and the last 4 <strong>softly (p)</strong>. Dynamics give music its emotional shape.',tip:'<strong>f = forte (loud). p = piano (soft).</strong> The instrument was named "piano" for its ability to play both loud and soft.'},
+  {phase:7,phaseLabel:'Musical Expression',phaseIcon:'🎭',exInPhase:2,label:'Legato Playing',concept:'Smooth and connected',isLegato:true,seq:['C4','D4','E4','F4','G4'],durs:['q','q','q','q','h'],prompt:'Connect each note smoothly — let one note flow into the next without any gap. This is called <strong>legato</strong>.',tip:'<strong>Legato</strong> means "tied together" in Italian. Lift each finger only when the next one lands.'},
+  {phase:7,phaseLabel:'Musical Expression',phaseIcon:'🎭',exInPhase:3,label:'Staccato Playing',concept:'Short and bouncy',isStaccato:true,seq:['C4','D4','E4','F4','G4'],durs:['q','q','q','q','q'],prompt:'Play each note short and bouncy — release immediately after pressing. The note should sound like a raindrop, not a river.',tip:'<strong>Staccato</strong> means "detached" in Italian. Each note is about half its written length.'},
+  {phase:7,phaseLabel:'Musical Expression',phaseIcon:'🎭',exInPhase:4,label:'First Piece',concept:'First piece',isFirstPiece:true,seq:['C4','D4','E4','G4','E4','D4','C4','G3'],durs:['q','q','q','q','q','q','h','h'],lhSeq:['C4','G3','C4','G3'],lhDurs:['h','h','h','h'],dynamicMarks:['f','f','f','f','p','p','p','p'],prompt:'Your first real piece. Right hand plays the melody with dynamics. Left hand holds the bass. Play it <strong>slowly and musically</strong>.',tip:'<strong>Slow is musical.</strong> Every great pianist plays new pieces slowly first. Speed comes naturally — musicality must be built from the start.'},
+  ];
 const NOTE_MAP={C:{key:'c',acc:null},'C#':{key:'c',acc:'#'},Db:{key:'d',acc:'b'},D:{key:'d',acc:null},'D#':{key:'d',acc:'#'},Eb:{key:'e',acc:'b'},E:{key:'e',acc:null},F:{key:'f',acc:null},'F#':{key:'f',acc:'#'},Gb:{key:'g',acc:'b'},G:{key:'g',acc:null},'G#':{key:'g',acc:'#'},Ab:{key:'a',acc:'b'},A:{key:'a',acc:null},'A#':{key:'a',acc:'#'},Bb:{key:'b',acc:'b'},B:{key:'b',acc:null}};
 function toneToVex(note){const m=note.match(/^([A-G][b#]?)(\d)$/);if(!m)return{keys:['c/4'],acc:null};const[,pc,oct]=m,n=NOTE_MAP[pc]||{key:'c',acc:null};return{keys:[`${n.key}/${oct}`],acc:n.acc};}
 const CHROMATIC=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -647,7 +659,7 @@ let discoveryMode=false, discoveryDone=false;
 let rhDone=false;
 
 const L1_SIGHT_IDX = TOTAL_BEG_EX;
-const L2_SIGHT_IDX = 3;
+const L2_SIGHT_IDX = 11;
 
 // ══ MASTERY STATE ══
 const MASTERY_GAMES = [
@@ -695,7 +707,7 @@ function buildStaffExercise(item){
   const rh=item.seq.map((audio,i)=>{const v=toneToVex(audio);return{audio,dur:durs[i]||'q',keys:v.keys,acc:v.acc};});
   let lh=[];
   if(item.lhSeq){const ld=item.lhDurs||item.lhSeq.map(()=>'q');lh=item.lhSeq.map((audio,i)=>{const v=toneToVex(audio);return{audio,dur:ld[i]||'q',keys:v.keys,acc:v.acc};});}
-  return{...item,rh,lh,hand:'both'};
+  return{...item,rh,lh,hand:lh.length>0?'both':'right'};
 }
 
 // ══ SIDEBAR ══
@@ -794,10 +806,23 @@ function renderSidebar(){
   } else {
     // Level 2
     const lbl=document.createElement('div');lbl.className='sidebar-phase-header';lbl.innerHTML=`<span class="sph-icon">📖</span><span class="sph-text">Level 2 — Staff Reading</span>`;sb.appendChild(lbl);
-    L2_EXERCISES.forEach((ex,i)=>{
-      const item=document.createElement('div');item.className='sidebar-item'+(i===l2Idx?' active':'')+(l2DoneSets.has(i)?' done':'');
-      item.innerHTML=`<div class="si-dot">${l2DoneSets.has(i)?'✓':(i+1)}</div><div class="si-text"><div class="si-name">${ex.label}</div><div class="si-skill">${ex.concept}</div></div><span class="si-check">✓</span>`;
-      item.addEventListener('click',()=>loadL2Exercise(i));sb.appendChild(item);
+    const L2_PHASES=[
+  {icon:'🎼',label:'Phase 5 — Treble & Bass',range:[0,3]},
+  {icon:'🤲',label:'Phase 6 — Both Hands',range:[3,7]},
+  {icon:'🎭',label:'Phase 7 — Expression',range:[7,11]},
+];
+    L2_PHASES.forEach(ph=>{
+      const phDone=Array.from({length:ph.range[1]-ph.range[0]},(_,k)=>l2DoneSets.has(ph.range[0]+k)).filter(Boolean).length;
+      const phH=document.createElement('div');phH.className='sidebar-phase-header';
+      phH.innerHTML=`<span class="sph-icon">${ph.icon}</span><span class="sph-text">${ph.label}</span><span class="sph-count">${phDone}/${ph.range[1]-ph.range[0]}</span>`;
+      sb.appendChild(phH);
+      for(let i=ph.range[0];i<ph.range[1];i++){
+        const ex=L2_EXERCISES[i];if(!ex)continue;
+        const item=document.createElement('div');item.className='sidebar-item'+(i===l2Idx?' active':'')+(l2DoneSets.has(i)?' done':'');
+        item.innerHTML=`<div class="si-dot">${l2DoneSets.has(i)?'✓':(i+1)}</div><div class="si-text"><div class="si-name">${ex.label}</div><div class="si-skill">${ex.concept}</div></div><span class="si-check">✓</span>`;
+        item.addEventListener('click',()=>loadL2Exercise(i));sb.appendChild(item);
+      }
+      const divEl=document.createElement('div');divEl.className='sidebar-divider';sb.appendChild(divEl);
     });
     const divEl=document.createElement('div');divEl.className='sidebar-divider';sb.appendChild(divEl);
     const sActive=l2Idx===L2_SIGHT_IDX,sDone=l2DoneSets.has(L2_SIGHT_IDX);
@@ -976,23 +1001,51 @@ async function loadL2Exercise(idx){
   scheduleSave();
   const mc=document.getElementById('main-content');mc.innerHTML='<div style="padding:60px 0;text-align:center;color:var(--muted);font-size:0.85rem">Building exercise…</div>';mc.scrollTop=0;
   renderSidebar();
-  const ex=L2_EXERCISES[idx];const isLast=idx===L2_EXERCISES.length-1;const nextEx=L2_EXERCISES[idx+1];
+  const ex=L2_EXERCISES[idx];
+  const isLast=idx===L2_EXERCISES.length-1;
+  const nextEx=L2_EXERCISES[idx+1];
+  const isTwoHand=!!(ex.lhSeq&&ex.lhSeq.length&&!ex.isBassIntro);
   const noteType=ex.isStaffLines?'line':ex.isStaffSpaces?'space':null;
-  const isTwoHand=ex.isStaffLines||ex.isStaffSpaces;
+
   let tip=ex.tip||'Study the staff positions carefully before playing.';
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,messages:[{role:'user',content:`Bollywood piano teacher. 1 sentence for a student learning staff notation.\nExercise: "${ex.label}" — concept: ${ex.concept}.\nWhy does knowing this unlock Bollywood piano reading? Bold 1-2 key terms with <strong>. No bullets. No intro phrase. Under 20 words.`}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,messages:[{role:'user',content:`Bollywood piano teacher. 1 sentence for a student learning "${ex.label}" — concept: ${ex.concept}. Why does this matter for playing Bollywood piano? Bold 1-2 key terms with <strong>. No bullets. No intro phrase. Under 20 words.`}]})});
     const data=await res.json();const t=(data.content||[]).map(c=>c.text||'').join('').trim();if(t.length>10)tip=t;
   }catch(e){}
+
+  // Phase strip for L2
+  const phaseIcons={5:'🎼',6:'🤲',7:'🎭',8:'📖'};
+  const phaseLabels={5:'Treble & Bass Awareness',6:'Playing With Both Hands',7:'Musical Expression',8:'Staff Theory'};
+  const phaseSizes={5:3,6:4,7:4,8:3};
+  const phaseStarts={5:0,6:3,7:7,8:11};
+  const exPhase=ex.phase||5;
+  const exInPhase=ex.exInPhase||1;
+  const phSize=phaseSizes[exPhase]||4;
+  const phStart=phaseStarts[exPhase]||0;
+  const levelDone=Math.min(l2Idx,15);
+  const pct=Math.round((levelDone/15)*100);
+  const dots=Array.from({length:phSize},(_,i)=>{const gi=phStart+i;const cls=l2DoneSets.has(gi)?'done':i===(exInPhase-1)?'current':'';return`<div class="ped ${cls}"></div>`;}).join('');
+  const phaseStripHTML=`<div class="phase-strip"><div class="phase-strip-left"><div class="phase-icon-big">${phaseIcons[exPhase]||'📖'}</div><div><div class="phase-name-text">Phase ${exPhase} — ${phaseLabels[exPhase]||''}</div><div class="phase-sub-text">Exercise ${exInPhase} of ${phSize} · Level 2</div></div></div><div class="phase-right"><div class="phase-ex-dots">${dots}</div><div class="phase-progress-bar"><div class="phase-progress-fill" style="width:${pct}%"></div></div></div></div>`;
+
+  // Dynamics display helper
+  const dynHTML=ex.dynamicMarks?`<div class="count-display"><span class="count-lbl">Dynamics</span><span class="count-value">${ex.dynamicMarks.map(d=>`<span style="color:${d==='f'?'rgba(255,60,120,0.85)':'rgba(85,55,190,0.75)'};font-style:italic;margin:0 3px">${d}</span>`).join('')}</span></div>`:'';
+
+  // Banner icon/text by phase
+  const bannerIcon=ex.phase===7?'🤲':ex.phase===8?'🎭':ex.phase===6?'🎼':'📐';
+  const bannerTitle=ex.isTwoHandTogether?'Both hands together.':ex.isEchoHands?'Echo the pattern.':ex.isMelodyBass?'Melody meets bass.':ex.isTwoHandPhrase?'Separate, then together.':ex.isDynamics?'Feel the contrast.':ex.isLegato?'Flow between notes.':ex.isStaccato?'Short and bouncy.':ex.isFirstPiece?'Your first piece.':'Study, then play.';
+  const bannerSub=ex.isTwoHandTogether?'Right and left hand land at the exact same moment.':ex.isEchoHands?'Right hand plays, left hand copies. One at a time.':ex.isMelodyBass?'Right hand = melody. Left hand = steady bass.':ex.isTwoHandPhrase?'Learn each hand alone first, then combine.':ex.isDynamics?'f = loud, p = soft. Play the first half forte, second half piano.':ex.isLegato?'Let each note overlap slightly into the next.':ex.isStaccato?'Release immediately after each press.':ex.isFirstPiece?'Take it slowly. Music before speed.':'Read the concept, then follow the glow.';
+
   mc.innerHTML=`
+    ${phaseStripHTML}
     <div class="listen-banner" id="listen-banner">
-      <div class="listen-banner-icon">${ex.isStaffLines?'🟣':ex.isStaffSpaces?'🩷':'🎯'}</div>
-      <div class="listen-banner-title">${ex.isStaffLines?'Learn the 5 lines, then play both hands.':ex.isStaffSpaces?'Learn the 4 spaces, then play both hands.':'Lines and spaces together.'}</div>
-      <div class="listen-banner-sub">${isTwoHand?'Study the diagram and mnemonic, then play right hand then left hand.':'Name each note before playing it.'}</div>
+      <div class="listen-banner-icon">${bannerIcon}</div>
+      <div class="listen-banner-title">${bannerTitle}</div>
+      <div class="listen-banner-sub">${bannerSub}</div>
+      <div class="listen-playing-dots"><div class="dot-anim"></div><div class="dot-anim"></div><div class="dot-anim"></div></div>
     </div>
     <div class="ex-card">
       <div class="ex-head">
-        <div class="ex-eyebrow">Level 2 · Exercise ${idx+1} of 3 · Staff Reading</div>
+<div class="ex-eyebrow">Level 2 · Exercise ${idx+1} of 14 · ${phaseLabels[exPhase]||'Staff Reading'}</div>
         <div class="ex-title-beginner">${ex.label}</div>
         <div class="concept-badge">${ex.concept}</div>
         <div class="ex-prompt">${ex.prompt}</div>
@@ -1002,44 +1055,46 @@ async function loadL2Exercise(idx){
         <button class="btn btn-play" id="play-btn" onclick="playL2Exercise()">▶ Play Notes</button>
         <button class="btn btn-stop" onclick="stopPlayback()">■ Stop</button>
       </div>
-      ${isTwoHand?`
-      <div class="intro-diagram-block">${ex.isStaffLines?buildPureLinesDiagram():buildPureSpacesDiagram()}</div>
-      <div class="hand-section rh-section">
-        <div class="hand-section-header">
-          <span class="hand-section-badge rh-badge">🤚 Right Hand — Treble Clef</span>
-          <div class="hand-mnemonic ${ex.isStaffLines?'line-mnem':'space-mnem'}">
-            ${ex.isStaffLines?`<span class="mnem-notes"><b>E</b>·<b>G</b>·<b>B</b>·<b>D</b>·<b>F</b></span><span class="mnem-phrase">"<b>E</b>very <b>G</b>reen <b>B</b>us <b>D</b>rives <b>F</b>ast"</span>`:`<span class="mnem-notes"><b>F</b>·<b>A</b>·<b>C</b>·<b>E</b></span><span class="mnem-phrase">spaces spell <b>"FACE"</b></span>`}
+      ${dynHTML}
+${isTwoHand?`
+        <div class="hand-section rh-section">
+          <div class="hand-section-header">
+            <span class="hand-section-badge rh-badge">🤚 Right Hand</span>
           </div>
+          <div class="staff-canvas" id="treble-canvas"></div>
         </div>
-        <div class="staff-canvas" id="treble-canvas"></div>
-      </div>
-      <div class="hand-keyboard-card" id="rh-piano-card">
-        <div class="piano-head"><div class="piano-title">🎹 Right Hand</div><div class="next-badge" id="next-badge">▶ Follow the glow</div></div>
-        <div class="piano-wrap" id="piano-wrap-inner"><div class="keyboard" id="keyboard"></div></div>
-      </div>
-      <div class="hand-section lh-section">
-        <div class="hand-section-header">
-          <span class="hand-section-badge lh-badge">🖐 Left Hand — Bass Clef</span>
-          <div class="hand-mnemonic ${ex.isStaffLines?'line-mnem':'space-mnem'}">
-            ${ex.isStaffLines?`<span class="mnem-notes"><b>G</b>·<b>B</b>·<b>D</b>·<b>F</b>·<b>A</b></span><span class="mnem-phrase">"<b>G</b>reen <b>B</b>us <b>D</b>rives <b>F</b>ast <b>A</b>lways"</span>`:`<span class="mnem-notes"><b>A</b>·<b>C</b>·<b>E</b>·<b>G</b></span><span class="mnem-phrase">"<b>A</b>ll <b>C</b>ows <b>E</b>at <b>G</b>rass"</span>`}
+        <div class="hand-section lh-section">
+          <div class="hand-section-header">
+            <span class="hand-section-badge lh-badge">🖐 Left Hand</span>
           </div>
+          <div class="staff-canvas" id="bass-canvas"></div>
         </div>
-        <div class="staff-canvas" id="bass-canvas"></div>
-      </div>
-      <div class="hand-keyboard-card keyboard-waiting" id="lh-piano-card">
-        <div class="piano-head"><div class="piano-title">🎹 Left Hand</div><div class="next-badge" id="lh-next-badge">▶ Complete right hand first</div></div>
-        <div class="piano-wrap" id="lh-piano-wrap"><div class="keyboard" id="lh-keyboard"></div></div>
-      </div>
+       <div class="hand-keyboard-card" id="rh-piano-card">
+          <div class="piano-head"><div class="piano-title">🎹 Play Both Hands</div><div class="next-badge" id="next-badge">▶ Follow the glow</div></div>
+          <div class="piano-wrap" id="piano-wrap-inner"><div class="keyboard" id="keyboard"></div></div>
+        </div>
       `:`
-      <div class="staff-block reading-focus">
-        <div class="hand-lbl rh">🤚 Right Hand — Lines &amp; Spaces Together</div>
-        <div class="reading-hint">🎯 Is each note on a <strong>line</strong> or in a <strong>space</strong>?</div>
-        <div class="staff-canvas" id="treble-canvas"></div>
-      </div>
-      <div class="piano-card" id="piano-anchor">
-        <div class="piano-head"><div class="piano-title">🎹 Your Turn</div><div class="next-badge" id="next-badge">▶ Follow the glow</div></div>
-        <div class="piano-wrap" id="piano-wrap-inner"><div class="keyboard" id="keyboard"></div></div>
-      </div>
+${ex.isBassIntro?`
+        <div class="hand-section lh-section">
+          <div class="hand-section-header">
+            <span class="hand-section-badge lh-badge">🖐 Left Hand (Bass Clef)</span>
+          </div>
+          <div class="staff-canvas" id="bass-canvas"></div>
+        </div>
+        <div class="piano-card" id="piano-anchor">
+          <div class="piano-head"><div class="piano-title">🎹 Your Turn</div><div class="next-badge" id="next-badge">▶ Follow the glow</div></div>
+          <div class="piano-wrap" id="piano-wrap-inner"><div class="keyboard" id="keyboard"></div></div>
+        </div>
+        `:`
+        <div class="staff-block">
+          <div class="hand-lbl rh">🤚 Right Hand</div>
+          <div class="staff-canvas" id="treble-canvas"></div>
+        </div>
+        <div class="piano-card" id="piano-anchor">
+          <div class="piano-head"><div class="piano-title">🎹 Your Turn</div><div class="next-badge" id="next-badge">▶ Follow the glow</div></div>
+          <div class="piano-wrap" id="piano-wrap-inner"><div class="keyboard" id="keyboard"></div></div>
+        </div>
+        `}
       `}
       <div class="tip-block"><div class="tip-lbl">Foundation Tip</div><div class="tip-text">${tip}</div></div>
     </div>
@@ -1047,16 +1102,23 @@ async function loadL2Exercise(idx){
       <div class="next-bar-info"><div class="next-bar-label">${isLast?'Almost done':'Up next'}</div><div class="next-bar-title">${isLast?'👁 Sight Reading Challenge':nextEx?nextEx.label:'Sight Reading'}</div></div>
       <button class="btn-next-ex" onclick="${isLast?'loadL2SightReading()':'l2NextExercise()'}">${isLast?'Go to Sight Reading →':'Next Exercise →'}</button>
     </div>`;
-  await new Promise(r=>requestAnimationFrame(r));await new Promise(r=>setTimeout(r,50));
-  rhNoteEls=renderStaff('treble-canvas','treble',ex.rh,noteType);
-  if(isTwoHand&&ex.lh&&ex.lh.length){
-    lhNoteEls=renderStaff('bass-canvas','bass',ex.lh,noteType);
-    buildTwoHandKeyboards(ex,noteType);
-  }else{lhNoteEls=[];buildPiano();}
-  const mc2=document.getElementById('main-content');if(mc2)mc2.scrollTop=0;
-  setTimeout(()=>{revealNextBar();if(isTwoHand)startRHPhase(ex,noteType);else hlNextL2();},500);
-}
 
+  await new Promise(r=>requestAnimationFrame(r));await new Promise(r=>setTimeout(r,50));
+  if(ex.isBassIntro){
+    rhNoteEls=[];
+    lhNoteEls=renderStaff('bass-canvas','bass',ex.lh,noteType);
+    buildPiano();
+    noteQueue=[];ex.lh.forEach((n,i)=>noteQueue.push({audio:n.audio,dur:n.dur||'q',idx:i,hand:'lh'}));noteQueueIdx=0;
+  } else {
+    rhNoteEls=renderStaff('treble-canvas','treble',ex.rh,noteType);
+    if(isTwoHand&&ex.lh&&ex.lh.length){
+      lhNoteEls=renderStaff('bass-canvas','bass',ex.lh,noteType);
+      buildPiano();
+    }else{lhNoteEls=[];buildPiano();}
+  }
+  const mc2=document.getElementById('main-content');if(mc2)mc2.scrollTop=0;
+  setTimeout(()=>{revealNextBar();if(ex.isBassIntro){autoListenL2Bass(ex);}else if(isTwoHand){autoListenL2(ex);hlNextL2();}else{autoListenL2(ex);hlNextL2();}},500);
+}
 // ══ TWO-HAND KEYBOARDS ══
 function buildTwoHandKeyboards(ex,noteType){rhDone=false;buildKeyboardInto('keyboard',noteType,'rh');buildKeyboardInto('lh-keyboard',noteType,'lh');}
 function buildKeyboardInto(kbId,noteType,hand){
@@ -1134,7 +1196,23 @@ async function playL2Exercise(){
   schedVis(rhEv,rhNoteEls,noteType);schedVis(lhEv,lhNoteEls,null);
   playTimers.push(setTimeout(()=>{isPlaying=false;const pb2=document.getElementById('play-btn');if(pb2)pb2.textContent='▶ Play Notes';if(noteType==='line')rhNoteEls.forEach(({el})=>colorEl(el,'rgba(85,55,190,0.75)'));else if(noteType==='space')rhNoteEls.forEach(({el})=>colorEl(el,'rgba(255,90,160,0.8)'));else{resetColors(rhNoteEls);resetColors(lhNoteEls);}hlNextL2();},(total+0.5)*1000));
 }
-
+async function autoListenL2Bass(ex){
+  await Tone.start();isPlaying=true;const spb=60/tempo;const now=Tone.now()+0.1;
+  ex.lh.forEach((n,i)=>{let t=0;for(let j=0;j<i;j++)t+=(DBEATS[ex.lh[j].dur]||1)*spb;getLH().triggerAttackRelease(n.audio,(DBEATS[n.dur]||1)*spb*0.82,now+t);});
+  let elapsed=0;ex.lh.forEach((n,i)=>{const dur=(DBEATS[n.dur]||1)*spb;const t=elapsed;playTimers.push(setTimeout(()=>{colorEl(lhNoteEls[i]?.el,'rgba(30,180,148,0.9)');const kn=a2k(n.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.add('highlight');setTimeout(()=>key.classList.remove('highlight'),dur*900);}},t*1000));elapsed+=dur;});
+  const total=elapsed;playTimers.push(setTimeout(()=>{isPlaying=false;resetColors(lhNoteEls);updateBannerYourTurn();
+  const next=noteQueue[noteQueueIdx];if(next){const kn=a2k(next.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key)key.classList.add('highlight');colorEl(lhNoteEls[next.idx]?.el,'rgba(155,110,255,0.82)');}
+  },(total+0.8)*1000));
+}
+async function autoListenL2(ex){
+  await Tone.start();isPlaying=true;const spb=60/tempo;const now=Tone.now()+0.1;
+  ex.rh.forEach((n,i)=>{let t=0;for(let j=0;j<i;j++)t+=(DBEATS[ex.rh[j].dur]||1)*spb;getRH().triggerAttackRelease(n.audio,(DBEATS[n.dur]||1)*spb*0.82,now+t);});
+  if(ex.lh&&ex.lh.length){ex.lh.forEach((n,i)=>{let t=0;for(let j=0;j<i;j++)t+=(DBEATS[ex.lh[j].dur]||1)*spb;getLH().triggerAttackRelease(n.audio,(DBEATS[n.dur]||1)*spb*0.82,now+t);});}
+  let elapsed=0;ex.rh.forEach((n,i)=>{const dur=(DBEATS[n.dur]||1)*spb;const t=elapsed;playTimers.push(setTimeout(()=>{colorEl(rhNoteEls[i]?.el,'rgba(255,90,160,0.88)');const kn=a2k(n.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.add('highlight');setTimeout(()=>key.classList.remove('highlight'),dur*900);}},t*1000));elapsed+=dur;});
+  if(ex.lh&&ex.lh.length){let lhElapsed=0;ex.lh.forEach((n,i)=>{const dur=(DBEATS[n.dur]||1)*spb;const t=lhElapsed;playTimers.push(setTimeout(()=>{colorEl(lhNoteEls[i]?.el,'rgba(155,110,255,0.88)');const kn=a2k(n.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.add('highlight-lh');setTimeout(()=>key.classList.remove('highlight-lh'),dur*900);}},t*1000));lhElapsed+=dur;});}
+  const total=Math.max(elapsed,(ex.lh&&ex.lh.length?ex.lh.reduce((s,n)=>s+(DBEATS[n.dur]||1)*spb,0):0));
+  playTimers.push(setTimeout(()=>{isPlaying=false;resetColors(rhNoteEls);resetColors(lhNoteEls);updateBannerYourTurn();hlNextL2();},( total+0.8)*1000));
+}
 // ══ NAVIGATION ══
 function l1NextExercise(){
   doneSets.add(sessionIdx);
@@ -1610,7 +1688,7 @@ function transitionToLevel2(){
     <div class="level-up-banner">
       <div class="level-up-icon">🌟</div>
       <div class="level-up-title">Level 2 Unlocked!</div>
-      <div class="level-up-sub">Levels 1A, 1B and Mastery Training — all done. Now it's time to read the full staff — <strong>EGBDF lines</strong> and <strong>FACE spaces</strong>. This is the foundation of reading any piano music.</div>
+<div class="level-up-sub">Levels 1A, 1B and Mastery Training — all done. Level 2 covers treble &amp; bass clef, both hands together, musical expression, and finally the full staff — <strong>EGBDF lines</strong> and <strong>FACE spaces</strong>.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
         <button class="btn-next-ex" onclick="loadL2Exercise(0)">Start Level 2 →</button>
         <button class="btn btn-ghost" onclick="loadMasteryHub()">← Back to Mastery</button>
@@ -1622,7 +1700,7 @@ function transitionToLevel2(){
 // ══ LEVEL 2 SIGHT READING ══
 async function loadL2SightReading(){
   l2Idx=L2_SIGHT_IDX; stopPlayback(); renderSidebar();
-  sightData=buildSightReading(['E4','G4','B4','F4','A4','C5'],4); sightAnswered=false;
+  sightData=buildSightReading(['C4','D4','E4','F4','G4','A4','B4'],6); sightAnswered=false;
   const mc=document.getElementById('main-content');mc.innerHTML='<div style="padding:60px 0;text-align:center;color:var(--muted);font-size:0.85rem">Preparing…</div>';
   let tip='Use <strong>EGBDF</strong> for lines and <strong>FACE</strong> for spaces to name each note at a glance.';
   try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,messages:[{role:'user',content:`Bollywood piano teacher. 1 sentence on how to quickly identify a note on the staff using EGBDF lines and FACE spaces. Bold key terms. No intro phrase.`}]})});const data=await res.json();const t=(data.content||[]).map(c=>c.text||'').join('').trim();if(t.length>10)tip=t;}catch(e){}
@@ -1683,24 +1761,63 @@ function completeLandmark(){landmarkMode=false;document.querySelectorAll('.key-w
 // ══ STAFF RENDERER ══
 function renderStaff(cid,clef,notes,noteType){
   const VF=Vex.Flow,container=document.getElementById(cid);if(!container)return[];container.innerHTML='';
-  const DB={w:4,h:2,q:1,'8':0.5};const measures=[];let cur=[],beats=0;
+  const DB={w:4,h:2,q:1,'8':0.5};
+  // Calculate total beats and group into 4-beat measures, padding the last
+  const totalBeats=notes.reduce((s,n)=>s+(DB[n.dur]||1),0);
+  const measures=[];let cur=[],beats=0;
   for(const n of notes){cur.push(n);beats+=DB[n.dur]||1;if(beats>=3.99){measures.push(cur);cur=[];beats=0;}}
-  if(cur.length)measures.push(cur);
-  const M=measures.length||1,W=Math.max(320,container.clientWidth||700),CLEF_EXTRA=80,eachW=Math.floor((W-14-CLEF_EXTRA)/M),firstW=eachW+CLEF_EXTRA,STAFF_H=110;
-  const renderer=new VF.Renderer(container,VF.Renderer.Backends.SVG);renderer.resize(W,STAFF_H);const ctx=renderer.getContext();ctx.setFont('Arial',10,'');
+  if(cur.length){
+    measures.push(cur);
+  }
+  const M=measures.length||1;
+  // Use wider per-measure width for exercises with many measures to avoid squishing
+  const W=Math.max(320,container.clientWidth||700);
+  const CLEF_EXTRA=80;
+  const minMeasureW=220;
+
+  const totalNeeded=CLEF_EXTRA+M*minMeasureW+14;
+  const useW=Math.max(W,totalNeeded);
+  const firstW=Math.floor((useW-14)*0.45)+CLEF_EXTRA,eachW=Math.floor((useW-14-firstW)/(M-1||1)),STAFF_H=200;
+  const renderer=new VF.Renderer(container,VF.Renderer.Backends.SVG);renderer.resize(useW,STAFF_H);
+
+  const ctx=renderer.getContext();
   const map=[];let gIdx=0,x=7;
   measures.forEach((mn,mi)=>{
-    const sw=mi===0?firstW:eachW;const stave=new VF.Stave(x,10,sw-4);
+    const sw=mi===0?firstW:eachW;const stave=new VF.Stave(x,30,sw-4);
+
     if(mi===0)stave.addClef(clef).addTimeSignature('4/4');if(mi===M-1)stave.setEndBarType(VF.Barline.type.END);stave.setContext(ctx).draw();
-    const sns=mn.map(n=>{const sn=new VF.StaveNote({clef,keys:n.keys,duration:n.dur,auto_stem:true});if(n.acc)sn.addAccidental(0,new VF.Accidental(n.acc));return sn;});
+    const sns=mn.map(n=>{
+      if(n.isRest){const sn=new VF.StaveNote({clef,keys:['b/4'],duration:n.dur+'r',auto_stem:true});sn.setStyle({fillStyle:'rgba(0,0,0,0)',strokeStyle:'rgba(0,0,0,0)'});return sn;}
+      const sn=new VF.StaveNote({clef,keys:n.keys,duration:n.dur,auto_stem:true});if(n.acc)sn.addAccidental(0,new VF.Accidental(n.acc));return sn;
+    });
     const beams=VF.Beam.generateBeams(sns);const voice=new VF.Voice({num_beats:4,beat_value:4,resolution:VF.RESOLUTION});voice.setMode(VF.Voice.Mode.SOFT);voice.addTickables(sns);
-    new VF.Formatter().joinVoices([voice]).format([voice],Math.max(40,(sw-4)-(mi===0?84:16)));voice.draw(ctx,stave);beams.forEach(b=>b.setContext(ctx).draw());
-    sns.forEach((sn,li)=>map.push({idx:gIdx+li,el:sn.attrs?.el||null}));gIdx+=mn.length;x+=sw;
+    const voiceBeats=sns.reduce((s,sn)=>{const d=sn.duration;return s+(d==='w'?4:d==='h'?2:d==='q'?1:d==='8'?0.5:1);},0);
+    if(voiceBeats<3.99){const rem=4-voiceBeats;const rDur=rem>=2?'h':rem>=1?'q':'8';const rest=new VF.StaveNote({clef,keys:['b/4'],duration:rDur+'r'});rest.setStyle({fillStyle:'transparent',strokeStyle:'transparent'});voice.addTickable(rest);}
+      new VF.Formatter().joinVoices([voice]).format([voice],Math.max(100,(sw-4)-(mi===0?120:28)));voice.draw(ctx,stave);beams.forEach(b=>b.setContext(ctx).draw());
+      sns.forEach((sn,li)=>{
+      if(mn[li]?.isRest)return;
+      const el=sn.attrs?.el||null;
+      if(el){el.style.cursor='pointer';el.addEventListener('click',()=>{const noteData=mn[li];if(noteData?.audio)highlightNoteOnPiano(noteData.audio);});}
+      map.push({idx:gIdx+li,el});
+    });
+    gIdx+=mn.length;
+    x+=sw;
   });
   if(noteType==='line')map.forEach(({el})=>el&&colorEl(el,'rgba(85,55,190,0.75)'));else if(noteType==='space')map.forEach(({el})=>el&&colorEl(el,'rgba(255,90,160,0.8)'));
   return map;
 }
+
 function colorEl(el,c){if(!el)return;el.querySelectorAll('path,rect,circle').forEach(p=>{p.style.fill=c;p.style.stroke=c;});}
+function highlightNoteOnPiano(note){
+  document.querySelectorAll('.key-white.staff-click,.key-black.staff-click').forEach(k=>{k.classList.remove('staff-click');k.style.background='';});
+  const kn=a2k(note);
+  const key=document.querySelector(`#keyboard .key-white[data-note="${kn}"],#keyboard .key-black[data-note="${kn}"],#lh-keyboard .key-white[data-note="${kn}"],#lh-keyboard .key-black[data-note="${kn}"],#mastery-keyboard .key-white[data-note="${kn}"],#mastery-keyboard .key-black[data-note="${kn}"]`);
+  if(!key)return;
+  key.classList.add('staff-click');
+  key.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  getRH().triggerAttackRelease(note,'8n');
+  setTimeout(()=>{key.classList.remove('staff-click');key.style.background='';},1200);
+}
 function resetColors(map){map.forEach(({el})=>colorEl(el,'#000'));}
 
 // ══ SYNTHS ══
@@ -1757,14 +1874,28 @@ function hlNext(){
 
 function hlNextL2(){
   if(!L2_EXERCISES[l2Idx])return;const ex=L2_EXERCISES[l2Idx];if(ex.isStaffLines||ex.isStaffSpaces)return;
-  document.querySelectorAll('.key-white.highlight,.key-black.highlight').forEach(k=>k.classList.remove('highlight'));
+  document.querySelectorAll('.key-white.highlight,.key-black.highlight,.key-white.highlight-lh,.key-black.highlight-lh').forEach(k=>k.classList.remove('highlight','highlight-lh'));
   if(!isPlaying){resetColors(rhNoteEls);resetColors(lhNoteEls);}
-  if(!noteQueue.length){noteQueue=[];ex.rh.forEach((n,i)=>noteQueue.push({audio:n.audio,dur:n.dur||'q',idx:i,hand:'rh'}));noteQueueIdx=0;}
+  const isTH=!!(ex.lh&&ex.lh.length&&!ex.isBassIntro);
+  if(!noteQueue.length){
+    noteQueue=[];
+    ex.rh.forEach((n,i)=>noteQueue.push({audio:n.audio,dur:n.dur||'q',idx:i,hand:'rh'}));
+    if(isTH)ex.lh.forEach((n,i)=>noteQueue.push({audio:n.audio,dur:n.dur||'q',idx:i,hand:'lh'}));
+    noteQueueIdx=0;
+  }
   if(noteQueueIdx>=noteQueue.length)noteQueueIdx=0;
-  const next=noteQueue[noteQueueIdx];if(!next)return;
   const nb=document.getElementById('next-badge');if(nb)nb.textContent='▶ Follow the glow';
-  const kn=a2k(next.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.remove('highlight-line','highlight-space');key.classList.add('highlight');}
-  if(!isPlaying){if(ex.isStaffMix)rhNoteEls.forEach(({el},i)=>colorEl(el,i===next.idx?'rgba(255,90,160,0.9)':'rgba(150,150,180,0.35)'));else colorEl(rhNoteEls[next.idx]?.el,'rgba(255,90,160,0.82)');}
+  if(isTH){
+    // highlight ALL notes at current step across both hands
+    const rhNext=ex.rh[Math.min(noteQueueIdx,ex.rh.length-1)];
+    const lhNext=ex.lh[Math.min(noteQueueIdx,ex.lh.length-1)];
+    if(rhNext){const kn=a2k(rhNext.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.remove('highlight-line','highlight-space');key.classList.add('highlight');}if(!isPlaying)colorEl(rhNoteEls[Math.min(noteQueueIdx,rhNoteEls.length-1)]?.el,'rgba(255,90,160,0.82)');}
+    if(lhNext){const kn=a2k(lhNext.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.remove('highlight-line','highlight-space');key.classList.add('highlight-lh');}if(!isPlaying)colorEl(lhNoteEls[Math.min(noteQueueIdx,lhNoteEls.length-1)]?.el,'rgba(155,110,255,0.82)');}
+  } else {
+    const next=noteQueue[noteQueueIdx];if(!next)return;
+    const kn=a2k(next.audio);const key=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(key){key.classList.remove('highlight-line','highlight-space');key.classList.add('highlight');}
+    if(!isPlaying){if(ex.isStaffMix)rhNoteEls.forEach(({el},i)=>colorEl(el,i===next.idx?'rgba(255,90,160,0.9)':'rgba(150,150,180,0.35)'));else colorEl(rhNoteEls[next.idx]?.el,'rgba(255,90,160,0.82)');}
+  }
 }
 
 function toggleHint(){hintVisible=!hintVisible;const row=document.getElementById('hint-row');const btn=document.getElementById('hint-btn');if(row)row.style.display=hintVisible?'flex':'none';if(btn)btn.textContent=hintVisible?'💡 Hide hints':'💡 Show note names';if(hintVisible)syncHintChips();}
@@ -1786,9 +1917,32 @@ async function noteDown(note,keyEl){
     return;
   }
   if(currentLevel==='level2'){
-    getRH().triggerAttackRelease(note,'8n');keyEl.classList.add('pressed');setTimeout(()=>keyEl.classList.remove('pressed'),160);
-    const next=noteQueue[noteQueueIdx];const kn=a2k(next?.audio||'');
-    if(next&&(kn===note||next.audio===note)){keyEl.classList.add('correct');setTimeout(()=>keyEl.classList.remove('correct'),300);colorEl(rhNoteEls[next.idx]?.el,'rgba(30,180,148,0.9)');noteQueueIdx++;if(noteQueueIdx>=noteQueue.length)setTimeout(()=>document.getElementById('next-bar-anchor')?.scrollIntoView({behavior:'smooth',block:'start'}),500);setTimeout(hlNextL2,360);}else hlNextL2();
+    const isBassEx=L2_EXERCISES[l2Idx]?.isBassIntro;
+    const ex2=L2_EXERCISES[l2Idx];
+    const isTH=!!(ex2?.lh&&ex2.lh.length&&!isBassEx);
+    if(isBassEx)getLH().triggerAttackRelease(note,'8n');else getRH().triggerAttackRelease(note,'8n');
+    keyEl.classList.add('pressed');setTimeout(()=>keyEl.classList.remove('pressed'),160);
+    const noteEls=isBassEx?lhNoteEls:rhNoteEls;
+    if(isTH){
+      // accept press from either hand — check both RH and LH at current step
+      const stepIdx=noteQueueIdx;
+      const rhNote=ex2.rh[Math.min(stepIdx,ex2.rh.length-1)];
+      const lhNote=ex2.lh[Math.min(stepIdx,ex2.lh.length-1)];
+      const rhKn=a2k(rhNote?.audio||'');const lhKn=a2k(lhNote?.audio||'');
+      const isRH=(note===rhKn||note===rhNote?.audio);
+      const isLH=(note===lhKn||note===lhNote?.audio);
+      if(isRH||isLH){
+        keyEl.classList.add('correct');setTimeout(()=>keyEl.classList.remove('correct'),300);
+        if(isRH&&rhNoteEls[stepIdx])colorEl(rhNoteEls[Math.min(stepIdx,rhNoteEls.length-1)]?.el,'rgba(30,180,148,0.9)');
+        if(isLH&&lhNoteEls[stepIdx])colorEl(lhNoteEls[Math.min(stepIdx,lhNoteEls.length-1)]?.el,'rgba(30,180,148,0.9)');
+        noteQueueIdx++;
+        if(noteQueueIdx>=ex2.rh.length)setTimeout(()=>document.getElementById('next-bar-anchor')?.scrollIntoView({behavior:'smooth',block:'start'}),500);
+        setTimeout(hlNextL2,360);
+      } else hlNextL2();
+    } else {
+      const next=noteQueue[noteQueueIdx];const kn=a2k(next?.audio||'');
+      if(next&&(kn===note||next.audio===note)){keyEl.classList.add('correct');setTimeout(()=>keyEl.classList.remove('correct'),300);colorEl(noteEls[next.idx]?.el,'rgba(30,180,148,0.9)');noteQueueIdx++;if(noteQueueIdx>=noteQueue.length)setTimeout(()=>document.getElementById('next-bar-anchor')?.scrollIntoView({behavior:'smooth',block:'start'}),500);setTimeout(hlNextL2,360);}else hlNextL2();
+    }
     return;
   }
 
