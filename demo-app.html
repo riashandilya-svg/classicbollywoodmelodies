@@ -1218,86 +1218,163 @@ function explainWrongNote(playedMidi, expectedMidi) {
 }
 
 function drawKeyboard() {
-    const keyHeight = KEYBOARD_HEIGHT;
+    const keyHeight  = KEYBOARD_HEIGHT;
     const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
+    const wkw = getWhiteKeyWidth();
+    const bkw = wkw * 0.62;
+    const bkh = keyHeight * 0.62;
+    const WR  = 6;   // white-key bottom corner radius
+    const BR  = 5;   // black-key bottom corner radius
 
-    // WHITE KEYS
-    let whiteIndex = 0;
+    // ── Utility: rounded-bottom rect path ──────────────────────
+    function roundedBottom(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w, y);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y);
+        ctx.closePath();
+    }
 
+    // ── PASS 1 — WHITE KEYS ─────────────────────────────────────
+    let wi = 0;
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         if (isBlackMidi(midi)) continue;
 
-        const x = whiteIndex * getWhiteKeyWidth();
-        const isTreble = expectedMidiTreble.has(midi);
-        const isBass   = expectedMidiBass.has(midi);
-        
+        const x         = wi * wkw;
+        const isTreble  = expectedMidiTreble.has(midi);
+        const isBass    = expectedMidiBass.has(midi);
+
+        // ·· Fill gradient ·····················
+        let g;
         if (isTreble) {
-            ctx.fillStyle = "#FFCDD2";
+            g = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
+            g.addColorStop(0,   'rgba(255,90,160,0.18)');
+            g.addColorStop(0.5, 'rgba(200,150,255,0.14)');
+            g.addColorStop(1,   'rgba(155,110,255,0.22)');
         } else if (isBass) {
-            ctx.fillStyle = "#757575";
+            g = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
+            g.addColorStop(0, 'rgba(130,130,180,0.22)');
+            g.addColorStop(1, 'rgba(90,90,140,0.18)');
         } else {
-            ctx.fillStyle = "#ffffff";
+            g = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
+            g.addColorStop(0,    '#f7f4fc');
+            g.addColorStop(0.12, '#ffffff');
+            g.addColorStop(0.88, '#ffffff');
+            g.addColorStop(1,    '#efecf6');
         }
-        
-        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+        ctx.fillStyle = g;
+        roundedBottom(x + 0.5, keyboardTop, wkw - 1, keyHeight, WR);
+        ctx.fill();
 
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+        // ·· Outer border ·····················
+        ctx.strokeStyle = 'rgba(0,0,0,0.11)';
+        ctx.lineWidth   = 1;
+        roundedBottom(x + 0.5, keyboardTop, wkw - 1, keyHeight, WR);
+        ctx.stroke();
 
-        if (showNoteNames) {
-            ctx.fillStyle = "#000";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "bottom";
-
-            ctx.fillText(
-                getNoteName(midi),
-                x + getWhiteKeyWidth() / 2,
-                keyboardTop + keyHeight - 5
-            );
+        // ·· Top inset highlight ··············
+        if (!isTreble && !isBass) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+            ctx.lineWidth   = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x + 1,        keyboardTop + 1);
+            ctx.lineTo(x + wkw - 1,  keyboardTop + 1);
+            ctx.stroke();
         }
 
-        whiteIndex++;
+        // ·· Bottom inset shadow line ·········
+        ctx.strokeStyle = 'rgba(190,180,215,0.55)';
+        ctx.lineWidth   = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x + WR,        keyboardTop + keyHeight - 1.5);
+        ctx.lineTo(x + wkw - WR,  keyboardTop + keyHeight - 1.5);
+        ctx.stroke();
+
+        wi++;
     }
 
-    // BLACK KEYS
-    whiteIndex = 0;
-
+    // ── PASS 2 — BLACK KEYS ─────────────────────────────────────
+    wi = 0;
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
-        if (!isBlackMidi(midi)) {
-            whiteIndex++;
-            continue;
-        }
+        if (!isBlackMidi(midi)) { wi++; continue; }
 
-        const blackKeyWidth = getWhiteKeyWidth() * 0.6;
-        const blackKeyHeight = keyHeight * 0.6;
-
-        const x = (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
-
+        const bx       = (wi - 1) * wkw + wkw * 0.7;
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
 
+        // ·· Drop shadow ······················
+        ctx.shadowColor   = 'rgba(0,0,0,0.32)';
+        ctx.shadowBlur    = 7;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 4;
+
+        // ·· Fill gradient ·····················
+        let g;
         if (isTreble) {
-            ctx.fillStyle = "#E57373";
+            g = ctx.createLinearGradient(bx, keyboardTop, bx, keyboardTop + bkh);
+            g.addColorStop(0, 'rgba(255,90,160,0.82)');
+            g.addColorStop(1, 'rgba(255,40,110,0.62)');
         } else if (isBass) {
-            ctx.fillStyle = "#424242";
+            g = ctx.createLinearGradient(bx, keyboardTop, bx, keyboardTop + bkh);
+            g.addColorStop(0, '#424242');
+            g.addColorStop(1, '#212121');
         } else {
-            ctx.fillStyle = "#000";
+            g = ctx.createLinearGradient(bx, keyboardTop, bx, keyboardTop + bkh);
+            g.addColorStop(0,   '#1a1220');
+            g.addColorStop(0.7, '#100c18');
+            g.addColorStop(1,   '#0d0a14');
         }
+        ctx.fillStyle = g;
+        roundedBottom(bx, keyboardTop, bkw, bkh, BR);
+        ctx.fill();
 
-        ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+        // ·· Reset shadow ·····················
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur  = ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
 
+        // ·· Top inner highlight ··············
+        ctx.strokeStyle = 'rgba(255,255,255,0.13)';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(bx + 1,       keyboardTop + 1);
+        ctx.lineTo(bx + bkw - 1, keyboardTop + 1);
+        ctx.stroke();
+
+        // ·· Bottom inset shadow line ·········
+        ctx.strokeStyle = 'rgba(0,0,0,0.38)';
+        ctx.lineWidth   = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx + BR,       keyboardTop + bkh - 2.5);
+        ctx.lineTo(bx + bkw - BR, keyboardTop + bkh - 2.5);
+        ctx.stroke();
+
+        // ·· Note label ·······················
         if (showNoteNames) {
-            ctx.fillStyle = "#fff";
-            ctx.font = "10px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "bottom";
+            ctx.fillStyle    = 'rgba(255,255,255,0.22)';
+            ctx.font         = 'bold 9px Arial, sans-serif';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(getNoteName(midi), bx + bkw / 2, keyboardTop + bkh - 5);
+        }
+    }
 
-            ctx.fillText(
-                getNoteName(midi),
-                x + blackKeyWidth / 2,
-                keyboardTop + blackKeyHeight - 4
-            );
+    // ── PASS 3 — WHITE KEY NOTE LABELS ──────────────────────────
+    if (showNoteNames) {
+        wi = 0;
+        for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
+            if (isBlackMidi(midi)) continue;
+            const x = wi * wkw;
+
+            ctx.fillStyle    = 'rgba(0,0,0,0.28)';
+            ctx.font         = '500 10px Arial, sans-serif';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(getNoteName(midi), x + wkw / 2, canvas.height - 5);
+            wi++;
         }
     }
 }
