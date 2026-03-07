@@ -1192,8 +1192,7 @@ function revealSight(){document.getElementById('sight-canvas')?.classList.add('r
 async function playSight(){await Tone.start();const spb=60/tempo;const now=Tone.now()+0.1;sightData.rh.forEach((n,i)=>getRH().triggerAttackRelease(n.audio,spb*0.82,now+i*spb));}
 function checkL1Sight(btn,answer){
   if(sightAnswered)return;const fb=document.getElementById('sight-fb');
-  if(answer===sightData.correct){sightAnswered=true;btn.classList.add('correct-ans');if(fb){fb.textContent='✓ Correct! That\'s '+answer+'.';fb.className='sight-feedback ok';}revealSight();doneSets.add(L1_SIGHT_IDX);renderSidebar();const fb2=document.getElementById('sight-finish-bar');if(fb2){fb2.style.opacity='1';fb2.style.pointerEvents='auto';}setTimeout(()=>document.getElementById('sight-finish-bar')?.scrollIntoView({behavior:'smooth',block:'start'}),300);}
-    scheduleSave();
+  if(answer===sightData.correct){sightAnswered=true;btn.classList.add('correct-ans');if(fb){fb.textContent='✓ Correct! That\'s '+answer+'.';fb.className='sight-feedback ok';}revealSight();doneSets.add(L1_SIGHT_IDX);renderSidebar();const fb2=document.getElementById('sight-finish-bar');if(fb2){fb2.style.opacity='1';fb2.style.pointerEvents='auto';}setTimeout(()=>document.getElementById('sight-finish-bar')?.scrollIntoView({behavior:'smooth',block:'start'}),300);scheduleSave();}
   else{btn.classList.add('wrong-ans');if(fb){fb.textContent='Not quite — look at the line/space position.';fb.className='sight-feedback wrong';}setTimeout(()=>btn.classList.remove('wrong-ans'),400);}
 }
 
