@@ -23,7 +23,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 #aurora{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35}
 .screen{display:none;position:relative;z-index:1}
 .screen.active{display:block}
-
+.save-indicator{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:7px 18px;border-radius:100px;background:rgba(30,180,148,0.12);border:1px solid rgba(30,180,148,0.35);color:rgba(18,130,110,1);font-size:0.72rem;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:9999;}
+.save-indicator.visible{opacity:1;}
+  
 /* ══ WELCOME ══ */
 #screen-welcome{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px}
 .welcome-inner{max-width:520px;width:100%;display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center}
@@ -420,6 +422,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 </style>
 </head>
 <body>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <canvas id="aurora" aria-hidden="true"></canvas>
 
 <!-- ══ SCREEN 1: WELCOME ══ -->
@@ -434,7 +437,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
     <p style="font-size:0.72rem;color:var(--muted);font-weight:300">Level 1A · Level 1B · ⭐ Mastery · Level 2 · ~50 minutes total</p>
   </div>
 </div>
-
+<!-- Save indicator toast -->
+<div class="save-indicator" id="save-indicator">✓ Progress saved</div>
 <!-- ══ SCREEN 2: PRACTICE ══ -->
 <div id="screen-practice" class="screen">
   <div class="practice-layout" id="practice-layout">
@@ -458,6 +462,98 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 </div>
 
 <script>
+  // ══ SUPABASE PROGRESS ══
+const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+let _sbClient = null;
+function getSB(){if(!_sbClient)_sbClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);return _sbClient;}
+
+function showSaveToast(){const el=document.getElementById('save-indicator');if(!el)return;el.classList.add('visible');setTimeout(()=>el.classList.remove('visible'),2000);}
+
+function encodeProgress(){
+  const completedKeys=[];
+  doneSets.forEach(i=>completedKeys.push('l1:'+i));
+  l2DoneSets.forEach(i=>completedKeys.push('l2:'+i));
+  masteryCompleted.forEach(id=>completedKeys.push('mastery:'+id));
+  Object.entries(masteryBestAcc).forEach(([k,v])=>completedKeys.push('acc:'+k+':'+v));
+  let lastLesson='welcome';
+  if(currentLevel==='level1a'||currentLevel==='level1b')lastLesson='l1:'+sessionIdx;
+  else if(currentLevel==='mastery')lastLesson='mastery_hub';
+  else if(currentLevel==='level2')lastLesson='l2:'+l2Idx;
+  return{lastLesson,completedKeys};
+}
+
+let _saveTimer=null;
+async function saveProgress(){
+  try{
+    const sb=getSB();
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session?.user)return;
+    const{lastLesson,completedKeys}=encodeProgress();
+    const{error}=await sb.from('course_progress').upsert({user_id:session.user.id,last_lesson:lastLesson,completed_lessons:completedKeys,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+    if(!error)showSaveToast();
+  }catch(e){console.log('save error:',e);}
+}
+
+function scheduleSave(){if(_saveTimer)clearTimeout(_saveTimer);_saveTimer=setTimeout(saveProgress,1400);}
+
+async function loadProgress(){
+  try{
+    const sb=getSB();
+    const{data:{session}}=await sb.auth.getSession();
+    if(!session?.user)return null;
+    const{data,error}=await sb.from('course_progress').select('last_lesson,completed_lessons').eq('user_id',session.user.id).maybeSingle();
+    if(error||!data)return null;
+    return data;
+  }catch(e){console.log('load error:',e);return null;}
+}
+
+function applyProgress(data){
+  if(!data||!data.completed_lessons||data.completed_lessons.length===0)return false;
+  data.completed_lessons.forEach(key=>{
+    if(key.startsWith('l1:')){const idx=parseInt(key.slice(3));if(!isNaN(idx))doneSets.add(idx);}
+    else if(key.startsWith('l2:')){const idx=parseInt(key.slice(3));if(!isNaN(idx))l2DoneSets.add(idx);}
+    else if(key.startsWith('mastery:'))masteryCompleted.add(key.slice(8));
+    else if(key.startsWith('acc:')){const p=key.slice(4).split(':');if(p.length===2)masteryBestAcc[p[0]]=parseInt(p[1]);}
+  });
+  return!!(data.last_lesson&&data.last_lesson!=='welcome');
+}
+
+function getLessonLabel(lastLesson){
+  if(!lastLesson||lastLesson==='welcome')return'the beginning';
+  if(lastLesson==='mastery_hub')return'⭐ Mastery Training';
+  if(lastLesson.startsWith('l1:')){const idx=parseInt(lastLesson.slice(3));const ex=sessionExercises[idx];return ex?`Level ${idx>=L1B_START?'1B':'1A'} — ${ex.label}`:'Level 1';}
+  if(lastLesson.startsWith('l2:')){const idx=parseInt(lastLesson.slice(3));if(idx>=L2_SIGHT_IDX)return'Level 2 — Sight Reading';const ex=L2_EXERCISES[idx];return ex?`Level 2 — ${ex.label}`:'Level 2';}
+  return lastLesson;
+}
+
+function showResumePrompt(lastLesson){
+  const mc=document.getElementById('main-content');
+  const lessonLabel=getLessonLabel(lastLesson);
+  mc.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;text-align:center;padding:20px"><div style="font-size:3rem">🎹</div><div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,rgba(85,55,190,1),rgba(155,110,255,1),rgba(255,90,160,0.9));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1">Welcome back!</div><div style="font-size:0.9rem;color:var(--muted);line-height:1.75;max-width:360px">Your progress has been saved. You were at:<br><strong style="color:var(--text)">${lessonLabel}</strong></div><div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="btn-next-ex" onclick="resumeFromLastLesson('${lastLesson}')">▶ Continue where I left off</button><button class="btn btn-ghost" onclick="freshStart()">↺ Start from the beginning</button></div></div>`;
+  mc.scrollTop=0;
+}
+
+function freshStart(){
+  doneSets.clear();l2DoneSets.clear();masteryCompleted.clear();masteryBestAcc={};masteryStreak=0;
+  sessionIdx=0;l2Idx=0;currentLevel='level1a';
+  document.getElementById('level-badge').textContent='Level 1A';
+  renderSidebar();loadExercise(0);saveProgress();
+}
+
+function resumeFromLastLesson(lastLesson){
+  if(!lastLesson||lastLesson==='welcome')return;
+  if(lastLesson==='mastery_hub'){currentLevel='mastery';document.getElementById('level-badge').textContent='⭐ Mastery';showScreen('screen-practice');renderSidebar();loadMasteryHub();return;}
+  if(lastLesson.startsWith('l1:')){const idx=parseInt(lastLesson.slice(3));if(isNaN(idx))return;currentLevel=idx>=L1B_START?'level1b':'level1a';document.getElementById('level-badge').textContent=currentLevel==='level1b'?'Level 1B':'Level 1A';showScreen('screen-practice');renderSidebar();loadExercise(idx);return;}
+  if(lastLesson.startsWith('l2:')){const idx=parseInt(lastLesson.slice(3));if(isNaN(idx))return;currentLevel='level2';document.getElementById('level-badge').textContent='Level 2';showScreen('screen-practice');renderSidebar();if(idx>=L2_SIGHT_IDX)loadL2SightReading();else loadL2Exercise(idx);return;}
+}
+
+async function checkAndResume(){
+  const saved=await loadProgress();
+  const hasProgress=applyProgress(saved);
+  if(hasProgress){showScreen('screen-practice');renderSidebar();showResumePrompt(saved.last_lesson);}
+  else{showScreen('screen-practice');renderSidebar();loadExercise(0);}
+}
 // ══ AURORA ══
 (function(){
   const cv=document.getElementById('aurora'),cx=cv.getContext('2d');let W,H;
@@ -577,10 +673,8 @@ function startSession(){
   sessionExercises=BEGINNER_CURRICULUM.map(buildBeginnerExercise);
   sightData=buildSightReading(['C4','D4','E4','F4','G4'],4);
   L2_EXERCISES=STAFF_INTRO_EXERCISES.map(buildStaffExercise);
-  document.getElementById('level-badge').textContent='Level 1A';
-  showScreen('screen-practice');
-  renderSidebar();
-  loadExercise(0);
+document.getElementById('level-badge').textContent='Level 1A';
+  checkAndResume();
 }
 function goWelcome(){stopPlayback();showScreen('screen-welcome');window.scrollTo({top:0,behavior:'instant'});}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -728,6 +822,7 @@ function renderPhaseStrip(ex){
 // ══ LOAD EXERCISE DISPATCHER ══
 async function loadExercise(idx){
   sessionIdx=idx; stopPlayback(); noteQueue=[]; noteQueueIdx=0; hasPlayedOnce=false; landmarkMode=false;
+  scheduleSave();
   const mc=document.getElementById('main-content');mc.innerHTML='<div style="padding:60px 0;text-align:center;color:var(--muted);font-size:0.85rem">Building exercise…</div>';mc.scrollTop=0;
   renderSidebar();
   await loadBeginnerExercise(idx);
@@ -836,6 +931,7 @@ async function loadBeginnerExercise(idx){
 function showL1BTransition(){
   stopPlayback();
   currentLevel='level1b';
+  scheduleSave();
   document.getElementById('level-badge').textContent='Level 1B';
   renderSidebar();
   const mc=document.getElementById('main-content');
@@ -871,6 +967,7 @@ function showL1BTransition(){
 // ══ LEVEL 2 EXERCISE LOADER ══
 async function loadL2Exercise(idx){
   l2Idx=idx; stopPlayback(); noteQueue=[]; noteQueueIdx=0; rhDone=false;
+  scheduleSave();
   const mc=document.getElementById('main-content');mc.innerHTML='<div style="padding:60px 0;text-align:center;color:var(--muted);font-size:0.85rem">Building exercise…</div>';mc.scrollTop=0;
   renderSidebar();
   const ex=L2_EXERCISES[idx];const isLast=idx===L2_EXERCISES.length-1;const nextEx=L2_EXERCISES[idx+1];
@@ -1035,6 +1132,7 @@ async function playL2Exercise(){
 // ══ NAVIGATION ══
 function l1NextExercise(){
   doneSets.add(sessionIdx);
+  scheduleSave();
   if(sessionIdx===L1A_MAX-1){
     // Last exercise of 1A
     renderSidebar();
@@ -1046,7 +1144,7 @@ function l1NextExercise(){
     loadL1SightReading();
   }
 }
-function l2NextExercise(){l2DoneSets.add(l2Idx);renderSidebar();if(l2Idx<L2_EXERCISES.length-1)loadL2Exercise(l2Idx+1);else loadL2SightReading();}
+function l2NextExercise(){l2DoneSets.add(l2Idx);scheduleSave();renderSidebar();if(l2Idx<L2_EXERCISES.length-1)loadL2Exercise(l2Idx+1);else loadL2SightReading();}
 function revealNextBar(){const nb=document.getElementById('next-bar-anchor');if(nb){nb.style.display='flex';nb.style.animation='rise 0.4s ease';}}
 
 // ══ LEVEL 1 SIGHT READING ══
@@ -1089,12 +1187,14 @@ async function playSight(){await Tone.start();const spb=60/tempo;const now=Tone.
 function checkL1Sight(btn,answer){
   if(sightAnswered)return;const fb=document.getElementById('sight-fb');
   if(answer===sightData.correct){sightAnswered=true;btn.classList.add('correct-ans');if(fb){fb.textContent='✓ Correct! That\'s '+answer+'.';fb.className='sight-feedback ok';}revealSight();doneSets.add(L1_SIGHT_IDX);renderSidebar();const fb2=document.getElementById('sight-finish-bar');if(fb2){fb2.style.opacity='1';fb2.style.pointerEvents='auto';}setTimeout(()=>document.getElementById('sight-finish-bar')?.scrollIntoView({behavior:'smooth',block:'start'}),300);}
+    scheduleSave();
   else{btn.classList.add('wrong-ans');if(fb){fb.textContent='Not quite — look at the line/space position.';fb.className='sight-feedback wrong';}setTimeout(()=>btn.classList.remove('wrong-ans'),400);}
 }
 
 // ══ MASTERY HUB ══
 function loadMasteryHub(){
   currentLevel='mastery'; stopPlayback(); clearMasteryTimer();
+  scheduleSave();
   document.getElementById('level-badge').textContent='⭐ Mastery';
   renderSidebar();
   const mc=document.getElementById('main-content');
@@ -1359,6 +1459,7 @@ function finishMasteryGame(){
   const g=MASTERY_GAMES.find(x=>x.id===currentMasteryGame);
   const acc=Math.round((masteryCorrect/masteryQ.length)*100);
   masteryCompleted.add(currentMasteryGame);
+  scheduleSave();
   if(!masteryBestAcc[currentMasteryGame]||acc>masteryBestAcc[currentMasteryGame])masteryBestAcc[currentMasteryGame]=acc;
   const allDone=masteryCompleted.size===MASTERY_GAMES.length;
   const mc=document.getElementById('main-content');
@@ -1496,6 +1597,7 @@ function checkMemoryInput(note){
 // ══ LEVEL TRANSITION ══
 function transitionToLevel2(){
   currentLevel='level2';l2Idx=0;l2DoneSets.clear();sightAnswered=false;
+  scheduleSave();
   document.getElementById('level-badge').textContent='Level 2';
   renderSidebar();
   const mc=document.getElementById('main-content');
@@ -1553,6 +1655,7 @@ function checkL2Sight(btn,answer){
 }
 function finishCourse(){
   l2DoneSets.add(L2_SIGHT_IDX);renderSidebar();stopPlayback();
+  scheduleSave();
   document.getElementById('main-content').innerHTML=`<div class="complete-banner"><div style="font-size:3rem;margin-bottom:12px">🎉</div><h2>Course Complete!</h2><p>Level 1A · Level 1B · Mastery Training · Level 2 — all done. You've built keyboard fundamentals, finger technique, rhythm, and full staff reading. That's the foundation every pianist needs.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="replayL2()">↺ Replay Level 2</button><button class="btn btn-ghost" onclick="startSession()">↺ Start Over</button></div></div>`;
 }
 function replayL2(){l2DoneSets.clear();sightAnswered=false;L2_EXERCISES=STAFF_INTRO_EXERCISES.map(buildStaffExercise);l2Idx=0;renderSidebar();loadL2Exercise(0);}
