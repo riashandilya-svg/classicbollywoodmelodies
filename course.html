@@ -549,8 +549,14 @@ function resumeFromLastLesson(lastLesson){
 }
 
 async function checkAndResume(){
-  const saved=await loadProgress();
-  const hasProgress=applyProgress(saved);
+  let saved = null;
+  try {
+    const timeout = new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 3000));
+    saved = await Promise.race([loadProgress(), timeout]);
+  } catch(e) {
+    saved = null;
+  }
+  const hasProgress = applyProgress(saved);
   if(hasProgress){showScreen('screen-practice');renderSidebar();showResumePrompt(saved.last_lesson);}
   else{showScreen('screen-practice');renderSidebar();loadExercise(0);}
 }
