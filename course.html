@@ -472,14 +472,20 @@ function getSB(){if(!_sbClient)_sbClient=supabase.createClient(SUPABASE_URL,SUPA
 
 function showSaveToast(){const el=document.getElementById('save-indicator');if(!el)return;el.classList.add('visible');setTimeout(()=>el.classList.remove('visible'),2000);}
 async function requireLogin(onLoggedIn){
-  const{data:{session}}=await getSB().auth.getSession();
-  if(!session){
-    document.getElementById('login-gate-modal').style.display='flex';
-    return;
-  }
-  if(onLoggedIn)onLoggedIn();
+  try{
+    const{data:{session}}=await getSB().auth.getSession();
+    if(session){if(onLoggedIn)onLoggedIn();return;}
+    // retry once after short delay (session may still be loading)
+    await new Promise(r=>setTimeout(r,600));
+    const{data:{session:session2}}=await getSB().auth.getSession();
+    if(session2){if(onLoggedIn)onLoggedIn();return;}
+  }catch(e){console.log('requireLogin error:',e);}
+  document.getElementById('login-gate-modal').style.display='flex';
 }
-  
+  function dismissLoginGate(){
+  document.getElementById('login-gate-modal').style.display='none';
+}
+
 function encodeProgress(){
   const completedKeys=[];
   doneSets.forEach(i=>completedKeys.push('l1:'+i));
@@ -1998,7 +2004,7 @@ async function onMIDIMessage(e){const[status,note,velocity]=e.data;const type=st
     <div style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,rgba(85,55,190,1),rgba(155,110,255,1),rgba(255,90,160,0.9));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px;line-height:1.15">Log in to continue</div>
     <div style="font-size:0.88rem;color:rgba(22,13,34,0.55);line-height:1.75;margin-bottom:24px">Create a free account to unlock the full course.<br>Your progress is saved automatically so you can pick up right where you left off.</div>
     <a href="https://app.riaomshandilya.com/login.html" style="display:block;padding:14px 24px;border-radius:100px;background:linear-gradient(135deg,rgba(255,90,160,0.28),rgba(155,110,255,0.22));border:1.5px solid rgba(155,110,255,0.36);font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:500;color:rgba(22,13,34,0.88);text-decoration:none;box-shadow:0 4px 16px rgba(155,110,255,0.15);margin-bottom:10px">Login / Sign Up →</a>
-    <button onclick="document.getElementById('login-gate-modal').style.display='none'" style="background:none;border:none;font-size:0.78rem;color:rgba(22,13,34,0.35);cursor:pointer;padding:4px 8px">Maybe later</button>
+<button onclick="dismissLoginGate()" style="background:none;border:none;font-size:0.78rem;color:rgba(22,13,34,0.35);cursor:pointer;padding:4px 8px">Maybe later</button>
   </div>
 </div>
 </body>
