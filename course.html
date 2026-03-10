@@ -471,7 +471,15 @@ let _sbClient = null;
 function getSB(){if(!_sbClient)_sbClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);return _sbClient;}
 
 function showSaveToast(){const el=document.getElementById('save-indicator');if(!el)return;el.classList.add('visible');setTimeout(()=>el.classList.remove('visible'),2000);}
-
+async function requireLogin(onLoggedIn){
+  const{data:{session}}=await getSB().auth.getSession();
+  if(!session){
+    document.getElementById('login-gate-modal').style.display='flex';
+    return;
+  }
+  if(onLoggedIn)onLoggedIn();
+}
+  
 function encodeProgress(){
   const completedKeys=[];
   doneSets.forEach(i=>completedKeys.push('l1:'+i));
@@ -732,11 +740,14 @@ function renderSidebar(){
       const ex=sessionExercises[i];if(!ex)continue;
       const item=document.createElement('div');item.className='sidebar-item'+(i===sessionIdx&&isL1?' active':'')+(doneSets.has(i)?' done':'');
       item.innerHTML=`<div class="si-dot">${doneSets.has(i)?'✓':(i+1)}</div><div class="si-text"><div class="si-name">${ex.label}</div><div class="si-skill">${ex.concept}</div></div><span class="si-check">✓</span>`;
-      item.addEventListener('click',()=>{currentLevel='level1a';document.getElementById('level-badge').textContent='Level 1A';loadExercise(i);});sb.appendChild(item);
+item.addEventListener('click',()=>{
+  if(i===0){currentLevel='level1a';document.getElementById('level-badge').textContent='Level 1A';loadExercise(0);return;}
+  requireLogin(()=>{currentLevel='level1a';document.getElementById('level-badge').textContent='Level 1A';loadExercise(i);});
+});
+      sb.appendChild(item);
     }
 
-    const div1=document.createElement('div');div1.className='sidebar-divider';sb.appendChild(div1);
-
+    const div1=document.createElement('div');
     // Phase 2
     const p2h=document.createElement('div');p2h.className='sidebar-phase-header';
     const p2done=Array.from({length:5},(_,i)=>doneSets.has(7+i)).filter(Boolean).length;
@@ -746,7 +757,9 @@ function renderSidebar(){
       const ex=sessionExercises[i];if(!ex)continue;
       const item=document.createElement('div');item.className='sidebar-item'+(i===sessionIdx&&isL1?' active':'')+(doneSets.has(i)?' done':'');
       item.innerHTML=`<div class="si-dot">${doneSets.has(i)?'✓':(i+1)}</div><div class="si-text"><div class="si-name">${ex.label}</div><div class="si-skill">${ex.concept}</div></div><span class="si-check">✓</span>`;
-      item.addEventListener('click',()=>{currentLevel='level1a';document.getElementById('level-badge').textContent='Level 1A';loadExercise(i);});sb.appendChild(item);
+item.addEventListener('click',()=>{
+  requireLogin(()=>{currentLevel='level1a';document.getElementById('level-badge').textContent='Level 1A';loadExercise(i);});
+});
     }
 
     const div2=document.createElement('div');div2.className='sidebar-divider';sb.appendChild(div2);
@@ -1216,17 +1229,18 @@ async function autoListenL2(ex){
 // ══ NAVIGATION ══
 function l1NextExercise(){
   doneSets.add(sessionIdx);
-  scheduleSave();
-  if(sessionIdx===L1A_MAX-1){
-    // Last exercise of 1A
-    renderSidebar();
-    showL1BTransition();
-  } else if(sessionIdx<TOTAL_BEG_EX-1){
-    renderSidebar();
-    loadExercise(sessionIdx+1);
-  } else {
-    loadL1SightReading();
+  if(sessionIdx===0){
+    requireLogin(()=>{
+      scheduleSave();
+      if(sessionIdx===L1A_MAX-1){renderSidebar();showL1BTransition();}
+      else{renderSidebar();loadExercise(1);}
+    });
+    return;
   }
+  scheduleSave();
+  if(sessionIdx===L1A_MAX-1){renderSidebar();showL1BTransition();}
+  else if(sessionIdx<TOTAL_BEG_EX-1){renderSidebar();loadExercise(sessionIdx+1);}
+  else{loadL1SightReading();}
 }
 function l2NextExercise(){l2DoneSets.add(l2Idx);scheduleSave();renderSidebar();if(l2Idx<L2_EXERCISES.length-1)loadL2Exercise(l2Idx+1);else loadL2SightReading();}
 function revealNextBar(){const nb=document.getElementById('next-bar-anchor');if(nb){nb.style.display='flex';nb.style.animation='rise 0.4s ease';}}
@@ -1978,5 +1992,14 @@ async function connectMIDI(){
 function setupMIDIInputs(){midiInputs.forEach(i=>i.removeEventListener('midimessage',onMIDIMessage));midiInputs=[];if(!midiAccess)return;midiAccess.inputs.forEach(i=>{i.addEventListener('midimessage',onMIDIMessage);midiInputs.push(i);});const c=midiInputs.length;const b=document.getElementById('midi-btn'),l=document.getElementById('midi-label');if(!b||!l)return;if(c===0){b.classList.remove('connected');l.textContent='No device';}else{b.classList.add('connected');const nm=midiInputs[0].name||'MIDI';l.textContent=nm.length>18?nm.slice(0,16)+'…':nm;}}
 async function onMIDIMessage(e){const[status,note,velocity]=e.data;const type=status&0xf0;if(type===0x90&&velocity>0){await Tone.start();const nm=midiNumToName(note);const kn=a2k(nm);const keyEl=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`)||document.querySelector(`.key-white[data-note="${nm}"],.key-black[data-note="${nm}"]`);if(keyEl)pressNote(kn||nm,keyEl);else getRH().triggerAttackRelease(Tone.Frequency(note,'midi').toNote(),'8n');}if(type===0x80||(type===0x90&&velocity===0)){const kn=a2k(midiNumToName(note));const keyEl=document.querySelector(`.key-white[data-note="${kn}"],.key-black[data-note="${kn}"]`);if(keyEl)keyEl.classList.remove('pressed');}}
 </script>
+  <div id="login-gate-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(22,13,34,0.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:24px;padding:36px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(22,13,34,0.18);position:relative">
+    <div style="font-size:2.4rem;margin-bottom:12px">🔒</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:700;background:linear-gradient(135deg,rgba(85,55,190,1),rgba(155,110,255,1),rgba(255,90,160,0.9));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px;line-height:1.15">Log in to continue</div>
+    <div style="font-size:0.88rem;color:rgba(22,13,34,0.55);line-height:1.75;margin-bottom:24px">Create a free account to unlock the full course.<br>Your progress is saved automatically so you can pick up right where you left off.</div>
+    <a href="https://app.riaomshandilya.com/login.html" style="display:block;padding:14px 24px;border-radius:100px;background:linear-gradient(135deg,rgba(255,90,160,0.28),rgba(155,110,255,0.22));border:1.5px solid rgba(155,110,255,0.36);font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:500;color:rgba(22,13,34,0.88);text-decoration:none;box-shadow:0 4px 16px rgba(155,110,255,0.15);margin-bottom:10px">Login / Sign Up →</a>
+    <button onclick="document.getElementById('login-gate-modal').style.display='none'" style="background:none;border:none;font-size:0.78rem;color:rgba(22,13,34,0.35);cursor:pointer;padding:4px 8px">Maybe later</button>
+  </div>
+</div>
 </body>
 </html>
