@@ -986,6 +986,7 @@
         <button class="tab" onclick="switchTab('requests', this)">💬 Song Requests</button>
           <button class="tab" onclick="switchTab('sheetmusic', this)">📄 Sheet Music</button>
         <button class="tab" onclick="switchTab('pricing', this)">💰 Pricing</button>
+        <button class="tab" onclick="switchTab('courseprogress', this)">🎹 Course Progress</button>
       </div>
       
       <!-- Users Tab -->
@@ -1204,7 +1205,62 @@ placeholder="Search by message, request type, or user..."
           </div>
         </div>
       </div>
-
+<!-- Course Progress Tab -->
+<div id="courseprogressTab" class="tab-content hidden">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">🎹 Course Progress</h2>
+      <button class="refresh-btn" onclick="loadCourseProgress()">↻ Refresh</button>
+    </div>
+    <div class="stats-grid" style="margin-bottom:24px">
+      <div class="stat-box">
+        <div class="stat-value" id="cp-total">-</div>
+        <div class="stat-label">Started Course</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="cp-l1a" style="color:var(--primary)">-</div>
+        <div class="stat-label">In Level 1A</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="cp-l1b" style="color:var(--warning)">-</div>
+        <div class="stat-label">In Level 1B</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="cp-mastery" style="color:#a855f7">-</div>
+        <div class="stat-label">In Mastery</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="cp-l2" style="color:var(--success)">-</div>
+        <div class="stat-label">In Level 2</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="cp-done" style="color:var(--success)">-</div>
+        <div class="stat-label">Finished Course</div>
+      </div>
+    </div>
+    <input type="text" class="search-box" id="cpSearch" placeholder="Search by name or email..." onkeyup="filterCourseProgress()">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Last Position</th>
+            <th>Level 1A</th>
+            <th>Level 1B</th>
+            <th>Mastery</th>
+            <th>Level 2</th>
+            <th>Overall</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody id="cpTableBody">
+          <tr><td colspan="8" class="loading"><div class="spinner"></div>Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+      
       <!-- Pricing Tab -->
       <div id="pricingTab" class="tab-content hidden">
         <div class="card">
@@ -3038,6 +3094,11 @@ async function switchTab(tabName, btn) {
   if (tabName === 'sheetmusic') {
     loadSheetMusic();
   }
+  if (tabName === 'courseprogress') {
+  if (!allUsers || allUsers.length === 0) await loadUsers();
+  loadCourseProgress();
+}
+
 if (tabName === 'requests') {
   if (!allUsers || allUsers.length === 0) await loadUsers();
   loadFeedbackRequests();
@@ -3265,7 +3326,117 @@ if (tabName === 'requests') {
     const _startDate = new Date();
     _startDate.setDate(_startDate.getDate() - 30);
     document.getElementById('startDate').valueAsDate = _startDate;
+// ═══════════════════════════════════════════════════════
+// COURSE PROGRESS
+// ═══════════════════════════════════════════════════════
 
+let allCourseProgress = [];
+
+function parseCourseProgress(row) {
+  const completed = row.completed_lessons || [];
+  const l1 = completed.filter(k => k.startsWith('l1:')).map(k => parseInt(k.slice(3))).filter(n => !isNaN(n));
+  const l2 = completed.filter(k => k.startsWith('l2:')).map(k => parseInt(k.slice(3))).filter(n => !isNaN(n));
+  const mastery = completed.filter(k => k.startsWith('mastery:')).map(k => k.slice(8));
+  const l1aDone = l1.filter(i => i < 12).length;
+  const l1bDone = l1.filter(i => i >= 12).length;
+  const l1SightDone = l1.includes(22);
+  const l2Done = l2.length;
+  const masteryDone = mastery.length;
+  const last = row.last_lesson || 'welcome';
+  let stage = 'Not started';
+  if (last === 'welcome') stage = 'Not started';
+  else if (last === 'mastery_hub') stage = '⭐ Mastery Hub';
+  else if (last.startsWith('l1:')) {
+    const idx = parseInt(last.slice(3));
+    stage = idx >= 12 ? `Level 1B — Ex ${idx + 1}` : `Level 1A — Ex ${idx + 1}`;
+  } else if (last.startsWith('l2:')) {
+    const idx = parseInt(last.slice(3));
+    stage = idx >= 3 ? 'Level 2 Sight Reading' : `Level 2 — Ex ${idx + 1}`;
+  }
+  const totalDone = l1.length + l2.length + masteryDone + (l1SightDone ? 1 : 0);
+  const totalPossible = 22 + 1 + 10 + 3 + 1; // l1 + l1sight + mastery + l2 + l2sight
+  const pct = Math.round((totalDone / totalPossible) * 100);
+  return { l1aDone, l1bDone, masteryDone, l2Done, l1SightDone, stage, pct, last };
+}
+
+function progressBar(pct, color) {
+  return `<div style="background:rgba(0,0,0,0.07);border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle">
+    <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width 0.3s"></div>
+  </div> <span style="font-size:12px;color:var(--muted)">${pct}%</span>`;
+}
+
+async function loadCourseProgress() {
+  const tbody = document.getElementById('cpTableBody');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+  try {
+    const { data, error } = await window.supabase
+      .from('course_progress')
+      .select('user_id, last_lesson, completed_lessons, updated_at')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    allCourseProgress = data || [];
+    renderCourseProgress(allCourseProgress);
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+  }
+}
+
+function renderCourseProgress(list) {
+  const tbody = document.getElementById('cpTableBody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🎹</div><p>No course progress yet</p></td></tr>';
+    updateCourseStats([]);
+    return;
+  }
+  updateCourseStats(list);
+  tbody.innerHTML = list.map(row => {
+    const p = parseCourseProgress(row);
+    const profile = getProfile(row.user_id);
+    const userCell = profile
+      ? userInfoHTML(escHTML(profile.display_name || 'Unknown'), escHTML(profile.email || ''))
+      : `<span class="code-display">${row.user_id.substring(0, 8)}…</span>`;
+    const stageBadge = p.last === 'welcome'
+      ? `<span class="badge badge-warning">Not started</span>`
+      : p.pct >= 100
+      ? `<span class="badge badge-success">✓ Finished</span>`
+      : `<span style="font-size:13px">${p.stage}</span>`;
+    const l1aBar = progressBar(Math.round((p.l1aDone / 12) * 100), 'rgba(155,110,255,0.7)');
+    const l1bBar = progressBar(Math.round(((p.l1bDone + (p.l1SightDone ? 1 : 0)) / 11) * 100), 'rgba(245,158,11,0.8)');
+    const masteryBar = progressBar(Math.round((p.masteryDone / 10) * 100), 'rgba(168,85,247,0.75)');
+    const l2Bar = progressBar(Math.round((p.l2Done / 4) * 100), 'rgba(16,185,129,0.75)');
+    const overallBar = progressBar(p.pct, p.pct >= 100 ? 'var(--success)' : 'rgba(155,110,255,0.6)');
+    return `<tr>
+      <td>${userCell}</td>
+      <td>${stageBadge}</td>
+      <td>${l1aBar}<br><span style="font-size:11px;color:var(--muted)">${p.l1aDone}/12</span></td>
+      <td>${l1bBar}<br><span style="font-size:11px;color:var(--muted)">${p.l1bDone + (p.l1SightDone ? 1 : 0)}/11</span></td>
+      <td>${masteryBar}<br><span style="font-size:11px;color:var(--muted)">${p.masteryDone}/10</span></td>
+      <td>${l2Bar}<br><span style="font-size:11px;color:var(--muted)">${p.l2Done}/4</span></td>
+      <td>${overallBar}</td>
+      <td style="font-size:12px;color:var(--muted)">${new Date(row.updated_at).toLocaleDateString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateCourseStats(list) {
+  const parsed = list.map(parseCourseProgress);
+  document.getElementById('cp-total').textContent = list.length;
+  document.getElementById('cp-l1a').textContent = parsed.filter(p => p.last.startsWith('l1:') && parseInt(p.last.slice(3)) < 12).length;
+  document.getElementById('cp-l1b').textContent = parsed.filter(p => p.last.startsWith('l1:') && parseInt(p.last.slice(3)) >= 12).length;
+  document.getElementById('cp-mastery').textContent = parsed.filter(p => p.last === 'mastery_hub').length;
+  document.getElementById('cp-l2').textContent = parsed.filter(p => p.last.startsWith('l2:')).length;
+  document.getElementById('cp-done').textContent = parsed.filter(p => p.pct >= 100).length;
+}
+
+function filterCourseProgress() {
+  const q = document.getElementById('cpSearch').value.toLowerCase();
+  if (!q) { renderCourseProgress(allCourseProgress); return; }
+  const filtered = allCourseProgress.filter(row => {
+    const p = getProfile(row.user_id);
+    return (p?.display_name || '').toLowerCase().includes(q) || (p?.email || '').toLowerCase().includes(q);
+  });
+  renderCourseProgress(filtered);
+}
     checkAdminAccess();
   </script>
 </body>
