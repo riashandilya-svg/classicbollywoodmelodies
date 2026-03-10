@@ -474,10 +474,11 @@ function showSaveToast(){const el=document.getElementById('save-indicator');if(!
 async function requireLogin(onLoggedIn){
   try{
     const{data:{session}}=await getSB().auth.getSession();
+    console.log('requireLogin session:', session);  // ADD THIS
     if(session){if(onLoggedIn)onLoggedIn();return;}
-    // retry once after short delay (session may still be loading)
     await new Promise(r=>setTimeout(r,600));
     const{data:{session:session2}}=await getSB().auth.getSession();
+    console.log('requireLogin session2:', session2);  // ADD THIS
     if(session2){if(onLoggedIn)onLoggedIn();return;}
   }catch(e){console.log('requireLogin error:',e);}
   document.getElementById('login-gate-modal').style.display='flex';
