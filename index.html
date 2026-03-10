@@ -185,24 +185,23 @@
       background: rgba(155,110,255,0.18);
     }
 
-    @media (max-width: 1100px){
-      .navGrid{ grid-template-columns: 1fr; grid-template-rows: auto auto; padding: 10px 12px 12px; }
-      .navTitle{ grid-column: 1; grid-row: 1; justify-self: center; }
-      .accountDock{ grid-column: 1; grid-row: 2; justify-self: stretch; width: 100%; max-width: 100%; }
+ @media (max-width: 1100px){
+  .navGrid{ grid-template-columns: auto 1fr auto; grid-template-rows: auto; padding: 10px 12px; }
+  .navTitle{ grid-column: 2; grid-row: 1; justify-self: center; }
+  .accountDock{ grid-column: 3; grid-row: 1; justify-self: end; width: auto; max-width: 100%; }
       .accountLayout{ width: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
       .welcomeText{ max-width: 92vw; text-align: center; }
       .actionStrip{ width: 100%; }
       .stripItem{ flex: 1; justify-content: center; padding: 11px 10px; }
     }
-
-    @media (max-width: 980px){
-      .navGrid{ grid-template-columns: 1fr; grid-template-rows: auto auto; }
-      .navTitle{ grid-column: 1; grid-row: 1; justify-self: center; }
-      .accountDock{ grid-column: 1; grid-row: 2; justify-self: center; width: 100%; max-width: 100%; display: block; }
-      .accountLayout{ justify-content: center; flex-wrap: wrap; }
-      .welcomeText{ flex: 0 0 100%; max-width: 92vw; text-align: center; }
-      .actionStrip{ width: 100%; }
-      .stripItem{ flex: 1; justify-content: center; }
+@media (max-width: 980px){
+  .navGrid{ grid-template-columns: auto 1fr auto; grid-template-rows: auto; }
+  .navTitle{ grid-column: 2; grid-row: 1; justify-self: center; }
+  .accountDock{ grid-column: 3; grid-row: 1; justify-self: end; width: auto; max-width: 100%; display: block; }
+  .accountLayout{ justify-content: center; flex-wrap: wrap; }
+  .welcomeText{ flex: 0 0 100%; max-width: 92vw; text-align: center; }
+  .actionStrip{ width: 100%; }
+  .stripItem{ flex: 1; justify-content: center; }
     }
 
     @media (max-width: 760px){
@@ -595,7 +594,7 @@
 
   <header class="banner">
 <div class="navGrid">
-  <a href="#" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0;">
+<a href="#" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0;grid-column:1;grid-row:1;padding-left:0.5rem;">
     <img src="logo1.png" alt="riaaz logo" style="height:56px;width:auto;display:block;object-fit:contain;">
   </a>
   <div class="navTitle">
