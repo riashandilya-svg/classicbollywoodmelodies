@@ -560,10 +560,16 @@ function freshStart(){
 function resumeFromLastLesson(lastLesson){
   if(!lastLesson||lastLesson==='welcome')return;
   if(lastLesson==='mastery_hub'){currentLevel='mastery';document.getElementById('level-badge').textContent='⭐ Mastery';showScreen('screen-practice');renderSidebar();loadMasteryHub();return;}
-  if(lastLesson.startsWith('l1:')){const idx=parseInt(lastLesson.slice(3));if(isNaN(idx))return;currentLevel=idx>=L1B_START?'level1b':'level1a';document.getElementById('level-badge').textContent=currentLevel==='level1b'?'Level 1B':'Level 1A';showScreen('screen-practice');renderSidebar();loadExercise(idx);return;}
+  if(lastLesson.startsWith('l1:')){
+    const idx=parseInt(lastLesson.slice(3));if(isNaN(idx))return;
+    const nextIdx=doneSets.has(idx)?idx+1:idx;  // if already done, go to next
+    currentLevel=nextIdx>=L1B_START?'level1b':'level1a';
+    document.getElementById('level-badge').textContent=currentLevel==='level1b'?'Level 1B':'Level 1A';
+    showScreen('screen-practice');renderSidebar();loadExercise(nextIdx);return;
+  }
   if(lastLesson.startsWith('l2:')){const idx=parseInt(lastLesson.slice(3));if(isNaN(idx))return;currentLevel='level2';document.getElementById('level-badge').textContent='Level 2';showScreen('screen-practice');renderSidebar();if(idx>=L2_SIGHT_IDX)loadL2SightReading();else loadL2Exercise(idx);return;}
 }
-
+  
 async function checkAndResume(){
   let saved = null;
   try {
