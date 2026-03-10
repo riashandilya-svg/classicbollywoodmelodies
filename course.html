@@ -1230,8 +1230,8 @@ async function autoListenL2(ex){
 function l1NextExercise(){
   doneSets.add(sessionIdx);
   if(sessionIdx===0){
+    scheduleSave();
     requireLogin(()=>{
-      scheduleSave();
       if(sessionIdx===L1A_MAX-1){renderSidebar();showL1BTransition();}
       else{renderSidebar();loadExercise(1);}
     });
