@@ -611,27 +611,27 @@ const bundlePriceDisplay = bundlePrice
       : `${currencySymbol}${(bundlePrice / 100).toFixed(0)}`)
   : null;
 
-      let paywallHTML = `
+  let paywallHTML = `
         <div style="max-width: 500px; margin: 0 auto; padding: 20px;">
           <h3>${title || "Unlock This Song"}</h3>
           <p>${body || "Purchase to access this exclusive content"}</p>
           
-      <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
-  <p style="margin: 0 0 5px 0;"><strong>Your Price:</strong> ${priceDisplay}</p>
-  <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #666;">
-    ${hasBooks ? `📚 Book owner pricing (${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned)` : `${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned`}
-  </p>
-  <p style="margin: 0; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.85em; color: #444; line-height: 1.4;">
-    💡 <strong>What's included:</strong><br>
-    • Falling notes learning video<br>
-    • Sheet music PDF (watermarked with your name)<br>
-    • Access both in your <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="color: #3b82f6; text-decoration: underline;">DASHBOARD</a>
-  </p>
+          <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+            <p style="margin: 0 0 5px 0;"><strong>Your Price:</strong> ${priceDisplay}</p>
+            <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #666;">
+              ${hasBooks ? `📚 Book owner pricing (${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned)` : `${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned`}
+            </p>
+            <p style="margin: 0; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.85em; color: #444; line-height: 1.4;">
+              💡 <strong>What's included:</strong><br>
+              • Falling notes learning video<br>
+              • Sheet music PDF (watermarked with your name)<br>
+              • Access both in your <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="color: #3b82f6; text-decoration: underline;">DASHBOARD</a>
+            </p>
+          </div>
       `;
 
-      // ✅ FIXED: Show simple total credit count instead of confusing "5 bundle + 5 book bonus" breakdown
+      // Credits button — only if user has credits
       if (canUseCredits && credits.total > 0) {
-        // Build credit summary: "1 Bundle = 5 credits + 2 book bonus"
         let creditSummary = "";
         if (credits.bundleCredits > 0 && credits.bookCredits > 0) {
           creditSummary = `1 Bundle = 5 credits + ${credits.bookCredits} book bonus`;
@@ -640,64 +640,67 @@ const bundlePriceDisplay = bundlePrice
         } else {
           creditSummary = `${credits.bookCredits} book bonus`;
         }
-
         console.log(`[PAYWALL] 🎁 Showing credit button — ${creditSummary} (total: ${credits.total})`);
-        // ── Subscription upsell ──
-   
-// Show bundle option
-if (bundleAvailable && bundlePrice) {
-  const perSongPrice = bundlePrice / 5;
-  const perSongDisplay = useDecimals
-    ? `${currencySymbol}${(perSongPrice / 100).toFixed(2)}`
-    : `${currencySymbol}${(perSongPrice / 100).toFixed(0)}`;
-  
-  const totalIfBoughtSeparately = price * 5;
-  const savings = totalIfBoughtSeparately - bundlePrice;
-  const savingsDisplay = useDecimals
-    ? `${currencySymbol}${(savings / 100).toFixed(2)}`
-    : `${currencySymbol}${(savings / 100).toFixed(0)}`;
-  
-  paywallHTML += `
-    <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
-      <h4 style="margin: 0 0 10px 0;">💎 Better Deal: 5-Song Bundle</h4>
-      <p style="margin: 0 0 8px 0; font-size: 0.9em;">
-        Get 5 songs for ${bundlePriceDisplay}
-      </p>
-      <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #92400e;">
-        <strong>${perSongDisplay} per song</strong> — Save ${savingsDisplay}!
-      </p>
-      <button id="bundleBtn" type="button" style="
-        width: 100%;
-        padding: 12px;
-        background: #f59e0b;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 16px;
-        cursor: pointer;
-      ">
-        Buy 5-Song Bundle ${bundlePriceDisplay}
-      </button>
-    </div>
+        paywallHTML += `
+          <div style="margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #444;">
+              🎁 Your credits: <strong>${creditSummary}</strong>
+            </p>
+            <button id="redeemBtn" type="button" style="
+              width: 100%;
+              padding: 12px;
+              background: #10b981;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 16px;
+              cursor: pointer;
+              margin-bottom: 10px;
+            ">
+              Unlock with 1 Credit (${credits.total} available)
+            </button>
+          </div>
+        `;
+      } else {
+        console.log("[PAYWALL] ℹ️ No credits available for redemption");
+      }
+
+      // Bundle option — only if available
+      if (bundleAvailable && bundlePrice) {
+        const perSongPrice = bundlePrice / 5;
+        const perSongDisplay = useDecimals
+          ? `${currencySymbol}${(perSongPrice / 100).toFixed(2)}`
+          : `${currencySymbol}${(perSongPrice / 100).toFixed(0)}`;
+        const totalIfBoughtSeparately = price * 5;
+        const savings = totalIfBoughtSeparately - bundlePrice;
+        const savingsDisplay = useDecimals
+          ? `${currencySymbol}${(savings / 100).toFixed(2)}`
+          : `${currencySymbol}${(savings / 100).toFixed(0)}`;
+        paywallHTML += `
+          <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+            <h4 style="margin: 0 0 10px 0;">💎 Better Deal: 5-Song Bundle</h4>
+            <p style="margin: 0 0 8px 0; font-size: 0.9em;">Get 5 songs for ${bundlePriceDisplay}</p>
+            <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #92400e;">
+              <strong>${perSongDisplay} per song</strong> — Save ${savingsDisplay}!
+            </p>
+            <button id="bundleBtn" type="button" style="
+              width: 100%;
+              padding: 12px;
+              background: #f59e0b;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 16px;
+              cursor: pointer;
+            ">
+              Buy 5-Song Bundle ${bundlePriceDisplay}
+            </button>
+          </div>
         `;
       }
 
+      // Subscription — always shown
       paywallHTML += `
-          <button id="buyBtn" type="button" style="
-            width: 100%;
-            padding: 12px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-          ">
-            Buy This Song ${priceDisplay}
-          </button>
-        </div>
-      `;
-   paywallHTML += `
         <div style="margin: 20px 0; padding: 15px; background: #ede9fe; border: 2px solid #7c3aed; border-radius: 8px;">
           <h4 style="margin: 0 0 6px 0; color: #5b21b6;">🎵 Unlock All Songs</h4>
           <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #4c1d95;">
@@ -715,6 +718,23 @@ if (bundleAvailable && bundlePrice) {
           ">
             Subscribe ₹249/month
           </button>
+        </div>
+      `;
+
+      // Buy single song — always shown
+      paywallHTML += `
+        <button id="buyBtn" type="button" style="
+          width: 100%;
+          padding: 12px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+        ">
+          Buy This Song ${priceDisplay}
+        </button>
         </div>
       `;
 
