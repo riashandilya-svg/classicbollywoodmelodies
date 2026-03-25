@@ -784,4 +784,73 @@ window.location.reload();
   console.log("[PAYWALL] ✅ Paywall system loaded");
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
-})();
+    window.startSubscription = startSubscription; 
+  async function startSubscription(planType) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { alert("Please log in first"); return; }
+
+  const res = await fetch(
+    `${SUPABASE_URL}/functions/v1/create-subscription`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+        "apikey": SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ plan_type: planType }),
+    }
+  );
+  const data = await res.json();
+
+  const options = {
+    key: data.key_id,
+    name: "riaaz",
+    description: planType === "monthly" ? "Monthly Subscription" : "Lifetime Access",
+    image: "https://app.riaomshandilya.com/favicon.ico",
+
+    handler: async function(response) {
+      const verifyRes = await fetch(
+        `${SUPABASE_URL}/functions/v1/verify-subscription`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            plan_type: planType,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            razorpay_subscription_id: response.razorpay_subscription_id || null,
+            razorpay_order_id: response.razorpay_order_id || null,
+          }),
+        }
+      );
+      const verifyData = await verifyRes.json();
+      if (verifyData.success) {
+        alert("🎉 You're subscribed! Enjoy all songs.");
+        window.location.reload();
+      } else {
+        alert("Payment verification failed. Please contact us.");
+      }
+    },
+
+    prefill: { email: session.user.email },
+    theme: { color: "#6c47ff" },
+  };
+
+  if (planType === "monthly") {
+    options.subscription_id = data.subscription_id;
+  } else {
+    options.order_id = data.order_id;
+    options.amount = data.amount;
+    options.currency = data.currency;
+  }
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+}
+)();
