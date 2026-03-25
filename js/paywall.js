@@ -807,8 +807,9 @@ window.location.reload();
   console.log("[PAYWALL] ✅ Paywall system loaded");
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
-  async function startSubscription(planType) {
-const { data: { session } } = await window.supabase.auth.getSession();
+async function startSubscription(planType) {
+  await loadRazorpay();
+  const { data: { session } } = await window.supabase.auth.getSession();
   if (!session) { alert("Please log in first"); return; }
 
 const res = await fetch(
