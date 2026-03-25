@@ -191,14 +191,29 @@ async function detectCurrency() {
       return false;
     }
   
-    // Check if owner
+// Check if owner
     const email = normalizeEmail(session.user.email);
     if (OWNER_EMAILS.includes(email)) {
       console.log("[PAYWALL] ✅ User is owner - granting access");
       return true;
     }
   
-    const userId = session.user.id;
+    // ── SUBSCRIPTION CHECK ──
+    const { data: sub } = await window.supabase
+      .from('subscriptions')
+      .select('status, current_period_end')
+      .eq('user_id', session.user.id)
+      .eq('status', 'active')
+      .gte('current_period_end', new Date().toISOString())
+      .maybeSingle();
+
+    if (sub) {
+      console.log("[PAYWALL] ✅ User has active subscription - granting access");
+      return true;
+    }
+    // ────────────────────────
+
+    const userId = session.user.id;  // ← this line was already there;
     const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
   
     console.log(`[PAYWALL] 🔍 Checking ownership for song_slug: ${songSlug}`);
