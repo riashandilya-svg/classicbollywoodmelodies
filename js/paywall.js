@@ -643,26 +643,41 @@ const bundlePriceDisplay = bundlePrice
 
         console.log(`[PAYWALL] 🎁 Showing credit button — ${creditSummary} (total: ${credits.total})`);
         
-        paywallHTML += `
-          <div style="margin: 20px 0;">
-            <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #444;">
-              🎁 Your credits: <strong>${creditSummary}</strong>
-            </p>
-            <button id="redeemBtn" type="button" style="
+paywallHTML += `
+          <button id="buyBtn" type="button" style="
+            width: 100%;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+          ">
+            Buy This Song ${priceDisplay}
+          </button>
+
+          <div style="margin-top: 20px; padding: 15px; background: #f3f0ff; border: 2px solid #9b6eff; border-radius: 8px; text-align: center;">
+            <p style="margin: 0 0 4px 0; font-weight: 700; font-size: 0.95em; color: #5537be;">🎵 Or get ALL songs</p>
+            <p style="margin: 0 0 12px 0; font-size: 0.82em; color: #6b5b95;">Monthly subscription — cancel anytime</p>
+            <button id="subscribeBtn" type="button" style="
               width: 100%;
               padding: 12px;
-              background: #10b981;
+              background: #9b6eff;
               color: white;
               border: none;
               border-radius: 6px;
-              font-size: 16px;
+              font-size: 15px;
+              font-weight: 700;
               cursor: pointer;
-              margin-bottom: 10px;
+              margin-bottom: 6px;
             ">
-              Unlock with 1 Credit (${credits.total} available)
+              Subscribe ₹249/month — All 30+ Songs
             </button>
+            <a href="/pricing.html" style="font-size: 0.78em; color: #9b6eff; text-decoration: underline;">See all plans →</a>
           </div>
-        `;
+        </div>
+      `;
       } else {
         console.log("[PAYWALL] ℹ️ No credits available for redemption");
       }
@@ -770,7 +785,12 @@ window.location.reload();
           }
         };
       }
-
+const subscribeBtn = document.getElementById("subscribeBtn");
+      if (subscribeBtn) {
+        subscribeBtn.onclick = () => {
+          window.startSubscription('monthly');
+        };
+      }
     } catch (err) {
       console.error("[PAYWALL] ❌ Critical error:", err);
       paywallEl.innerHTML = `
@@ -786,11 +806,11 @@ window.location.reload();
   window.startRazorpayCheckout = startRazorpayCheckout;
     window.startSubscription = startSubscription; 
   async function startSubscription(planType) {
-  const { data: { session } } = await supabase.auth.getSession();
+const { data: { session } } = await window.supabase.auth.getSession();
   if (!session) { alert("Please log in first"); return; }
 
   const res = await fetch(
-    `${SUPABASE_URL}/functions/v1/create-subscription`,
+    `${SUPABASE_FUNCTIONS_BASE}//create-subscription`,
     {
       method: "POST",
       headers: {
@@ -811,7 +831,7 @@ window.location.reload();
 
     handler: async function(response) {
       const verifyRes = await fetch(
-        `${SUPABASE_URL}/functions/v1/verify-subscription`,
+        `${${SUPABASE_FUNCTIONS_BASE}/verify-subscription`,
         {
           method: "POST",
           headers: {
