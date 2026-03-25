@@ -642,46 +642,8 @@ const bundlePriceDisplay = bundlePrice
         }
 
         console.log(`[PAYWALL] 🎁 Showing credit button — ${creditSummary} (total: ${credits.total})`);
-        
-paywallHTML += `
-          <button id="buyBtn" type="button" style="
-            width: 100%;
-            padding: 12px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-          ">
-            Buy This Song ${priceDisplay}
-          </button>
-
-          <div style="margin-top: 20px; padding: 15px; background: #f3f0ff; border: 2px solid #9b6eff; border-radius: 8px; text-align: center;">
-            <p style="margin: 0 0 4px 0; font-weight: 700; font-size: 0.95em; color: #5537be;">🎵 Or get ALL songs</p>
-            <p style="margin: 0 0 12px 0; font-size: 0.82em; color: #6b5b95;">Monthly subscription — cancel anytime</p>
-            <button id="subscribeBtn" type="button" style="
-              width: 100%;
-              padding: 12px;
-              background: #9b6eff;
-              color: white;
-              border: none;
-              border-radius: 6px;
-              font-size: 15px;
-              font-weight: 700;
-              cursor: pointer;
-              margin-bottom: 6px;
-            ">
-              Subscribe ₹249/month — All 30+ Songs
-            </button>
-            <a href="/pricing.html" style="font-size: 0.78em; color: #9b6eff; text-decoration: underline;">See all plans →</a>
-          </div>
-        </div>
-      `;
-      } else {
-        console.log("[PAYWALL] ℹ️ No credits available for redemption");
-      }
-
+        // ── Subscription upsell ──
+   
 // Show bundle option
 if (bundleAvailable && bundlePrice) {
   const perSongPrice = bundlePrice / 5;
@@ -735,6 +697,26 @@ if (bundleAvailable && bundlePrice) {
           </button>
         </div>
       `;
+   paywallHTML += `
+        <div style="margin: 20px 0; padding: 15px; background: #ede9fe; border: 2px solid #7c3aed; border-radius: 8px;">
+          <h4 style="margin: 0 0 6px 0; color: #5b21b6;">🎵 Unlock All Songs</h4>
+          <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #4c1d95;">
+            Subscribe for ₹249/month — access every song, cancel anytime.
+          </p>
+          <button id="subscribeBtn" type="button" style="
+            width: 100%;
+            padding: 12px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+          ">
+            Subscribe ₹249/month
+          </button>
+        </div>
+      `;
 
       paywallEl.innerHTML = paywallHTML;
 
@@ -752,7 +734,13 @@ if (bundleAvailable && bundlePrice) {
           startRazorpayCheckout({ productId: BUNDLE_PRODUCT_ID, currency });
         };
       }
-
+const subscribeBtn = document.getElementById("subscribeBtn");
+      if (subscribeBtn) {
+        subscribeBtn.onclick = () => {
+          console.log("[PAYWALL] 💳 User clicked: Subscribe Monthly");
+          startSubscription('monthly');
+        };
+      }
       const redeemBtn = document.getElementById("redeemBtn");
       if (redeemBtn) {
         redeemBtn.onclick = async () => {
@@ -785,12 +773,7 @@ window.location.reload();
           }
         };
       }
-const subscribeBtn = document.getElementById("subscribeBtn");
-      if (subscribeBtn) {
-        subscribeBtn.onclick = () => {
-          window.startSubscription('monthly');
-        };
-      }
+
     } catch (err) {
       console.error("[PAYWALL] ❌ Critical error:", err);
       paywallEl.innerHTML = `
@@ -804,13 +787,12 @@ const subscribeBtn = document.getElementById("subscribeBtn");
   console.log("[PAYWALL] ✅ Paywall system loaded");
   window.showPaywall = showPaywall;
   window.startRazorpayCheckout = startRazorpayCheckout;
-    window.startSubscription = startSubscription; 
   async function startSubscription(planType) {
 const { data: { session } } = await window.supabase.auth.getSession();
   if (!session) { alert("Please log in first"); return; }
 
-  const res = await fetch(
-    `${SUPABASE_FUNCTIONS_BASE}//create-subscription`,
+const res = await fetch(
+    `${SUPABASE_FUNCTIONS_BASE}/create-subscription`,
     {
       method: "POST",
       headers: {
@@ -831,7 +813,7 @@ const { data: { session } } = await window.supabase.auth.getSession();
 
     handler: async function(response) {
       const verifyRes = await fetch(
-        `${${SUPABASE_FUNCTIONS_BASE}/verify-subscription`,
+    `${SUPABASE_FUNCTIONS_BASE}/verify-subscription`,
         {
           method: "POST",
           headers: {
@@ -869,8 +851,10 @@ const { data: { session } } = await window.supabase.auth.getSession();
     options.currency = data.currency;
   }
 
-  const rzp = new Razorpay(options);
-  rzp.open();
-}
+const rzp = new Razorpay(options);
+    rzp.open();
+  }
+
+  window.startSubscription = startSubscription;
 }
 )();
