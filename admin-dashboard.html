@@ -986,7 +986,8 @@
         <button class="tab" onclick="switchTab('requests', this)">💬 Song Requests</button>
           <button class="tab" onclick="switchTab('sheetmusic', this)">📄 Sheet Music</button>
         <button class="tab" onclick="switchTab('pricing', this)">💰 Pricing</button>
-        <button class="tab" onclick="switchTab('courseprogress', this)">🎹 Course Progress</button>
+<button class="tab" onclick="switchTab('courseprogress', this)">🎹 Course Progress</button>
+        <button class="tab" onclick="switchTab('subscriptions', this)">💳 Subscriptions</button>
       </div>
       
       <!-- Users Tab -->
@@ -1012,7 +1013,8 @@
   <th>Bundles</th>
   <th>Photo</th>
   <th>Video</th>
-  <th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
+<th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
+  <th>Subscription</th>
   <th>Actions</th>
 </tr>
 
@@ -1260,6 +1262,52 @@ placeholder="Search by message, request type, or user..."
     </div>
   </div>
 </div>
+
+      <!-- Subscriptions Tab -->
+      <div id="subscriptionsTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💳 Subscriptions</h2>
+            <button class="refresh-btn" onclick="loadSubscriptions()">↻ Refresh</button>
+          </div>
+          <div class="stats-grid" style="margin-bottom:24px">
+            <div class="stat-box">
+              <div class="stat-value" id="sub-total" style="color:var(--primary)">-</div>
+              <div class="stat-label">Active Subscriptions</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="sub-monthly" style="color:var(--success)">-</div>
+              <div class="stat-label">Monthly</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="sub-annual" style="color:#1d4ed8">-</div>
+              <div class="stat-label">Annual</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="sub-cancelled" style="color:var(--error)">-</div>
+              <div class="stat-label">Cancelled / Expired</div>
+            </div>
+          </div>
+          <input type="text" class="search-box" id="subSearch" placeholder="Search by name, email or plan..." onkeyup="filterSubscriptions()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Razorpay Subscription ID</th>
+                  <th>Renews / Expires</th>
+                  <th>Started</th>
+                </tr>
+              </thead>
+              <tbody id="subTableBody">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       
       <!-- Pricing Tab -->
       <div id="pricingTab" class="tab-content hidden">
@@ -2336,7 +2384,7 @@ async function grantSongAccessForever() {
         authCheck.classList.add('hidden');
         adminContent.classList.remove('hidden');
 
-        await Promise.all([loadPurchasesData(), loadBundlesData(), loadSavedRates()]);
+await Promise.all([loadPurchasesData(), loadBundlesData(), loadSavedRates(), loadSubscriptionsData()]);
         loadStats();
         loadUsers();
         loadCodes();
@@ -2496,6 +2544,15 @@ tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></d
           : '<span style="color: var(--muted); font-size: 13px;">None</span>';
     
         // UPDATE THIS PART - Show both buttons for all non-admin users
+  const sub = allSubscriptions.find(s => s.user_id === user.id && s.status === 'active');
+        const subBadge = sub
+          ? (sub.plan_type === 'monthly'
+              ? `<span class="badge badge-success">Monthly</span>`
+              : sub.plan_type === 'annual'
+              ? `<span class="badge" style="background:rgba(59,130,246,0.1);color:#1d4ed8;">Annual</span>`
+              : `<span class="badge badge-warning">${sub.plan_type}</span>`)
+          : `<span class="badge badge-error">No</span>`;
+
         const actionButtons = isAdmin
           ? '<span class="badge badge-warning">ADMIN</span>'
           : `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button>
@@ -2532,7 +2589,8 @@ tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></d
           <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
           <td>${photoHTML}</td>
           <td>${videoHTML}</td>
-          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>${subBadge}</td>
           <td>${actionButtons}</td>
         </tr>`;
       }).join('');
@@ -3098,7 +3156,11 @@ async function switchTab(tabName, btn) {
   if (!allUsers || allUsers.length === 0) await loadUsers();
   loadCourseProgress();
 }
-
+if (tabName === 'subscriptions') {
+    if (!allUsers || allUsers.length === 0) await loadUsers();
+    loadSubscriptions();
+  }
+  
 if (tabName === 'requests') {
   if (!allUsers || allUsers.length === 0) await loadUsers();
   loadFeedbackRequests();
@@ -3329,7 +3391,76 @@ if (tabName === 'requests') {
 // ═══════════════════════════════════════════════════════
 // COURSE PROGRESS
 // ═══════════════════════════════════════════════════════
+let allSubscriptions = [];
 
+async function loadSubscriptionsData() {
+  const { data, error } = await window.supabase
+    .from('subscriptions')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  allSubscriptions = data || [];
+}
+
+async function loadSubscriptions() {
+  const tbody = document.getElementById('subTableBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+  try {
+    await loadSubscriptionsData();
+    renderSubscriptions(allSubscriptions);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+  }
+}
+
+function renderSubscriptions(list) {
+  const tbody = document.getElementById('subTableBody');
+  const active = list.filter(s => s.status === 'active');
+  document.getElementById('sub-total').textContent = active.length;
+  document.getElementById('sub-monthly').textContent = active.filter(s => s.plan_type === 'monthly').length;
+  document.getElementById('sub-annual').textContent = active.filter(s => s.plan_type === 'annual').length;
+  document.getElementById('sub-cancelled').textContent = list.filter(s => s.status !== 'active').length;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">💳</div><p>No subscriptions yet</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(s => {
+    const profile = getProfile(s.user_id);
+    const planBadge = s.plan_type === 'monthly'
+      ? `<span class="badge badge-success">Monthly</span>`
+      : s.plan_type === 'annual'
+      ? `<span class="badge" style="background:rgba(59,130,246,0.1);color:#1d4ed8;">Annual</span>`
+      : `<span class="badge badge-warning">${s.plan_type}</span>`;
+    const statusBadge = s.status === 'active'
+      ? `<span class="badge badge-success">Active</span>`
+      : `<span class="badge badge-error">${s.status}</span>`;
+    const expiry = s.current_period_end
+      ? new Date(s.current_period_end).toLocaleDateString()
+      : '-';
+    return `<tr>
+      <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
+      <td>${planBadge}</td>
+      <td>${statusBadge}</td>
+      <td><span class="code-display" style="font-size:12px">${s.razorpay_subscription_id || '-'}</span></td>
+      <td>${expiry}</td>
+      <td>${new Date(s.created_at).toLocaleDateString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterSubscriptions() {
+  const q = document.getElementById('subSearch').value.toLowerCase();
+  const filtered = allSubscriptions.filter(s => {
+    const p = getProfile(s.user_id);
+    return (p?.display_name || '').toLowerCase().includes(q) ||
+           (p?.email || '').toLowerCase().includes(q) ||
+           (s.plan_type || '').toLowerCase().includes(q) ||
+           (s.status || '').toLowerCase().includes(q);
+  });
+  renderSubscriptions(filtered);
+}
+    
 let allCourseProgress = [];
 
 function parseCourseProgress(row) {
