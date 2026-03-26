@@ -829,7 +829,7 @@ const res = await fetch(
   const options = {
     key: data.key_id,
     name: "riaaz",
-    description: planType === "monthly" ? "Monthly Subscription" : "Lifetime Access",
+description: planType === "monthly" ? "Monthly Subscription" : planType === "annual" ? "Annual Subscription" : "Lifetime Access",
     image: "https://app.riaomshandilya.com/favicon.ico",
 
     handler: async function(response) {
@@ -864,7 +864,7 @@ const res = await fetch(
     theme: { color: "#6c47ff" },
   };
 
-  if (planType === "monthly") {
+if (planType === "monthly" || planType === "annual") {
     options.subscription_id = data.subscription_id;
   } else {
     options.order_id = data.order_id;
