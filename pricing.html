@@ -329,7 +329,7 @@
       parent.appendChild(row);
     }
 
-    function renderPricing({ currency, isBookOwner }){
+function renderPricing({ currency, isBookOwner }){
       const subtitle = document.getElementById("subtitle");
       const badges = document.getElementById("badges");
       const currencyBadge = document.getElementById("currencyBadge");
@@ -341,52 +341,42 @@
 
       badges.style.display = "flex";
       currencyBadge.textContent = currency;
-      ownerBadge.textContent = isBookOwner ? "Yes" : "No";
+      ownerBadge.textContent = isBookOwner ? "Yes ✓" : "No";
 
       rowsEl.innerHTML = "";
       bundleNote.style.display = "none";
       bundleNote.textContent = "";
 
       if (isBookOwner) {
-        subtitle.textContent = "Book owner pricing";
-
+        subtitle.textContent = "Book owner pricing — thanks for supporting riaaz 🎹";
         if (currency === "INR") {
-          addRow(rowsEl, "Price for first song", formatMoney(150, "INR"));
-          addRow(rowsEl, "Price for second song", formatMoney(129, "INR"));
-          addRow(rowsEl, "Price for 3rd and onwards", formatMoney(100, "INR"));
-          addRow(rowsEl, "Bundle", "5 songs for ₹550");
-          noteText.textContent = "Bundles are available only for book owners.";
+          addRow(rowsEl, "Single song", "₹129");
+          addRow(rowsEl, "Monthly (all 30+ songs)", "₹249/month");
+          addRow(rowsEl, "Lifetime (all songs, forever)", "₹2,999 once");
+          noteText.textContent = "Book owner discount applied. Monthly gives you everything for less than 2 songs.";
         } else {
-          addRow(rowsEl, "Price for first song", formatMoney(8, "USD"));
-          addRow(rowsEl, "Price for second song", "7 USD");
-          addRow(rowsEl, "Price for 3rd and onwards", "7 USD");
-          addRow(rowsEl, "Bundle", "5-song pack for $34 (book owners only)");
-          noteText.textContent = "Bundles are available only for book owners.";
+          addRow(rowsEl, "Single song", "$6");
+          addRow(rowsEl, "Monthly (all 30+ songs)", "$12/month");
+          addRow(rowsEl, "Lifetime (all songs, forever)", "$39 once");
+          noteText.textContent = "Book owner discount applied. Monthly gives you everything for less than 2 songs.";
         }
-
       } else {
-        subtitle.textContent = "Pricing (no books on account)";
-
+        subtitle.textContent = "Your pricing";
         if (currency === "INR") {
-          addRow(rowsEl, "Price for first song", formatMoney(200, "INR"));
-          addRow(rowsEl, "Price for second song", formatMoney(180, "INR"));
-          addRow(rowsEl, "Price for 3rd and onwards", formatMoney(150, "INR"));
-          bundleNote.style.display = "block";
-          bundleNote.textContent = "❌ No bundle";
-          noteText.textContent = "Verify a book to unlock book-owner pricing and bundles.";
+          addRow(rowsEl, "Single song", "₹199");
+          addRow(rowsEl, "Monthly (all 30+ songs)", "₹249/month");
+          addRow(rowsEl, "Lifetime (all songs, forever)", "₹2,999 once");
+          noteText.textContent = "Verify a book to get single songs for ₹129. Or go Monthly — 2 songs already makes it cheaper.";
         } else {
-          addRow(rowsEl, "Price for first song", "10 USD");
-          addRow(rowsEl, "Price for second song", "9 USD");
-          addRow(rowsEl, "Price for 3rd and onwards", "8 USD");
-          bundleNote.style.display = "block";
-          bundleNote.textContent = "❌ No bundle";
-          noteText.textContent = "Verify a book to unlock book-owner pricing and bundles.";
+          addRow(rowsEl, "Single song", "$10");
+          addRow(rowsEl, "Monthly (all 30+ songs)", "$12/month");
+          addRow(rowsEl, "Lifetime (all songs, forever)", "$39 once");
+          noteText.textContent = "Verify a book to unlock discounted single-song pricing.";
         }
       }
 
       card.style.display = "block";
     }
-
     async function init(){
       setYear();
 
