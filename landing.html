@@ -608,9 +608,44 @@ margin-top: -0.5rem;
     }
     #rc-send:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(155,110,255,0.45); }
     #rc-send:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    /* Harmonium Easter Egg hints */
+.nav-logo img { transition: filter 0.3s ease; }
+.nav-logo:hover img { filter: drop-shadow(0 0 8px rgba(255,90,160,0.4)); }
+.story-vertical-text { cursor: pointer; transition: opacity 0.3s, letter-spacing 0.3s; }
+.story-vertical-text:hover { opacity: 0.7; letter-spacing: 0.12em; }
+.fn { pointer-events: auto !important; cursor: pointer; }
+.fn:hover { color: rgba(255,90,160,0.5) !important; transform: scale(1.3) rotate(var(--r)); }
+
+/* Harmonium transition overlay */
+#harmonium-overlay {
+  position: fixed; inset: 0; z-index: 99999;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+#harmonium-overlay.active { opacity: 1; pointer-events: all; }
+.h-overlay-notes {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem; letter-spacing: 0.4em;
+  background: linear-gradient(135deg, rgba(85,55,190,1), rgba(155,110,255,1), rgba(255,90,160,1));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: h-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes h-pulse { from { opacity: 0.4; } to { opacity: 1; } }
+.h-overlay-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem; font-style: italic;
+  color: var(--muted); margin-top: 1rem; letter-spacing: 0.08em;
+}
+    
   </style>
 </head>
 <body>
+  <div id="harmonium-overlay">
+  <div class="h-overlay-notes">♪ ♫ ♩ ♬</div>
+  <div class="h-overlay-text">opening the harmonium…</div>
+</div>
 <canvas id="glitter" aria-hidden="true"></canvas>
 <canvas id="aurora" aria-hidden="true"></canvas>
 <div class="shimmer-line" style="left:15%;animation-duration:7s;animation-delay:0s;"></div>
@@ -1102,7 +1137,38 @@ margin-top: -0.5rem;
   const headObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.backgroundImage='linear-gradient(135deg, #160d22 0%, rgba(85,55,190,0.85) 50%, #160d22 100%)';e.target.style.backgroundSize='200% auto';e.target.style.webkitBackgroundClip='text';e.target.style.backgroundClip='text';e.target.style.webkitTextFillColor='transparent';e.target.style.animation='gradShift 5s ease infinite';headObs.unobserve(e.target);}});},{ threshold: 0.5 });
   headings.forEach(h => headObs.observe(h));
 </script>
+// ══ HARMONIUM EASTER EGG ══
+(function () {
+  var logoClicks = 0;
+  var logoTimer;
 
+  function goHarmonium() {
+    var overlay = document.getElementById('harmonium-overlay');
+    overlay.classList.add('active');
+    setTimeout(function () {
+      window.location.href = '/harmonium.html';
+    }, 1200);
+  }
+
+  // 1. Logo triple-click
+  document.querySelector('.nav-logo').addEventListener('click', function (e) {
+    e.preventDefault();
+    logoClicks++;
+    clearTimeout(logoTimer);
+    if (logoClicks >= 3) { logoClicks = 0; goHarmonium(); return; }
+    logoTimer = setTimeout(function () { logoClicks = 0; }, 800);
+  });
+
+  // 2. रियाज़ vertical text in story section
+  var hindi = document.querySelector('.story-vertical-text');
+  if (hindi) hindi.addEventListener('click', goHarmonium);
+
+  // 3. Floating music notes in hero
+  document.querySelectorAll('.fn').forEach(function (note) {
+    note.addEventListener('click', goHarmonium);
+  });
+})();
+  
 <!-- ALL SONGS MODAL -->
 <div id="songs-modal" style="position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:1.5rem;">
   <div onclick="document.getElementById('songs-modal').classList.remove('open')" style="position:absolute;inset:0;background:rgba(22,10,35,0.5);backdrop-filter:blur(6px);"></div>
