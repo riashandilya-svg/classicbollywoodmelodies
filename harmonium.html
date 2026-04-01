@@ -11,7 +11,6 @@
 :root {
   --gold:#c9933a; --gold-bright:#f0c060; --glow:#ffaa44;
   --primary:#edbc1d; --burg:#4a0404;
-  /* Gold shimmer gradient — same as Ria site */
   --gold-shimmer: linear-gradient(
     100deg,
     #7a4a00 0%, #7a4a00 18%,
@@ -26,13 +25,11 @@ html,body{width:100%;height:100%;font-family:'DM Sans',system-ui,sans-serif;over
 
 #cursor{display:none;}
 
-/* Gold shimmer animation */
 @keyframes goldShimmer{
   0%,100%{ background-position: 0% 50%; }
   50%{ background-position: 100% 50%; }
 }
 
-/* Reusable shimmer text utility */
 .gold-shimmer-text {
   background: var(--gold-shimmer);
   background-size: 220% 100%;
@@ -74,7 +71,6 @@ html,body{width:100%;height:100%;font-family:'DM Sans',system-ui,sans-serif;over
 .reveal-eyebrow{font-size:.5rem;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,120,255,.5);margin-bottom:32px;display:flex;align-items:center;gap:10px;animation:fadeUp .7s ease .2s both;}
 .reveal-eyebrow::before,.reveal-eyebrow::after{content:'';display:block;width:28px;height:1px;background:linear-gradient(90deg,transparent,rgba(155,93,229,.4));}
 .reveal-eyebrow::after{transform:scaleX(-1);}
-/* Gold shimmer on main headline */
 .reveal-h1{
   font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:700;
   font-size:clamp(3rem,7vw,5.5rem);text-align:center;margin-bottom:12px;
@@ -85,7 +81,6 @@ html,body{width:100%;height:100%;font-family:'DM Sans',system-ui,sans-serif;over
   filter:drop-shadow(0 0 40px rgba(255,184,38,.3));
 }
 .reveal-sub{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:clamp(.9rem,2vw,1.2rem);color:rgba(237,188,29,.55);letter-spacing:.15em;text-align:center;margin-bottom:52px;animation:fadeUp .8s ease .5s both;}
-/* Gold shimmer button */
 .reveal-btn{
   position:relative;overflow:hidden;padding:16px 64px;
   background: linear-gradient(100deg,#c49400 0%,#c49400 18%,#FFBF2F 34%,#FFF8DC 46%,#FFBF2F 58%,#c49400 78%,#c49400 100%);
@@ -611,7 +606,6 @@ async function dialUnlock() {
     startHintTimer();
     document.getElementById('gameToggle').classList.add('visible');
     startBellowsDecay();
-    // Show entry overlay
     showEntryOverlay();
   }, 900);
 }
@@ -651,20 +645,14 @@ function buildAudio() {
 }
 
 // ══════════════════════════════════════════
-//  KEY → NOTE MAPPING (user's layout)
+//  KEY → NOTE MAPPING
 // ══════════════════════════════════════════
-// Format: key_letter -> MIDI number
-// A=A3(57), W=A#3(58), S=B3(59), D=C4(60), R=C#4(61), F=D4(62), T=D#4(63),
-// G=E4(64), H=F4(65), U=F#4(66), J=G4(67), I=G#4(68), K=A4(69), O=A#4(70),
-// L=B4(71), ;=C5(72), [=C#5(73), '=D5(74), ]=D#5(75), Enter=E5(76)
-
 const KB = {
   'a':57, 'w':58, 's':59, 'd':60, 'r':61, 'f':62, 't':63,
   'g':64, 'h':65, 'u':66, 'j':67, 'i':68, 'k':69, 'o':70,
   'l':71, ';':72, '[':73, "'":74, ']':75, 'enter':76
 };
 
-// Display labels for each key
 const KEY_LABELS = {
   'a':'A','w':'W','s':'S','d':'D','r':'R','f':'F','t':'T',
   'g':'G','h':'H','u':'U','j':'J','i':'I','k':'K','o':'O',
@@ -672,12 +660,10 @@ const KEY_LABELS = {
 };
 
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-// midi->note name helper
 function midiToName(midi) {
   return NOTE_NAMES[midi%12] + (Math.floor(midi/12)-1);
 }
 
-// Black key positions
 const BLACK_PATTERN = [false,true,false,true,false,false,true,false,true,false,true,false];
 const START_MIDI = 57, END_MIDI = 76;
 const WK_W = 44;
@@ -689,7 +675,6 @@ for(let midi=START_MIDI; midi<=END_MIDI; midi++){
   if(!black) whiteNotes.push({midi, black, pc});
 }
 
-// MIDI -> key letter (reverse map)
 const MIDI_TO_KEY = {};
 Object.entries(KB).forEach(([k,m]) => { if(!MIDI_TO_KEY[m]) MIDI_TO_KEY[m]=k; });
 
@@ -718,14 +703,14 @@ allNotes.forEach(n => {
 kbEl.style.minWidth = (whiteNotes.length * WK_W) + 'px';
 
 // ══════════════════════════════════════════
-//  BELLOWS ENGINE — decay + lock
+//  BELLOWS ENGINE
 // ══════════════════════════════════════════
 let bellows = 0.5;
 let bellowsLocked = false;
 let bellowsTargetLevel = 0.70;
 let bellowsDecayTimer = null;
 let audioReady = false;
-const BELLOWS_DECAY_RATE = 1 / (3.5 * 60); // drain to 0 over ~3.5s at 60fps
+const BELLOWS_DECAY_RATE = 1 / (3.5 * 60);
 
 const bellowsLockBtn   = document.getElementById('bellowsLockBtn');
 const bellowsSlider    = document.getElementById('bellowsLevelSlider');
@@ -747,25 +732,17 @@ bellowsLockBtn.addEventListener('click', () => {
 function startBellowsDecay() {
   if(bellowsDecayTimer) return;
   bellowsDecayTimer = setInterval(() => {
-    if(bellowsLocked) {
-      updateBellows(bellowsTargetLevel);
-      return;
-    }
-    // Decay bellows unless mouse is moving up
-    const newVal = Math.max(0.02, bellows - BELLOWS_DECAY_RATE);
-    updateBellows(newVal);
+    if(bellowsLocked) { updateBellows(bellowsTargetLevel); return; }
+    updateBellows(Math.max(0.02, bellows - BELLOWS_DECAY_RATE));
   }, 1000/60);
 }
 
-
-// Mouse moves upward = pump bellows (when mouse mode on, or no lid connected)
 let lastMouseY = window.innerHeight / 2;
 
 function updateBellows(val) {
   bellows = Math.max(0, Math.min(1, val));
   const pct = Math.round(bellows * 100);
-  const fill = document.getElementById('bellowsFill');
-  fill.style.width = pct + '%';
+  document.getElementById('bellowsFill').style.width = pct + '%';
   document.getElementById('bellowsPctLabel').textContent = pct + '%';
   if(audioReady) masterGain.gain.setTargetAtTime(bellows * 0.65, ctx.currentTime, 0.06);
   if(audioReady) Object.values(activeNodes).forEach(nd => {
@@ -795,7 +772,6 @@ document.getElementById('modalConnect').addEventListener('click',()=>{document.g
 document.getElementById('modalCancel').addEventListener('click',()=>{document.getElementById('connectModal').classList.add('gone');});
 function showConnectModal(){if(!navigator.hid){setBadge('unsupported');return;}document.getElementById('connectModal').classList.remove('gone');}
 
-// Mouse mode toggle
 let mouseMode = false;
 document.getElementById('mouseTog').addEventListener('click', function() {
   mouseMode = !mouseMode;
@@ -847,13 +823,11 @@ function spawnParticle(midi){
   for(let i=0;i<4;i++){const p=document.createElement('div');p.className='pt';const sz=4+Math.random()*5,hue=25+Math.random()*35;p.style.cssText=`width:${sz}px;height:${sz}px;background:hsl(${hue},90%,64%);left:${r.left+r.width/2+(Math.random()-.5)*18}px;top:${r.top+8}px;box-shadow:0 0 7px hsl(${hue},90%,64%);animation-delay:${i*.06}s;animation-duration:${.7+Math.random()*.5}s`;document.body.appendChild(p);setTimeout(()=>p.remove(),1400);}
 }
 
-// MOUSE/TOUCH on keys
 kbEl.addEventListener('mousedown',e=>{const el=e.target.closest('[data-midi]');if(!el)return;const m=+el.dataset.midi;heldByMouse.add(m);playNote(m);});
 document.addEventListener('mouseup',()=>{heldByMouse.forEach(m=>{heldByMouse.delete(m);if(!sustainOn&&!spaceDown)stopNote(m);});});
 kbEl.addEventListener('touchstart',e=>{e.preventDefault();Array.from(e.changedTouches).forEach(t=>{const el=document.elementFromPoint(t.clientX,t.clientY)?.closest('[data-midi]');if(el){const m=+el.dataset.midi;heldByMouse.add(m);playNote(m);}});},{passive:false});
 kbEl.addEventListener('touchend',e=>{e.preventDefault();Array.from(e.changedTouches).forEach(t=>{const el=document.elementFromPoint(t.clientX,t.clientY)?.closest('[data-midi]');if(el){const m=+el.dataset.midi;heldByMouse.delete(m);if(!sustainOn&&!spaceDown)stopNote(m);}});if(!e.touches.length){heldByMouse.forEach(m=>{if(!sustainOn&&!spaceDown)stopNote(m);});heldByMouse.clear();}},{passive:false});
 
-// KEYBOARD EVENTS
 document.addEventListener('keydown',e=>{
   if(e.repeat)return;
   if(e.key===' '){e.preventDefault();spaceDown=true;return;}
@@ -871,7 +845,6 @@ document.addEventListener('keyup',e=>{
   if(!sustainOn&&!spaceDown&&!heldByMouse.has(m))stopNote(m);
 });
 
-// TOGGLES
 document.getElementById('sustainTog').addEventListener('click',function(){
   sustainOn=!sustainOn;const s=document.getElementById('sustainStatus');
   s.style.background=sustainOn?'rgba(201,147,58,.08)':'transparent';
@@ -901,7 +874,6 @@ function showEntryOverlay() {
   });
 }
 
-// HINTS
 let hintShown=false;
 const hints=[
   'This isn\'t just something to click. It\'s something to feel.',
@@ -917,64 +889,53 @@ function showHint(msg){const t=document.getElementById('hintToast');t.textConten
 // ══════════════════════════════════════════
 //  GAME ENGINE
 // ══════════════════════════════════════════
-// Phrases are pre-mapped keyboard letter strings.
-// Each string in the phrases array = ONE box shown to the player.
-// Letters are the actual keyboard keys to press based on user's layout:
-//   A3=A  A#3=W  B3=S  C4=D  C#4=R  D4=F  D#4=T  E4=G  F4=H
-//   F#4=U  G4=J  G#4=I  A4=K  A#4=O  B4=L  C5=;  D5='  E5=↵
+// Each entry in `phrases` is ONE chip box shown to the player.
+// Commas in the original request → separate array entries.
 
 const SONGS = [
   {
     name: "Pirates of the Caribbean",
     hint: "Swashbuckling adventure on the high seas…",
-    // ACDD→ADFF  DEFF→FGHH  DGEE→FJGG  DCCD→FDDF
-    // DFGG→FHJJ  GA→JK  Bb→O  AGAGD→KJKJF
-    // DEFFGAD→FGHHJ KF  FGEEDC→HJGGFD
     phrases: ["ADFF","FGHH","FJGG","FDDF","ADFF","FGHH","FJGG","FDDF","ADFF","FHJJ","JK","O","O","KJKJF","FGHHJ KF","HJGGFD"]
   },
   {
     name: "Bella Ciao",
     hint: "A resistance anthem from the Italian hills…",
-    // E3ABCE4 → S A S D G  (E3=S, A3=A, B3=S, C4=D, E4=G)
-    // EAB → G K S  (E4=G, A4=K, B4=L... wait B4=L not S)
-    // Bella Ciao is in A minor: E3=S A3=A B3=S C4=D E4=G A4=K B4=L
-    phrases: ["SASDG","SASDG","GKL","D","LS","D","LS","G","G","G"]
+    // G K L D G, G K L D G, G K L, D, L K, D, L K, G, G, G
+    phrases: ["GKLDG","GKLDG","GKL","D","LK","D","LK","G","G","G"]
   },
   {
     name: "We Will Rock You",
     hint: "Stomp stomp clap… buddy you're a boy…",
-    // G4=J  F#4=U  E4=G  D4=F
+    // J, U, G, F, G, G
     phrases: ["J","U","G","F","G","G"]
   },
   {
     name: "Om Shanti Om",
     hint: "A devotional Bollywood classic…",
-    // E5=↵  D5='  C5=;  B4=L  A4=K  G4=J  F4=H  E4=G
-    // "E5 D5 C5" = ↵';   "C5 B4 A4" = ;LK
-    phrases: ["↵","↵","↵","↵","↵","↵","↵';",";","'",";","'",";","'",";LK","K","L","K","L","K","L","KJ","H","G"]
+    // ENTER, H, ENTER, H, ENTER, H, ENTER ' ;, ;, ' ;, ' ;, ' ; L K, K, L K, L K, L K, J, H, G
+    phrases: ["↵","H","↵","H","↵","H","↵ ' ;",";","' ;","' ;","' ; L K","K","L K","L K","L K","J","H","G"]
   },
   {
     name: "Harry Potter Theme",
     hint: "You're a wizard…",
-    // B3=S  E4=G  G4=J | B4=L  A4=K  F#4=U | E4=G  G4=J  F#4=U  D#4=T | F4=H | B3=S
-    phrases: ["SGJ","LKU","GJUT","H","S"]
+    // S G G H G, K K U, G G U ] H, L
+    // (using ↵ for Enter / E5)
+    phrases: ["SGGHG","KKU","GGU]H","L"]
   }
 ];
 
-// midi → keyboard label (for live key lighting when notes played)
 function midiToKeyLabel(midi) {
   const k = MIDI_TO_KEY[midi];
   return k ? KEY_LABELS[k] : '?';
 }
 
-// Game state
 let gameActive = false;
 let roundSongs = [], curSongIdx = 0, roundResults = [];
 let gCorrect = 0, gWrong = 0;
 let gAnswered = false;
 let autoPlayTimer = null;
 
-// Sidebar toggle
 const gameToggle = document.getElementById('gameToggle');
 const gameSidebar = document.getElementById('gameSidebar');
 gameToggle.addEventListener('click', () => {
@@ -986,7 +947,6 @@ document.getElementById('gCloseBtn').addEventListener('click', () => {
   gameToggle.classList.remove('open');
 });
 
-// Populate song list in start screen
 function buildSongList() {
   const list = document.getElementById('gSongList');
   list.innerHTML = '';
@@ -1003,7 +963,6 @@ function buildSongList() {
 }
 buildSongList();
 
-// Start round
 document.getElementById('gStartBtn').addEventListener('click', startRound);
 document.getElementById('gPlayAgainBtn').addEventListener('click', () => {
   document.getElementById('gFinal').classList.remove('active');
@@ -1039,7 +998,6 @@ function loadSong(idx) {
   document.getElementById('gCorrect').textContent = gCorrect;
   document.getElementById('gWrong').textContent = gWrong;
 
-  // Build key display — each phrase = ONE box, comma between boxes
   const kd = document.getElementById('gKeysDisplay');
   kd.innerHTML = '';
   song.phrases.forEach((phraseStr, pi) => {
@@ -1056,13 +1014,11 @@ function loadSong(idx) {
     kd.appendChild(box);
   });
 
-  // Reset guess
   const inp = document.getElementById('gGuessInput');
   inp.value = ''; inp.className = 'g-guess-input'; inp.disabled = false; inp.placeholder = 'Type your answer…';
   document.getElementById('gCorrectMsg').classList.remove('show');
   document.getElementById('gWrongMsg').classList.remove('show');
 
-  // Progress dots
   const dots = document.getElementById('gDots');
   dots.innerHTML = '';
   for(let i=0;i<3;i++){
@@ -1071,7 +1027,6 @@ function loadSong(idx) {
     dots.appendChild(d);
   }
 
-  // Buttons
   document.getElementById('gSkipBtn').style.display = 'block';
   document.getElementById('gNextBtn').style.display = 'none';
 
@@ -1088,7 +1043,6 @@ function litGameChip(midi) {
   });
 }
 
-// Guess
 document.getElementById('gGuessInput').addEventListener('keydown', e => {
   if(e.key === 'Enter' && !gAnswered) { e.preventDefault(); submitGuess(); }
 });
@@ -1125,7 +1079,6 @@ function submitGuess() {
     roundResults.push({song, correct:false, skipped:false});
   }
 
-  // Update dot
   const dots = document.querySelectorAll('.g-dot');
   if(dots[curSongIdx]) dots[curSongIdx].className = 'g-dot ' + (correct ? 'ok' : 'bad');
 
@@ -1191,7 +1144,7 @@ function clearAutoPlay() {
 }
 
 // ══════════════════════════════════════════
-//  GOLD GLITTER — runs last so all vars exist
+//  GOLD GLITTER
 // ══════════════════════════════════════════
 const glitterCanvas = document.getElementById('glitter');
 const gCtx = glitterCanvas.getContext('2d', {alpha:true});
@@ -1231,7 +1184,6 @@ function addSpark(x, y, intensity=1) {
 
 let glitterLast = {x: window.innerWidth/2, y: window.innerHeight/2};
 
-// Combined mousemove: bellows + glitter
 document.addEventListener('mousemove', e => {
   const upDy = glitterLast.y - e.clientY;
   if(!bellowsLocked && (mouseMode || !lidConnected)) {
@@ -1276,7 +1228,6 @@ function glitterTick(){
       gCtx.fillStyle = `rgba(255,210,50,${a})`;
       drawStar(p.x, p.y, p.size * 1.5, p.tw * 0.3);
       gCtx.fill();
-      // cross sparkle
       gCtx.save(); gCtx.translate(p.x, p.y); gCtx.rotate(p.tw * 0.3);
       gCtx.globalAlpha = a * 0.85;
       gCtx.strokeStyle = `rgba(255,248,180,${a})`;
@@ -1290,7 +1241,6 @@ function glitterTick(){
       gCtx.fillStyle = `rgba(255,191,47,${a})`;
       gCtx.arc(p.x, p.y, p.size, 0, Math.PI*2); gCtx.fill();
     }
-    // bright white centre
     gCtx.beginPath();
     gCtx.fillStyle = `rgba(255,255,220,${a * 0.7})`;
     gCtx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI*2); gCtx.fill();
