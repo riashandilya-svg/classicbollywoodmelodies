@@ -3082,9 +3082,12 @@ window.location.replace("/login.html");
 <!-- 5) Call paywall for THIS song -->
 <script>
   window.showPaywall({
-    productId: "song:aajkal",  // ← CHANGE THIS FOR EACH SONG!
+    productId: "song:aajkal",
     title: "This song is locked",
-    body: "Please buy to unlock this lesson."
+    body: "Please buy to unlock this lesson.",
+    onSuccess: () => {
+      document.getElementById('app').style.display = 'block';
+    }
   });
 </script>
 
