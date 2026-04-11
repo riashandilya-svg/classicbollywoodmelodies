@@ -1194,14 +1194,13 @@ const ctx = canvas.getContext('2d');
 function resizeCanvas() {
     const maxWidth = Math.min(window.innerWidth - 20, 1400);
     canvas.width = maxWidth;
-    const NOTE_AREA_HEIGHT = 260;
+
+    const NOTE_AREA_HEIGHT = 260;   // ⬅️ INCREASED
     canvas.height = NOTE_AREA_HEIGHT + KEYBOARD_HEIGHT;
-    canvas.style.height = canvas.height + 'px'; // ADD THIS
 }
 
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('appVisible', resizeCanvas); // ADD THIS
-resizeCanvas();
+resizeCanvas(); // initial call
 let fallingRectangles = [];
 let midiFallingNotes = [];
 let songStartTime = null;
@@ -3069,21 +3068,24 @@ holdEl.innerHTML =
 
 <!-- 4) Login check -->
 <script type="module">
-  const { data } = await window.supabase.auth.getSession();
-  if (!data.session) {
-    window.location.replace("/login.html");
-  } else {
-    await window.showPaywall({
-      productId: "song:aajkal",
-      title: "This song is locked",
-      body: "Please buy to unlock this lesson."
-    });
-    // Force canvas resize NOW that #app is visible
-    const c = document.getElementById('canvas');
-    c.width = Math.min(window.innerWidth - 20, 1400);
-    c.height = 390;
-    c.style.height = '390px';
+  async function requireLogin() {
+    const { data } = await window.supabase.auth.getSession();
+    if (!data.session) {
+window.location.replace("/login.html");
+    }
   }
+
+  await requireLogin();
+  window.addEventListener("pageshow", requireLogin);
+</script>
+
+<!-- 5) Call paywall for THIS song -->
+<script>
+  window.showPaywall({
+    productId: "song:aajkal",  // ← CHANGE THIS FOR EACH SONG!
+    title: "This song is locked",
+    body: "Please buy to unlock this lesson."
+  });
 </script>
 
 </body>
