@@ -580,9 +580,10 @@ window.location.reload();
       
       if (allowed) {
         console.log("[PAYWALL] ✅ ACCESS GRANTED - Showing content");
-        paywallEl.style.display = "none";
-        appEl.style.display = "block";
-        return;
+       paywallEl.style.display = "none";
+appEl.style.display = "block";
+window.dispatchEvent(new Event('appVisible')); // ADD THIS
+return;
       }
 
       console.log("[PAYWALL] 🚫 ACCESS DENIED - Showing paywall");
