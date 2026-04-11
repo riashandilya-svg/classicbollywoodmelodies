@@ -578,13 +578,13 @@ window.location.reload();
       
       const allowed = await userHasAccess(productId, session);
       
-      if (allowed) {
-        console.log("[PAYWALL] ✅ ACCESS GRANTED - Showing content");
-       paywallEl.style.display = "none";
-appEl.style.display = "block";
-window.dispatchEvent(new Event('appVisible')); // ADD THIS
-return;
-      }
+    if (allowed) {
+    console.log("[PAYWALL] ✅ ACCESS GRANTED - Showing content");
+    paywallEl.style.display = "none";
+    appEl.style.display = "block";
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    return;
+}
 
       console.log("[PAYWALL] 🚫 ACCESS DENIED - Showing paywall");
       
