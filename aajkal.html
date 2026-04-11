@@ -388,12 +388,18 @@ button:disabled {
     
 canvas {
     width: 100%;
+    height: auto;
+}
+#holdInfo:empty {
+    display: none;
+}
+}
+canvas {
     display: block;
-    touch-action: none;
-    -webkit-user-select: none;
+    touch-action: none; /* Prevents default touch behaviors like scrolling */
+    -webkit-user-select: none; /* Prevents text selection on iOS */
     user-select: none;
 }
-    
 /* 🎯 Training Progress Bar */
 #trainingProgress {
     position: relative;
@@ -1188,13 +1194,14 @@ const ctx = canvas.getContext('2d');
 function resizeCanvas() {
     const maxWidth = Math.min(window.innerWidth - 20, 1400);
     canvas.width = maxWidth;
-
-    const NOTE_AREA_HEIGHT = 260;   // ⬅️ INCREASED
+    const NOTE_AREA_HEIGHT = 260;
     canvas.height = NOTE_AREA_HEIGHT + KEYBOARD_HEIGHT;
+    canvas.style.height = canvas.height + 'px'; // ADD THIS
 }
 
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas(); // initial call
+window.addEventListener('appVisible', resizeCanvas); // ADD THIS
+resizeCanvas();
 let fallingRectangles = [];
 let midiFallingNotes = [];
 let songStartTime = null;
@@ -3058,24 +3065,30 @@ holdEl.innerHTML =
 
 <!-- 3) Paywall logic -->
 <script src="/js/paywall.js?v=20260203"></script>
+
+
+<!-- 4) Login check -->
 <script type="module">
-  const { data } = await window.supabase.auth.getSession();
-  if (!data.session) {
-    window.location.replace("/login.html");
-  } else {
-    await window.showPaywall({
-      productId: "song:aajkal",
-      title: "This song is locked",
-      body: "Please buy to unlock this lesson."
-    });
-    // Re-run resizeCanvas NOW that #app is visible
-    const canvas = document.getElementById('canvas');
-    const KEYBOARD_HEIGHT = 130;
-    canvas.width = Math.min(window.innerWidth - 20, 1400);
-    canvas.height = 260 + KEYBOARD_HEIGHT;
-    canvas.style.height = canvas.height + 'px';
+  async function requireLogin() {
+    const { data } = await window.supabase.auth.getSession();
+    if (!data.session) {
+window.location.replace("/login.html");
+    }
   }
+
+  await requireLogin();
+  window.addEventListener("pageshow", requireLogin);
 </script>
+
+<!-- 5) Call paywall for THIS song -->
+<script>
+  window.showPaywall({
+    productId: "song:aajkal",  // ← CHANGE THIS FOR EACH SONG!
+    title: "This song is locked",
+    body: "Please buy to unlock this lesson."
+  });
+</script>
+
 </body>
 </html>
 </body>
