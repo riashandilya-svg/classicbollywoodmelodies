@@ -3064,30 +3064,18 @@ holdEl.innerHTML =
 
 <!-- 3) Paywall logic -->
 <script src="/js/paywall.js?v=20260203"></script>
-
-
-<!-- 4) Login check -->
 <script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-window.location.replace("/login.html");
-    }
+  const { data } = await window.supabase.auth.getSession();
+  if (!data.session) {
+    window.location.replace("/login.html");
+  } else {
+    window.showPaywall({
+      productId: "song:aajkal",
+      title: "This song is locked",
+      body: "Please buy to unlock this lesson."
+    });
   }
-
-  await requireLogin();
-  window.addEventListener("pageshow", requireLogin);
 </script>
-
-<!-- 5) Call paywall for THIS song -->
-<script>
-  window.showPaywall({
-    productId: "song:aajkal",  // ← CHANGE THIS FOR EACH SONG!
-    title: "This song is locked",
-    body: "Please buy to unlock this lesson."
-  });
-</script>
-
 </body>
 </html>
 </body>
