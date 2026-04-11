@@ -388,7 +388,6 @@ button:disabled {
     
 canvas {
     width: 100%;
-    height: 390px;
     display: block;
     touch-action: none;
     -webkit-user-select: none;
@@ -3064,11 +3063,17 @@ holdEl.innerHTML =
   if (!data.session) {
     window.location.replace("/login.html");
   } else {
-    window.showPaywall({
+    await window.showPaywall({
       productId: "song:aajkal",
       title: "This song is locked",
       body: "Please buy to unlock this lesson."
     });
+    // Re-run resizeCanvas NOW that #app is visible
+    const canvas = document.getElementById('canvas');
+    const KEYBOARD_HEIGHT = 130;
+    canvas.width = Math.min(window.innerWidth - 20, 1400);
+    canvas.height = 260 + KEYBOARD_HEIGHT;
+    canvas.style.height = canvas.height + 'px';
   }
 </script>
 </body>
