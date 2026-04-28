@@ -1,4 +1,3 @@
-<html>
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,18 +11,23 @@
 
   <style>
     :root{
-      --bg: #ffffff;                 /* ✅ white background */
+      --bg: #ffffff;
       --surface: rgba(255,255,255,0.86);
 
-      --text: #1b1b1f;               /* soft near-black */
+      --text: #1b1b1f;
       --muted: rgba(27,27,31,0.70);
 
-      --border: rgba(190, 150, 35, 0.22); /* golden border */
+      --border: rgba(190, 150, 35, 0.22);
       --shadow: 0 18px 44px rgba(20, 18, 10, 0.12);
 
       --btnText: #141316;
       --btnBorder: rgba(190, 150, 35, 0.40);
       --btnBg: linear-gradient(135deg, rgba(255, 214, 98, 0.95), rgba(190, 150, 35, 0.88));
+
+      /* Difficulty colors */
+      --easy: #10b981;
+      --moderate: #f59e0b;
+      --advanced: #ef4444;
     }
 
     *{ box-sizing: border-box; }
@@ -41,7 +45,6 @@
         var(--bg);
     }
 
-    /* Cursor glitter canvas (gold) */
     #glitter{
       position: fixed;
       inset: 0;
@@ -50,7 +53,6 @@
       mix-blend-mode: screen;
     }
 
-    /* Sticky banner (updated layout like your model) */
     .banner{
       position: sticky;
       top: 0;
@@ -152,7 +154,7 @@
       box-shadow: 0 14px 40px rgba(20, 18, 10, 0.10);
       max-width: 100%;
       flex: 0 0 auto;
-      cursor: none; /* glitter cursor */
+      cursor: none;
     }
 
     .stripItem{
@@ -164,7 +166,7 @@
       font-size: 13px;
       color: rgba(27,27,31,0.86);
       text-decoration: none;
-      cursor: none; /* glitter cursor */
+      cursor: none;
       display: inline-flex;
       align-items: center;
       user-select: none;
@@ -194,7 +196,6 @@
       background: rgba(190, 150, 35, 0.18);
     }
 
-    /* Shine sweep on strip items */
     .stripItem::before{
       content:"";
       position:absolute;
@@ -216,50 +217,18 @@
       to { transform: translateX(40%) rotate(10deg); }
     }
 
-    /* Move account below title earlier so it never overlaps */
     @media (max-width: 1100px){
       .navGrid{
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
         padding: 10px 12px 12px;
       }
-
-      .navTitle{
-        grid-column: 1;
-        grid-row: 1;
-        justify-self: center;
-      }
-
-      .accountDock{
-        grid-column: 1;
-        grid-row: 2;
-        justify-self: stretch;
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .accountLayout{
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .welcomeText{
-        max-width: 92vw;
-        text-align: center;
-      }
-
-      .actionStrip{
-        width: 100%;
-      }
-
-      .stripItem{
-        flex: 1;
-        justify-content: center;
-        padding: 11px 10px;
-      }
+      .navTitle{ grid-column: 1; grid-row: 1; justify-self: center; }
+      .accountDock{ grid-column: 1; grid-row: 2; justify-self: stretch; width: 100%; max-width: 100%; }
+      .accountLayout{ width: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
+      .welcomeText{ max-width: 92vw; text-align: center; }
+      .actionStrip{ width: 100%; }
+      .stripItem{ flex: 1; justify-content: center; padding: 11px 10px; }
     }
 
     main{
@@ -268,7 +237,6 @@
       padding: 34px 18px 70px;
     }
 
-    /* ===== Page layout with right image ===== */
     .layout{
       display: grid;
       grid-template-columns: minmax(0, 1fr) 320px;
@@ -334,7 +302,6 @@
       background: rgba(255,255,255,0.78);
     }
 
-    /* Logged out row (kept in hero area) */
     .authRow{
       margin: 14px 0 6px;
       display:flex;
@@ -353,7 +320,6 @@
     @media (max-width: 760px){
       .grid{ grid-template-columns: 1fr; }
     }
-
     .grid, .card { min-width: 0; }
 
     .card{
@@ -405,11 +371,109 @@
 
     .card > *{ position: relative; z-index: 1; }
 
+    /* ===== Coming Soon / Placeholder cards ===== */
+    .placeholder{
+      opacity: 0.55;
+    }
+
+    .placeholder .btn{
+      pointer-events: none;
+      filter: grayscale(0.15);
+      opacity: 0.85;
+    }
+
+    .placeholder:hover{
+      transform: none;
+      box-shadow: var(--shadow);
+      border-color: rgba(190, 150, 35, 0.16);
+    }
+
+    /* ===== Song Header (title + badge + info) ===== */
+    .song-header{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .song-title-wrapper{
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
     .song-title{
-      margin: 0 0 6px;
+      margin: 0;
       font-size: 18px;
       font-weight: 700;
       letter-spacing: -0.01em;
+      flex: 1;
+    }
+
+    /* ===== Difficulty Badge ===== */
+    .difficulty-badge{
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .difficulty-badge.easy{
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
+      color: #047857;
+      border: 1px solid rgba(16, 185, 129, 0.24);
+    }
+
+    .difficulty-badge.moderate{
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.08));
+      color: #b45309;
+      border: 1px solid rgba(245, 158, 11, 0.24);
+    }
+
+    .difficulty-badge.advanced{
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.08));
+      color: #991b1b;
+      border: 1px solid rgba(239, 68, 68, 0.24);
+    }
+
+    /* ===== Info Button ===== */
+    .info-btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(190, 150, 35, 0.40);
+      background: rgba(255, 214, 98, 0.10);
+      color: rgba(120, 90, 10, 0.80);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .info-btn:hover{
+      background: rgba(255, 214, 98, 0.22);
+      border-color: rgba(190, 150, 35, 0.60);
+      color: rgba(100, 70, 5, 0.95);
+      transform: scale(1.1);
+    }
+
+    .info-btn:active{
+      transform: scale(0.95);
     }
 
     .song-meta{
@@ -427,10 +491,10 @@
       text-decoration: none;
       font-weight: 750;
       color: var(--btnText);
-      border: 1px solid rgba(190, 150, 35, 0.40);
+      border: 1px solid var(--btnBorder);
       background: var(--btnBg);
       transition: transform 0.14s ease, filter 0.14s ease;
-      cursor: none; /* glitter cursor */
+      cursor: none;
       position: relative;
       overflow: hidden;
     }
@@ -440,7 +504,6 @@
       filter: brightness(1.02);
     }
 
-    /* Shine sweep on .btn */
     .btn::before{
       content:"";
       position:absolute;
@@ -486,18 +549,134 @@
     }
     .back:hover{ text-decoration: underline; }
 
-    /* Optional: hidden placeholders for future songs */
-    .placeholder{
-      opacity: 0.55;
+    /* ===== Modal Styles ===== */
+    .modal-overlay{
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      animation: fadeIn 0.2s ease;
     }
-    .placeholder .btn{
-      pointer-events: none;
-      opacity: 0.85;
+
+    .modal-overlay.active{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeIn{
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content{
+      background: var(--surface);
+      border-radius: 24px;
+      border: 1px solid rgba(190, 150, 35, 0.22);
+      box-shadow: 0 20px 60px rgba(20, 18, 10, 0.22);
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp{
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-close{
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(255, 214, 98, 0.12);
+      border-radius: 50%;
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover{
+      background: rgba(255, 214, 98, 0.24);
+      transform: rotate(90deg);
+    }
+
+    .modal-title{
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      font-family: "Cormorant Garamond", serif;
+    }
+
+    .modal-meta{
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 16px;
+    }
+
+    .modal-meta-item{
+      display: flex;
+      gap: 6px;
+    }
+
+    .modal-meta-label{
+      font-weight: 600;
+      color: rgba(150, 100, 10, 0.72);
+    }
+
+    .modal-description{
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .modal-youtube{
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.08), rgba(255, 0, 0, 0.04));
+      border: 1px solid rgba(255, 0, 0, 0.16);
+      text-decoration: none;
+      color: #dc2626;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .modal-youtube:hover{
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.12), rgba(255, 0, 0, 0.08));
+      border-color: rgba(255, 0, 0, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .modal-youtube svg{
+      width: 16px;
+      height: 16px;
     }
 
     @media (prefers-reduced-motion: reduce){
       .welcomeText{ animation: none !important; }
       #glitter{ display:none !important; }
+      .modal-content{ animation: none !important; }
+      .modal-overlay{ animation: none !important; }
     }
   </style>
 </head>
@@ -511,15 +690,14 @@
         <a class="banner-link" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html">Ria Om Shandilya™</a>
       </div>
 
-      <!-- Logged-in account dock (Dashboard / Verify / Logout) -->
       <div id="accountDock" class="accountDock" aria-label="Account actions">
         <div class="accountLayout">
           <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
 
           <div class="actionStrip" role="navigation" aria-label="Account navigation">
-<a id="dashboardLink" class="stripItem primary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="display:none;">Dashboard</a>
+            <a id="dashboardLink" class="stripItem primary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="display:none;">Dashboard</a>
             <div class="stripDivider" aria-hidden="true"></div>
-<a id="verifyLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display:none;">Verify Book</a>
+            <a id="verifyLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display:none;">Verify Book</a>
             <div class="stripDivider" aria-hidden="true"></div>
             <button id="logoutBtn" class="stripItem" style="display:none;" type="button">Logout</button>
           </div>
@@ -536,61 +714,117 @@
           <h1>Peppy Melodies</h1>
           <p class="sub">Pick a song to open its practice page.</p>
 
-          <!-- Logged-out login button stays here -->
           <div class="authRow" id="authRow">
             <a id="loginLink" class="btn" href="./login.html">Login</a>
           </div>
         </div>
 
         <section class="grid">
+
+          <!-- KAISI PAHELI ZINDAGANI - EASY -->
           <div class="card">
-            <h2 class="song-title">Kaisi Paheli Zindagaani</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Kaisi Paheli Zindagaani</h2>
+                <span class="difficulty-badge easy">Easy</span>
+              </div>
+              <button class="info-btn" data-song="kaisi-paheli" aria-label="About Kaisi Paheli Zindagaani">ⓘ</button>
+            </div>
+            <p class="song-meta">B♭ Major · 120 BPM · 2/4</p>
             <a class="btn" href="kaisipaheli.html">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- DARLING - EASY -->
           <div class="card">
-            <h2 class="song-title">Jaane Kahan Mera Jigaar Gaya Ji</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="./jaanekahan.html">Open <span class="arrow">→</span></a>
-          </div>
-
-          <div class="card">
-            <h2 class="song-title">Gore Gore Baanke Chorre</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="goregore.html">Open <span class="arrow">→</span></a>
-          </div>
-
-          <div class="card">
-            <h2 class="song-title">Zoobie Doobie</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="zoobiedoobie.html">Open <span class="arrow">→</span></a>
-          </div>
-
-          <div class="card">
-            <h2 class="song-title">Darling</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Darling</h2>
+                <span class="difficulty-badge easy">Easy</span>
+              </div>
+              <button class="info-btn" data-song="darling" aria-label="About Darling">ⓘ</button>
+            </div>
+            <p class="song-meta">D Minor · 125 BPM · 2/4</p>
             <a class="btn" href="darling.html">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- JAANE KAHAN MERA JIGAR GAYA JI - EASY -->
+          <div class="card">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Jaane Kahan Mera Jigaar Gaya Ji</h2>
+                <span class="difficulty-badge easy">Easy</span>
+              </div>
+              <button class="info-btn" data-song="jaane-kahan" aria-label="About Jaane Kahan Mera Jigaar Gaya Ji">ⓘ</button>
+            </div>
+            <p class="song-meta">G Major · 130 BPM · 4/4</p>
+            <a class="btn" href="jaanekahan.html">Open <span class="arrow">→</span></a>
+          </div>
+
+          <!-- ZOOBIE DOOBIE - MODERATE -->
+          <div class="card">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Zoobie Doobie</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="zoobie-doobie" aria-label="About Zoobie Doobie">ⓘ</button>
+            </div>
+            <p class="song-meta">C Minor · 90 BPM · 4/4</p>
+            <a class="btn" href="zoobiedoobie.html">Open <span class="arrow">→</span></a>
+          </div>
+
+          <!-- GORE GORE O BANKE CHORRE - MODERATE -->
+          <div class="card">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Gore Gore O Banke Chorre</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="gore-gore" aria-label="About Gore Gore O Banke Chorre">ⓘ</button>
+            </div>
+            <p class="song-meta">G Major · 120 BPM · 2/4</p>
+            <a class="btn" href="goregore.html">Open <span class="arrow">→</span></a>
+          </div>
+
+          <!-- SENORITA - MODERATE (Coming Soon) -->
           <div class="card placeholder">
-            <h2 class="song-title">Señorita</h2>
-            <p class="song-meta">Coming Soon</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Señorita</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="senorita" aria-label="About Señorita">ⓘ</button>
+            </div>
+            <p class="song-meta">A Major · 120 BPM · 4/4 · Coming Soon</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- NAINA DA KYA KASOOR - MODERATE (Coming Soon) -->
           <div class="card placeholder">
-            <h2 class="song-title">Naina Da Kya Kasoor</h2>
-            <p class="song-meta">Coming Soon</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Naina Da Kya Kasoor</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="naina-da" aria-label="About Naina Da Kya Kasoor">ⓘ</button>
+            </div>
+            <p class="song-meta">D Major · 120 BPM · 4/4 · Coming Soon</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
-          
-           <div class="card placeholder">
-            <h2 class="song-title">Slow Motion Angreza</h2>
-            <p class="song-meta">Coming Soon</p>
+
+          <!-- SLOW MOTION ANGREZA - MODERATE (Coming Soon) -->
+          <div class="card placeholder">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Slow Motion Angreza</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="slow-motion" aria-label="About Slow Motion Angreza">ⓘ</button>
+            </div>
+            <p class="song-meta">C Major · 100 BPM · 2/4 · Coming Soon</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
-          
+
         </section>
 
         <div class="footer">
@@ -598,7 +832,7 @@
         </div>
       </div>
 
-      <!-- Right: optional cover image -->
+      <!-- Right: cover image -->
       <aside class="side">
         <div class="cover">
           <img src="peppy.jpg" alt="Peppy Melodies cover" onerror="this.style.display='none'">
@@ -607,6 +841,22 @@
       </aside>
     </div>
   </main>
+
+  <!-- Modal for song info -->
+  <div id="songModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Close modal">×</button>
+      <h3 class="modal-title" id="modalTitle">Song Title</h3>
+      <div class="modal-meta" id="modalMeta"></div>
+      <p class="modal-description" id="modalDescription"></p>
+      <a id="modalYoutubeLink" class="modal-youtube" href="#" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        Listen on YouTube
+      </a>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -620,10 +870,8 @@
 
       const accountDock = document.getElementById("accountDock");
       const welcomeText = document.getElementById("welcomeText");
-
       const authRow = document.getElementById("authRow");
       const loginLink = document.getElementById("loginLink");
-
       const logoutBtn = document.getElementById("logoutBtn");
       const dashboardLink = document.getElementById("dashboardLink");
       const verifyLink = document.getElementById("verifyLink");
@@ -671,12 +919,133 @@
       await renderAuthUI();
     });
 
-    sb.auth.onAuthStateChange(() => {
-      renderAuthUI();
-    });
-
+    sb.auth.onAuthStateChange(() => { renderAuthUI(); });
     renderAuthUI();
     setTimeout(renderAuthUI, 800);
+  </script>
+
+  <!-- Song data + Modal Logic -->
+  <script>
+    const songData = {
+      "kaisi-paheli": {
+        title: "Kaisi Paheli Zindagaani",
+        key: "B♭ Major",
+        bpm: 120,
+        timesig: "2/4",
+        difficulty: "Easy",
+        description: "A bright, lilting melody in B♭ Major that sits comfortably under the right hand. The 2/4 metre keeps phrase lengths short and manageable, making it ideal for beginners working on clean melodic projection. A great piece to practise coaxing a singing tone from the keys while keeping the left hand light and unobtrusive.",
+        youtube: "https://www.youtube.com/results?search_query=kaisi+paheli+zindagaani+piano"
+      },
+      "darling": {
+        title: "Darling",
+        key: "D Minor",
+        bpm: 125,
+        timesig: "2/4",
+        difficulty: "Easy",
+        description: "A peppy tune in D Minor with a breezy, dance-like feel. The 2/4 pulse makes the rhythm intuitive, and the melodic contour stays largely stepwise — perfect for building confidence in right-hand fluency. Focus on keeping the wrist relaxed and maintaining an even, buoyant touch throughout.",
+        youtube: "https://www.youtube.com/results?search_query=darling+dum+maro+dum+piano"
+      },
+      "jaane-kahan": {
+        title: "Jaane Kahan Mera Jigaar Gaya Ji",
+        key: "G Major",
+        bpm: 130,
+        timesig: "4/4",
+        difficulty: "Easy",
+        description: "A cheerful golden-era melody in G Major with a playful, rolling right-hand line. The 4/4 framework offers a stable rhythmic foundation for beginners, and the brisk 130 BPM encourages clean, decisive finger strokes. Excellent for developing light finger independence and a natural melodic swing.",
+        youtube: "https://www.youtube.com/results?search_query=jaane+kahan+mera+jigar+gaya+ji+piano"
+      },
+      "zoobie-doobie": {
+        title: "Zoobie Doobie",
+        key: "C Minor",
+        bpm: 90,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "A soulful melody in C Minor that rewards expressive playing. The slower tempo gives you space to shape each phrase carefully, but the minor tonality demands sensitivity to dynamics and tone colour. A wonderful piece for practising melodic voicing — let the right hand sing above a steady, supportive left hand.",
+        youtube: "https://www.youtube.com/results?search_query=zoobie+doobie+3+idiots+piano"
+      },
+      "gore-gore": {
+        title: "Gore Gore O Banke Chorre",
+        key: "G Major",
+        bpm: 120,
+        timesig: "2/4",
+        difficulty: "Moderate",
+        description: "A lively, folk-tinged melody in G Major with an infectious rhythmic energy. The 2/4 metre at 120 BPM demands crisp articulation and nimble finger work as the melodic line skips and leaps. Great for developing rhythmic precision and learning to balance brightness of tone with the playful character the piece calls for.",
+        youtube: "https://www.youtube.com/results?search_query=gore+gore+o+banke+chorre+piano"
+      },
+      "senorita": {
+        title: "Señorita",
+        key: "A Major",
+        bpm: 120,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "A flirtatious, upbeat melody in A Major with a distinct rhythmic character. The 4/4 groove at 120 BPM challenges pianists to maintain both rhythmic momentum and melodic clarity simultaneously. An excellent piece for working on hand independence — keep the left hand steady while allowing the right hand to move with ease and expression.",
+        youtube: "https://www.youtube.com/results?search_query=senorita+bollywood+piano"
+      },
+      "naina-da": {
+        title: "Naina Da Kya Kasoor",
+        key: "D Major",
+        bpm: 120,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "A delicate, heartfelt melody in D Major that asks for a warm, singing tone from the pianist. The steady 4/4 pulse at 120 BPM provides a reliable rhythmic anchor, but the emotional depth of the piece requires careful attention to touch and phrasing. Focus on bringing out the lyrical contour of each phrase while keeping the accompaniment gentle and grounded.",
+        youtube: "https://www.youtube.com/results?search_query=naina+da+kya+kasoor+piano"
+      },
+      "slow-motion": {
+        title: "Slow Motion Angreza",
+        key: "C Major",
+        bpm: 100,
+        timesig: "2/4",
+        difficulty: "Moderate",
+        description: "A groovy, swaggering melody in C Major with a relaxed but rhythmically precise feel. The 2/4 metre at 100 BPM gives each beat real weight — ideal for practising deliberate, confident finger placement and clean melodic articulation. A great piece for refining your sense of rhythmic placement and building expressive control at a comfortable pace.",
+        youtube: "https://www.youtube.com/results?search_query=slow+motion+angreza+piano"
+      }
+    };
+
+    const modal = document.getElementById('songModal');
+    const modalClose = document.querySelector('.modal-close');
+
+    document.querySelectorAll('.info-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const songId = btn.getAttribute('data-song');
+        const song = songData[songId];
+
+        if (song) {
+          document.getElementById('modalTitle').textContent = song.title;
+          document.getElementById('modalMeta').innerHTML = `
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Key:</span>
+              <span>${song.key}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">BPM:</span>
+              <span>${song.bpm}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Time:</span>
+              <span>${song.timesig}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Level:</span>
+              <span>${song.difficulty}</span>
+            </div>
+          `;
+          document.getElementById('modalDescription').textContent = song.description;
+
+          const ytLink = document.getElementById('modalYoutubeLink');
+          ytLink.href = song.youtube;
+          // ytLink.style.display = 'inline-flex';
+
+          modal.classList.add('active');
+        }
+      });
+    });
+
+    modalClose.addEventListener('click', () => { modal.classList.remove('active'); });
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) modal.classList.remove('active');
+    });
   </script>
 
   <script>
@@ -708,7 +1077,6 @@
           if(particles.length > MAX) particles.shift();
           const angle = Math.random() * Math.PI * 2;
           const speed = (0.30 + Math.random() * 2.0) * intensity;
-
           particles.push({
             x, y,
             vx: Math.cos(angle) * speed,
@@ -736,51 +1104,34 @@
 
       function tick(){
         ctx.clearRect(0,0,canvas.width,canvas.height);
-
         for(let i=particles.length-1;i>=0;i--){
           const p = particles[i];
           p.life -= 1;
           if(p.life <= 0){ particles.splice(i,1); continue; }
-
-          p.vx *= 0.986;
-          p.vy *= 0.986;
-          p.vy += 0.018;
-
-          p.x += p.vx;
-          p.y += p.vy;
-
+          p.vx *= 0.986; p.vy *= 0.986; p.vy += 0.018;
+          p.x += p.vx; p.y += p.vy;
           p.tw += 0.22;
           const twinkle = 0.62 + Math.sin(p.tw) * 0.38;
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
-
-          const gold   = `rgba(255, 214, 98, ${a})`;
-          const amber  = `rgba(190, 150, 35, ${a * 0.92})`;
-          const core   = `rgba(255, 255, 255, ${a * 0.55})`;
+          const gold  = `rgba(255, 214, 98, ${a})`;
+          const amber = `rgba(190, 150, 35, ${a * 0.92})`;
+          const core  = `rgba(255, 255, 255, ${a * 0.55})`;
           const dot = p.warm ? gold : amber;
-
-          ctx.beginPath();
-          ctx.fillStyle = dot;
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.fillStyle = core;
-          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
-          ctx.fill();
-
+          ctx.beginPath(); ctx.fillStyle = dot;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle = core;
+          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2); ctx.fill();
           if(Math.random() < 0.24){
             ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.tw * 0.35);
+            ctx.translate(p.x, p.y); ctx.rotate(p.tw * 0.35);
             ctx.globalAlpha = a * 0.92;
             ctx.strokeStyle = `rgba(255, 246, 210, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
             ctx.moveTo(0, -p.size*2.2); ctx.lineTo(0, p.size*2.2);
-            ctx.stroke();
-            ctx.restore();
+            ctx.stroke(); ctx.restore();
           }
         }
         requestAnimationFrame(tick);
@@ -788,6 +1139,6 @@
       tick();
     })();
   </script>
+
 </body>
 </html>
-
