@@ -27,6 +27,11 @@
       --btnText: #05304a;
       --btnBorder: rgba(80, 170, 230, 0.34);
       --btnBg: linear-gradient(135deg, rgba(120,205,255,0.34), rgba(190,240,255,0.22));
+
+      /* Difficulty colors */
+      --easy: #10b981;
+      --moderate: #f59e0b;
+      --advanced: #ef4444;
     }
 
     *{ box-sizing: border-box; }
@@ -44,7 +49,6 @@
         var(--bg);
     }
 
-    /* Cursor glitter canvas (royal blue) */
     #glitter{
       position: fixed;
       inset: 0;
@@ -53,7 +57,6 @@
       mix-blend-mode: screen;
     }
 
-    /* Sticky banner (updated layout like your model) */
     .banner{
       position: sticky;
       top: 0;
@@ -155,7 +158,7 @@
       box-shadow: 0 14px 40px rgba(8, 24, 40, 0.10);
       max-width: 100%;
       flex: 0 0 auto;
-      cursor: none; /* glitter cursor */
+      cursor: none;
     }
 
     .stripItem{
@@ -167,7 +170,7 @@
       font-size: 13px;
       color: rgba(11,26,36,0.86);
       text-decoration: none;
-      cursor: none; /* glitter cursor */
+      cursor: none;
       display: inline-flex;
       align-items: center;
       user-select: none;
@@ -197,7 +200,6 @@
       background: rgba(80, 170, 230, 0.16);
     }
 
-    /* Shine sweep on strip items */
     .stripItem::before{
       content:"";
       position:absolute;
@@ -219,50 +221,18 @@
       to { transform: translateX(40%) rotate(10deg); }
     }
 
-    /* Move account below title earlier so it never overlaps */
     @media (max-width: 1100px){
       .navGrid{
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
         padding: 10px 12px 12px;
       }
-
-      .navTitle{
-        grid-column: 1;
-        grid-row: 1;
-        justify-self: center;
-      }
-
-      .accountDock{
-        grid-column: 1;
-        grid-row: 2;
-        justify-self: stretch;
-        width: 100%;
-        max-width: 100%;
-      }
-
-      .accountLayout{
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .welcomeText{
-        max-width: 92vw;
-        text-align: center;
-      }
-
-      .actionStrip{
-        width: 100%;
-      }
-
-      .stripItem{
-        flex: 1;
-        justify-content: center;
-        padding: 11px 10px;
-      }
+      .navTitle{ grid-column: 1; grid-row: 1; justify-self: center; }
+      .accountDock{ grid-column: 1; grid-row: 2; justify-self: stretch; width: 100%; max-width: 100%; }
+      .accountLayout{ width: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
+      .welcomeText{ max-width: 92vw; text-align: center; }
+      .actionStrip{ width: 100%; }
+      .stripItem{ flex: 1; justify-content: center; padding: 11px 10px; }
     }
 
     main{
@@ -271,7 +241,6 @@
       padding: 34px 18px 70px;
     }
 
-    /* ===== Page layout with right image ===== */
     .layout{
       display: grid;
       grid-template-columns: minmax(0, 1fr) 320px;
@@ -336,7 +305,6 @@
       background: rgba(255,255,255,0.72);
     }
 
-    /* Logged out row (kept in hero area) */
     .authRow{
       margin: 14px 0 6px;
       display:flex;
@@ -405,28 +373,110 @@
     }
 
     .card > *{ position: relative; z-index: 1; }
-/* ===== Coming Soon / Placeholder cards ===== */
-.placeholder{
-  opacity: 0.55;
-}
 
-.placeholder .btn{
-  pointer-events: none;
-  filter: grayscale(0.15);
-  opacity: 0.85;
-}
+    /* ===== Coming Soon / Placeholder cards ===== */
+    .placeholder{
+      opacity: 0.55;
+    }
 
-.placeholder:hover{
-  transform: none;
-  box-shadow: var(--shadow);
-  border-color: rgba(80,170,230,0.18);
-}
+    .placeholder .btn{
+      pointer-events: none;
+      filter: grayscale(0.15);
+      opacity: 0.85;
+    }
+
+    .placeholder:hover{
+      transform: none;
+      box-shadow: var(--shadow);
+      border-color: rgba(80,170,230,0.18);
+    }
+
+    /* ===== Song Header (title + badge + info) ===== */
+    .song-header{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .song-title-wrapper{
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
 
     .song-title{
-      margin: 0 0 6px;
+      margin: 0;
       font-size: 18px;
       font-weight: 700;
       letter-spacing: -0.01em;
+      flex: 1;
+    }
+
+    /* ===== Difficulty Badge ===== */
+    .difficulty-badge{
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .difficulty-badge.easy{
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
+      color: #047857;
+      border: 1px solid rgba(16, 185, 129, 0.24);
+    }
+
+    .difficulty-badge.moderate{
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.08));
+      color: #b45309;
+      border: 1px solid rgba(245, 158, 11, 0.24);
+    }
+
+    .difficulty-badge.advanced{
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.08));
+      color: #991b1b;
+      border: 1px solid rgba(239, 68, 68, 0.24);
+    }
+
+    /* ===== Info Button ===== */
+    .info-btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(80, 170, 230, 0.36);
+      background: rgba(80, 170, 230, 0.08);
+      color: rgba(20, 90, 200, 0.72);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .info-btn:hover{
+      background: rgba(80, 170, 230, 0.16);
+      border-color: rgba(80, 170, 230, 0.52);
+      color: rgba(20, 90, 200, 0.9);
+      transform: scale(1.1);
+    }
+
+    .info-btn:active{
+      transform: scale(0.95);
     }
 
     .song-meta{
@@ -447,7 +497,7 @@
       border: 1px solid var(--btnBorder);
       background: var(--btnBg);
       transition: transform 0.14s ease, filter 0.14s ease;
-      cursor: none; /* glitter cursor */
+      cursor: none;
       position: relative;
       overflow: hidden;
     }
@@ -457,7 +507,6 @@
       filter: brightness(1.03);
     }
 
-    /* Shine sweep on .btn */
     .btn::before{
       content:"";
       position:absolute;
@@ -503,22 +552,134 @@
     }
     .back:hover{ text-decoration: underline; }
 
-    .pill{
-      display: inline-flex;
+    /* ===== Modal Styles ===== */
+    .modal-overlay{
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.active{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeIn{
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content{
+      background: var(--surface);
+      border-radius: 24px;
+      border: 1px solid rgba(80, 170, 230, 0.22);
+      box-shadow: 0 20px 60px rgba(8, 24, 40, 0.22);
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp{
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-close{
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(80, 170, 230, 0.10);
+      border-radius: 50%;
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover{
+      background: rgba(80, 170, 230, 0.20);
+      transform: rotate(90deg);
+    }
+
+    .modal-title{
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      font-family: "Cormorant Garamond", serif;
+    }
+
+    .modal-meta{
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 16px;
+    }
+
+    .modal-meta-item{
+      display: flex;
+      gap: 6px;
+    }
+
+    .modal-meta-label{
+      font-weight: 600;
+      color: rgba(20, 90, 200, 0.64);
+    }
+
+    .modal-description{
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .modal-youtube{
+      display: none;
       align-items: center;
       gap: 8px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(80,170,230,0.18);
-      background: rgba(255,255,255,0.70);
-      color: rgba(11,26,36,0.70);
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.08), rgba(255, 0, 0, 0.04));
+      border: 1px solid rgba(255, 0, 0, 0.16);
+      text-decoration: none;
+      color: #dc2626;
+      font-weight: 600;
       font-size: 13px;
-      font-weight: 650;
+      transition: all 0.2s ease;
+    }
+
+    .modal-youtube:hover{
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.12), rgba(255, 0, 0, 0.08));
+      border-color: rgba(255, 0, 0, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .modal-youtube svg{
+      width: 16px;
+      height: 16px;
     }
 
     @media (prefers-reduced-motion: reduce){
       .welcomeText{ animation: none !important; }
       #glitter{ display:none !important; }
+      .modal-content{ animation: none !important; }
+      .modal-overlay{ animation: none !important; }
     }
   </style>
 </head>
@@ -532,15 +693,14 @@
         <a class="banner-link" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html">Ria Om Shandilya™</a>
       </div>
 
-      <!-- Logged-in account dock (Dashboard / Verify / Logout) -->
       <div id="accountDock" class="accountDock" aria-label="Account actions">
         <div class="accountLayout">
           <div id="welcomeText" class="welcomeText" aria-live="polite"></div>
 
           <div class="actionStrip" role="navigation" aria-label="Account navigation">
-<a id="dashboardLink" class="stripItem primary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="display:none;">Dashboard</a>
+            <a id="dashboardLink" class="stripItem primary" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="display:none;">Dashboard</a>
             <div class="stripDivider" aria-hidden="true"></div>
-<a id="verifyLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display:none;">Verify Book</a>
+            <a id="verifyLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display:none;">Verify Book</a>
             <div class="stripDivider" aria-hidden="true"></div>
             <button id="logoutBtn" class="stripItem" style="display:none;" type="button">Logout</button>
           </div>
@@ -557,60 +717,117 @@
           <h1>Classic Bollywood Melodies</h1>
           <p class="sub">Pick a song to open its practice page.</p>
 
-          <!-- Logged-out login button stays here -->
           <div class="authRow" id="authRow">
             <a id="loginLink" class="btn" href="./login.html">Login</a>
           </div>
         </div>
 
         <section class="grid">
+
+          <!-- EK LADKI BHEEGI BHAAGI SI - EASY -->
           <div class="card">
-            <h2 class="song-title">Ek Ladki Bheegi Bhaagi Si</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Ek Ladki Bheegi Bhaagi Si</h2>
+                <span class="difficulty-badge easy">Easy</span>
+              </div>
+              <button class="info-btn" data-song="ek-ladki" aria-label="About Ek Ladki Bheegi Bhaagi Si">ⓘ</button>
+            </div>
+            <p class="song-meta">A Minor · 125 BPM · 4/4</p>
             <a class="btn" href="ekladki.html">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- GULAABI AANKHEN - EASY -->
           <div class="card">
-            <h2 class="song-title">Hai Apna Dil Toh Awaara</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
-            <a class="btn" href="haiapna.html">Open <span class="arrow">→</span></a>
-          </div>
-
-          <div class="card">
-            <h2 class="song-title">Gulaabi Aankhen</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Gulaabi Aankhen</h2>
+                <span class="difficulty-badge easy">Easy</span>
+              </div>
+              <button class="info-btn" data-song="gulaabi-aankhen" aria-label="About Gulaabi Aankhen">ⓘ</button>
+            </div>
+            <p class="song-meta">A Minor · 100 BPM · 2/4</p>
             <a class="btn" href="gulaabi.html">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- CHOOKAR MERE MANN KO - EASY -->
           <div class="card">
-            <h2 class="song-title">Chookar Mere Mann Ko</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Chookar Mere Mann Ko</h2>
+                <span class="difficulty-badge easy">Easy</span>
+              </div>
+              <button class="info-btn" data-song="chookar" aria-label="About Chookar Mere Mann Ko">ⓘ</button>
+            </div>
+            <p class="song-meta">F Major · 120 BPM · 4/4</p>
             <a class="btn" href="chookar.html">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- HAI APNA DIL TOH AWAARA - MODERATE -->
           <div class="card">
-            <h2 class="song-title">Kal Ho Na Ho</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Hai Apna Dil Toh Awaara</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="hai-apna" aria-label="About Hai Apna Dil Toh Awaara">ⓘ</button>
+            </div>
+            <p class="song-meta">G Major · 120 BPM · 4/4</p>
+            <a class="btn" href="haiapna.html">Open <span class="arrow">→</span></a>
+          </div>
+
+          <!-- KAL HO NA HO - MODERATE -->
+          <div class="card">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Kal Ho Na Ho</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="kal-ho-na-ho" aria-label="About Kal Ho Na Ho">ⓘ</button>
+            </div>
+            <p class="song-meta">C Major · 80 BPM · 4/4</p>
             <a class="btn" href="kalho.html">Open <span class="arrow">→</span></a>
           </div>
 
+          <!-- AAOGE JAB TUM SAAJNA - MODERATE -->
           <div class="card">
-            <h2 class="song-title">Aaoge Jab Tum Saajna</h2>
-            <p class="song-meta">Practice mode + falling notes</p>
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Aaoge Jab Tum Saajna</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="aaoge-jab" aria-label="About Aaoge Jab Tum Saajna">ⓘ</button>
+            </div>
+            <p class="song-meta">G Major · 120 BPM · 4/4</p>
             <a class="btn" href="aaogejab.html">Open <span class="arrow">→</span></a>
           </div>
 
-                <div class="card placeholder">
-            <h2 class="song-title">Ajeeb Dastaan Hai yeha</h2>
-            <p class="song-meta">Coming Soon</p>
+          <!-- AJEEB DASTAAN HAI YEH - MODERATE (Coming Soon) -->
+          <div class="card placeholder">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Ajeeb Dastaan Hai Yeh</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="ajeeb-dastaan" aria-label="About Ajeeb Dastaan Hai Yeh">ⓘ</button>
+            </div>
+            <p class="song-meta">G Major · 160 BPM · 2/4 · Coming Soon</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
-          
-            <div class="card placeholder">
-            <h2 class="song-title">Maula Mere Le Le Meri Jaan</h2>
-            <p class="song-meta">Coming Soon</p>
+
+          <!-- MAULA MERE LE LE MERI JAAN - MODERATE (Coming Soon) -->
+          <div class="card placeholder">
+            <div class="song-header">
+              <div class="song-title-wrapper">
+                <h2 class="song-title">Maula Mere Le Le Meri Jaan</h2>
+                <span class="difficulty-badge moderate">Moderate</span>
+              </div>
+              <button class="info-btn" data-song="maula-mere" aria-label="About Maula Mere Le Le Meri Jaan">ⓘ</button>
+            </div>
+            <p class="song-meta">D Major · 120 BPM · 4/4 · Coming Soon</p>
             <a class="btn" href="#">Open <span class="arrow">→</span></a>
           </div>
+
         </section>
 
         <div class="footer">
@@ -628,6 +845,22 @@
     </div>
   </main>
 
+  <!-- Modal for song info -->
+  <div id="songModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="modal-close" aria-label="Close modal">×</button>
+      <h3 class="modal-title" id="modalTitle">Song Title</h3>
+      <div class="modal-meta" id="modalMeta"></div>
+      <p class="modal-description" id="modalDescription"></p>
+      <a id="modalYoutubeLink" class="modal-youtube" href="#" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        Listen on YouTube
+      </a>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
@@ -640,10 +873,8 @@
 
       const accountDock = document.getElementById("accountDock");
       const welcomeText = document.getElementById("welcomeText");
-
       const authRow = document.getElementById("authRow");
       const loginLink = document.getElementById("loginLink");
-
       const logoutBtn = document.getElementById("logoutBtn");
       const dashboardLink = document.getElementById("dashboardLink");
       const verifyLink = document.getElementById("verifyLink");
@@ -691,12 +922,133 @@
       await renderAuthUI();
     });
 
-    sb.auth.onAuthStateChange(() => {
-      renderAuthUI();
-    });
-
+    sb.auth.onAuthStateChange(() => { renderAuthUI(); });
     renderAuthUI();
     setTimeout(renderAuthUI, 800);
+  </script>
+
+  <!-- Song data + Modal Logic -->
+  <script>
+    const songData = {
+      "ek-ladki": {
+        title: "Ek Ladki Bheegi Bhaagi Si",
+        key: "A Minor",
+        bpm: 125,
+        timesig: "4/4",
+        difficulty: "Easy",
+        description: "A timeless golden era melody with a gentle, flowing right-hand line. Ideal for pianists building their touch and legato technique. The moderate tempo gives you ample time to focus on smooth phrase connections and even finger weight across each note.",
+        youtube: "https://www.youtube.com/results?search_query=ek+ladki+bheegi+bhaagi+si"
+      },
+      "gulaabi-aankhen": {
+        title: "Gulaabi Aankhen",
+        key: "A Minor",
+        bpm: 100,
+        timesig: "2/4",
+        difficulty: "Easy",
+        description: "A beautifully romantic melody in 2/4 that offers great practice for phrasing in duple metre. The relaxed tempo makes it perfect for beginners refining their pedal use and tone shaping, helping you bring out the song's warm, nostalgic character.",
+        youtube: "https://www.youtube.com/results?search_query=gulaabi+aankhen+piano"
+      },
+      "chookar": {
+        title: "Chookar Mere Mann Ko",
+        key: "F Major",
+        bpm: 120,
+        timesig: "4/4",
+        difficulty: "Easy",
+        description: "A lyrical evergreen that translates beautifully to the piano keyboard. Its stepwise melodic movement makes it excellent for developing confident right-hand independence. A great piece for working on clean articulation while keeping an even left-hand accompaniment underneath.",
+        youtube: "https://www.youtube.com/results?search_query=chookar+mere+mann+ko+piano"
+      },
+      "hai-apna": {
+        title: "Hai Apna Dil Toh Awaara",
+        key: "G Major",
+        bpm: 120,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "A lively, swinging melody that challenges pianists with its rhythmic character and wider melodic leaps. Great for building hand coordination and practising light, bouncy touch. The G Major tonality keeps it bright — focus on keeping the accompaniment steady as the right hand dances.",
+        youtube: "https://www.youtube.com/results?search_query=hai+apna+dil+toh+awaara"
+      },
+      "kal-ho-na-ho": {
+        title: "Kal Ho Na Ho",
+        key: "C Major",
+        bpm: 80,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "One of Bollywood's most emotionally resonant pieces. The slow tempo demands expressive control and careful dynamic shaping — every phrase must breathe. An excellent study in slow-practice discipline and using the sustain pedal tastefully to create that signature cinematic swell.",
+        youtube: "https://www.youtube.com/results?search_query=kal+ho+na+ho+piano"
+      },
+      "aaoge-jab": {
+        title: "Aaoge Jab Tum Saajna",
+        key: "G Major",
+        bpm: 120,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "A delicate, introspective piece with a flowing melodic line that challenges you to sustain long phrases while maintaining rhythmic steadiness. Great for developing the balance between a singing right-hand melody and a supportive left-hand, with attention to tonal warmth throughout.",
+        youtube: "https://www.youtube.com/results?search_query=aaoge+jab+tum+saajna+piano"
+      },
+      "ajeeb-dastaan": {
+        title: "Ajeeb Dastaan Hai Yeh",
+        key: "G Major",
+        bpm: 160,
+        timesig: "2/4",
+        difficulty: "Moderate",
+        description: "A classic from the golden era set at a brisk 2/4 pace. The faster tempo in duple metre pushes pianists to develop crisp, clean articulation and rhythmic precision. A wonderful piece for building finger agility while still conveying the song's graceful, wistful mood.",
+        youtube: "https://www.youtube.com/results?search_query=ajeeb+dastaan+hai+yeh+piano"
+      },
+      "maula-mere": {
+        title: "Maula Mere Le Le Meri Jaan",
+        key: "D Major",
+        bpm: 120,
+        timesig: "4/4",
+        difficulty: "Moderate",
+        description: "A deeply soulful qawwali-influenced melody that presents rich harmonic textures on the piano. Requires careful voice leading and sensitivity to the song's spiritual weight. An excellent piece for practising gradual dynamic builds and maintaining tonal depth at a steady, meditative tempo.",
+        youtube: "https://www.youtube.com/results?search_query=maula+mere+le+le+meri+jaan+piano"
+      }
+    };
+
+    const modal = document.getElementById('songModal');
+    const modalClose = document.querySelector('.modal-close');
+
+    document.querySelectorAll('.info-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const songId = btn.getAttribute('data-song');
+        const song = songData[songId];
+
+        if (song) {
+          document.getElementById('modalTitle').textContent = song.title;
+          document.getElementById('modalMeta').innerHTML = `
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Key:</span>
+              <span>${song.key}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">BPM:</span>
+              <span>${song.bpm}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Time:</span>
+              <span>${song.timesig}</span>
+            </div>
+            <div class="modal-meta-item">
+              <span class="modal-meta-label">Level:</span>
+              <span>${song.difficulty}</span>
+            </div>
+          `;
+          document.getElementById('modalDescription').textContent = song.description;
+
+          const ytLink = document.getElementById('modalYoutubeLink');
+          ytLink.href = song.youtube;
+// ytLink.style.display = 'inline-flex';
+
+          modal.classList.add('active');
+        }
+      });
+    });
+
+    modalClose.addEventListener('click', () => { modal.classList.remove('active'); });
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) modal.classList.remove('active');
+    });
   </script>
 
   <script>
@@ -728,7 +1080,6 @@
           if(particles.length > MAX) particles.shift();
           const angle = Math.random() * Math.PI * 2;
           const speed = (0.30 + Math.random() * 2.0) * intensity;
-
           particles.push({
             x, y,
             vx: Math.cos(angle) * speed,
@@ -756,51 +1107,34 @@
 
       function tick(){
         ctx.clearRect(0,0,canvas.width,canvas.height);
-
         for(let i=particles.length-1;i>=0;i--){
           const p = particles[i];
           p.life -= 1;
           if(p.life <= 0){ particles.splice(i,1); continue; }
-
-          p.vx *= 0.986;
-          p.vy *= 0.986;
-          p.vy += 0.018;
-
-          p.x += p.vx;
-          p.y += p.vy;
-
+          p.vx *= 0.986; p.vy *= 0.986; p.vy += 0.018;
+          p.x += p.vx; p.y += p.vy;
           p.tw += 0.22;
           const twinkle = 0.62 + Math.sin(p.tw) * 0.38;
           const fade = Math.min(1, p.life / 44);
           const a = p.alpha * fade * twinkle;
-
           const royal = `rgba(20, 90, 255, ${a})`;
           const sky   = `rgba(120, 205, 255, ${a * 0.88})`;
           const core  = `rgba(255, 255, 255, ${a * 0.55})`;
           const dot = p.deep ? royal : sky;
-
-          ctx.beginPath();
-          ctx.fillStyle = dot;
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.fillStyle = core;
-          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
-          ctx.fill();
-
+          ctx.beginPath(); ctx.fillStyle = dot;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle = core;
+          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2); ctx.fill();
           if(Math.random() < 0.24){
             ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.tw * 0.35);
+            ctx.translate(p.x, p.y); ctx.rotate(p.tw * 0.35);
             ctx.globalAlpha = a * 0.92;
             ctx.strokeStyle = `rgba(210, 235, 255, ${a})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
             ctx.moveTo(0, -p.size*2.2); ctx.lineTo(0, p.size*2.2);
-            ctx.stroke();
-            ctx.restore();
+            ctx.stroke(); ctx.restore();
           }
         }
         requestAnimationFrame(tick);
