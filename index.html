@@ -686,6 +686,386 @@
       </div>
     </section>
 
+    <div class="course-section" style="margin-top:28px;">
+
+<style>
+  :root {
+    --bg: #fff;
+    --surface: rgba(255,255,255,0.86);
+    --text: #1A1A1F;
+    --muted: rgba(26,26,31,0.68);
+    --border: rgba(140,120,160,0.18);
+    --shadow: 0 18px 44px rgba(22,10,35,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--text); background: transparent; }
+
+  .section-wrap { padding: 28px 0 0; }
+
+  .toggle-btn {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 auto; padding: 13px 28px; border-radius: 16px;
+    border: 1px solid rgba(155,110,255,0.30);
+    background: linear-gradient(135deg, rgba(155,110,255,0.14), rgba(255,120,160,0.10), rgba(155,110,255,0.08));
+    font-family: Inter, sans-serif; font-size: 15px; font-weight: 700;
+    color: rgb(85,55,190); cursor: pointer;
+    transition: transform 0.14s, box-shadow 0.14s, filter 0.14s;
+    box-shadow: 0 6px 20px rgba(85,55,190,0.10);
+  }
+  .toggle-btn:hover { transform: translateY(-1px); filter: brightness(1.04); box-shadow: 0 10px 28px rgba(85,55,190,0.16); }
+  .toggle-btn .chevron { font-size: 13px; transition: transform 0.3s ease; display:inline-flex; }
+  .toggle-btn.open .chevron { transform: rotate(180deg); }
+
+  .songs-panel { display: none; margin-top: 20px; animation: slideDown 0.3s ease; }
+  .songs-panel.visible { display: block; }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+  .search-input {
+    flex: 1; min-width: 180px; padding: 10px 14px; border-radius: 12px;
+    border: 1px solid rgba(155,110,255,0.22); background: rgba(255,255,255,0.80);
+    font-size: 14px; font-family: Inter, sans-serif; color: var(--text); outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: rgba(155,110,255,0.50); }
+
+  .filter-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+  .pill {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(155,110,255,0.20);
+    background: rgba(255,255,255,0.60); font-size: 12px; font-weight: 700;
+    color: var(--muted); cursor: pointer; transition: all 0.14s; font-family: Inter, sans-serif;
+  }
+  .pill:hover { border-color: rgba(155,110,255,0.38); color: rgb(85,55,190); }
+  .pill.active-all { background: linear-gradient(135deg, rgba(155,110,255,0.16), rgba(255,120,160,0.10)); border-color: rgba(155,110,255,0.42); color: rgb(85,55,190); }
+  .pill.active-easy { background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(16,185,129,0.07)); border-color: rgba(16,185,129,0.30); color: #047857; }
+  .pill.active-moderate { background: linear-gradient(135deg, rgba(245,158,11,0.14), rgba(245,158,11,0.07)); border-color: rgba(245,158,11,0.30); color: #b45309; }
+  .pill.active-advanced { background: linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.07)); border-color: rgba(239,68,68,0.30); color: #991b1b; }
+
+  .count-label { font-size: 13px; color: var(--muted); margin-left: auto; font-style: italic; }
+
+  .songs-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+  @media (max-width: 640px) { .songs-grid { grid-template-columns: 1fr; } }
+
+  .song-card {
+    border-radius: 20px; padding: 18px 20px;
+    border: 1px solid rgba(140,120,160,0.16);
+    background: var(--surface);
+    box-shadow: 0 14px 36px rgba(22,10,35,0.08);
+    backdrop-filter: blur(10px);
+    position: relative; overflow: hidden;
+    transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .song-card:hover { transform: translateY(-2px); box-shadow: 0 22px 50px rgba(22,10,35,0.13); border-color: rgba(155,110,255,0.26); }
+  .song-card::before {
+    content:""; position:absolute; inset:-70px -80px auto auto;
+    width:200px; height:200px; border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,120,160,0.28), rgba(155,110,255,0.18), transparent 62%);
+    pointer-events:none;
+  }
+  .song-card > * { position: relative; z-index:1; }
+
+  .song-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .song-title-row { display:flex; align-items:flex-start; gap:8px; flex:1; flex-wrap:wrap; }
+  .song-name { font-size:15px; font-weight:700; letter-spacing:-0.01em; line-height:1.25; }
+
+  .diff-badge {
+    display:inline-flex; align-items:center;
+    padding:3px 9px; border-radius:999px;
+    font-size:10px; font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; white-space:nowrap; flex-shrink:0; margin-top:2px;
+  }
+  .diff-badge.easy { background:linear-gradient(135deg,rgba(16,185,129,0.16),rgba(16,185,129,0.07)); color:#047857; border:1px solid rgba(16,185,129,0.24); }
+  .diff-badge.moderate { background:linear-gradient(135deg,rgba(245,158,11,0.16),rgba(245,158,11,0.07)); color:#b45309; border:1px solid rgba(245,158,11,0.24); }
+  .diff-badge.advanced { background:linear-gradient(135deg,rgba(239,68,68,0.16),rgba(239,68,68,0.07)); color:#991b1b; border:1px solid rgba(239,68,68,0.24); }
+
+  .info-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%;
+    border:1.5px solid rgba(155,110,255,0.28);
+    background:rgba(155,110,255,0.06);
+    color:rgba(155,110,255,0.72); font-size:12px; font-weight:700;
+    cursor:pointer; transition:all 0.2s; flex-shrink:0; margin-top:2px;
+    font-family:Inter,sans-serif;
+  }
+  .info-btn:hover { background:rgba(155,110,255,0.14); border-color:rgba(155,110,255,0.45); transform:scale(1.1); }
+
+  .song-meta { font-size:13px; color:var(--muted); line-height:1.4; }
+
+  /* Book tag + open link row */
+  .song-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+
+  .book-tag {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700;
+    text-decoration:none; transition:all 0.15s; white-space:nowrap;
+  }
+  .book-tag.soulful  { background:rgba(132,82,255,0.10); border:1px solid rgba(132,82,255,0.24); color:#5337be; }
+  .book-tag.romantic { background:rgba(255,120,160,0.10); border:1px solid rgba(255,120,160,0.30); color:#b03068; }
+  .book-tag.peppy    { background:rgba(245,158,11,0.10);  border:1px solid rgba(245,158,11,0.28);  color:#b45309; }
+  .book-tag.classic  { background:rgba(16,185,129,0.10);  border:1px solid rgba(16,185,129,0.26);  color:#047857; }
+  .book-tag:hover { transform:translateY(-1px); filter:brightness(1.06); }
+  .book-tag svg { width:11px; height:11px; flex-shrink:0; }
+
+  .open-link {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:6px 13px; border-radius:10px; font-size:12px; font-weight:700;
+    text-decoration:none; color:rgb(85,55,190);
+    border:1px solid rgba(155,110,255,0.28);
+    background:linear-gradient(135deg,rgba(155,110,255,0.12),rgba(255,120,160,0.08));
+    transition:all 0.14s;
+  }
+  .open-link:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(85,55,190,0.14); filter:brightness(1.05); }
+  .open-link svg { width:11px; height:11px; }
+
+  .no-results { text-align:center; padding:40px 20px; color:var(--muted); font-size:15px; }
+
+  /* Modal */
+  .modal-backdrop {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.42); backdrop-filter:blur(4px);
+    z-index:99999; align-items:center; justify-content:center; padding:18px;
+  }
+  .modal-backdrop.open { display:flex; animation:fadeIn 0.2s ease; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  .modal-box {
+    width:100%; max-width:480px; border-radius:22px;
+    border:1px solid rgba(155,110,255,0.18);
+    background:rgba(255,255,255,0.97);
+    box-shadow:0 24px 60px rgba(0,0,0,0.28);
+    padding:28px; position:relative;
+    animation:slideUp 0.28s ease;
+  }
+  @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  .modal-close {
+    position:absolute; top:14px; right:14px;
+    width:30px; height:30px; border:none; border-radius:50%;
+    background:rgba(155,110,255,0.08); color:var(--text);
+    font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s; font-family:Inter,sans-serif;
+  }
+  .modal-close:hover { background:rgba(155,110,255,0.16); transform:rotate(90deg); }
+
+  .modal-title { font-size:21px; font-weight:700; margin-bottom:8px; font-family:"Cormorant Garamond",serif; letter-spacing:-0.01em; }
+  .modal-badge-row { display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .modal-meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; font-size:13px; }
+  .meta-item { display:flex; gap:5px; }
+  .meta-label { color:rgba(155,110,255,0.64); font-weight:700; }
+  .modal-desc { font-size:14px; line-height:1.65; color:var(--text); margin-bottom:18px; }
+  .modal-cta {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:11px 20px; border-radius:13px; font-size:14px; font-weight:700;
+    text-decoration:none; color:rgb(85,55,190);
+    border:1px solid rgba(155,110,255,0.34);
+    background:linear-gradient(135deg,rgba(155,110,255,0.14),rgba(255,120,160,0.09),rgba(155,110,255,0.08));
+    transition:all 0.14s; box-shadow:0 5px 16px rgba(85,55,190,0.09);
+  }
+  .modal-cta:hover { transform:translateY(-1px); box-shadow:0 9px 24px rgba(85,55,190,0.16); filter:brightness(1.04); }
+  .modal-cta svg { width:14px; height:14px; }
+</style>
+
+<div class="section-wrap">
+  <button class="toggle-btn" id="toggleBtn" onclick="togglePanel()">
+    <span style="font-size:18px;">🎹</span>
+    Browse All Songs
+    <span class="chevron">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4.5l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+  </button>
+
+  <div class="songs-panel" id="songsPanel">
+    <div class="filter-bar">
+      <input class="search-input" id="searchInput" placeholder="Search songs, keys, books…" oninput="renderSongs()" />
+      <div class="filter-pills">
+        <button class="pill active-all" data-filter="all" onclick="setFilter('all',this)">All</button>
+        <button class="pill" data-filter="easy" onclick="setFilter('easy',this)">Easy</button>
+        <button class="pill" data-filter="moderate" onclick="setFilter('moderate',this)">Moderate</button>
+        <button class="pill" data-filter="advanced" onclick="setFilter('advanced',this)">Advanced</button>
+      </div>
+      <span class="count-label" id="countLabel"></span>
+    </div>
+    <div class="songs-grid" id="songsGrid"></div>
+    <div class="no-results" id="noResults" style="display:none">No songs match your search.</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalDirect()">×</button>
+    <div class="modal-title" id="mTitle"></div>
+    <div class="modal-badge-row" id="mBadge"></div>
+    <div class="modal-meta-grid" id="mMeta"></div>
+    <div class="modal-desc" id="mDesc"></div>
+    <a class="modal-cta" id="mCta" href="#" target="_blank" rel="noopener">
+      Open Book
+      <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</div>
+
+<script>
+const BOOK_URLS = {
+  soulful:  "https://app.riaomshandilya.com/soulfulindex.html",
+  romantic: "https://app.riaomshandilya.com/romanticindex.html",
+  peppy:    "https://app.riaomshandilya.com/peppyindex.html",
+  classic:  "https://app.riaomshandilya.com/classicindex.html"
+};
+
+const BOOK_LABELS = {
+  soulful: "Soulful Melodies",
+  romantic: "Romantic Melodies",
+  peppy: "Peppy Melodies",
+  classic: "Classic Melodies"
+};
+
+const BOOK_EMOJIS = {
+  soulful: "🎶", romantic: "💜", peppy: "🌟", classic: "🎵"
+};
+
+const songs = [
+  { name:"Kaisi Paheli Zindagani",           key:"B♭ Major", bpm:120, time:"2/4",   diff:"easy",     book:"peppy",    desc:"A playful, rhythmically crisp melody in 2/4 — great for pianists developing a clean sense of two-beat phrasing. The bright B♭ Major tonality rewards clean finger placement and even touch, while the brisk tempo encourages a light, bouncing articulation style." },
+  { name:"Darling",                           key:"D Minor",  bpm:125, time:"2/4",   diff:"easy",     book:"peppy",    desc:"This D Minor gem in 2/4 is a wonderful entry point for understanding minor key character at the piano. The moderate tempo gives beginners space to shape melodic phrases with warmth and slight melancholy, while practising smooth legato touch in the right hand." },
+  { name:"Jaane Kahan Mera Jigar Gaya Ji",   key:"G Major",  bpm:130, time:"4/4",   diff:"easy",     book:"peppy",    desc:"A cheerful classic in G Major — ideal for pianists cementing four-beat counting while exploring a lively, folk-tinged melody. The comfortable tempo allows focus on even finger independence and clean hand position without rushing." },
+  { name:"Senorita",                          key:"A Major",  bpm:120, time:"4/4",   diff:"moderate", book:"peppy",    desc:"A polished A Major piece that challenges pianists with its syncopated rhythmic feel and expressive phrasing demands. Developing a singing tone in the right hand while keeping the left hand steady is the key technical goal here." },
+  { name:"Zoobie Doobie",                     key:"C Minor",  bpm:90,  time:"4/4",   diff:"moderate", book:"peppy",    desc:"The slower tempo of this C Minor piece is deceptive — it demands excellent control of touch, dynamics, and voicing. Perfect for pianists working on expressive depth, as every note must carry melodic weight at this deliberate pace." },
+  { name:"Gore Gore O Banke Chorre",          key:"G Major",  bpm:120, time:"2/4",   diff:"moderate", book:"peppy",    desc:"A spirited 2/4 piece that builds nimbleness and rhythmic precision. The two-beat feel in G Major pushes pianists to develop a brisk, confident attack and clean separation between melodic notes, ideal for articulation practice." },
+  { name:"Naina Da Kya Kasoor",               key:"D Major",  bpm:120, time:"4/4",   diff:"moderate", book:"peppy",    desc:"A tender D Major melody requiring sensitive touch and tonal shaping. Pianists will work on singing tone production and subtle dynamic shading — making each phrase breathe naturally and sing above a steady accompaniment." },
+  { name:"Slow Motion Angreza",               key:"C Major",  bpm:100, time:"2/4",   diff:"moderate", book:"peppy",    desc:"This C Major piece in 2/4 is a great study in controlled, unhurried articulation. The moderate tempo rewards deliberate finger work and clean thumb crossings, while the straightforward key lets pianists focus entirely on musical expression." },
+  { name:"Mere Saamne Wali Khidki Mein",      key:"G Major",  bpm:125, time:"4/4",   diff:"easy",     book:"romantic", desc:"A warm, singable G Major melody perfect for pianists learning to project a smooth cantabile line. The comfortable tempo and familiar tonality make it an ideal piece for developing legato touch and basic phrasing awareness." },
+  { name:"Bade Acche Lagte Hain",             key:"G Major",  bpm:200, time:"3/4",   diff:"easy",     book:"romantic", desc:"A lilting waltz in G Major — a superb introduction to 3/4 metre for pianists. The quick tempo trains the ear to feel a one-in-a-bar waltz pulse, while the simple melodic shape keeps technical demands manageable." },
+  { name:"Raat Kali Ek Khwab Mein Aayi",     key:"C Major",  bpm:130, time:"4/4",   diff:"easy",     book:"romantic", desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination and unbroken legato. The simple harmonic language keeps the focus on tone quality and evenness of touch." },
+  { name:"Pal Pal Har Pal",                   key:"F Major",  bpm:120, time:"4/4",   diff:"easy",     book:"romantic", desc:"A gentle F Major piece that develops a pianist's ability to sustain melodic phrases over a steady pulse. Excellent for building consistent finger pressure, practising the F Major scale position, and shaping phrases with a natural rise and fall." },
+  { name:"Aaj Kal Tere Mere Pyaar Ke Charche",key:"A Major",  bpm:80,  time:"2/2",   diff:"easy",     book:"romantic", desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse. The slow tempo gives ample space for working on clean hand independence and a full, resonant tone in A Major." },
+  { name:"Piyu Bole",                         key:"F Major",  bpm:160, time:"8/8",   diff:"moderate", book:"romantic", desc:"An 8/8 groove in F Major — a rare and rewarding challenge for the rhythmically curious pianist. Developing an internal feel for compound groupings while keeping a light, dancing touch at speed makes this a distinctive piece in the repertoire." },
+  { name:"Khwab Ho Tum Ya Koi Haqeeqat",      key:"G Major",  bpm:120, time:"3/4",   diff:"easy",     book:"romantic", desc:"A dreamy waltz in G Major well suited for pianists consolidating 3/4 metre. The gentle pace and lyrical melodic line encourage a flowing wrist motion and the development of a naturally shaped, song-like phrase arc." },
+  { name:"Main Agar Kahun",                   key:"E Minor",  bpm:120, time:"12/8",  diff:"moderate", book:"romantic", desc:"A deeply expressive E Minor piece in 12/8 — compound metre that creates a natural rolling, triplet feel under the hands. Pianists learn to voice a singing melody over a rocking accompaniment pattern, developing the independence and sensitivity central to expressive playing." },
+  { name:"Ek Ladki Bheegi Bhaagi Si",         key:"A Minor",  bpm:125, time:"4/4",   diff:"easy",     book:"classic",  desc:"A breezy A Minor tune excellent for pianists getting comfortable with minor key melodies at a moderate pace. Clean finger crossing, consistent touch, and simple rhythmic clarity are the core skills this cheerful piece develops." },
+  { name:"Gulaabi Aankhen",                   key:"A Minor",  bpm:100, time:"2/4",   diff:"easy",     book:"classic",  desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone and phrasing. The unhurried tempo gives pianists time to listen deeply to each note, making it perfect for developing a refined, expressive touch." },
+  { name:"Chookar Mere Mann Ko",              key:"F Major",  bpm:120, time:"4/4",   diff:"easy",     book:"classic",  desc:"A warm F Major melody well suited to pianists practising smooth finger legato and basic dynamic shaping. The straightforward rhythmic pattern keeps the focus on tone quality and the natural shaping of a beautifully arched melodic line." },
+  { name:"Hai Apna Dil Toh Awaara",           key:"G Major",  bpm:120, time:"4/4",   diff:"moderate", book:"classic",  desc:"A lively G Major piece that challenges pianists with its rhythmic energy and need for crisp articulation. Developing a strong sense of pulse while keeping the melody singing above a steady accompaniment is the central technical focus." },
+  { name:"Kal Ho Na Ho",                      key:"C Major",  bpm:80,  time:"4/4",   diff:"moderate", book:"classic",  desc:"A sweeping C Major ballad that demands real musical maturity at the piano. Slow tempos expose every nuance of touch and voicing — pianists will work on sustaining long melodic lines, shaping dynamic arches, and bringing genuine emotional depth to each phrase." },
+  { name:"Ajeeb Dastan Hai Yeh",              key:"G Major",  bpm:160, time:"2/4",   diff:"moderate", book:"classic",  desc:"A brisk 2/4 piece that builds dexterity and rhythmic lightness. The quicker pace in G Major challenges pianists to maintain clean finger independence and a dancing, buoyant touch without allowing tension to creep into the hand." },
+  { name:"Aaoge Jab Tum Saajnaa",             key:"G Major",  bpm:120, time:"4/4",   diff:"moderate", book:"classic",  desc:"A soulful G Major melody that asks pianists to develop a searching, expressive tone. Careful attention to phrase direction, subtle rubato, and balance between melody and inner voices will bring this piece to life at the keyboard." },
+  { name:"Maula Mere Le Le Meri Jaan",        key:"D Major",  bpm:120, time:"4/4",   diff:"moderate", book:"classic",  desc:"An intense D Major piece requiring committed dynamic shaping and strong melodic projection. Pianists develop the ability to sustain intensity across long phrases while keeping the harmonic accompaniment transparent and supportive." },
+  { name:"Ae Hairate",                        key:"D Major",  bpm:110, time:"4/4",   diff:"easy",     book:"soulful",  desc:"A graceful D Major melody at a gentle tempo — ideal for pianists building confidence with smooth, even legato in a comfortable key. The unhurried pace allows careful attention to tone production and the natural shaping of lyrical phrases." },
+  { name:"Itna Na Mujhse Tu",                 key:"A Minor",  bpm:140, time:"4/4",   diff:"easy",     book:"soulful",  desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness and control even as the tempo increases. Clean finger preparation and consistent key touch are the core technical benefits of practising this expressive piece." },
+  { name:"Jashn-e-Bahara",                    key:"A Major",  bpm:140, time:"4/4",   diff:"easy",     book:"soulful",  desc:"A bright, celebratory A Major melody that develops clean finger articulation and confident playing at a lively tempo. The ascending and descending scale-like passages are excellent for building keyboard geography and hand position awareness." },
+  { name:"Srivalli",                          key:"A Major",  bpm:125, time:"4/4",   diff:"moderate", book:"soulful",  desc:"A contemporary A Major piece with engaging rhythmic patterns that challenge pianists to develop crisp note repetition and agile finger movement. Maintaining accuracy and an even touch at a moderate tempo are the primary technical goals." },
+  { name:"Moh Moh Ke Dhaage",                key:"D Major",  bpm:120, time:"4/4",   diff:"moderate", book:"soulful",  desc:"An emotionally rich D Major piece where micro-dynamic shadings make all the difference. Pianists work on subtle voicing, control of touch weight, and the art of telling a musical story through careful management of phrase direction and tone colour." },
+  { name:"Allah Ke Bande",                    key:"G Major",  bpm:175, time:"4/4",   diff:"moderate", book:"soulful",  desc:"A spiritually charged G Major piece at a lively tempo. The higher BPM demands strong rhythmic stamina and the ability to keep melodic lines clear and singing even as the pace quickens — excellent for building overall keyboard fluency." },
+  { name:"Kalank",                            key:"B♭ Major", bpm:110, time:"4/4",   diff:"moderate", book:"soulful",  desc:"A melancholic B♭ Major piece that develops sensitivity to harmonic colour and tonal weight. Pianists explore the expressive possibilities of a flat key, working on full, resonant tone production and the shaping of brooding, sustained melodic arches." },
+  { name:"Teri Deewani",                      key:"E Minor",  bpm:120, time:"6/8",   diff:"moderate", book:"soulful",  desc:"A distinctive E Minor piece in 6/8 that expands a pianist's rhythmic understanding into compound metre. The flowing triplet feel under the hands encourages a natural rocking wrist motion and a singing legato touch across the two-beat phrase groups." },
+];
+
+let currentFilter = "all";
+
+function togglePanel() {
+  const btn = document.getElementById("toggleBtn");
+  const panel = document.getElementById("songsPanel");
+  const isOpen = panel.classList.contains("visible");
+  panel.classList.toggle("visible", !isOpen);
+  btn.classList.toggle("open", !isOpen);
+  if (!isOpen) renderSongs();
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll(".pill").forEach(p => {
+    p.className = "pill";
+    if(p.dataset.filter === f) p.classList.add("active-" + f);
+  });
+  renderSongs();
+}
+
+function renderSongs() {
+  const q = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+  const grid = document.getElementById("songsGrid");
+  const noRes = document.getElementById("noResults");
+  const countLabel = document.getElementById("countLabel");
+
+  const filtered = songs.filter(s => {
+    const matchFilter = currentFilter === "all" || s.diff === currentFilter;
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.key.toLowerCase().includes(q) || BOOK_LABELS[s.book].toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  countLabel.textContent = filtered.length + " song" + (filtered.length !== 1 ? "s" : "");
+
+  if (!filtered.length) {
+    grid.innerHTML = "";
+    noRes.style.display = "block";
+    return;
+  }
+  noRes.style.display = "none";
+
+  grid.innerHTML = filtered.map(s => {
+    const idx = songs.indexOf(s);
+    const url = BOOK_URLS[s.book];
+    const label = BOOK_LABELS[s.book];
+    const emoji = BOOK_EMOJIS[s.book];
+    const diffLabel = s.diff === "easy" ? "Easy" : s.diff === "moderate" ? "Moderate" : "Advanced";
+    return `
+    <div class="song-card">
+      <div class="song-header">
+        <div class="song-title-row">
+          <span class="song-name">${s.name}</span>
+          <span class="diff-badge ${s.diff}">${diffLabel}</span>
+        </div>
+        <button class="info-btn" onclick="openModal(${idx})" aria-label="About ${s.name}">ⓘ</button>
+      </div>
+      <div class="song-meta">${s.key} · ${s.bpm} BPM · ${s.time}</div>
+      <div class="song-footer">
+        <a class="book-tag ${s.book}" href="${url}" target="_blank" rel="noopener" title="Open ${label}">
+          <svg viewBox="0 0 12 12" fill="none"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1H8v8H2.5A1.5 1.5 0 0 1 1 7.5V2.5z" stroke="currentColor" stroke-width="1.2"/><path d="M8 1h1A1.5 1.5 0 0 1 10.5 2.5V9H8V1z" stroke="currentColor" stroke-width="1.2"/></svg>
+          ${emoji} ${label}
+        </a>
+        <a class="open-link" href="${url}" target="_blank" rel="noopener">
+          Open
+          <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6.5 2.5L10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openModal(idx) {
+  const s = songs[idx];
+  const url = BOOK_URLS[s.book];
+  const label = BOOK_LABELS[s.book];
+  const emoji = BOOK_EMOJIS[s.book];
+  const diffLabel = s.diff === "easy" ? "Easy" : s.diff === "moderate" ? "Moderate" : "Advanced";
+
+  document.getElementById("mTitle").textContent = s.name;
+  document.getElementById("mBadge").innerHTML =
+    `<span class="diff-badge ${s.diff}">${diffLabel}</span>
+     <a class="book-tag ${s.book}" href="${url}" target="_blank" rel="noopener">${emoji} ${label}</a>`;
+  document.getElementById("mMeta").innerHTML = `
+    <div class="meta-item"><span class="meta-label">Key:</span><span>${s.key}</span></div>
+    <div class="meta-item"><span class="meta-label">BPM:</span><span>${s.bpm}</span></div>
+    <div class="meta-item"><span class="meta-label">Time:</span><span>${s.time}</span></div>
+    <div class="meta-item"><span class="meta-label">Book:</span><span>${label}</span></div>
+  `;
+  document.getElementById("mDesc").textContent = s.desc;
+  const cta = document.getElementById("mCta");
+  cta.href = url;
+  cta.textContent = "";
+  cta.innerHTML = `Open ${label} <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  document.getElementById("modalBackdrop").classList.add("open");
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById("modalBackdrop")) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById("modalBackdrop").classList.remove("open");
+}
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeModalDirect(); });
+</script>
+</div>
+
     <!-- ── Learn Piano course entry point ── -->
     <div class="course-section">
       <p class="course-section-label">✦ New — Learn to Play</p>
