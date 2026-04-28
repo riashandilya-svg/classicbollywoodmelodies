@@ -748,17 +748,18 @@
 
   /* ── Song card: glass + depth ── */
 .song-card {
-    border-radius: 16px;
-    padding: 12px 13px 11px;
-    border: 1px solid rgba(140,120,160,0.14);
-    background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.75));
-    box-shadow: 0 10px 30px rgba(22,10,35,0.06), 0 2px 8px rgba(22,10,35,0.04);
-    backdrop-filter: blur(14px);
-    position: relative; overflow: hidden;
-    transition: all 0.18s ease;
-    display: flex; flex-direction: column; gap: 6px;
-    animation: fadeInUp 0.3s ease;
-  }
+  border-radius: 16px;
+  padding: 12px 13px 11px;
+  border: 1px solid rgba(140,120,160,0.14);
+  background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.75));
+  box-shadow: 0 10px 30px rgba(22,10,35,0.06), 0 2px 8px rgba(22,10,35,0.04);
+  backdrop-filter: blur(14px);
+  position: relative; overflow: hidden;
+  transition: all 0.18s ease;
+  display: flex; flex-direction: column; gap: 4px;
+  animation: fadeInUp 0.3s ease;
+  min-height: 120px;   /* ← keeps all cards same height floor */
+}
   @keyframes fadeInUp {
     from { opacity:0; transform: translateY(6px); }
     to   { opacity:1; transform: translateY(0); }
@@ -816,7 +817,15 @@
 .song-meta { font-size:11px; color:rgba(26,26,31,0.55); line-height:1.4; }
 
   /* Footer: only open button, no book tag */
-  .song-footer { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-top: 6px; }
+.song-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* badge left, Open right */
+  gap: 8px;
+  margin-top: auto;    /* ← always pinned to bottom */
+  padding-top: 8px;
+  border-top: 1px solid rgba(140,120,160,0.10);
+}
 
   /* Improved open CTA */
   .open-link {
@@ -1010,15 +1019,23 @@ function renderSongs() {
     const idx = songs.indexOf(s);
     const url = BOOK_URLS[s.book];
     const diffLabel = s.diff === "easy" ? "Easy" : s.diff === "moderate" ? "Moderate" : "Advanced";
-    return `
-    <div class="song-card" data-book="${s.book}">
-      <div class="song-header">
-        <div class="song-title-row">
-          <span class="song-name">${s.name}</span>
-          <span class="diff-badge ${s.diff}">${diffLabel}</span>
-        </div>
-        <button class="info-btn" onclick="openModal(${idx})" aria-label="About ${s.name}">ⓘ</button>
-      </div>
+   return `
+<div class="song-card" data-book="${s.book}">
+  <div class="song-header">
+    <div class="song-title-row">
+      <span class="song-name">${s.name}</span>
+    </div>
+    <button class="info-btn" onclick="openModal(${idx})" aria-label="About ${s.name}">ⓘ</button>
+  </div>
+  <div class="song-meta">${s.key} · ${s.bpm} BPM · ${s.time}</div>
+  <div class="song-footer">
+    <span class="diff-badge ${s.diff}">${diffLabel}</span>
+    <a class="open-link" href="${url}" target="_blank" rel="noopener">
+      Open
+      <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6.5 2.5L10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</div>`;
       <div class="song-meta">${s.key} · ${s.bpm} BPM · ${s.time}</div>
       <div class="song-footer">
         <a class="open-link" href="${url}" target="_blank" rel="noopener">
