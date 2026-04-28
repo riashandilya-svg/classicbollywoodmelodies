@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Find Your Song — Sonic Echo</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #1a1020;
+  --bg2:         #211428;
+  --lavender:    #c8b4f0;
+  --lavender-dim:#a08ed4;
+  --lavender-faint: rgba(200,180,240,0.12);
+  --rose:        #f28ca0;
+  --rose-deep:   #c94f6a;
+  --rose-faint:  rgba(242,140,160,0.12);
+  --white:       #f5eeff;
+  --white-muted: rgba(245,238,255,0.55);
+  --white-dim:   rgba(245,238,255,0.08);
+  --border:      rgba(200,180,240,0.14);
+  --border-bright: rgba(200,180,240,0.35);
+  --card-bg:     rgba(255,255,255,0.04);
+  --glow-lav:    rgba(200,180,240,0.18);
+  --glow-rose:   rgba(194,79,106,0.22);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--white);
+  overflow-x: hidden;
+}
+
+/* ── AURORA BG ── */
+.aurora {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 65% 55% at 12% 18%, rgba(160,100,200,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 65% at 88% 82%, rgba(194,79,106,0.14) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 45% at 55% 42%, rgba(200,180,240,0.07) 0%, transparent 65%),
+    var(--bg);
+}
+
+/* ── GRAIN ── */
+.grain {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── FLOATING PARTICLES ── */
+.particles { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.particle {
+  position: absolute; bottom: -20px; border-radius: 50%; opacity: 0;
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+  8%   { opacity: 0.45; }
+  90%  { opacity: 0.18; }
+  100% { transform: translateY(-110vh) scale(1.1); opacity: 0; }
+}
+
+/* ── CURSOR GLOW ── */
+.cursor-glow {
+  position: fixed; width: 360px; height: 360px;
+  background: radial-gradient(circle, rgba(200,180,240,0.08) 0%, transparent 70%);
+  border-radius: 50%; pointer-events: none; z-index: 2;
+  transform: translate(-50%, -50%);
+  transition: left 0.5s ease, top 0.5s ease;
+  mix-blend-mode: screen;
+}
+
+/* ── MAIN WRAPPER ── */
+main {
+  position: relative; z-index: 10;
+  max-width: 900px; margin: 0 auto;
+  padding: 72px 28px 96px;
+  display: flex; flex-direction: column; gap: 72px;
+}
+
+/* ── GLASS CARD ── */
+.glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(22px);
+  border: 1px solid var(--border);
+  border-top: 1px solid rgba(200,180,240,0.22);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.02) inset;
+  position: relative; overflow: hidden;
+}
+.glass::before {
+  content: '';
+  position: absolute; top: -1px; left: 22%; right: 22%; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(200,180,240,0.55), transparent);
+}
+
+/* ── MELODIC THREAD ── */
+.thread {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--lavender), transparent);
+  position: relative; overflow: hidden; border-radius: 2px;
+}
+.thread::after {
+  content: '';
+  position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--rose), transparent);
+  animation: flow 3.8s linear infinite;
+}
+@keyframes flow { to { left: 100%; } }
+
+/* ── SECTION HEADING ── */
+.section-q {
+  font-family: 'Noto Serif', serif;
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 600; line-height: 1.25;
+  color: var(--white); text-align: center; margin-bottom: 10px;
+}
+.section-q em { font-style: italic; color: var(--lavender); font-weight: 400; }
+
+/* ── SECTION 1 : SOUL — 4-col grid ── */
+#s-soul .grid4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px; margin-top: 28px;
+}
+@media(max-width:680px){ #s-soul .grid4 { grid-template-columns: 1fr 1fr; } }
+@media(max-width:420px){ #s-soul .grid4 { grid-template-columns: 1fr; } }
+
+.soul-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 24px 18px;
+  text-align: center; cursor: pointer;
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s, background 0.3s, box-shadow 0.3s;
+  position: relative; overflow: hidden;
+}
+.soul-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--rose-deep), var(--lavender));
+  transform: scaleX(0); transform-origin: center;
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+}
+.soul-card:hover { transform: translateY(-4px); border-color: var(--border-bright); }
+.soul-card:hover::after { transform: scaleX(1); }
+.soul-card.selected {
+  border-color: var(--lavender); background: var(--lavender-faint);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(200,180,240,0.18);
+}
+.soul-card.selected::after { transform: scaleX(1); }
+.soul-card .label {
+  font-family: 'Noto Serif', serif;
+  font-size: 17px; font-weight: 600; color: var(--rose); margin-bottom: 8px;
+}
+.soul-card .sub { font-size: 11px; color: var(--white-muted); letter-spacing: .03em; line-height: 1.5; }
+
+/* ── SECTION 2 : SLIDER ── */
+#s-skill .glass { border-radius: 28px; padding: 40px 40px 36px; }
+.slider-labels {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--white-muted); margin-bottom: 18px;
+}
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 3px; border-radius: 3px; outline: none; cursor: pointer;
+  background: linear-gradient(to right, #7ec8b4 0%, var(--lavender) 50%, var(--rose) 100%);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer;
+  background: radial-gradient(circle at 38% 36%, #fff 0%, var(--lavender) 70%);
+  box-shadow: 0 0 18px rgba(200,180,240,0.65), 0 3px 12px rgba(0,0,0,0.4);
+  transition: transform 0.2s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.18); }
+input[type=range]::-moz-range-thumb {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  background: radial-gradient(circle at 38% 36%, #fff 0%, var(--lavender) 70%);
+}
+.slider-echo {
+  text-align: center; margin-top: 24px;
+  font-family: 'Noto Serif', serif;
+  font-size: 22px; font-style: italic; color: var(--lavender);
+  animation: softPulse 2.8s ease-in-out infinite;
+}
+@keyframes softPulse { 0%,100%{opacity:1} 50%{opacity:0.68} }
+.slider-thread { max-width: 200px; margin: 16px auto 0; }
+
+/* ── SECTION 3 : RHYTHM — 3 circles ── */
+#s-rhythm .circles {
+  display: flex; flex-wrap: wrap; gap: 24px;
+  justify-content: center; margin-top: 32px;
+}
+.rhythm-orb {
+  width: 210px; height: 210px; border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  cursor: pointer; text-align: center; padding: 24px;
+  transition: transform 0.35s cubic-bezier(.22,1,.36,1), border-color 0.35s, box-shadow 0.35s, background 0.35s;
+  animation: orbPulse 3s ease-in-out infinite;
+}
+.rhythm-orb:nth-child(2) { animation-delay: 1s; }
+.rhythm-orb:nth-child(3) { animation-delay: 2s; }
+@keyframes orbPulse {
+  0%,100%{ box-shadow: 0 0 0 0 rgba(200,180,240,0); }
+  50%{ box-shadow: 0 0 0 10px rgba(200,180,240,0.06); }
+}
+.rhythm-orb:hover { transform: scale(1.05); border-color: var(--border-bright); }
+.rhythm-orb.selected {
+  border-color: var(--lavender); background: var(--lavender-faint);
+  transform: scale(1.07);
+  box-shadow: 0 0 0 2px var(--lavender), 0 0 40px rgba(200,180,240,0.22);
+  animation: none;
+}
+.rhythm-orb .orb-icon {
+  font-family: 'Material Symbols Outlined';
+  font-size: 36px; color: var(--rose);
+}
+.rhythm-orb.selected .orb-icon { color: var(--lavender); }
+.rhythm-orb .orb-label {
+  font-family: 'Noto Serif', serif;
+  font-size: 15px; font-weight: 600; color: var(--white);
+}
+
+/* ── SECTION 4 : MOOD — 2×2 grid ── */
+#s-mood .grid2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-top: 28px;
+}
+@media(max-width:500px){ #s-mood .grid2 { grid-template-columns: 1fr; } }
+
+.mood-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 22px 20px;
+  display: flex; align-items: center; gap: 18px;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s, background 0.3s, box-shadow 0.3s;
+}
+.mood-card:hover { transform: translateX(5px); border-color: var(--border-bright); }
+.mood-card.selected { transform: translateX(7px); }
+
+.mood-icon-wrap {
+  width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.mood-icon-wrap .material-symbols-outlined { font-size: 26px; color: #fff; }
+.mood-card h4 { font-family: 'Noto Serif', serif; font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+.mood-card p  { font-size: 11.5px; color: var(--white-muted); font-style: italic; }
+
+.mood-card.mc-calm.selected   { border-color: #a8d5c0; box-shadow: -5px 0 0 #4a9e80, 0 0 28px rgba(74,158,128,0.14); background: rgba(168,213,192,0.08); }
+.mood-card.mc-emotional.selected{ border-color: var(--lavender); box-shadow: -5px 0 0 var(--lavender-dim), 0 0 28px rgba(200,180,240,0.14); background: var(--lavender-faint); }
+.mood-card.mc-bright.selected  { border-color: #f0d070; box-shadow: -5px 0 0 #c8a030, 0 0 28px rgba(240,208,112,0.14); background: rgba(240,208,112,0.07); }
+.mood-card.mc-dramatic.selected{ border-color: var(--rose); box-shadow: -5px 0 0 var(--rose-deep), 0 0 28px var(--rose-faint); background: var(--rose-faint); }
+
+/* ── SECTION 5 : PACE — 3 cards ── */
+#s-pace .pace-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 16px; margin-top: 28px;
+}
+@media(max-width:560px){ #s-pace .pace-row { grid-template-columns: 1fr; } }
+
+.pace-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 28px; padding: 30px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s, background 0.3s, box-shadow 0.3s;
+}
+.pace-card:hover { transform: translateY(-4px); border-color: var(--border-bright); }
+.pace-card.selected {
+  border-color: var(--lavender); background: var(--lavender-faint);
+  transform: translateY(-6px);
+  box-shadow: 0 0 0 2px var(--lavender), 0 16px 40px rgba(200,180,240,0.2);
+}
+.pace-icon-wrap {
+  width: 68px; height: 68px; border-radius: 50%;
+  background: var(--white-dim);
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(200,180,240,0.18);
+  transition: background 0.3s, border-color 0.3s;
+}
+.pace-card.selected .pace-icon-wrap {
+  background: rgba(200,180,240,0.18); border-color: var(--lavender);
+}
+.pace-icon-wrap .material-symbols-outlined { font-size: 34px; color: var(--lavender); }
+.pace-card .pace-label {
+  font-family: 'Noto Serif', serif; font-size: 15px; font-weight: 600; color: var(--white);
+}
+.pace-card .pace-sub {
+  font-size: 11px; color: var(--white-muted); font-style: italic; letter-spacing: .04em;
+}
+
+/* ── SHIMMER REVEAL ── */
+#s-reveal {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 32px 0;
+}
+.reveal-text {
+  font-family: 'Noto Serif', serif;
+  font-size: 22px; font-style: italic; color: var(--rose);
+  animation: softPulse 2.5s ease-in-out infinite;
+  text-align: center;
+}
+.reveal-sub {
+  font-size: 14px; color: var(--white-muted); font-style: italic; text-align: center;
+}
+.reveal-dots { display: flex; gap: 10px; margin-top: 8px; }
+.reveal-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  animation: dotBounce 1.6s ease-in-out infinite;
+}
+.reveal-dot:nth-child(1){ background: var(--lavender); animation-delay:0s; }
+.reveal-dot:nth-child(2){ background: var(--rose);     animation-delay:.2s; }
+.reveal-dot:nth-child(3){ background: #a1cde3;          animation-delay:.4s; }
+@keyframes dotBounce {
+  0%,100%{transform:scale(0.55);opacity:.3}
+  50%{transform:scale(1.35);opacity:1}
+}
+
+/* ── RESULT SECTION ── */
+#s-result {
+  background: var(--card-bg);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+  border-top: 1px solid rgba(200,180,240,0.3);
+  border-radius: 40px; padding: 48px 44px;
+  box-shadow: 0 24px 64px rgba(200,180,240,0.12), 0 0 0 1px rgba(255,255,255,0.025) inset;
+  position: relative; overflow: hidden;
+  display: none; /* hidden until result is shown */
+}
+#s-result.visible { display: block; }
+#s-result::before {
+  content: '';
+  position: absolute; top: -1px; left: 18%; right: 18%; height: 1px;
+  background: linear-gradient(to right, transparent, rgba(200,180,240,0.7), transparent);
+}
+.res-deco {
+  position: absolute; top: 24px; right: 28px;
+  font-family: 'Material Symbols Outlined';
+  font-size: 64px; color: rgba(200,180,240,0.12);
+  user-select: none; pointer-events: none;
+}
+.res-eyebrow {
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--lavender); font-weight: 600; margin-bottom: 10px;
+}
+.res-headline {
+  font-family: 'Noto Serif', serif;
+  font-size: clamp(24px, 4vw, 38px); font-weight: 700;
+  color: var(--white); margin-bottom: 32px;
+}
+.res-body {
+  display: flex; flex-direction: row; gap: 36px; align-items: flex-start; flex-wrap: wrap;
+}
+.res-content { flex: 1; min-width: 200px; }
+.res-song-title {
+  font-family: 'Noto Serif', serif;
+  font-size: clamp(20px, 3.5vw, 28px); font-weight: 600;
+  color: var(--rose); margin-bottom: 8px;
+}
+.res-tagline {
+  font-family: 'Noto Serif', serif;
+  font-size: 15px; font-style: italic; color: var(--white-muted);
+  margin-bottom: 18px; line-height: 1.6;
+}
+.res-desc {
+  font-size: 14px; color: rgba(245,238,255,0.78); line-height: 1.8;
+  margin-bottom: 28px;
+}
+.res-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+.res-tag {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px; padding: 5px 14px; font-size: 11.5px; color: var(--white-muted);
+}
+.also-label {
+  font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--lavender); font-weight: 600; margin-bottom: 12px;
+}
+.also-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.also-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 100px; padding: 8px 18px; cursor: pointer;
+  transition: all 0.25s cubic-bezier(.22,1,.36,1);
+  font-size: 13px; color: var(--white);
+}
+.also-pill:hover { background: var(--lavender-faint); border-color: var(--border-bright); transform: translateY(-2px); }
+.also-pill .material-symbols-outlined { font-size: 16px; color: var(--rose); }
+
+/* ── SURPRISE ME ── */
+.surprise-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 36px 0 0;
+}
+.surprise-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 40px; border: none; border-radius: 100px;
+  background: linear-gradient(135deg, #2a1a3e 0%, #3a1828 100%);
+  border: 1.5px solid rgba(200,180,240,0.3);
+  color: var(--lavender); font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px; font-weight: 600; letter-spacing: .06em;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 rgba(200,180,240,0);
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s, border-color 0.3s;
+  position: relative; overflow: hidden;
+}
+.surprise-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(200,180,240,0.08) 0%, rgba(242,140,160,0.08) 100%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.surprise-btn:hover { transform: translateY(-3px) scale(1.03); border-color: var(--lavender); box-shadow: 0 0 32px rgba(200,180,240,0.22), 0 8px 24px rgba(0,0,0,0.3); }
+.surprise-btn:hover::before { opacity: 1; }
+.surprise-btn:active { transform: scale(0.98); }
+.surprise-icon {
+  font-family: 'Material Symbols Outlined'; font-size: 20px;
+  animation: spinStar 4s linear infinite;
+}
+@keyframes spinStar { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+.surprise-label {
+  font-size: 12px; color: var(--white-muted); letter-spacing: .05em;
+  font-style: italic;
+}
+
+/* ── RETAKE BTN ── */
+.retake-wrap { display: flex; justify-content: center; margin-top: 40px; }
+.retake-btn {
+  padding: 15px 48px; border: none; border-radius: 100px;
+  background: linear-gradient(135deg, var(--lavender-dim) 0%, var(--rose-deep) 100%);
+  color: #fff; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px; font-weight: 600; letter-spacing: .06em;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(194,79,106,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s;
+}
+.retake-btn:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 16px 48px rgba(194,79,106,0.48), 0 0 0 1px rgba(255,255,255,0.14) inset;
+}
+
+/* ── YOUTUBE EMBED ── */
+.yt-wrap {
+  flex-shrink: 0; width: 300px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+@media(max-width:700px){ .yt-wrap { width: 100%; } }
+.yt-frame-wrap {
+  position: relative; width: 100%; padding-bottom: 56.25%;
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+  border: 1px solid rgba(200,180,240,0.18);
+}
+.yt-frame-wrap iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: none;
+}
+.yt-label {
+  text-align: center; font-size: 11px; color: var(--white-muted);
+  letter-spacing: .06em; text-transform: uppercase; font-weight: 500;
+}
+.yt-open-link {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  color: var(--rose); font-size: 12.5px; text-decoration: none;
+  font-weight: 500; transition: color 0.2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.yt-open-link:hover { color: var(--lavender); }
+.yt-open-link .material-symbols-outlined { font-size: 16px; }
+
+/* ── PAGE TITLE ── */
+.page-title-wrap {
+  text-align: center; padding-bottom: 8px;
+}
+.page-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(200,180,240,0.08); border: 1px solid rgba(200,180,240,0.22);
+  border-radius: 100px; padding: 6px 18px; margin-bottom: 20px;
+  font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--lavender); font-weight: 600;
+}
+.page-title {
+  font-family: 'Noto Serif', serif;
+  font-size: clamp(32px, 6vw, 54px); font-weight: 700; line-height: 1.12;
+  color: var(--white); letter-spacing: -0.02em; margin-bottom: 14px;
+}
+.page-title em { font-style: italic; color: var(--rose); font-weight: 400; }
+.page-sub {
+  font-size: 15px; color: var(--white-muted); line-height: 1.75; max-width: 480px; margin: 0 auto;
+}
+
+@media(max-width:600px){ main { padding: 48px 16px 72px; gap: 56px; } }
+</style>
+</head>
+<body>
+
+<div class="aurora"></div>
+<div class="grain"></div>
+<div class="particles" id="particles"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<main>
+
+  <!-- PAGE TITLE -->
+  <div class="page-title-wrap">
+    <div class="page-eyebrow">✦ A Musical Soul Experience</div>
+    <h1 class="page-title">Find Your<br><em>Perfect Song</em></h1>
+    <p class="page-sub">Answer instinctively — not logically. Let your musical soul speak.</p>
+  </div>
+
+  <!-- ── SURPRISE ME ── -->
+  <div class="surprise-wrap">
+    <button class="surprise-btn" onclick="surpriseMe()">
+      <span class="surprise-icon">✦</span>
+      Surprise Me
+      <span class="surprise-icon" style="animation-delay:-2s">✦</span>
+    </button>
+    <span class="surprise-label">Skip the quiz — let fate pick your song</span>
+  </div>
+
+  <!-- ── S1: MUSICAL SOUL ── -->
+  <section id="s-soul">
+    <div class="section-q">What kind of music pulls you in <em>instantly?</em></div>
+    <div class="thread" style="max-width:240px;margin:0 auto 0;"></div>
+    <div class="grid4">
+      <div class="soul-card" onclick="pickSoul(this,'romantic')">
+        <div class="label">Romantic</div>
+        <div class="sub">Deep emotional connections</div>
+        <div class="thread" style="margin-top:18px;"></div>
+      </div>
+      <div class="soul-card" onclick="pickSoul(this,'peppy')">
+        <div class="label">Peppy</div>
+        <div class="sub">Bouncy and energetic vibes</div>
+        <div class="thread" style="margin-top:18px;"></div>
+      </div>
+      <div class="soul-card" onclick="pickSoul(this,'soulful')">
+        <div class="label">Soulful</div>
+        <div class="sub">Inner reflection and calm</div>
+        <div class="thread" style="margin-top:18px;"></div>
+      </div>
+      <div class="soul-card" onclick="pickSoul(this,'classic')">
+        <div class="label">Classic</div>
+        <div class="sub">Timeless structure and grace</div>
+        <div class="thread" style="margin-top:18px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S2: COMFORT SLIDER ── -->
+  <section id="s-skill">
+    <div class="section-q">How comfortable do you feel <em>when you play?</em></div>
+    <div class="thread" style="max-width:240px;margin:0 auto 28px;"></div>
+    <div class="glass" style="border-radius:28px;padding:40px 40px 36px;">
+      <div class="slider-labels">
+        <span>I'm still finding my way…</span>
+        <span>I'm getting there…</span>
+        <span>I feel at home on the keys</span>
+      </div>
+      <input type="range" id="skill-slider" min="0" max="100" value="50" oninput="updateSlider(this.value)"/>
+      <div class="slider-echo" id="slider-echo">You're building your voice</div>
+      <div class="thread slider-thread" style="max-width:180px;margin:14px auto 0;"></div>
+    </div>
+  </section>
+
+  <!-- ── S3: RHYTHM ── -->
+  <section id="s-rhythm">
+    <div class="section-q">What rhythm feels like <em>second nature to you?</em></div>
+    <div class="thread" style="max-width:240px;margin:0 auto 0;"></div>
+    <div class="circles">
+      <div class="rhythm-orb" onclick="pickRhythm(this,'simple')">
+        <span class="orb-icon material-symbols-outlined">favorite</span>
+        <div class="orb-label">Steady &amp; Grounded</div>
+      </div>
+      <div class="rhythm-orb" onclick="pickRhythm(this,'compound')">
+        <span class="orb-icon material-symbols-outlined">waves</span>
+        <div class="orb-label">Flowing &amp; Swaying</div>
+      </div>
+      <div class="rhythm-orb" onclick="pickRhythm(this,'complex')">
+        <span class="orb-icon material-symbols-outlined">auto_fix_high</span>
+        <div class="orb-label">Playful &amp; Unpredictable</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S4: MOOD ── -->
+  <section id="s-mood">
+    <div class="section-q">What do you want to <em>feel</em> while playing… right now?</div>
+    <div class="thread" style="max-width:240px;margin:0 auto 0;"></div>
+    <div class="grid2">
+      <div class="mood-card mc-calm" onclick="pickMood(this,'calm')">
+        <div class="mood-icon-wrap" style="background:linear-gradient(135deg,rgba(100,200,160,0.35),rgba(60,160,120,0.35))">
+          <span class="material-symbols-outlined">spa</span>
+        </div>
+        <div>
+          <h4>Calm &amp; Beautiful</h4>
+          <p>Serenity in every note</p>
+        </div>
+      </div>
+      <div class="mood-card mc-emotional" onclick="pickMood(this,'emotional')">
+        <div class="mood-icon-wrap" style="background:linear-gradient(135deg,rgba(160,140,220,0.35),rgba(120,100,200,0.35))">
+          <span class="material-symbols-outlined">ecg_heart</span>
+        </div>
+        <div>
+          <h4>Emotional &amp; Deep</h4>
+          <p>Vulnerability unleashed</p>
+        </div>
+      </div>
+      <div class="mood-card mc-bright" onclick="pickMood(this,'bright')">
+        <div class="mood-icon-wrap" style="background:linear-gradient(135deg,rgba(240,200,80,0.35),rgba(200,150,40,0.35))">
+          <span class="material-symbols-outlined">sunny</span>
+        </div>
+        <div>
+          <h4>Bright &amp; Happy</h4>
+          <p>Radiant musical joy</p>
+        </div>
+      </div>
+      <div class="mood-card mc-dramatic" onclick="pickMood(this,'dramatic')">
+        <div class="mood-icon-wrap" style="background:linear-gradient(135deg,rgba(220,90,110,0.35),rgba(160,60,80,0.35))">
+          <span class="material-symbols-outlined">theater_comedy</span>
+        </div>
+        <div>
+          <h4>Expressive &amp; Dramatic</h4>
+          <p>High contrast and fire</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S5: PACE ── -->
+  <section id="s-pace">
+    <div class="section-q">What kind of pace feels <em>right today?</em></div>
+    <div class="thread" style="max-width:240px;margin:0 auto 0;"></div>
+    <div class="pace-row">
+      <div class="pace-card" onclick="pickPace(this,'slow')">
+        <div class="pace-icon-wrap">
+          <span class="material-symbols-outlined">potted_plant</span>
+        </div>
+        <div class="pace-label">Slow &amp; Expressive</div>
+        <div class="pace-sub">slow breath</div>
+      </div>
+      <div class="pace-card" onclick="pickPace(this,'medium')">
+        <div class="pace-icon-wrap">
+          <span class="material-symbols-outlined">directions_walk</span>
+        </div>
+        <div class="pace-label">Flowing &amp; Natural</div>
+        <div class="pace-sub">steady</div>
+      </div>
+      <div class="pace-card" onclick="pickPace(this,'fast')">
+        <div class="pace-icon-wrap">
+          <span class="material-symbols-outlined">directions_run</span>
+        </div>
+        <div class="pace-label">Alive &amp; Energetic</div>
+        <div class="pace-sub">bouncing</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SHIMMER REVEAL ── -->
+  <section id="s-reveal">
+    <div class="thread" style="max-width:100%;"></div>
+    <div class="reveal-text" id="reveal-text">Listening to your musical instinct…</div>
+    <div class="reveal-sub" id="reveal-sub">Finding something that feels like you…</div>
+    <div class="reveal-dots">
+      <div class="reveal-dot"></div>
+      <div class="reveal-dot"></div>
+      <div class="reveal-dot"></div>
+    </div>
+  </section>
+
+  <!-- ── RESULT ── -->
+  <section id="s-result">
+    <span class="res-deco material-symbols-outlined">music_note</span>
+    <div class="res-eyebrow">✦ Your Soul Discovery</div>
+    <div class="res-headline" id="res-headline">This feels like your song…</div>
+    <div class="res-body">
+      <div class="yt-wrap">
+        <div class="yt-frame-wrap">
+          <iframe id="yt-iframe"
+            src=""
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
+        </div>
+        <div class="yt-label">Now playing on YouTube</div>
+        <a class="yt-open-link" id="yt-open-link" href="#" target="_blank">
+          <span class="material-symbols-outlined">open_in_new</span>
+          Open in YouTube
+        </a>
+      </div>
+      <div class="res-content">
+        <div class="res-song-title" id="res-name">—</div>
+        <div class="res-tagline" id="res-tagline">—</div>
+        <div class="res-tags" id="res-tags"></div>
+        <div class="res-desc" id="res-desc">—</div>
+        <div class="also-label">✦ Also recommended for you</div>
+        <div class="also-pills" id="also-pills"></div>
+      </div>
+    </div>
+    <div class="retake-wrap">
+      <button class="retake-btn" onclick="retake()">Retake the Journey</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── SONG DATA ──
+const songs = [
+  {name:"Kaisi Paheli Zindagani",key:"B♭ Major",bpm:120,time:"2/4",diff:"easy",book:"peppy",yt:"yBbgCrOHnew",tagline:"Bright and bouncy — like a warm sunny afternoon.",desc:"A playful, rhythmically crisp melody in 2/4 — great for developing a clean sense of two-beat phrasing. The bright B♭ Major tonality rewards clean finger placement and even touch."},
+  {name:"Darling",key:"D Minor",bpm:125,time:"2/4",diff:"easy",book:"peppy",yt:"7FbvOZ1lrFo",tagline:"Light-footed and full of spirit.",desc:"This D Minor gem in 2/4 gives space to shape melodic phrases with warmth and slight melancholy, while practising smooth legato touch in the right hand."},
+  {name:"Jaane Kahan Mera Jigar Gaya Ji",key:"G Major",bpm:130,time:"4/4",diff:"easy",book:"peppy",yt:"R_Hs2HhkMJw",tagline:"Folk energy with a cheerful, dancing pulse.",desc:"A cheerful classic in G Major — ideal for cementing four-beat counting while exploring a lively, folk-tinged melody."},
+  {name:"Senorita",key:"A Major",bpm:120,time:"4/4",diff:"moderate",book:"peppy",yt:"bz4VUhUlMJg",tagline:"Rhythmically bold — syncopation with a grin.",desc:"A polished A Major piece that challenges pianists with its syncopated feel and expressive phrasing demands."},
+  {name:"Zoobie Doobie",key:"C Minor",bpm:90,time:"4/4",diff:"moderate",book:"peppy",yt:"t7bZfQqHU_c",tagline:"Deceptively slow — and delightfully tricky.",desc:"The slower tempo is deceptive — it demands excellent control of touch, dynamics, and voicing in C Minor."},
+  {name:"Gore Gore O Banke Chorre",key:"G Major",bpm:120,time:"2/4",diff:"moderate",book:"peppy",yt:"fzCxAg-Sc9g",tagline:"Nimble and spirited in 2/4.",desc:"A spirited 2/4 piece that builds nimbleness and rhythmic precision in joyful G Major."},
+  {name:"Naina Da Kya Kasoor",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"peppy",yt:"yRL0KQDQ3MQ",tagline:"Tender but full of colour.",desc:"A tender D Major melody requiring sensitive touch and careful tonal shaping throughout."},
+  {name:"Slow Motion Angreza",key:"C Major",bpm:100,time:"2/4",diff:"moderate",book:"peppy",yt:"gCuIKMWF2TA",tagline:"Unhurried and precise — every beat counts.",desc:"This C Major piece in 2/4 is a great study in controlled, unhurried articulation and clarity."},
+  {name:"Mere Saamne Wali Khidki Mein",key:"G Major",bpm:125,time:"4/4",diff:"easy",book:"romantic",yt:"cSoFBEUCMgA",tagline:"Warm and singable — a cantabile dream.",desc:"A warm G Major melody perfect for learning to project a smooth cantabile line with genuine feeling."},
+  {name:"Bade Acche Lagte Hain",key:"G Major",bpm:200,time:"3/4",diff:"easy",book:"romantic",yt:"aCzmBtHPAXE",tagline:"A lilting waltz — tender and timeless.",desc:"A waltz in G Major — a superb introduction to 3/4 metre for pianists who love tender expression."},
+  {name:"Raat Kali Ek Khwab Mein Aayi",key:"C Major",bpm:130,time:"4/4",diff:"easy",book:"romantic",yt:"P6ik5_NmgZg",tagline:"Flowing, dreamy — like music in a reverie.",desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination."},
+  {name:"Pal Pal Har Pal",key:"F Major",bpm:120,time:"4/4",diff:"easy",book:"romantic",yt:"OHzVnBrSBE4",tagline:"Gentle, flowing… like your thoughts turning into music.",desc:"A gentle F Major piece that develops your ability to sustain melodic phrases over a steady pulse — like breathing through music."},
+  {name:"Aaj Kal Tere Mere Pyaar Ke Charche",key:"A Major",bpm:80,time:"2/2",diff:"easy",book:"romantic",yt:"bgMIapBbVLw",tagline:"Broad and graceful — two heartbeats in a bar.",desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse with warmth."},
+  {name:"Piyu Bole",key:"F Major",bpm:160,time:"8/8",diff:"moderate",book:"romantic",yt:"c9L4aWuH6_I",tagline:"Rhythmically rare — and beautifully rewarding.",desc:"An 8/8 groove in F Major — a rare and rewarding challenge for the rhythmically curious, romantically inclined pianist."},
+  {name:"Khwab Ho Tum Ya Koi Haqeeqat",key:"G Major",bpm:120,time:"3/4",diff:"easy",book:"romantic",yt:"7s8aGRl3Eqk",tagline:"Dreamy waltz — soft moonlight in 3/4.",desc:"A dreamy G Major waltz suited for consolidating 3/4 metre with a soft, moonlit touch."},
+  {name:"Main Agar Kahun",key:"E Minor",bpm:120,time:"12/8",diff:"moderate",book:"romantic",yt:"dkM5O5FRiU0",tagline:"Rolling compound metre — longing set to music.",desc:"A deeply expressive E Minor piece in 12/8 — compound metre that creates a natural rolling, triplet feel of longing."},
+  {name:"Ek Ladki Bheegi Bhaagi Si",key:"A Minor",bpm:125,time:"4/4",diff:"easy",book:"classic",yt:"CNoEUGBMQUo",tagline:"Breezy and familiar — a classic in minor.",desc:"A breezy A Minor tune excellent for getting comfortable with minor key melodies at a moderate pace."},
+  {name:"Gulaabi Aankhen",key:"A Minor",bpm:100,time:"2/4",diff:"easy",book:"classic",yt:"iRkBgD6YZWY",tagline:"Slow and rich — attention to every tone.",desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone, phrasing, and sensitivity."},
+  {name:"Chookar Mere Mann Ko",key:"F Major",bpm:120,time:"4/4",diff:"easy",book:"classic",yt:"NLsHFDFdGrc",tagline:"Warm legato — a melody that asks to be sung.",desc:"A warm F Major melody suited for practising smooth finger legato and basic dynamic shaping."},
+  {name:"Hai Apna Dil Toh Awaara",key:"G Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"X-wSzKEA1lM",tagline:"Lively and crisp — G Major with real flair.",desc:"A lively G Major piece that challenges with its rhythmic energy and need for crisp articulation."},
+  {name:"Kal Ho Na Ho",key:"C Major",bpm:80,time:"4/4",diff:"moderate",book:"classic",yt:"R2LsSDGtC2Y",tagline:"Sweeping and cinematic — a ballad of real weight.",desc:"A sweeping C Major ballad that demands musical maturity — cinematic and deeply unforgettable."},
+  {name:"Ajeeb Dastan Hai Yeh",key:"G Major",bpm:160,time:"2/4",diff:"moderate",book:"classic",yt:"PVb8MvZSDqo",tagline:"Brisk and light — dexterity in a timeless frame.",desc:"A brisk 2/4 piece that builds dexterity and rhythmic lightness in a timeless melody."},
+  {name:"Aaoge Jab Tum Saajnaa",key:"G Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"mT5J9L0TkJU",tagline:"Searching and soulful — a melody of longing.",desc:"A soulful G Major melody asking pianists to develop a searching, expressive tone."},
+  {name:"Maula Mere Le Le Meri Jaan",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"QT8AIFR2dT4",tagline:"Intense and powerful — dynamics in full force.",desc:"An intense D Major piece requiring committed dynamic shaping and strong melodic projection."},
+  {name:"Ae Hairate",key:"D Major",bpm:110,time:"4/4",diff:"easy",book:"soulful",yt:"UPh5DGpnMNc",tagline:"Graceful and quiet — introspection at the piano.",desc:"A graceful D Major melody at a gentle tempo — ideal for building confidence with smooth, even legato and quiet introspection."},
+  {name:"Itna Na Mujhse Tu",key:"A Minor",bpm:140,time:"4/4",diff:"easy",book:"soulful",yt:"OtLHpIWa2Dc",tagline:"Flowing and controlled — emotion at pace.",desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness and emotional control."},
+  {name:"Jashn-e-Bahara",key:"A Major",bpm:140,time:"4/4",diff:"easy",book:"soulful",yt:"D-dAP_HYnSI",tagline:"Celebratory and bright — joy in A Major.",desc:"A bright, celebratory A Major melody that develops clean finger articulation and confident playing at a lively tempo."},
+  {name:"Srivalli",key:"A Major",bpm:125,time:"4/4",diff:"moderate",book:"soulful",yt:"OsU0CGZoV8E",tagline:"Contemporary and rhythmically alive.",desc:"A contemporary A Major piece with engaging rhythmic patterns that challenge and inspire pianists."},
+  {name:"Moh Moh Ke Dhaage",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"soulful",yt:"Mwa2RnBJkME",tagline:"Emotionally rich — micro-dynamics make the difference.",desc:"An emotionally rich D Major piece where micro-dynamic shadings and subtle voicing make all the difference."},
+  {name:"Allah Ke Bande",key:"G Major",bpm:175,time:"4/4",diff:"moderate",book:"soulful",yt:"Cp_SxKHFNNE",tagline:"Spiritual and stamina-building — open your heart.",desc:"A spiritually charged G Major piece at a lively tempo demanding strong rhythmic stamina and an open heart."},
+  {name:"Kalank",key:"B♭ Major",bpm:110,time:"4/4",diff:"moderate",book:"soulful",yt:"_H3OVqfaIiM",tagline:"Melancholic colour — heavy with harmonic weight.",desc:"A melancholic B♭ Major piece developing sensitivity to harmonic colour and tonal weight."},
+  {name:"Teri Deewani",key:"E Minor",bpm:120,time:"6/8",diff:"moderate",book:"soulful",yt:"kYkRrIMkUn8",tagline:"Compound metre — devotion in 6/8.",desc:"A distinctive E Minor piece in 6/8 that expands a pianist's rhythmic understanding into compound metre."},
+];
+
+// ── STATE ──
+const ans = { soul: null, rhythm: null, mood: null, pace: null };
+let skillVal = 50;
+
+// ── PARTICLES ──
+(function(){
+  const el = document.getElementById('particles');
+  const cols = ['#c8b4f0','#f28ca0','#e9d8ff','#ffd4e0','#a1cde3'];
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div'); p.className = 'particle';
+    const sz = 2 + Math.random() * 7;
+    p.style.cssText = [`width:${sz}px`,`height:${sz}px`,`left:${Math.random()*100}%`,
+      `background:${cols[Math.floor(Math.random()*cols.length)]}`,
+      `animation-duration:${13+Math.random()*18}s`,`animation-delay:${Math.random()*15}s`].join(';');
+    el.appendChild(p);
+  }
+})();
+
+// ── CURSOR GLOW ──
+document.addEventListener('mousemove', e => {
+  const g = document.getElementById('cursorGlow');
+  g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px';
+});
+
+// ── PICKERS ──
+function pickSoul(el, val) {
+  document.querySelectorAll('.soul-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); ans.soul = val; updateReveal();
+}
+function pickRhythm(el, val) {
+  document.querySelectorAll('.rhythm-orb').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); ans.rhythm = val; updateReveal();
+}
+function pickMood(el, val) {
+  document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); ans.mood = val; updateReveal();
+}
+function pickPace(el, val) {
+  document.querySelectorAll('.pace-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected'); ans.pace = val; updateReveal();
+}
+
+// ── SLIDER ──
+function updateSlider(v) {
+  skillVal = parseInt(v);
+  const t = document.getElementById('slider-echo');
+  if (skillVal < 33)      t.textContent = 'Every note is a discovery ✨';
+  else if (skillVal < 66) t.textContent = "You're building your voice";
+  else                    t.textContent = 'You shape the music 🌳';
+}
+
+// ── REVEAL ──
+function updateReveal() {
+  const filled = Object.values(ans).filter(Boolean).length;
+  const rt = document.getElementById('reveal-text');
+  const rs = document.getElementById('reveal-sub');
+  if (filled === 4) {
+    ans.skill = skillVal < 33 ? 'easy' : skillVal < 66 ? 'mixed' : 'moderate';
+    rt.textContent = 'Your song is waiting…';
+    rs.textContent = 'Scroll down to meet it ↓';
+    setTimeout(() => {
+      showResult();
+      document.getElementById('s-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 900);
+  } else {
+    const prompts = [
+      'Listening to your musical instinct…',
+      'Feeling the pattern emerge…',
+      'Almost there — keep going…',
+      'One more answer to go…'
+    ];
+    rt.textContent = prompts[Math.min(filled, 3)];
+    rs.textContent = 'Finding something that feels like you…';
+  }
+}
+
+// ── MATCH ──
+function matchSong() {
+  let pool = [...songs];
+  const bookMap = { romantic:'romantic', peppy:'peppy', soulful:'soulful', classic:'classic' };
+  const wb = bookMap[ans.soul];
+  if (wb) { const f = pool.filter(s => s.book === wb); if (f.length) pool = f; }
+  if (ans.skill === 'easy')     { const f = pool.filter(s => s.diff === 'easy'); if (f.length) pool = f; }
+  else if (ans.skill === 'moderate') { const f = pool.filter(s => s.diff === 'moderate'); if (f.length) pool = f; }
+  if (ans.rhythm === 'compound') { const f = pool.filter(s => ['3/4','6/8','12/8','8/8'].includes(s.time)); if (f.length) pool = f; }
+  else if (ans.rhythm === 'simple') { const f = pool.filter(s => ['4/4','2/4','2/2'].includes(s.time)); if (f.length) pool = f; }
+  if (ans.pace === 'slow')   { const f = pool.filter(s => s.bpm <= 100); if (f.length) pool = f; }
+  else if (ans.pace === 'medium') { const f = pool.filter(s => s.bpm > 100 && s.bpm <= 135); if (f.length) pool = f; }
+  else if (ans.pace === 'fast')   { const f = pool.filter(s => s.bpm > 135); if (f.length) pool = f; }
+  const scores = {};
+  pool.forEach(s => {
+    let sc = 0;
+    if (ans.mood === 'calm'      && s.key.includes('Major') && !s.key.includes('♭')) sc += 2;
+    if (ans.mood === 'emotional' && s.key.includes('Minor')) sc += 2;
+    if (ans.mood === 'bright'    && ['G Major','C Major','A Major','D Major'].includes(s.key)) sc += 2;
+    if (ans.mood === 'dramatic'  && s.diff === 'moderate') sc += 2;
+    scores[s.name] = sc;
+  });
+  const max = Math.max(...pool.map(s => scores[s.name]));
+  const top = pool.filter(s => scores[s.name] === max);
+  return top[Math.floor(Math.random() * top.length)];
+}
+
+// ── SHOW RESULT ──
+function showResult(song) {
+  if (!song) song = matchSong();
+
+  // Show the result section
+  const resultEl = document.getElementById('s-result');
+  resultEl.classList.add('visible');
+
+  // Populate text fields
+  document.getElementById('res-name').textContent = song.name;
+  document.getElementById('res-tagline').textContent = song.tagline;
+  document.getElementById('res-desc').textContent = song.desc;
+
+  const diffLabel = song.diff === 'easy' ? '🌱 Beginner' : '🌿 Intermediate';
+  document.getElementById('res-tags').innerHTML = [
+    `<span class="res-tag">🎼 ${song.key}</span>`,
+    `<span class="res-tag">♩ ${song.bpm} BPM</span>`,
+    `<span class="res-tag">⏱ ${song.time}</span>`,
+    `<span class="res-tag">${diffLabel}</span>`,
+  ].join('');
+
+  // YouTube embed — use nocookie for better privacy / fewer blocks
+  const ytId = song.yt;
+  const iframe = document.getElementById('yt-iframe');
+  iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=0&rel=0`;
+  const openLink = document.getElementById('yt-open-link');
+  openLink.href = `https://www.youtube.com/watch?v=${ytId}`;
+
+  // Also recommended
+  const also = songs.filter(s => s.name !== song.name && s.book === song.book)
+    .sort(() => Math.random() - 0.5).slice(0, 3);
+  document.getElementById('also-pills').innerHTML = also.map(s =>
+    `<div class="also-pill" onclick="quickPlay('${s.yt}','${s.name}')">
+      <span class="material-symbols-outlined">library_music</span>${s.name}
+    </div>`
+  ).join('');
+}
+
+// ── QUICK PLAY from also-pills ──
+function quickPlay(ytId, name) {
+  const iframe = document.getElementById('yt-iframe');
+  iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0`;
+  document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${ytId}`;
+  document.getElementById('res-name').textContent = name;
+  document.getElementById('s-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── SURPRISE ME — picks a fully random song, skips the quiz ──
+function surpriseMe() {
+  // Randomise all answers silently
+  const souls    = ['romantic','peppy','soulful','classic'];
+  const rhythms  = ['simple','compound','complex'];
+  const moods    = ['calm','emotional','bright','dramatic'];
+  const paces    = ['slow','medium','fast'];
+
+  ans.soul   = souls  [Math.floor(Math.random() * souls.length)];
+  ans.rhythm = rhythms[Math.floor(Math.random() * rhythms.length)];
+  ans.mood   = moods  [Math.floor(Math.random() * moods.length)];
+  ans.pace   = paces  [Math.floor(Math.random() * paces.length)];
+  ans.skill  = ['easy','mixed','moderate'][Math.floor(Math.random() * 3)];
+
+  // Update the reveal text
+  document.getElementById('reveal-text').textContent = 'Fate is choosing your song…';
+  document.getElementById('reveal-sub').textContent = 'Something unexpected is coming ✦';
+
+  // Short delay for drama, then reveal
+  setTimeout(() => {
+    showResult();
+    document.getElementById('s-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 700);
+}
+
+// ── RETAKE ──
+function retake() {
+  Object.keys(ans).forEach(k => ans[k] = null);
+  skillVal = 50;
+  document.getElementById('skill-slider').value = 50;
+  updateSlider(50);
+  document.querySelectorAll('.soul-card,.rhythm-orb,.mood-card,.pace-card').forEach(e => e.classList.remove('selected'));
+  document.getElementById('reveal-text').textContent = 'Listening to your musical instinct…';
+  document.getElementById('reveal-sub').textContent = 'Finding something that feels like you…';
+  // Reset iframe to avoid lingering video
+  document.getElementById('yt-iframe').src = '';
+  // Hide result section again
+  document.getElementById('s-result').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
