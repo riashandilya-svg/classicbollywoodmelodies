@@ -747,127 +747,37 @@
   @media (max-width: 640px) { .songs-grid { grid-template-columns: 1fr; } }
 
   .song-card {
-    border-radius: 22px;
-    padding: 20px 20px 18px;
+    border-radius: 20px; padding: 18px 20px;
+    border: 1px solid rgba(140,120,160,0.16);
+    background: var(--surface);
+    box-shadow: 0 14px 36px rgba(22,10,35,0.08);
+    backdrop-filter: blur(10px);
     position: relative; overflow: hidden;
-    transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+    transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
     display: flex; flex-direction: column; gap: 10px;
-    animation: fadeInUp 0.35s ease both;
   }
-  .song-card:hover {
-    transform: translateY(-5px) scale(1.015);
-  }
-
-  /* Romantic — warm rose */
-  .song-card[data-book="romantic"] {
-    background: linear-gradient(145deg, #fff0f5 0%, #fce4ef 55%, #f9d0e6 100%);
-    border: 1.5px solid rgba(220,80,130,0.28);
-    box-shadow: 0 12px 36px rgba(210,60,110,0.14), 0 2px 8px rgba(210,60,110,0.08);
-  }
-  .song-card[data-book="romantic"]:hover {
-    box-shadow: 0 22px 55px rgba(210,60,110,0.24), 0 6px 18px rgba(210,60,110,0.14);
-    border-color: rgba(220,80,130,0.50);
-  }
-  .song-card[data-book="romantic"] .song-name { color: #8b1a4a; }
-  .song-card[data-book="romantic"] .song-meta { color: rgba(140,30,75,0.62); }
-  .song-card[data-book="romantic"] .info-btn { border-color: rgba(220,80,130,0.35); color: rgba(180,50,100,0.80); background: rgba(220,80,130,0.08); }
-  .song-card[data-book="romantic"] .open-link { background: linear-gradient(135deg, rgba(220,80,130,0.18), rgba(255,150,180,0.10)); border-color: rgba(220,80,130,0.38); color: #8b1a4a; }
-
-  /* Soulful — deep violet */
-  .song-card[data-book="soulful"] {
-    background: linear-gradient(145deg, #f3f0ff 0%, #e8e0fc 55%, #ddd4fa 100%);
-    border: 1.5px solid rgba(120,80,240,0.28);
-    box-shadow: 0 12px 36px rgba(100,60,220,0.14), 0 2px 8px rgba(100,60,220,0.08);
-  }
-  .song-card[data-book="soulful"]:hover {
-    box-shadow: 0 22px 55px rgba(100,60,220,0.24), 0 6px 18px rgba(100,60,220,0.14);
-    border-color: rgba(120,80,240,0.50);
-  }
-  .song-card[data-book="soulful"] .song-name { color: #3b1fa8; }
-  .song-card[data-book="soulful"] .song-meta { color: rgba(70,40,170,0.60); }
-  .song-card[data-book="soulful"] .info-btn { border-color: rgba(120,80,240,0.35); color: rgba(100,60,220,0.80); background: rgba(120,80,240,0.08); }
-  .song-card[data-book="soulful"] .open-link { background: linear-gradient(135deg, rgba(120,80,240,0.18), rgba(160,120,255,0.10)); border-color: rgba(120,80,240,0.38); color: #3b1fa8; }
-
-  /* Peppy — golden amber */
-  .song-card[data-book="peppy"] {
-    background: linear-gradient(145deg, #fffbf0 0%, #fef3d0 55%, #fdeab0 100%);
-    border: 1.5px solid rgba(210,140,20,0.28);
-    box-shadow: 0 12px 36px rgba(200,130,10,0.14), 0 2px 8px rgba(200,130,10,0.08);
-  }
-  .song-card[data-book="peppy"]:hover {
-    box-shadow: 0 22px 55px rgba(200,130,10,0.24), 0 6px 18px rgba(200,130,10,0.14);
-    border-color: rgba(210,140,20,0.50);
-  }
-  .song-card[data-book="peppy"] .song-name { color: #7a4800; }
-  .song-card[data-book="peppy"] .song-meta { color: rgba(130,80,0,0.60); }
-  .song-card[data-book="peppy"] .info-btn { border-color: rgba(210,140,20,0.38); color: rgba(180,110,10,0.80); background: rgba(210,140,20,0.08); }
-  .song-card[data-book="peppy"] .open-link { background: linear-gradient(135deg, rgba(210,140,20,0.18), rgba(245,190,60,0.10)); border-color: rgba(210,140,20,0.38); color: #7a4800; }
-
-  /* Classic — emerald green */
-  .song-card[data-book="classic"] {
-    background: linear-gradient(145deg, #f0fdf6 0%, #dcfaec 55%, #c6f4de 100%);
-    border: 1.5px solid rgba(16,160,90,0.28);
-    box-shadow: 0 12px 36px rgba(10,140,75,0.14), 0 2px 8px rgba(10,140,75,0.08);
-  }
-  .song-card[data-book="classic"]:hover {
-    box-shadow: 0 22px 55px rgba(10,140,75,0.24), 0 6px 18px rgba(10,140,75,0.14);
-    border-color: rgba(16,160,90,0.50);
-  }
-  .song-card[data-book="classic"] .song-name { color: #064e2e; }
-  .song-card[data-book="classic"] .song-meta { color: rgba(10,90,50,0.60); }
-  .song-card[data-book="classic"] .info-btn { border-color: rgba(16,160,90,0.35); color: rgba(10,140,75,0.80); background: rgba(16,160,90,0.08); }
-  .song-card[data-book="classic"] .open-link { background: linear-gradient(135deg, rgba(16,160,90,0.18), rgba(60,200,130,0.10)); border-color: rgba(16,160,90,0.38); color: #064e2e; }
-
-  /* Shared top-right orb glow */
+  .song-card:hover { transform: translateY(-2px); box-shadow: 0 22px 50px rgba(22,10,35,0.13); border-color: rgba(155,110,255,0.26); }
   .song-card::before {
-    content:"";
-    position:absolute;
-    inset:-60px -50px auto auto;
-    width:160px; height:160px;
-    border-radius:999px;
-    opacity:0.55;
+    content:""; position:absolute; inset:-70px -80px auto auto;
+    width:200px; height:200px; border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,120,160,0.28), rgba(155,110,255,0.18), transparent 62%);
     pointer-events:none;
-  }
-  .song-card[data-book="romantic"]::before { background: radial-gradient(circle, rgba(255,100,160,0.55), transparent 65%); }
-  .song-card[data-book="soulful"]::before  { background: radial-gradient(circle, rgba(140,90,255,0.55), transparent 65%); }
-  .song-card[data-book="peppy"]::before    { background: radial-gradient(circle, rgba(255,185,30,0.55), transparent 65%); }
-  .song-card[data-book="classic"]::before  { background: radial-gradient(circle, rgba(30,200,110,0.55), transparent 65%); }
-
-  /* Bottom-left accent blob */
-  .song-card::after {
-    content:"";
-    position:absolute;
-    bottom:-40px; left:-30px;
-    width:100px; height:100px;
-    border-radius:999px;
-    opacity:0.30;
-    pointer-events:none;
-  }
-  .song-card[data-book="romantic"]::after { background: radial-gradient(circle, rgba(255,80,140,0.50), transparent 70%); }
-  .song-card[data-book="soulful"]::after  { background: radial-gradient(circle, rgba(110,60,240,0.50), transparent 70%); }
-  .song-card[data-book="peppy"]::after    { background: radial-gradient(circle, rgba(240,160,10,0.50), transparent 70%); }
-  .song-card[data-book="classic"]::after  { background: radial-gradient(circle, rgba(10,180,90,0.50), transparent 70%); }
-
-  @keyframes fadeInUp {
-    from { opacity:0; transform: translateY(8px); }
-    to   { opacity:1; transform: translateY(0); }
   }
   .song-card > * { position: relative; z-index:1; }
 
-  .song-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom: 2px; }
+  .song-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
   .song-title-row { display:flex; align-items:flex-start; gap:8px; flex:1; flex-wrap:wrap; }
-  .song-name { font-size:16px; font-weight:700; letter-spacing:-0.015em; line-height:1.3; }
+  .song-name { font-size:15px; font-weight:700; letter-spacing:-0.01em; line-height:1.25; }
 
   .diff-badge {
     display:inline-flex; align-items:center;
-    padding:4px 10px; border-radius:999px;
-    font-size:10px; font-weight:700; letter-spacing:0.6px;
+    padding:3px 9px; border-radius:999px;
+    font-size:10px; font-weight:700; letter-spacing:0.5px;
     text-transform:uppercase; white-space:nowrap; flex-shrink:0; margin-top:2px;
-    backdrop-filter: blur(6px);
   }
-  .diff-badge.easy { background:linear-gradient(135deg,rgba(16,185,129,0.16),rgba(16,185,129,0.07)); color:#047857; border:1px solid rgba(16,185,129,0.24); box-shadow: 0 2px 6px rgba(16,185,129,0.12); }
-  .diff-badge.moderate { background:linear-gradient(135deg,rgba(245,158,11,0.16),rgba(245,158,11,0.07)); color:#b45309; border:1px solid rgba(245,158,11,0.24); box-shadow: 0 2px 6px rgba(245,158,11,0.12); }
-  .diff-badge.advanced { background:linear-gradient(135deg,rgba(239,68,68,0.16),rgba(239,68,68,0.07)); color:#991b1b; border:1px solid rgba(239,68,68,0.24); box-shadow: 0 2px 6px rgba(239,68,68,0.12); }
+  .diff-badge.easy { background:linear-gradient(135deg,rgba(16,185,129,0.16),rgba(16,185,129,0.07)); color:#047857; border:1px solid rgba(16,185,129,0.24); }
+  .diff-badge.moderate { background:linear-gradient(135deg,rgba(245,158,11,0.16),rgba(245,158,11,0.07)); color:#b45309; border:1px solid rgba(245,158,11,0.24); }
+  .diff-badge.advanced { background:linear-gradient(135deg,rgba(239,68,68,0.16),rgba(239,68,68,0.07)); color:#991b1b; border:1px solid rgba(239,68,68,0.24); }
 
   .info-btn {
     display:inline-flex; align-items:center; justify-content:center;
@@ -880,10 +790,10 @@
   }
   .info-btn:hover { background:rgba(155,110,255,0.14); border-color:rgba(155,110,255,0.45); transform:scale(1.1); }
 
-  .song-meta { font-size:12.5px; line-height:1.4; opacity: 0.68; }
+  .song-meta { font-size:13px; color:var(--muted); line-height:1.4; }
 
   /* Book tag + open link row */
-  .song-footer { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-top: 6px; }
+  .song-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
 
   .book-tag {
     display:inline-flex; align-items:center; gap:5px;
@@ -899,17 +809,13 @@
 
   .open-link {
     display:inline-flex; align-items:center; gap:5px;
-    padding:7px 14px; border-radius:12px; font-size:12px; font-weight:700;
+    padding:6px 13px; border-radius:10px; font-size:12px; font-weight:700;
     text-decoration:none; color:rgb(85,55,190);
-    border:1px solid rgba(155,110,255,0.30);
-    background: linear-gradient(
-      135deg,
-      rgba(155,110,255,0.16),
-      rgba(255,120,160,0.10)
-    );
+    border:1px solid rgba(155,110,255,0.28);
+    background:linear-gradient(135deg,rgba(155,110,255,0.12),rgba(255,120,160,0.08));
     transition:all 0.14s;
   }
-  .open-link:hover { transform:translateY(-1px); box-shadow:0 8px 18px rgba(85,55,190,0.18); filter:brightness(1.05); }
+  .open-link:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(85,55,190,0.14); filter:brightness(1.05); }
   .open-link svg { width:11px; height:11px; }
 
   .no-results { text-align:center; padding:40px 20px; color:var(--muted); font-size:15px; }
@@ -1015,10 +921,6 @@ const BOOK_LABELS = {
   classic: "Classic Melodies"
 };
 
-const BOOK_EMOJIS = {
-  soulful: "🎶", romantic: "💜", peppy: "🌟", classic: "🎵"
-};
-
 const songs = [
   { name:"Kaisi Paheli Zindagani",           key:"B♭ Major", bpm:120, time:"2/4",   diff:"easy",     book:"peppy",    desc:"A playful, rhythmically crisp melody in 2/4 — great for pianists developing a clean sense of two-beat phrasing. The bright B♭ Major tonality rewards clean finger placement and even touch, while the brisk tempo encourages a light, bouncing articulation style." },
   { name:"Darling",                           key:"D Minor",  bpm:125, time:"2/4",   diff:"easy",     book:"peppy",    desc:"This D Minor gem in 2/4 is a wonderful entry point for understanding minor key character at the piano. The moderate tempo gives beginners space to shape melodic phrases with warmth and slight melancholy, while practising smooth legato touch in the right hand." },
@@ -1102,7 +1004,7 @@ function renderSongs() {
     const emoji = BOOK_EMOJIS[s.book];
     const diffLabel = s.diff === "easy" ? "Easy" : s.diff === "moderate" ? "Moderate" : "Advanced";
     return `
-    <div class="song-card" data-book="${s.book}">
+    <div class="song-card">
       <div class="song-header">
         <div class="song-title-row">
           <span class="song-name">${s.name}</span>
@@ -1112,6 +1014,10 @@ function renderSongs() {
       </div>
       <div class="song-meta">${s.key} · ${s.bpm} BPM · ${s.time}</div>
       <div class="song-footer">
+        <a class="book-tag ${s.book}" href="${url}" target="_blank" rel="noopener" title="Open ${label}">
+          <svg viewBox="0 0 12 12" fill="none"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1H8v8H2.5A1.5 1.5 0 0 1 1 7.5V2.5z" stroke="currentColor" stroke-width="1.2"/><path d="M8 1h1A1.5 1.5 0 0 1 10.5 2.5V9H8V1z" stroke="currentColor" stroke-width="1.2"/></svg>
+          ${emoji} ${label}
+        </a>
         <a class="open-link" href="${url}" target="_blank" rel="noopener">
           Open
           <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6.5 2.5L10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
