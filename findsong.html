@@ -449,22 +449,40 @@ input[type=range]::-moz-range-thumb {
   box-shadow: 0 16px 48px rgba(194,79,106,0.48), 0 0 0 1px rgba(255,255,255,0.14) inset;
 }
 
-/* ── YOUTUBE EMBED ── */
+/* ── YOUTUBE THUMBNAIL ── */
 .yt-wrap {
   flex-shrink: 0; width: 300px;
   display: flex; flex-direction: column; gap: 12px;
 }
 @media(max-width:700px){ .yt-wrap { width: 100%; } }
-.yt-frame-wrap {
+.yt-thumb-wrap {
   position: relative; width: 100%; padding-bottom: 56.25%;
   border-radius: 20px; overflow: hidden;
   box-shadow: 0 20px 50px rgba(0,0,0,0.55);
   border: 1px solid rgba(200,180,240,0.18);
+  cursor: pointer; display: block; text-decoration: none;
 }
-.yt-frame-wrap iframe {
+.yt-thumb-wrap img {
   position: absolute; inset: 0; width: 100%; height: 100%;
-  border: none;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1), filter 0.3s;
+  filter: brightness(0.82);
 }
+.yt-thumb-wrap:hover img { transform: scale(1.05); filter: brightness(0.6); }
+.yt-play-btn {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+}
+.yt-play-circle {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(200,180,240,0.92);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.45);
+  transition: transform 0.25s, background 0.25s;
+}
+.yt-thumb-wrap:hover .yt-play-circle { transform: scale(1.12); background: #fff; }
+.yt-play-circle .material-symbols-outlined { font-size: 32px; color: #1a1020; margin-left: 4px; }
 .yt-label {
   text-align: center; font-size: 11px; color: var(--white-muted);
   letter-spacing: .06em; text-transform: uppercase; font-weight: 500;
@@ -684,14 +702,15 @@ input[type=range]::-moz-range-thumb {
     <div class="res-headline" id="res-headline">This feels like your song…</div>
     <div class="res-body">
       <div class="yt-wrap">
-        <div class="yt-frame-wrap">
-          <iframe id="yt-iframe"
-            src=""
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-          </iframe>
-        </div>
-        <div class="yt-label">Now playing on YouTube</div>
+        <a class="yt-thumb-wrap" id="yt-thumb-link" href="#" target="_blank">
+          <img id="yt-thumb-img" src="" alt="Song thumbnail"/>
+          <div class="yt-play-btn">
+            <div class="yt-play-circle">
+              <span class="material-symbols-outlined">play_arrow</span>
+            </div>
+          </div>
+        </a>
+        <div class="yt-label">Click to play on YouTube</div>
         <a class="yt-open-link" id="yt-open-link" href="#" target="_blank">
           <span class="material-symbols-outlined">open_in_new</span>
           Open in YouTube
@@ -716,38 +735,38 @@ input[type=range]::-moz-range-thumb {
 <script>
 // ── SONG DATA ──
 const songs = [
-  {name:"Kaisi Paheli Zindagani",key:"B♭ Major",bpm:120,time:"2/4",diff:"easy",book:"peppy",yt:"yBbgCrOHnew",tagline:"Bright and bouncy — like a warm sunny afternoon.",desc:"A playful, rhythmically crisp melody in 2/4 — great for developing a clean sense of two-beat phrasing. The bright B♭ Major tonality rewards clean finger placement and even touch."},
-  {name:"Darling",key:"D Minor",bpm:125,time:"2/4",diff:"easy",book:"peppy",yt:"7FbvOZ1lrFo",tagline:"Light-footed and full of spirit.",desc:"This D Minor gem in 2/4 gives space to shape melodic phrases with warmth and slight melancholy, while practising smooth legato touch in the right hand."},
-  {name:"Jaane Kahan Mera Jigar Gaya Ji",key:"G Major",bpm:130,time:"4/4",diff:"easy",book:"peppy",yt:"R_Hs2HhkMJw",tagline:"Folk energy with a cheerful, dancing pulse.",desc:"A cheerful classic in G Major — ideal for cementing four-beat counting while exploring a lively, folk-tinged melody."},
-  {name:"Senorita",key:"A Major",bpm:120,time:"4/4",diff:"moderate",book:"peppy",yt:"bz4VUhUlMJg",tagline:"Rhythmically bold — syncopation with a grin.",desc:"A polished A Major piece that challenges pianists with its syncopated feel and expressive phrasing demands."},
-  {name:"Zoobie Doobie",key:"C Minor",bpm:90,time:"4/4",diff:"moderate",book:"peppy",yt:"t7bZfQqHU_c",tagline:"Deceptively slow — and delightfully tricky.",desc:"The slower tempo is deceptive — it demands excellent control of touch, dynamics, and voicing in C Minor."},
-  {name:"Gore Gore O Banke Chorre",key:"G Major",bpm:120,time:"2/4",diff:"moderate",book:"peppy",yt:"fzCxAg-Sc9g",tagline:"Nimble and spirited in 2/4.",desc:"A spirited 2/4 piece that builds nimbleness and rhythmic precision in joyful G Major."},
-  {name:"Naina Da Kya Kasoor",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"peppy",yt:"yRL0KQDQ3MQ",tagline:"Tender but full of colour.",desc:"A tender D Major melody requiring sensitive touch and careful tonal shaping throughout."},
-  {name:"Slow Motion Angreza",key:"C Major",bpm:100,time:"2/4",diff:"moderate",book:"peppy",yt:"gCuIKMWF2TA",tagline:"Unhurried and precise — every beat counts.",desc:"This C Major piece in 2/4 is a great study in controlled, unhurried articulation and clarity."},
-  {name:"Mere Saamne Wali Khidki Mein",key:"G Major",bpm:125,time:"4/4",diff:"easy",book:"romantic",yt:"cSoFBEUCMgA",tagline:"Warm and singable — a cantabile dream.",desc:"A warm G Major melody perfect for learning to project a smooth cantabile line with genuine feeling."},
-  {name:"Bade Acche Lagte Hain",key:"G Major",bpm:200,time:"3/4",diff:"easy",book:"romantic",yt:"aCzmBtHPAXE",tagline:"A lilting waltz — tender and timeless.",desc:"A waltz in G Major — a superb introduction to 3/4 metre for pianists who love tender expression."},
-  {name:"Raat Kali Ek Khwab Mein Aayi",key:"C Major",bpm:130,time:"4/4",diff:"easy",book:"romantic",yt:"P6ik5_NmgZg",tagline:"Flowing, dreamy — like music in a reverie.",desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination."},
-  {name:"Pal Pal Har Pal",key:"F Major",bpm:120,time:"4/4",diff:"easy",book:"romantic",yt:"OHzVnBrSBE4",tagline:"Gentle, flowing… like your thoughts turning into music.",desc:"A gentle F Major piece that develops your ability to sustain melodic phrases over a steady pulse — like breathing through music."},
-  {name:"Aaj Kal Tere Mere Pyaar Ke Charche",key:"A Major",bpm:80,time:"2/2",diff:"easy",book:"romantic",yt:"bgMIapBbVLw",tagline:"Broad and graceful — two heartbeats in a bar.",desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse with warmth."},
-  {name:"Piyu Bole",key:"F Major",bpm:160,time:"8/8",diff:"moderate",book:"romantic",yt:"c9L4aWuH6_I",tagline:"Rhythmically rare — and beautifully rewarding.",desc:"An 8/8 groove in F Major — a rare and rewarding challenge for the rhythmically curious, romantically inclined pianist."},
-  {name:"Khwab Ho Tum Ya Koi Haqeeqat",key:"G Major",bpm:120,time:"3/4",diff:"easy",book:"romantic",yt:"7s8aGRl3Eqk",tagline:"Dreamy waltz — soft moonlight in 3/4.",desc:"A dreamy G Major waltz suited for consolidating 3/4 metre with a soft, moonlit touch."},
-  {name:"Main Agar Kahun",key:"E Minor",bpm:120,time:"12/8",diff:"moderate",book:"romantic",yt:"dkM5O5FRiU0",tagline:"Rolling compound metre — longing set to music.",desc:"A deeply expressive E Minor piece in 12/8 — compound metre that creates a natural rolling, triplet feel of longing."},
-  {name:"Ek Ladki Bheegi Bhaagi Si",key:"A Minor",bpm:125,time:"4/4",diff:"easy",book:"classic",yt:"CNoEUGBMQUo",tagline:"Breezy and familiar — a classic in minor.",desc:"A breezy A Minor tune excellent for getting comfortable with minor key melodies at a moderate pace."},
-  {name:"Gulaabi Aankhen",key:"A Minor",bpm:100,time:"2/4",diff:"easy",book:"classic",yt:"iRkBgD6YZWY",tagline:"Slow and rich — attention to every tone.",desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone, phrasing, and sensitivity."},
-  {name:"Chookar Mere Mann Ko",key:"F Major",bpm:120,time:"4/4",diff:"easy",book:"classic",yt:"NLsHFDFdGrc",tagline:"Warm legato — a melody that asks to be sung.",desc:"A warm F Major melody suited for practising smooth finger legato and basic dynamic shaping."},
-  {name:"Hai Apna Dil Toh Awaara",key:"G Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"X-wSzKEA1lM",tagline:"Lively and crisp — G Major with real flair.",desc:"A lively G Major piece that challenges with its rhythmic energy and need for crisp articulation."},
-  {name:"Kal Ho Na Ho",key:"C Major",bpm:80,time:"4/4",diff:"moderate",book:"classic",yt:"R2LsSDGtC2Y",tagline:"Sweeping and cinematic — a ballad of real weight.",desc:"A sweeping C Major ballad that demands musical maturity — cinematic and deeply unforgettable."},
+  {name:"Kaisi Paheli Zindagani",key:"B♭ Major",bpm:120,time:"2/4",diff:"easy",book:"peppy",yt:"Su8XHG1HEaU",tagline:"Bright and bouncy — like a warm sunny afternoon.",desc:"A playful, rhythmically crisp melody in 2/4 — great for developing a clean sense of two-beat phrasing. The bright B♭ Major tonality rewards clean finger placement and even touch."},
+  {name:"Darling",key:"D Minor",bpm:125,time:"2/4",diff:"easy",book:"peppy",yt:"8tgxBEBvmUM",tagline:"Light-footed and full of spirit.",desc:"This D Minor gem in 2/4 gives space to shape melodic phrases with warmth and slight melancholy, while practising smooth legato touch in the right hand."},
+  {name:"Jaane Kahan Mera Jigar Gaya Ji",key:"G Major",bpm:130,time:"4/4",diff:"easy",book:"peppy",yt:"JP2t2gjBdNY",tagline:"Folk energy with a cheerful, dancing pulse.",desc:"A cheerful classic in G Major — ideal for cementing four-beat counting while exploring a lively, folk-tinged melody."},
+  {name:"Senorita",key:"A Major",bpm:120,time:"4/4",diff:"moderate",book:"peppy",yt:"f0YGYy2o0OQ",tagline:"Rhythmically bold — syncopation with a grin.",desc:"A polished A Major piece that challenges pianists with its syncopated feel and expressive phrasing demands."},
+  {name:"Zoobie Doobie",key:"C Minor",bpm:90,time:"4/4",diff:"moderate",book:"peppy",yt:"ePewedmrAb8",tagline:"Deceptively slow — and delightfully tricky.",desc:"The slower tempo is deceptive — it demands excellent control of touch, dynamics, and voicing in C Minor."},
+  {name:"Gore Gore O Banke Chorre",key:"G Major",bpm:120,time:"2/4",diff:"moderate",book:"peppy",yt:"KHvc1e0Up1E",tagline:"Nimble and spirited in 2/4.",desc:"A spirited 2/4 piece that builds nimbleness and rhythmic precision in joyful G Major."},
+  {name:"Naina Da Kya Kasoor",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"peppy",yt:"A9-ZigWb5AE",tagline:"Tender but full of colour.",desc:"A tender D Major melody requiring sensitive touch and careful tonal shaping throughout."},
+  {name:"Slow Motion Angreza",key:"C Major",bpm:100,time:"2/4",diff:"moderate",book:"peppy",yt:"_hWLQAkjWDQ",tagline:"Unhurried and precise — every beat counts.",desc:"This C Major piece in 2/4 is a great study in controlled, unhurried articulation and clarity."},
+  {name:"Mere Saamne Wali Khidki Mein",key:"G Major",bpm:125,time:"4/4",diff:"easy",book:"romantic",yt:"RFgB64CydVo",tagline:"Warm and singable — a cantabile dream.",desc:"A warm G Major melody perfect for learning to project a smooth cantabile line with genuine feeling."},
+  {name:"Bade Acche Lagte Hain",key:"G Major",bpm:200,time:"3/4",diff:"easy",book:"romantic",yt:"X8WqxtQpRWg",tagline:"A lilting waltz — tender and timeless.",desc:"A waltz in G Major — a superb introduction to 3/4 metre for pianists who love tender expression."},
+  {name:"Raat Kali Ek Khwab Mein Aayi",key:"C Major",bpm:130,time:"4/4",diff:"easy",book:"romantic",yt:"1GbtE_vPbi4",tagline:"Flowing, dreamy — like music in a reverie.",desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination."},
+  {name:"Pal Pal Har Pal",key:"F Major",bpm:120,time:"4/4",diff:"easy",book:"romantic",yt:"RrYR90HqKOU",tagline:"Gentle, flowing… like your thoughts turning into music.",desc:"A gentle F Major piece that develops your ability to sustain melodic phrases over a steady pulse — like breathing through music."},
+  {name:"Aaj Kal Tere Mere Pyaar Ke Charche",key:"A Major",bpm:80,time:"2/2",diff:"easy",book:"romantic",yt:"La1cR4_YMQU",tagline:"Broad and graceful — two heartbeats in a bar.",desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse with warmth."},
+  {name:"Khwab Ho Tum Ya Koi Haqeeqat",key:"G Major",bpm:120,time:"3/4",diff:"easy",book:"romantic",yt:"8bRQeedskxM",tagline:"Dreamy waltz — soft moonlight in 3/4.",desc:"A dreamy G Major waltz suited for consolidating 3/4 metre with a soft, moonlit touch."},
+  {name:"Main Agar Kahun",key:"E Minor",bpm:120,time:"12/8",diff:"moderate",book:"romantic",yt:"WcVA8hrtpSI",tagline:"Rolling compound metre — longing set to music.",desc:"A deeply expressive E Minor piece in 12/8 — compound metre that creates a natural rolling, triplet feel of longing."},
+  {name:"Piyu Bole",key:"F Major",bpm:160,time:"8/8",diff:"moderate",book:"romantic",yt:"wiYBzBzKn5Q",tagline:"Rhythmically rare — and beautifully rewarding.",desc:"An 8/8 groove in F Major — a rare and rewarding challenge for the rhythmically curious, romantically inclined pianist."},
+  {name:"Ek Ladki Bheegi Bhaagi Si",key:"A Minor",bpm:125,time:"4/4",diff:"easy",book:"classic",yt:"mHWOvNtAyBE",tagline:"Breezy and familiar — a classic in minor.",desc:"A breezy A Minor tune excellent for getting comfortable with minor key melodies at a moderate pace."},
+  {name:"Gulaabi Aankhen",key:"A Minor",bpm:100,time:"2/4",diff:"easy",book:"classic",yt:"fD5YRvicrLg",tagline:"Slow and rich — attention to every tone.",desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone, phrasing, and sensitivity."},
+  {name:"Chookar Mere Mann Ko",key:"F Major",bpm:120,time:"4/4",diff:"easy",book:"classic",yt:"0ADhi47WPaI",tagline:"Warm legato — a melody that asks to be sung.",desc:"A warm F Major melody suited for practising smooth finger legato and basic dynamic shaping."},
+  {name:"Hai Apna Dil Toh Awaara",key:"G Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"QLs8T-CjiP4",tagline:"Lively and crisp — G Major with real flair.",desc:"A lively G Major piece that challenges with its rhythmic energy and need for crisp articulation."},
+  {name:"Kal Ho Na Ho",key:"C Major",bpm:80,time:"4/4",diff:"moderate",book:"classic",yt:"KPOeHQMqEBs",tagline:"Sweeping and cinematic — a ballad of real weight.",desc:"A sweeping C Major ballad that demands musical maturity — cinematic and deeply unforgettable."},
   {name:"Ajeeb Dastan Hai Yeh",key:"G Major",bpm:160,time:"2/4",diff:"moderate",book:"classic",yt:"PVb8MvZSDqo",tagline:"Brisk and light — dexterity in a timeless frame.",desc:"A brisk 2/4 piece that builds dexterity and rhythmic lightness in a timeless melody."},
-  {name:"Aaoge Jab Tum Saajnaa",key:"G Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"mT5J9L0TkJU",tagline:"Searching and soulful — a melody of longing.",desc:"A soulful G Major melody asking pianists to develop a searching, expressive tone."},
+  {name:"Aaoge Jab Tum Saajnaa",key:"G Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"PlJOa8VbZH4",tagline:"Searching and soulful — a melody of longing.",desc:"A soulful G Major melody asking pianists to develop a searching, expressive tone."},
   {name:"Maula Mere Le Le Meri Jaan",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"classic",yt:"QT8AIFR2dT4",tagline:"Intense and powerful — dynamics in full force.",desc:"An intense D Major piece requiring committed dynamic shaping and strong melodic projection."},
-  {name:"Ae Hairate",key:"D Major",bpm:110,time:"4/4",diff:"easy",book:"soulful",yt:"UPh5DGpnMNc",tagline:"Graceful and quiet — introspection at the piano.",desc:"A graceful D Major melody at a gentle tempo — ideal for building confidence with smooth, even legato and quiet introspection."},
-  {name:"Itna Na Mujhse Tu",key:"A Minor",bpm:140,time:"4/4",diff:"easy",book:"soulful",yt:"OtLHpIWa2Dc",tagline:"Flowing and controlled — emotion at pace.",desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness and emotional control."},
-  {name:"Jashn-e-Bahara",key:"A Major",bpm:140,time:"4/4",diff:"easy",book:"soulful",yt:"D-dAP_HYnSI",tagline:"Celebratory and bright — joy in A Major.",desc:"A bright, celebratory A Major melody that develops clean finger articulation and confident playing at a lively tempo."},
-  {name:"Srivalli",key:"A Major",bpm:125,time:"4/4",diff:"moderate",book:"soulful",yt:"OsU0CGZoV8E",tagline:"Contemporary and rhythmically alive.",desc:"A contemporary A Major piece with engaging rhythmic patterns that challenge and inspire pianists."},
-  {name:"Moh Moh Ke Dhaage",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"soulful",yt:"Mwa2RnBJkME",tagline:"Emotionally rich — micro-dynamics make the difference.",desc:"An emotionally rich D Major piece where micro-dynamic shadings and subtle voicing make all the difference."},
-  {name:"Allah Ke Bande",key:"G Major",bpm:175,time:"4/4",diff:"moderate",book:"soulful",yt:"Cp_SxKHFNNE",tagline:"Spiritual and stamina-building — open your heart.",desc:"A spiritually charged G Major piece at a lively tempo demanding strong rhythmic stamina and an open heart."},
-  {name:"Kalank",key:"B♭ Major",bpm:110,time:"4/4",diff:"moderate",book:"soulful",yt:"_H3OVqfaIiM",tagline:"Melancholic colour — heavy with harmonic weight.",desc:"A melancholic B♭ Major piece developing sensitivity to harmonic colour and tonal weight."},
-  {name:"Teri Deewani",key:"E Minor",bpm:120,time:"6/8",diff:"moderate",book:"soulful",yt:"kYkRrIMkUn8",tagline:"Compound metre — devotion in 6/8.",desc:"A distinctive E Minor piece in 6/8 that expands a pianist's rhythmic understanding into compound metre."},
+  {name:"Ae Hairate",key:"D Major",bpm:110,time:"4/4",diff:"easy",book:"soulful",yt:"lyKP5oJtsJQ",tagline:"Graceful and quiet — introspection at the piano.",desc:"A graceful D Major melody at a gentle tempo — ideal for building confidence with smooth, even legato and quiet introspection."},
+  {name:"Itna Na Mujhse Tu",key:"A Minor",bpm:140,time:"4/4",diff:"easy",book:"soulful",yt:"wtZY7Uu-GYU",tagline:"Flowing and controlled — emotion at pace.",desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness and emotional control."},
+  {name:"Jashn-e-Bahara",key:"A Major",bpm:140,time:"4/4",diff:"easy",book:"soulful",yt:"srgXZQmKogo",tagline:"Celebratory and bright — joy in A Major.",desc:"A bright, celebratory A Major melody that develops clean finger articulation and confident playing at a lively tempo."},
+  {name:"Srivalli",key:"A Major",bpm:125,time:"4/4",diff:"moderate",book:"soulful",yt:"XMTiWXdVTJw",tagline:"Contemporary and rhythmically alive.",desc:"A contemporary A Major piece with engaging rhythmic patterns that challenge and inspire pianists."},
+  {name:"Moh Moh Ke Dhaage",key:"D Major",bpm:120,time:"4/4",diff:"moderate",book:"soulful",yt:"-Nd05JvMAKk",tagline:"Emotionally rich — micro-dynamics make the difference.",desc:"An emotionally rich D Major piece where micro-dynamic shadings and subtle voicing make all the difference."},
+  {name:"Allah Ke Bande",key:"G Major",bpm:175,time:"4/4",diff:"moderate",book:"soulful",yt:"c3-9cD4ehAw",tagline:"Spiritual and stamina-building — open your heart.",desc:"A spiritually charged G Major piece at a lively tempo demanding strong rhythmic stamina and an open heart."},
+  {name:"Kalank",key:"B♭ Major",bpm:110,time:"4/4",diff:"moderate",book:"soulful",yt:"4QgVwqUxd4k",tagline:"Melancholic colour — heavy with harmonic weight.",desc:"A melancholic B♭ Major piece developing sensitivity to harmonic colour and tonal weight."},
+  {name:"Teri Deewani",key:"E Minor",bpm:120,time:"6/8",diff:"moderate",book:"soulful",yt:"UR8ynoLyJ-8",tagline:"Compound metre — devotion in 6/8.",desc:"A distinctive E Minor piece in 6/8 that expands a pianist's rhythmic understanding into compound metre."},
 ];
 
 // ── STATE ──
@@ -874,12 +893,11 @@ function showResult(song) {
     `<span class="res-tag">${diffLabel}</span>`,
   ].join('');
 
-  // YouTube embed — use nocookie for better privacy / fewer blocks
   const ytId = song.yt;
-  const iframe = document.getElementById('yt-iframe');
-  iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=0&rel=0`;
-  const openLink = document.getElementById('yt-open-link');
-  openLink.href = `https://www.youtube.com/watch?v=${ytId}`;
+  const ytUrl = `https://www.youtube.com/watch?v=${ytId}`;
+  document.getElementById('yt-thumb-img').src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+  document.getElementById('yt-thumb-link').href = ytUrl;
+  document.getElementById('yt-open-link').href = ytUrl;
 
   // Also recommended
   const also = songs.filter(s => s.name !== song.name && s.book === song.book)
@@ -893,9 +911,10 @@ function showResult(song) {
 
 // ── QUICK PLAY from also-pills ──
 function quickPlay(ytId, name) {
-  const iframe = document.getElementById('yt-iframe');
-  iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0`;
-  document.getElementById('yt-open-link').href = `https://www.youtube.com/watch?v=${ytId}`;
+  const ytUrl = `https://www.youtube.com/watch?v=${ytId}`;
+  document.getElementById('yt-thumb-img').src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+  document.getElementById('yt-thumb-link').href = ytUrl;
+  document.getElementById('yt-open-link').href = ytUrl;
   document.getElementById('res-name').textContent = name;
   document.getElementById('s-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -934,8 +953,9 @@ function retake() {
   document.querySelectorAll('.soul-card,.rhythm-orb,.mood-card,.pace-card').forEach(e => e.classList.remove('selected'));
   document.getElementById('reveal-text').textContent = 'Listening to your musical instinct…';
   document.getElementById('reveal-sub').textContent = 'Finding something that feels like you…';
-  // Reset iframe to avoid lingering video
-  document.getElementById('yt-iframe').src = '';
+  // Reset thumbnail
+  document.getElementById('yt-thumb-img').src = '';
+  document.getElementById('yt-thumb-link').href = '#';
   // Hide result section again
   document.getElementById('s-result').classList.remove('visible');
   window.scrollTo({ top: 0, behavior: 'smooth' });
