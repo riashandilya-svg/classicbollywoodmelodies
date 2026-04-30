@@ -81,6 +81,120 @@ function setAvatar(src) {
   }
 }
 
+// ─────────────────────────────────────────────
+// ADMIN GRANT NOTIFICATION POPUP
+// ─────────────────────────────────────────────
+async function checkPendingNotifications(userId) {
+  try {
+    const { data: profile } = await window.supabase
+      .from('profiles')
+      .select('pending_notifications')
+      .eq('id', userId)
+      .single();
+
+    const notifications = profile?.pending_notifications || [];
+    if (!notifications.length) return;
+
+    // Clear notifications immediately so they never show twice
+    await window.supabase
+      .from('profiles')
+      .update({ pending_notifications: [] })
+      .eq('id', userId);
+
+    // Show each one
+    for (const notif of notifications) {
+      if (notif.type === 'song_granted') {
+        showSongGrantedPopup(notif.songName || notif.songSlug);
+        // Small delay if multiple songs granted at once
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+  } catch (err) {
+    // Silent fail — don't break the dashboard over a notification
+    console.warn('Notification check failed:', err);
+  }
+}
+
+function showSongGrantedPopup(songName) {
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: white;
+    border-radius: 24px;
+    padding: 28px 36px;
+    box-shadow: 0 24px 80px rgba(155,110,255,0.25), 0 8px 32px rgba(0,0,0,0.12);
+    z-index: 99999;
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+    border: 1.5px solid rgba(155,110,255,0.25);
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  `;
+
+  popup.innerHTML = `
+    <div style="font-size: 40px; margin-bottom: 14px;">🎵</div>
+    <div style="
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #1A1A1F;
+      font-family: 'Cormorant Garamond', serif;
+      letter-spacing: 0.3px;
+    ">You asked, we listened!</div>
+    <div style="
+      font-size: 15px;
+      color: rgba(26,26,31,0.65);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    ">
+      You've been granted access to<br>
+      <strong style="color: #9b6eff; font-size: 16px;">${songName}</strong>,<br>
+      now in your library.
+    </div>
+    <button id="popupDismiss" style="
+      padding: 12px 32px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(135deg, rgba(255,120,160,0.9), rgba(155,110,255,0.9));
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: transform 0.2s, opacity 0.2s;
+    ">Open My Library ✨</button>
+  `;
+
+  document.body.appendChild(popup);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      popup.style.opacity = '1';
+      popup.style.transform = 'translateX(-50%) translateY(0)';
+    });
+  });
+
+  // Dismiss button scrolls to song list and closes
+  popup.querySelector('#popupDismiss').addEventListener('click', () => {
+    dismissPopup(popup);
+    document.getElementById('songsList')?.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // Auto-dismiss after 9 seconds
+  setTimeout(() => dismissPopup(popup), 9000);
+}
+
+function dismissPopup(popup) {
+  popup.style.opacity = '0';
+  popup.style.transform = 'translateX(-50%) translateY(20px)';
+  setTimeout(() => popup?.remove(), 400);
+}
+
 // Wait for Supabase to be ready
 async function initDashboard() {
   try {
