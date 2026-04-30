@@ -1175,7 +1175,8 @@ function togglePanel() {
 function setFilter(f, el) {
   currentFilter = f;
   document.querySelectorAll(".pill").forEach(p => {
-    p.className = "pill";
+    const isYt = p.classList.contains("pill-yt");
+    p.className = "pill" + (isYt ? " pill-yt" : "");
     if (p.dataset.filter === f) p.classList.add("active-" + f);
   });
   renderSongs();
