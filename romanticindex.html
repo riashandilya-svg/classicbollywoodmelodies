@@ -799,7 +799,13 @@
       <button class="modal-close" aria-label="Close modal">×</button>
       <h3 class="modal-title" id="modalTitle">Song Title</h3>
       <div class="modal-meta" id="modalMeta"></div>
-      <p class="modal-description" id="modalDescription"></p>
+     <p class="modal-description" id="modalDescription"></p>
+      <a id="modalYoutubeLink" class="modal-youtube" href="#" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        Listen on YouTube
+      </a>
     </div>
   </div>
 
@@ -875,41 +881,49 @@
       "mere-saamne": {
         title: "Mere Saamne Wali Khidhki",
         key: "G Major", bpm: 125, timesig: "4/4", difficulty: "Easy",
+        youtube: "https://www.youtube.com/watch?v=RFgB64CydVo",
         description: "A cheerful, skipping melody that sits comfortably under the fingers in G Major. Its predictable phrase structure makes it ideal for building steady right-hand rhythm while practising clean finger independence. Focus on keeping each note even and light — the song's playful character rewards a crisp, bouncy touch."
       },
       "bade-achhe": {
         title: "Bade Achhe Lagte Hain",
         key: "G Major", bpm: 200, timesig: "3/4", difficulty: "Easy",
+        youtube: "https://www.youtube.com/watch?v=X8WqxtQpRWg",
         description: "A waltz in 3/4 that trains your internal sense of the 'one-two-three' pulse. Despite the high BPM marking, the melodic movement is stepwise and accessible — perfect for developing a flowing wrist rotation and understanding how to shape musical phrases in triple metre. Great for pedal control practice too."
       },
       "raat-kali": {
         title: "Raat Kali Ek Khwaab Mei Aayi",
         key: "C Major", bpm: 130, timesig: "4/4", difficulty: "Easy",
+        youtube: "https://www.youtube.com/watch?v=1GbtE_vPbi4",
         description: "Set in the pianist-friendly key of C Major, this dreamy melody is excellent for developing smooth legato playing. The flowing right-hand line gives you space to focus on consistent finger weight and clean tone production, while the moderate tempo encourages relaxed, even phrase shaping without tension."
       },
       "pal-pal": {
         title: "Pal Pal Har Pal",
         key: "F Major", bpm: 120, timesig: "4/4", difficulty: "Easy",
+        youtube: "https://www.youtube.com/watch?v=RrYR90HqKOU",
         description: "A gentle, introspective melody in F Major that offers solid practice for navigating the B♭ in the key signature naturally. The steady 4/4 pulse and lyrical right-hand line make it a strong piece for developing singing tone, smooth phrase connections, and comfortable left-hand accompaniment balance."
       },
       "aaj-kal": {
         title: "Aaj Kal Tere Mere Pyaar Ke Charche",
         key: "A Major", bpm: 80, timesig: "2/2", difficulty: "Easy",
+        youtube: "https://www.youtube.com/watch?v=La1cR4_YMQU",
         description: "In cut time at a relaxed tempo, this piece trains you to feel a broader half-note pulse rather than counting every beat. The A Major key and unhurried pace give plenty of space to work on tonal warmth and controlled finger articulation — ideal for building confidence with three-sharp key signatures."
       },
       "khwaab-ho": {
         title: "Khwaab Ho Tum Ya Koi Haqueeqat",
         key: "G Major", bpm: 120, timesig: "3/4", difficulty: "Easy",
+        youtube: "https://www.youtube.com/watch?v=8bRQeedskxM",
         description: "A waltz-like romantic piece in G Major that rewards careful attention to phrasing across three-beat bars. The melodic contour is elegant but forgiving, making it a wonderful piece for practising gentle dynamic swells and smooth pedal changes — both essential skills for expressive Bollywood playing."
       },
       "piyu-bole": {
         title: "Piyu Bole",
         key: "F Major", bpm: 160, timesig: "8/8", difficulty: "Moderate",
+        youtube: "https://www.youtube.com/watch?v=wiYBzBzKn5Q",
         description: "The compound 8/8 feel and brisk tempo make this a genuine technical workout. The rhythmic groupings require sharp counting and clean finger independence to keep the groove steady. A fantastic piece for developing agility in F Major and learning to maintain rhythmic precision without sacrificing the song's bright, playful character."
       },
       "mai-agar": {
         title: "Mai Agar Kahun",
         key: "E Minor", bpm: 120, timesig: "12/8", difficulty: "Moderate",
+        youtube: "https://www.youtube.com/watch?v=WcVA8hrtpSI",
         description: "Set in the richly expressive 12/8 compound metre, this piece challenges you to feel the lilting four-group pulse while sustaining a lyrical, singing melodic line. E Minor adds an inherently emotional weight — ideal for developing sensitivity to tonal colour, careful pedalling, and the long-breathed phrasing that compound metre demands."
       }
     };
@@ -943,6 +957,9 @@
           </div>
         `;
         document.getElementById('modalDescription').textContent = song.description;
+        const ytLink = document.getElementById('modalYoutubeLink');
+        ytLink.href = song.youtube || '#';
+        ytLink.style.display = song.youtube ? 'inline-flex' : 'none';
         modal.classList.add('active');
       });
     });
