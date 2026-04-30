@@ -1336,9 +1336,155 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModalDi
       if (el) el.textContent = new Date().getFullYear();
     }
 
-    async function renderAuthUI(){
-      try{
-        const { data: { session } } = await sb.auth.getSession();
+  // ─────────────────────────────────────────────
+// ADMIN GRANT NOTIFICATION POPUP
+// ─────────────────────────────────────────────
+async function checkPendingNotifications(userId) {
+  try {
+    const { data: profile } = await sb
+      .from('profiles')
+      .select('pending_notifications')
+      .eq('id', userId)
+      .single();
+
+    const notifications = profile?.pending_notifications || [];
+    if (!notifications.length) return;
+
+    // Clear immediately so it never shows twice
+    await sb.from('profiles').update({ pending_notifications: [] }).eq('id', userId);
+
+    for (const notif of notifications) {
+      if (notif.type === 'song_granted') {
+        showSongGrantedPopup(notif.songName || notif.songSlug);
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+  } catch (err) {
+    console.warn('Notification check failed:', err);
+  }
+}
+
+function showSongGrantedPopup(songName) {
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    background: rgba(255,255,255,0.97);
+    border-radius: 28px;
+    padding: 40px 44px;
+    box-shadow: 0 32px 100px rgba(155,110,255,0.28), 0 8px 32px rgba(0,0,0,0.14);
+    z-index: 99999;
+    text-align: center;
+    max-width: 440px;
+    width: 90%;
+    border: 1.5px solid rgba(155,110,255,0.22);
+    opacity: 0;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    backdrop-filter: blur(16px);
+  `;
+
+  popup.innerHTML = `
+    <div style="font-size:48px; margin-bottom:16px; line-height:1;">🎵</div>
+    <div style="
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1A1A1F;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    ">You asked, we listened!</div>
+    <div style="
+      font-size: 15px;
+      color: rgba(26,26,31,0.62);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    ">
+      You've been granted access to<br>
+      <strong style="
+        color: #9b6eff;
+        font-size: 17px;
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      ">${songName}</strong>,<br>
+      now in your library.
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <a href="./dashboard.html" style="
+        padding: 12px 28px;
+        border-radius: 14px;
+        border: none;
+        background: linear-gradient(135deg, rgba(255,120,160,0.90), rgba(155,110,255,0.90));
+        color: white;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.2s, opacity 0.2s;
+      " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
+        Open My Library ✨
+      </a>
+      <button onclick="dismissPopup(this.closest('[data-popup]'))" data-dismiss style="
+        padding: 12px 20px;
+        border-radius: 14px;
+        border: 1.5px solid rgba(155,110,255,0.25);
+        background: white;
+        color: rgba(26,26,31,0.65);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+      ">Dismiss</button>
+    </div>
+  `;
+
+  popup.setAttribute('data-popup', '');
+
+  // Dark overlay behind popup
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.38);
+    backdrop-filter: blur(3px);
+    z-index: 99998;
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  `;
+  overlay.addEventListener('click', () => dismissPopup(popup));
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  // Animate in
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    popup.style.opacity = '1';
+    popup.style.transform = 'translate(-50%, -50%)';
+    overlay.style.opacity = '1';
+    popup._overlay = overlay;
+  }));
+
+  // Auto-dismiss after 12 seconds
+  setTimeout(() => dismissPopup(popup), 12000);
+}
+
+window.dismissPopup = function(popup) {
+  if (!popup) return;
+  popup.style.opacity = '0';
+  popup.style.transform = 'translate(-50%, -44%)';
+  if (popup._overlay) {
+    popup._overlay.style.opacity = '0';
+    setTimeout(() => popup._overlay?.remove(), 450);
+  }
+  setTimeout(() => popup?.remove(), 450);
+};
+
+async function renderAuthUI(){
+  try{
+    const { data: { session } } = await sb.auth.getSession();
         const accountDock = document.getElementById("accountDock");
         const welcomeText = document.getElementById("welcomeText");
         const authRow = document.getElementById("authRow");
@@ -1359,6 +1505,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModalDi
           const name = (prof && prof.display_name && String(prof.display_name).trim())
             ? String(prof.display_name).trim() : "";
           welcomeText.textContent = name ? `Welcome, ${name}` : "Welcome";
+          // ✅ Check for admin-granted song notifications
+          await checkPendingNotifications(userId);
 
           accountDock.style.display = "block";
           authRow.style.display = "none";
