@@ -102,7 +102,10 @@ async function initDashboard() {
     console.log('🔍 Profile data:', profile);
     console.log('📚 is_book_owner:', profile?.is_book_owner);
 
-    const displayName = profile?.display_name || user.email.split('@')[0];
+ const displayName = profile?.display_name || user.email.split('@')[0];
+
+    // ✅ Check for admin-granted song notifications
+    await checkPendingNotifications(user.id);
     
     // Welcome text (gold line under the title)
     const welcomeEl = document.getElementById('welcomeText');
