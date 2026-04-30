@@ -1365,110 +1365,93 @@ async function checkPendingNotifications(userId) {
 }
 
 function showSongGrantedPopup(songName) {
+  // Overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(4px);
+    z-index: 99998;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  `;
+
+  // Popup
   const popup = document.createElement('div');
   popup.style.cssText = `
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -60%);
-    background: rgba(255,255,255,0.97);
+    transform: translate(-50%, -50%) scale(0.92);
+    background: rgba(255,255,255,0.98);
     border-radius: 28px;
     padding: 40px 44px;
     box-shadow: 0 32px 100px rgba(155,110,255,0.28), 0 8px 32px rgba(0,0,0,0.14);
     z-index: 99999;
     text-align: center;
-    max-width: 440px;
-    width: 90%;
+    max-width: 420px;
+    width: calc(100% - 40px);
     border: 1.5px solid rgba(155,110,255,0.22);
     opacity: 0;
-    transition: opacity 0.45s ease, transform 0.45s ease;
-    backdrop-filter: blur(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
   `;
 
   popup.innerHTML = `
-    <div style="font-size:48px; margin-bottom:16px; line-height:1;">🎵</div>
+    <div style="font-size:48px;margin-bottom:16px;line-height:1;">🎵</div>
     <div style="
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: #1A1A1F;
-      letter-spacing: -0.01em;
-      line-height: 1.2;
+      font-family:'Cormorant Garamond',serif;
+      font-size:24px;font-weight:700;
+      margin-bottom:12px;color:#1A1A1F;
+      letter-spacing:-0.01em;line-height:1.2;
     ">You asked, we listened!</div>
     <div style="
-      font-size: 15px;
-      color: rgba(26,26,31,0.62);
-      line-height: 1.7;
-      margin-bottom: 28px;
+      font-size:15px;color:rgba(26,26,31,0.62);
+      line-height:1.7;margin-bottom:28px;
     ">
       You've been granted access to<br>
       <strong style="
-        color: #9b6eff;
-        font-size: 17px;
-        font-family: 'Cormorant Garamond', serif;
-        font-weight: 700;
-        letter-spacing: -0.01em;
+        color:#9b6eff;font-size:17px;
+        font-family:'Cormorant Garamond',serif;
+        font-weight:700;letter-spacing:-0.01em;
       ">${songName}</strong>,<br>
       now in your library.
     </div>
-    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
       <a href="./dashboard.html" style="
-        padding: 12px 28px;
-        border-radius: 14px;
-        border: none;
-        background: linear-gradient(135deg, rgba(255,120,160,0.90), rgba(155,110,255,0.90));
-        color: white;
-        font-weight: 700;
-        font-size: 15px;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-        transition: transform 0.2s, opacity 0.2s;
-      " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-        Open My Library ✨
-      </a>
-      <button onclick="dismissPopup(this.closest('[data-popup]'))" data-dismiss style="
-        padding: 12px 20px;
-        border-radius: 14px;
-        border: 1.5px solid rgba(155,110,255,0.25);
-        background: white;
-        color: rgba(26,26,31,0.65);
-        font-weight: 600;
-        font-size: 14px;
-        cursor: pointer;
+        padding:12px 28px;border-radius:14px;border:none;
+        background:linear-gradient(135deg,rgba(255,120,160,0.90),rgba(155,110,255,0.90));
+        color:white;font-weight:700;font-size:15px;
+        cursor:pointer;text-decoration:none;display:inline-block;
+      ">Open My Library ✨</a>
+      <button onclick="window._dismissPopup()" style="
+        padding:12px 20px;border-radius:14px;
+        border:1.5px solid rgba(155,110,255,0.25);
+        background:white;color:rgba(26,26,31,0.65);
+        font-weight:600;font-size:14px;cursor:pointer;
       ">Dismiss</button>
     </div>
   `;
 
-  popup.setAttribute('data-popup', '');
-
-  // Dark overlay behind popup
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.38);
-    backdrop-filter: blur(3px);
-    z-index: 99998;
-    opacity: 0;
-    transition: opacity 0.45s ease;
-  `;
-  overlay.addEventListener('click', () => dismissPopup(popup));
-
   document.body.appendChild(overlay);
   document.body.appendChild(popup);
 
-  // Animate in
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    popup.style.opacity = '1';
-    popup.style.transform = 'translate(-50%, -50%)';
+  // Animate in on next frame
+  requestAnimationFrame(() => {
     overlay.style.opacity = '1';
-    popup._overlay = overlay;
-  }));
+    popup.style.opacity = '1';
+    popup.style.transform = 'translate(-50%, -50%) scale(1)';
+  });
 
-  // Auto-dismiss after 12 seconds
-  setTimeout(() => dismissPopup(popup), 12000);
+  window._dismissPopup = function() {
+    overlay.style.opacity = '0';
+    popup.style.opacity = '0';
+    popup.style.transform = 'translate(-50%, -50%) scale(0.92)';
+    setTimeout(() => { overlay.remove(); popup.remove(); }, 400);
+  };
+
+  overlay.addEventListener('click', window._dismissPopup);
+  setTimeout(window._dismissPopup, 12000);
 }
 
 window.dismissPopup = function(popup) {
