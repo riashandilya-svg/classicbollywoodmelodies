@@ -2171,6 +2171,12 @@ function startMetronome(startTimeOverride = null) {
 // MOUSE INPUT (NOTE ON / OFF)
 // ================================
 function getMidiFromMouse(x, y) {
+    const scaleX = canvas.width / canvas.getBoundingClientRect().width;
+    const scaleY = canvas.height / canvas.getBoundingClientRect().height;
+    
+    x = x * scaleX;
+    y = y * scaleY;
+    
     const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
     if (y < keyboardTop) return null;
 
@@ -2212,8 +2218,10 @@ canvas.addEventListener('mousedown', async (e) => {
     mouseDown = true;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+const scaleY = canvas.height / rect.height;
+const x = (e.clientX - rect.left) * scaleX;
+const y = (e.clientY - rect.top) * scaleY;
 
     // Only allow clicks on keyboard area
     if (y < canvas.height - KEYBOARD_HEIGHT) return;
@@ -2229,8 +2237,10 @@ canvas.addEventListener('mousemove', (e) => {
     if (!mouseDown || !freeMode) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+   const scaleX = canvas.width / rect.width;
+const scaleY = canvas.height / rect.height;
+const x = (e.clientX - rect.left) * scaleX;
+const y = (e.clientY - rect.top) * scaleY;
 
     if (y < canvas.height - KEYBOARD_HEIGHT) return;
 
