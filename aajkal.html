@@ -2171,6 +2171,11 @@ function startMetronome(startTimeOverride = null) {
 // MOUSE INPUT (NOTE ON / OFF)
 // ================================
 function getMidiFromMouse(x, y) {
+        console.log("click x:", x, "y:", y, "canvas.width:", canvas.width, "canvas.height:", canvas.height);
+    
+    const keyboardTop = canvas.height - KEYBOARD_HEIGHT;
+    if (y < keyboardTop) return null;
+
     const scaleX = canvas.width / canvas.getBoundingClientRect().width;
     const scaleY = canvas.height / canvas.getBoundingClientRect().height;
     
