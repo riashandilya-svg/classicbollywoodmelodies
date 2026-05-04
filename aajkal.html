@@ -2171,10 +2171,9 @@ function startMetronome(startTimeOverride = null) {
 // MOUSE INPUT (NOTE ON / OFF)
 // ================================
 function getMidiFromMouse(x, y) {
-    if (y < keyboardTop) return null;
-
-    const scaleX = canvas.width / canvas.getBoundingClientRect().width;
-    const scaleY = canvas.height / canvas.getBoundingClientRect().height;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     
     x = x * scaleX;
     y = y * scaleY;
@@ -2186,19 +2185,13 @@ function getMidiFromMouse(x, y) {
     const blackKeyWidth = whiteKeyWidth * 0.6;
     const blackKeyHeight = KEYBOARD_HEIGHT * 0.6;
 
-    // 🔥 1️⃣ CHECK BLACK KEYS FIRST
     let whiteIndex = 0;
-
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
         if (!isBlackMidi(midi)) {
             whiteIndex++;
             continue;
         }
-
-        const bx =
-            (whiteIndex - 1) * whiteKeyWidth +
-            whiteKeyWidth * 0.7;
-
+        const bx = (whiteIndex - 1) * whiteKeyWidth + whiteKeyWidth * 0.7;
         if (
             x >= bx &&
             x <= bx + blackKeyWidth &&
@@ -2208,33 +2201,35 @@ function getMidiFromMouse(x, y) {
             return midi;
         }
     }
-
-    // 🔁 2️⃣ FALL BACK TO WHITE KEYS
     return xToMidi(x);
 }
-
+    
 canvas.addEventListener('mousedown', async (e) => {
     if (previewMode) return;
     await Tone.start();
-
     mouseDown = true;
-
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-const scaleY = canvas.height / rect.height;
-const x = (e.clientX - rect.left) * scaleX;
-const y = (e.clientY - rect.top) * scaleY;
-
-    // Only allow clicks on keyboard area
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     if (y < canvas.height - KEYBOARD_HEIGHT) return;
-
     const midiNote = getMidiFromMouse(x, y);
     if (midiNote === null) return;
-
     lastMouseMidi = midiNote;
-
     processUserNoteOn(midiNote);
 });
+
+canvas.addEventListener('mousemove', (e) => {
+    if (!mouseDown || !freeMode) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (y < canvas.height - KEYBOARD_HEIGHT) return;
+    const midiNote = getMidiFromMouse(x, y);
+    if (midiNote === null || midiNote === lastMouseMidi) return;
+    lastMouseMidi = midiNote;
+    processUserNoteOn(midiNote);
+});
+    
 canvas.addEventListener('mousemove', (e) => {
     if (!mouseDown || !freeMode) return;
 
