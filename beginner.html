@@ -613,6 +613,71 @@
     @media (prefers-reduced-motion: reduce) {
       .hero-title, #glitter { animation: none !important; }
     }
+
+    .modal-yt-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 20px; border-radius: 13px;
+      font-size: 14px; font-weight: 700;
+      text-decoration: none; color: #cc0000;
+      border: 1px solid rgba(204,0,0,0.28);
+      background: rgba(204,0,0,0.07);
+      transition: all 0.14s; cursor: pointer;
+    }
+    .modal-yt-btn:hover { background: rgba(204,0,0,0.15); transform: translateY(-1px); }
+    .modal-cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .hero-yt-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 14px;
+      font-size: 13px; font-weight: 700;
+      text-decoration: none; color: #cc0000;
+      border: 1px solid rgba(204,0,0,0.28);
+      background: rgba(204,0,0,0.07);
+      transition: all 0.15s; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(204,0,0,0.08);
+    }
+    .hero-yt-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(204,0,0,0.16); background: rgba(204,0,0,0.12); }
+    .hero-cta-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+    /* ── YouTube inline player ── */
+    .yt-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,5,25,0.72);
+      backdrop-filter: blur(10px);
+      z-index: 999999; align-items: center; justify-content: center; padding: 20px;
+    }
+    .yt-backdrop.open { display: flex; }
+    .yt-box {
+      width: 100%; max-width: 700px;
+      border-radius: 20px; overflow: hidden;
+      background: #0f0a1e;
+      border: 1px solid rgba(155,110,255,0.28);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.65);
+      animation: modalIn 0.22s ease;
+    }
+    .yt-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 18px;
+      background: rgba(155,110,255,0.12);
+      border-bottom: 1px solid rgba(155,110,255,0.15);
+      gap: 12px;
+    }
+    .yt-song-name {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 17px; font-weight: 700;
+      color: rgba(230,220,255,0.95);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .yt-close {
+      width: 30px; height: 30px; flex-shrink: 0;
+      border: none; border-radius: 50%;
+      background: rgba(155,110,255,0.18); color: rgba(230,220,255,0.85);
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .yt-close:hover { background: rgba(155,110,255,0.35); transform: rotate(90deg); }
+    .yt-frame-wrap { position: relative; padding-bottom: 56.25%; height: 0; }
+    .yt-frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   </style>
 </head>
 
@@ -688,9 +753,9 @@
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </a>
-          <a class="hero-yt-btn" id="heroYt" href="#" target="_blank" rel="noopener" style="display:none;">
+          <a class="hero-yt-btn" id="heroYt" href="javascript:void(0)" style="display:none;">
             <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
-            Listen on YouTube
+            Listen
           </a>
         </div>
       </div>
@@ -731,12 +796,31 @@
       <div class="modal-chips" id="mChips"></div>
       <div class="modal-meta" id="mMeta"></div>
       <div class="modal-desc" id="mDesc"></div>
-      <a class="modal-cta" id="mCta" href="#" target="_blank" rel="noopener">
-        Open Book
-        <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;">
-          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </a>
+      <div class="modal-cta-row">
+        <a class="modal-cta" id="mCta" href="#" target="_blank" rel="noopener">
+          Open Book
+          <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a class="modal-yt-btn" id="mYt" href="javascript:void(0)" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+          Listen
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube inline player -->
+  <div class="yt-backdrop" id="ytBackdrop" onclick="closeYt(event)">
+    <div class="yt-box">
+      <div class="yt-header">
+        <div class="yt-song-name" id="ytSongName">Now Playing</div>
+        <button class="yt-close" onclick="closeYtDirect()">×</button>
+      </div>
+      <div class="yt-frame-wrap">
+        <iframe id="ytFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
     </div>
   </div>
 
@@ -745,23 +829,47 @@
     <div style="margin-top:5px;">Contact: <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a></div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
     /* ═══════════════════════════════════════════════
        LOGIN GATE
     ═══════════════════════════════════════════════ */
-    function isLoggedIn() {
+    async function isLoggedIn() {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session && session.user) return true;
+      } catch(e) {}
       try { return !!localStorage.getItem("pj_logged_in"); }
       catch { return false; }
     }
 
-    function requireLogin() {
-      if (!isLoggedIn()) {
+    async function requireLogin() {
+      if (!(await isLoggedIn())) {
         window.location.href = "login.html";
         return true;
       }
       return false;
+    }
+
+    /* ── YouTube inline player ── */
+    function openYt(ytId, name) {
+      document.getElementById("ytSongName").textContent = name;
+      document.getElementById("ytFrame").src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
+      document.getElementById("ytBackdrop").classList.add("open");
+    }
+    function closeYt(e) {
+      if (e.target === document.getElementById("ytBackdrop")) closeYtDirect();
+    }
+    function closeYtDirect() {
+      document.getElementById("ytFrame").src = "";
+      document.getElementById("ytBackdrop").classList.remove("open");
     }
 
     /* ═══════════════════════════════════════════════
@@ -851,49 +959,49 @@
     ];
 
     const songs = [
-      { name:"Ae Hairate",                          key:"D Major",  bpm:110, time:"4/4", book:"soulful",
+      { name:"Ae Hairate",                          key:"D Major",  bpm:110, time:"4/4", book:"soulful", ytId:"lyKP5oJtsJQ",
         tagline:"Graceful and quiet — introspection at the piano.",
         desc:"A graceful D Major melody at a gentle tempo — ideal for building confidence with smooth, even legato and quiet introspection." },
-      { name:"Ek Ladki Bheegi Bhaagi Si",           key:"A Minor",  bpm:125, time:"4/4", book:"classic",
+      { name:"Ek Ladki Bheegi Bhaagi Si",           key:"A Minor",  bpm:125, time:"4/4", book:"classic", ytId:"mHWOvNtAyBE",
         tagline:"Breezy and familiar — a classic in minor.",
         desc:"A breezy A Minor tune excellent for getting comfortable with minor key melodies at a moderate pace." },
-      { name:"Jaane Kahan Mera Jigar Gaya Ji",      key:"G Major",  bpm:130, time:"4/4", book:"peppy",
+      { name:"Jaane Kahan Mera Jigar Gaya Ji",      key:"G Major",  bpm:130, time:"4/4", book:"peppy", ytId:"JP2t2gjBdNY",
         tagline:"Folk energy with a cheerful, dancing pulse.",
         desc:"A cheerful classic in G Major — ideal for cementing four-beat counting while exploring a lively, folk-tinged melody." },
-      { name:"Chhoo Kar Mere Man Ko",               key:"F Major",  bpm:120, time:"4/4", book:"classic",
+      { name:"Chhoo Kar Mere Man Ko",               key:"F Major",  bpm:120, time:"4/4", book:"classic", ytId:"0ADhi47WPaI",
         tagline:"Warm legato — a melody that asks to be sung.",
         desc:"A warm F Major melody suited for practising smooth finger legato and basic dynamic shaping." },
-      { name:"Mere Saamne Waale",                   key:"G Major",  bpm:125, time:"4/4", book:"romantic",
+      { name:"Mere Saamne Waale",                   key:"G Major",  bpm:125, time:"4/4", book:"romantic", ytId:"RFgB64CydVo",
         tagline:"Warm and singable — a cantabile dream.",
         desc:"A warm G Major melody perfect for learning to project a smooth cantabile line with genuine feeling." },
-      { name:"Itna Na Mujhse Jo Pyaar Bhantha",     key:"A Minor",  bpm:140, time:"4/4", book:"soulful",
+      { name:"Itna Na Mujhse Jo Pyaar Bhantha",     key:"A Minor",  bpm:140, time:"4/4", book:"soulful", ytId:"wtZY7Uu-GYU",
         tagline:"Flowing and controlled — emotion at pace.",
         desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness and emotional control." },
-      { name:"Raat Kali Ek Khwaab Mein Aayi",       key:"C Major",  bpm:130, time:"4/4", book:"romantic",
+      { name:"Raat Kali Ek Khwaab Mein Aayi",       key:"C Major",  bpm:130, time:"4/4", book:"romantic", ytId:"1GbtE_vPbi4",
         tagline:"Flowing, dreamy — like music in a reverie.",
         desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination." },
-      { name:"Khwab Ho Tum Ya",                     key:"G Major",  bpm:120, time:"3/4", book:"romantic",
+      { name:"Khwab Ho Tum Ya",                     key:"G Major",  bpm:120, time:"3/4", book:"romantic", ytId:"8bRQeedskxM",
         tagline:"Dreamy waltz — soft moonlight in 3/4.",
         desc:"A dreamy G Major waltz suited for consolidating 3/4 metre with a soft, moonlit touch." },
-      { name:"Jashn-e-Bahaara",                     key:"A Major",  bpm:140, time:"4/4", book:"soulful",
+      { name:"Jashn-e-Bahaara",                     key:"A Major",  bpm:140, time:"4/4", book:"soulful", ytId:"srgXZQmKogo",
         tagline:"Celebratory and bright — joy in A Major.",
         desc:"A bright, celebratory A Major melody that develops clean finger articulation and confident playing at a lively tempo." },
-      { name:"Kaisi Paheli Zindagani",              key:"B♭ Major", bpm:120, time:"2/4", book:"peppy",
+      { name:"Kaisi Paheli Zindagani",              key:"B♭ Major", bpm:120, time:"2/4", book:"peppy", ytId:"Su8XHG1HEaU",
         tagline:"Bright and bouncy — like a warm sunny afternoon.",
         desc:"A playful, rhythmically crisp melody in 2/4 — great for developing a clean sense of two-beat phrasing." },
-      { name:"Aaj Kal Tere Mere Pyaar Ke",          key:"A Major",  bpm:80,  time:"2/2", book:"romantic",
+      { name:"Aaj Kal Tere Mere Pyaar Ke",          key:"A Major",  bpm:80,  time:"2/2", book:"romantic", ytId:"La1cR4_YMQU",
         tagline:"Broad and graceful — two heartbeats in a bar.",
         desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse with warmth." },
-      { name:"Gulabi Aankhen",                      key:"A Minor",  bpm:100, time:"2/4", book:"classic",
+      { name:"Gulabi Aankhen",                      key:"A Minor",  bpm:100, time:"2/4", book:"classic", ytId:"fD5YRvicrLg",
         tagline:"Slow and rich — attention to every tone.",
         desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone, phrasing, and sensitivity." },
-      { name:"Pal Pal Har Pal",                     key:"F Major",  bpm:120, time:"4/4", book:"romantic",
+      { name:"Pal Pal Har Pal",                     key:"F Major",  bpm:120, time:"4/4", book:"romantic", ytId:"RrYR90HqKOU",
         tagline:"Gentle, flowing… like your thoughts turning into music.",
         desc:"A gentle F Major piece that develops your ability to sustain melodic phrases over a steady pulse." },
-      { name:"Darling",                             key:"D Minor",  bpm:125, time:"2/4", book:"peppy",
+      { name:"Darling",                             key:"D Minor",  bpm:125, time:"2/4", book:"peppy", ytId:"8tgxBEBvmUM",
         tagline:"Light-footed and full of spirit.",
         desc:"This D Minor gem in 2/4 gives space to shape melodic phrases with warmth and slight melancholy." },
-      { name:"Bade Acche Lagte Hain",               key:"G Major",  bpm:200, time:"3/4", book:"romantic",
+      { name:"Bade Acche Lagte Hain",               key:"G Major",  bpm:200, time:"3/4", book:"romantic", ytId:"X8WqxtQpRWg",
         tagline:"A lilting waltz — tender and timeless.",
         desc:"A waltz in G Major — a superb introduction to 3/4 metre for pianists who love tender expression." },
     ];
@@ -942,16 +1050,24 @@
         <span class="hero-chip green">🟢 Easy</span>
         <span class="hero-chip violet">🎼 ${s.key}</span>
         <span class="hero-chip">${s.bpm} BPM · ${s.time}</span>
-        ${measures ? `<span class="hero-chip violet">⚡ ${measures} measures</span>` : ""}
+        ${measures ? `<span class="hero-chip violet">⚡ ${measures} unique measures</span>` : ""}
         <span class="hero-chip">${BOOK_LABELS[s.book]}</span>
       `;
 
       const cta = document.getElementById("heroCta");
       cta.href = BOOK_URLS[s.book];
       cta.innerHTML = `Open ${BOOK_LABELS[s.book]} <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      cta.onclick = function(e) {
-        if (!isLoggedIn()) { e.preventDefault(); window.location.href = "login.html"; }
+      cta.onclick = async function(e) {
+        if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
       };
+
+      const heroYt = document.getElementById("heroYt");
+      if (s.ytId) {
+        heroYt.onclick = (e) => { e.preventDefault(); openYt(s.ytId, s.name); };
+        heroYt.style.display = "inline-flex";
+      } else {
+        heroYt.style.display = "none";
+      }
 
       document.querySelectorAll(".rs-song-item").forEach((el, i) => {
         el.classList.toggle("selected", i === idx);
@@ -1013,7 +1129,7 @@
         <span class="rc-num">${num}</span>
         <div class="rc-name">${s.name}</div>
         <div class="rc-meta">${s.key} · ${s.bpm} BPM</div>
-        ${showMeasures && measures ? `<span class="rc-measures">⚡ ${measures} measures</span>` : ""}
+        ${showMeasures && measures ? `<span class="rc-measures">⚡ ${measures} unique measures</span>` : ""}
       </div>`;
     }
 
@@ -1055,7 +1171,7 @@
           return ma - mb;
         });
         modeTitle.textContent = "⚡ Quick to Learn";
-        modeCount.textContent = `Sorted by measures (fewest first)`;
+        modeCount.textContent = `Sorted by unique measures (fewest first)`;
         noRes.style.display = "none";
         out.innerHTML = `<div class="result-grid">${sorted.map(s => resultCardHTML(s, true)).join("")}</div>`;
         return;
@@ -1163,7 +1279,7 @@
       document.getElementById("mChips").innerHTML = `
         <span class="modal-chip easy">🟢 Easy</span>
         <span class="modal-chip violet">🎼 ${s.key}</span>
-        ${measures ? `<span class="modal-chip violet">⚡ ${measures} measures</span>` : ""}
+        ${measures ? `<span class="modal-chip violet">⚡ ${measures} unique measures</span>` : ""}
         <span class="modal-chip muted">${BOOK_LABELS[s.book]}</span>
       `;
       document.getElementById("mMeta").innerHTML = `
@@ -1176,9 +1292,16 @@
       const cta = document.getElementById("mCta");
       cta.href = BOOK_URLS[s.book];
       cta.innerHTML = `Open ${BOOK_LABELS[s.book]} <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      cta.onclick = function(e) {
-        if (!isLoggedIn()) { e.preventDefault(); window.location.href = "login.html"; }
+      cta.onclick = async function(e) {
+        if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
       };
+      const mYt = document.getElementById("mYt");
+      if (s.ytId) {
+        mYt.onclick = (e) => { e.preventDefault(); closeModalDirect(); openYt(s.ytId, s.name); };
+        mYt.style.display = "inline-flex";
+      } else {
+        mYt.style.display = "none";
+      }
       document.getElementById("modalBackdrop").classList.add("open");
     }
     function closeModal(e) {
@@ -1187,7 +1310,7 @@
     function closeModalDirect() {
       document.getElementById("modalBackdrop").classList.remove("open");
     }
-    document.addEventListener("keydown", e => { if (e.key === "Escape") closeModalDirect(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModalDirect(); closeYtDirect(); } });
 
     /* ═══════════════════════════════════════════════
        INIT
