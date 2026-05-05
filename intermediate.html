@@ -308,6 +308,7 @@
     }
     .hero-chip.easy { border-color: rgba(16,185,129,0.28); background: rgba(16,185,129,0.08); color: #047857; }
     .hero-chip.moderate { border-color: rgba(245,158,11,0.30); background: rgba(245,158,11,0.09); color: #b45309; }
+    .hero-chip.intermediate { border-color: rgba(234,88,12,0.30); background: rgba(234,88,12,0.09); color: #c2410c; }
     .hero-chip.violet { border-color: rgba(155,110,255,0.30); background: rgba(155,110,255,0.09); color: var(--violetDeep); }
 
     .hero-desc {
@@ -391,6 +392,7 @@
     }
     .rc-diff.easy { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.18); color: #047857; }
     .rc-diff.moderate { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); color: #b45309; }
+    .rc-diff.intermediate { background: rgba(234,88,12,0.08); border: 1px solid rgba(234,88,12,0.22); color: #c2410c; }
     .rc-measures {
       display: inline-flex; align-items: center;
       padding: 2px 8px; border-radius: 999px;
@@ -777,27 +779,27 @@
 
     const songs = [
       {
-        name: "Hai Apna Dil To Aawara", key: "G Major", bpm: 92, time: "4/4", diff: "easy", book: "classic", ytId: "QLs8T-CjiP4",
+        name: "Hai Apna Dil To Aawara", key: "G Major", bpm: 92, time: "4/4", diff: "moderate", book: "classic", ytId: "QLs8T-CjiP4",
         tagline: "Timeless and carefree — Hemant Kumar's nostalgia.",
         desc: "A graceful G Major classic with a lilting, carefree character. Ideal for building phrasing over longer melodic arcs while maintaining a relaxed, singing tone."
       },
       {
-        name: "Srivalli", key: "D Major", bpm: 138, time: "4/4", diff: "easy", book: "peppy", ytId: "XMTiWXdVTJw",
+        name: "Srivalli", key: "D Major", bpm: 138, time: "4/4", diff: "moderate", book: "peppy", ytId: "XMTiWXdVTJw",
         tagline: "Spirited and soaring — folk soul in D Major.",
         desc: "A bright D Major folk melody with an upward, spirited energy. Excellent for practising clean finger articulation at a lively tempo with confident dynamics."
       },
       {
-        name: "Main Agar Kahun", key: "E Minor", bpm: 72, time: "4/4", diff: "easy", book: "romantic", ytId: "WcVA8hrtpSI",
+        name: "Main Agar Kahun", key: "E Minor", bpm: 72, time: "4/4", diff: "moderate", book: "romantic", ytId: "WcVA8hrtpSI",
         tagline: "Tender and aching — love phrased with restraint.",
         desc: "A tender E Minor ballad at a gentle pace — perfect for developing sensitivity to melodic shaping and learning to express emotional restraint through dynamics."
       },
       {
-        name: "Allah Ke Bande", key: "G Major", bpm: 96, time: "4/4", diff: "easy", book: "soulful", ytId: "c3-9cD4ehAw",
+        name: "Allah Ke Bande", key: "G Major", bpm: 96, time: "4/4", diff: "moderate", book: "soulful", ytId: "c3-9cD4ehAw",
         tagline: "Soulful and searching — a question asked in G Major.",
         desc: "A soulful G Major melody with a searching, philosophical character. Develops sustained phrasing and the ability to carry emotional weight through long melodic lines."
       },
       {
-        name: "Kal Ho Na Ho", key: "C Major", bpm: 84, time: "4/4", diff: "easy", book: "soulful", ytId: "KPOeHQMqEBs",
+        name: "Kal Ho Na Ho", key: "C Major", bpm: 84, time: "4/4", diff: "moderate", book: "soulful", ytId: "KPOeHQMqEBs",
         tagline: "Bittersweet and luminous — every note a goodbye.",
         desc: "A luminous C Major melody loaded with emotional contrast. One of the finest pieces for learning to balance tender legato passages against moments of dynamic lift."
       },
@@ -948,6 +950,7 @@
 
       const chips = document.getElementById("heroChips");
       chips.innerHTML = `
+        <span class="hero-chip intermediate">🟠 Intermediate</span>
         <span class="hero-chip violet">🎼 ${s.key}</span>
         <span class="hero-chip">${s.bpm} BPM · ${s.time}</span>
         ${measures ? `<span class="hero-chip violet">⚡ ${measures} unique measures</span>` : ""}
@@ -1025,6 +1028,7 @@
         <span class="rc-num">${num}</span>
         <div class="rc-name">${s.name}</div>
         <div class="rc-meta">${s.key} · ${s.bpm} BPM</div>
+        <span class="rc-diff intermediate">🟠 Intermediate</span>
         ${showMeasures && measures ? `<span class="rc-measures">⚡ ${measures} unique measures</span>` : ""}
       </div>`;
     }
@@ -1172,6 +1176,7 @@
       document.getElementById("mTitle").textContent = s.name;
       document.getElementById("mTagline").textContent = s.tagline;
       document.getElementById("mChips").innerHTML = `
+        <span class="modal-chip intermediate">🟠 Intermediate</span>
         <span class="modal-chip violet">🎼 ${s.key}</span>
         ${measures ? `<span class="modal-chip violet">⚡ ${measures} unique measures</span>` : ""}
         <span class="modal-chip muted">${BOOK_LABELS[s.book]}</span>
