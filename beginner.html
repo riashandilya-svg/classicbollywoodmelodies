@@ -326,18 +326,6 @@
       box-shadow: 0 4px 16px rgba(85,55,190,0.10);
     }
     .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(85,55,190,0.18); filter: brightness(1.05); }
-
-    .hero-yt-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 22px; border-radius: 14px;
-      font-size: 13px; font-weight: 700;
-      text-decoration: none; color: #cc0000;
-      border: 1px solid rgba(204,0,0,0.28);
-      background: rgba(204,0,0,0.07);
-      transition: all 0.15s; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(204,0,0,0.08);
-    }
-    .hero-yt-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(204,0,0,0.16); background: rgba(204,0,0,0.12); }
     .hero-cta-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
     .mode-bar {
@@ -623,16 +611,22 @@
         <p class="hero-tagline" id="heroTagline">Graceful and quiet — introspection at the piano.</p>
         <div class="hero-chips" id="heroChips"></div>
         <p class="hero-desc" id="heroDesc"></p>
+        <!-- ▼ YouTube thumbnail preview (same as intermediate page) -->
+        <div id="heroYtPreview" style="display:none; margin-bottom:18px; width:100%; max-width:420px; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(100,60,200,0.16); border:1px solid rgba(155,110,255,0.22); cursor:pointer; position:relative;" onclick="(function(){var id=document.getElementById('heroYtPreview').dataset.ytid,name=document.getElementById('heroTitle').textContent;if(id){openYt(id,name);}})()">
+          <img id="heroYtThumb" src="" alt="Preview" style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;" />
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.18);transition:background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.30)'" onmouseout="this.style.background='rgba(0,0,0,0.18)'">
+            <div style="width:54px;height:54px;border-radius:50%;background:rgba(204,0,0,0.88);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,0,0,0.35);">
+              <svg viewBox="0 0 24 24" fill="white" style="width:22px;height:22px;margin-left:3px;"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+        </div>
+        <!-- ▲ end YouTube preview -->
         <div class="hero-cta-row">
           <a class="hero-cta" id="heroCta" href="#" target="_blank" rel="noopener">
             Open Book
             <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </a>
-          <a class="hero-yt-btn" id="heroYt" href="javascript:void(0)" style="display:none;">
-            <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
-            Listen
           </a>
         </div>
       </div>
@@ -968,7 +962,7 @@
       const ownIdx = songs.findIndex(x => x.name === s.name);
       const isOwn = ownIdx >= 0;
       const measures = MEASURES[s.name];
-      const num = isOwn ? String(ownIdx + 1).padStart(2, "0") : "—";
+      const num = isOwn ? String(ownIdx + 1).padStart(2, "00") : "—";
 
       document.getElementById("heroNum").textContent = isOwn
         ? `SONG ${num} OF ${songs.length}`
@@ -996,12 +990,14 @@
         if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
       };
 
-      const heroYt = document.getElementById("heroYt");
+      /* ── YouTube thumbnail preview (same as intermediate page) ── */
+      const heroYtPreview = document.getElementById("heroYtPreview");
       if (s.ytId) {
-        heroYt.onclick = (e) => { e.preventDefault(); openYt(s.ytId, s.name); };
-        heroYt.style.display = "inline-flex";
+        heroYtPreview.dataset.ytid = s.ytId;
+        document.getElementById("heroYtThumb").src = `https://img.youtube.com/vi/${s.ytId}/hqdefault.jpg`;
+        heroYtPreview.style.display = "block";
       } else {
-        heroYt.style.display = "none";
+        heroYtPreview.style.display = "none";
       }
 
       // Update sidebar selection (only highlights own songs)
@@ -1064,7 +1060,6 @@
     /* ═══════════════════════════════════════════════
        CENTER FILTER RESULTS
     ═══════════════════════════════════════════════ */
-    /* Card for own-level songs (with measure count option) */
     function resultCardHTML(s, showMeasures = false) {
       const idx = songs.indexOf(s);
       const num = String(idx + 1).padStart(2, "0");
@@ -1079,7 +1074,6 @@
       </div>`;
     }
 
-    /* Card for occasion view — handles both levels */
     function resultCardHTMLOccasion(s) {
       const ownIdx = songs.findIndex(x => x.name === s.name);
       const isOwn = ownIdx >= 0;
