@@ -681,12 +681,18 @@
         <p class="hero-tagline" id="heroTagline">Graceful and quiet — introspection at the piano.</p>
         <div class="hero-chips" id="heroChips"></div>
         <p class="hero-desc" id="heroDesc"></p>
-        <a class="hero-cta" id="heroCta" href="#" target="_blank" rel="noopener">
-          Open Book
-          <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
+        <div class="hero-cta-row">
+          <a class="hero-cta" id="heroCta" href="#" target="_blank" rel="noopener">
+            Open Book
+            <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a class="hero-yt-btn" id="heroYt" href="#" target="_blank" rel="noopener" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+            Listen on YouTube
+          </a>
+        </div>
       </div>
 
       <div id="modeBar" class="mode-bar" style="display:none;">
@@ -739,31 +745,19 @@
     <div style="margin-top:5px;">Contact: <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a></div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  </script>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
     /* ═══════════════════════════════════════════════
-       LOGIN GATE — uses Supabase session (same as book.html)
+       LOGIN GATE
     ═══════════════════════════════════════════════ */
-    async function isLoggedIn() {
-      // 1. Check Supabase session (primary — used by book.html / login.html)
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session && session.user) return true;
-      } catch(e) { /* fall through */ }
-      // 2. Fallback: legacy localStorage flag
+    function isLoggedIn() {
       try { return !!localStorage.getItem("pj_logged_in"); }
       catch { return false; }
     }
 
-    async function requireLogin() {
-      if (!(await isLoggedIn())) {
+    function requireLogin() {
+      if (!isLoggedIn()) {
         window.location.href = "login.html";
         return true;
       }
@@ -955,8 +949,8 @@
       const cta = document.getElementById("heroCta");
       cta.href = BOOK_URLS[s.book];
       cta.innerHTML = `Open ${BOOK_LABELS[s.book]} <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      cta.onclick = async function(e) {
-        if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
+      cta.onclick = function(e) {
+        if (!isLoggedIn()) { e.preventDefault(); window.location.href = "login.html"; }
       };
 
       document.querySelectorAll(".rs-song-item").forEach((el, i) => {
@@ -1182,8 +1176,8 @@
       const cta = document.getElementById("mCta");
       cta.href = BOOK_URLS[s.book];
       cta.innerHTML = `Open ${BOOK_LABELS[s.book]} <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      cta.onclick = async function(e) {
-        if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
+      cta.onclick = function(e) {
+        if (!isLoggedIn()) { e.preventDefault(); window.location.href = "login.html"; }
       };
       document.getElementById("modalBackdrop").classList.add("open");
     }
