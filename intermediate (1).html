@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Intermediate Songs — Ria Om Shandilya™</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #faf8ff;
+      --surface: rgba(255,255,255,0.90);
+      --surface2: rgba(248,245,255,0.85);
+      --text: #1e1630;
+      --muted: rgba(30,22,48,0.55);
+      --border: rgba(155,110,255,0.14);
+      --border2: rgba(155,110,255,0.22);
+      --shadow-sm: 0 2px 12px rgba(100,60,200,0.06);
+      --shadow: 0 8px 32px rgba(100,60,200,0.10);
+      --shadow-lg: 0 20px 60px rgba(100,60,200,0.14);
+      --violet: #9b6eff;
+      --violetDeep: #5537be;
+      --violetLight: rgba(155,110,255,0.10);
+      --pink: #ff78a0;
+      --amber: #f59e0b;
+      --amberDeep: #b45309;
+      --sidebar-w: 240px;
+      --right-w: 280px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 800px 500px at 15% -5%, rgba(220,205,255,0.55), transparent 58%),
+        radial-gradient(ellipse 700px 400px at 90% 8%, rgba(200,180,255,0.40), transparent 55%),
+        radial-gradient(ellipse 600px 400px at 60% 92%, rgba(255,200,220,0.22), transparent 55%),
+        var(--bg);
+      overflow-x: hidden;
+    }
+
+    #glitter {
+      position: fixed; inset: 0;
+      z-index: 9998; pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .banner {
+      position: sticky; top: 0; z-index: 9999;
+      background: rgba(250,248,255,0.82);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border2);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8), 0 4px 20px rgba(100,60,200,0.05);
+    }
+
+    .navGrid {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      min-height: 62px;
+      padding: 0 20px;
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600;
+      color: var(--violetDeep);
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: var(--violetLight);
+      transition: all 0.14s;
+      white-space: nowrap;
+    }
+    .back-btn:hover { background: rgba(155,110,255,0.18); transform: translateX(-2px); }
+
+    .banner-link {
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600; font-size: 20px;
+      letter-spacing: 0.5px;
+      color: var(--text); text-decoration: none;
+      justify-self: center; text-align: center;
+    }
+
+    .level-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase;
+      background: rgba(245,158,11,0.10);
+      border: 1px solid rgba(245,158,11,0.32);
+      color: #b45309;
+      white-space: nowrap;
+    }
+    .level-chip .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.4; transform:scale(0.7); }
+    }
+
+    .app-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 16px 80px;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr var(--right-w);
+      grid-template-rows: auto 1fr;
+      gap: 0;
+      min-height: calc(100vh - 62px);
+    }
+
+    @media (max-width: 1100px) {
+      .app-wrapper { grid-template-columns: 210px 1fr 240px; }
+      :root { --sidebar-w: 210px; --right-w: 240px; }
+    }
+    @media (max-width: 860px) {
+      .app-wrapper { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+      .left-sidebar, .right-sidebar { position: static !important; }
+    }
+
+    .left-sidebar {
+      position: sticky;
+      top: 62px;
+      align-self: start;
+      height: calc(100vh - 62px);
+      overflow-y: auto;
+      padding: 24px 14px 24px 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(155,110,255,0.18) transparent;
+      border-right: 1px solid var(--border);
+    }
+    .left-sidebar::-webkit-scrollbar { width: 4px; }
+    .left-sidebar::-webkit-scrollbar-thumb { background: rgba(155,110,255,0.20); border-radius: 4px; }
+
+    .sidebar-section-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(155,110,255,0.50);
+      padding: 0 10px;
+      margin: 18px 0 6px;
+      display: block;
+    }
+    .sidebar-section-label:first-child { margin-top: 4px; }
+
+    .sidebar-divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+    .sidebar-search {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      background: rgba(255,255,255,0.90);
+      font-size: 13px; font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .sidebar-search:focus {
+      border-color: rgba(155,110,255,0.50);
+      box-shadow: 0 0 0 3px rgba(155,110,255,0.10);
+    }
+
+    .filter-btn {
+      display: flex; align-items: center; gap: 9px;
+      width: 100%; padding: 9px 10px;
+      border-radius: 10px; border: 1px solid transparent;
+      background: transparent;
+      font-size: 12.5px; font-weight: 500;
+      color: var(--muted);
+      cursor: pointer; transition: all 0.13s;
+      font-family: 'DM Sans', sans-serif;
+      text-align: left;
+    }
+    .filter-btn:hover {
+      background: rgba(155,110,255,0.07);
+      color: var(--violetDeep);
+      border-color: rgba(155,110,255,0.14);
+    }
+    .filter-btn.active {
+      background: linear-gradient(135deg, rgba(155,110,255,0.14), rgba(255,120,160,0.07));
+      border-color: rgba(155,110,255,0.28);
+      color: var(--violetDeep);
+      font-weight: 600;
+    }
+
+    .filter-icon {
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      background: rgba(155,110,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .filter-btn.active .filter-icon { background: rgba(155,110,255,0.18); }
+
+    .sub-filters { display: none; flex-direction: column; gap: 1px; padding-left: 8px; margin-top: 2px; }
+    .sub-filters.open { display: flex; }
+
+    .sub-btn {
+      display: flex; align-items: center;
+      width: 100%; padding: 7px 10px;
+      border-radius: 8px; border: 1px solid transparent;
+      background: transparent;
+      font-size: 11.5px; font-weight: 500;
+      color: var(--muted);
+      cursor: pointer; transition: all 0.12s;
+      font-family: 'DM Sans', sans-serif; text-align: left;
+    }
+    .sub-btn:hover { background: rgba(155,110,255,0.06); color: var(--violetDeep); }
+    .sub-btn.active {
+      background: rgba(155,110,255,0.10);
+      border-color: rgba(155,110,255,0.22);
+      color: var(--violetDeep); font-weight: 600;
+    }
+
+    .center-area { padding: 28px 28px 0; min-width: 0; }
+
+    .song-hero {
+      position: relative;
+      min-height: 280px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 40px 32px 36px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,244,255,0.90));
+      border: 1px solid rgba(155,110,255,0.20);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .song-hero::before {
+      content: "";
+      position: absolute; top: -80px; right: -80px;
+      width: 300px; height: 300px; border-radius: 999px;
+      background: radial-gradient(circle, rgba(245,158,11,0.14), transparent 65%);
+      pointer-events: none;
+    }
+    .song-hero::after {
+      content: "";
+      position: absolute; bottom: -60px; left: -60px;
+      width: 220px; height: 220px; border-radius: 999px;
+      background: radial-gradient(circle, rgba(155,110,255,0.14), transparent 65%);
+      pointer-events: none;
+    }
+    .song-hero > * { position: relative; z-index: 1; }
+
+    .hero-num {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(155,110,255,0.50);
+      margin-bottom: 10px;
+    }
+
+    .hero-title {
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(36px, 5vw, 62px);
+      font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.05;
+      background: linear-gradient(135deg,
+        rgba(85,55,190,0.98) 0%,
+        rgba(155,110,255,0.95) 45%,
+        rgba(220,170,255,0.90) 60%,
+        rgba(155,110,255,0.95) 75%,
+        rgba(85,55,190,0.98) 100%
+      );
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: shimmer 7s ease-in-out infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes shimmer {
+      0%,100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero-tagline {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 17px; font-style: italic;
+      color: rgba(85,55,190,0.65);
+      margin-bottom: 20px; line-height: 1.4;
+    }
+
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
+
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 13px; border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+      border: 1px solid rgba(155,110,255,0.22);
+      background: rgba(255,255,255,0.80);
+      color: rgba(30,22,48,0.70);
+      backdrop-filter: blur(6px);
+    }
+    .hero-chip.easy { border-color: rgba(16,185,129,0.28); background: rgba(16,185,129,0.08); color: #047857; }
+    .hero-chip.moderate { border-color: rgba(245,158,11,0.30); background: rgba(245,158,11,0.09); color: #b45309; }
+    .hero-chip.violet { border-color: rgba(155,110,255,0.30); background: rgba(155,110,255,0.09); color: var(--violetDeep); }
+
+    .hero-desc {
+      font-size: 14px; line-height: 1.70;
+      color: var(--muted); max-width: 480px;
+      margin: 0 auto 24px;
+    }
+
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 26px; border-radius: 14px;
+      font-size: 13px; font-weight: 700;
+      text-decoration: none; color: var(--violetDeep);
+      border: 1px solid rgba(155,110,255,0.36);
+      background: linear-gradient(135deg, rgba(155,110,255,0.16), rgba(255,120,160,0.09));
+      transition: all 0.15s;
+      box-shadow: 0 4px 16px rgba(85,55,190,0.10);
+    }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(85,55,190,0.18); filter: brightness(1.05); }
+
+    .hero-yt-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 14px;
+      font-size: 13px; font-weight: 700;
+      text-decoration: none; color: #cc0000;
+      border: 1px solid rgba(204,0,0,0.28);
+      background: rgba(204,0,0,0.07);
+      transition: all 0.15s; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(204,0,0,0.08);
+    }
+    .hero-yt-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(204,0,0,0.16); background: rgba(204,0,0,0.12); }
+    .hero-cta-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+    .mode-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px;
+      padding: 12px 18px;
+      background: rgba(255,255,255,0.80);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .mode-bar-title { font-family: "Cormorant Garamond", serif; font-size: 17px; font-weight: 700; color: var(--violetDeep); letter-spacing: -0.01em; }
+    .mode-bar-count { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+
+    .result-card {
+      border-radius: 16px; padding: 16px;
+      border: 1px solid rgba(155,110,255,0.13);
+      background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(248,244,255,0.85));
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
+      transition: all 0.16s; cursor: pointer;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .result-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: rgba(155,110,255,0.28); }
+    .result-card.selected {
+      border-color: rgba(155,110,255,0.45);
+      background: linear-gradient(145deg, rgba(245,240,255,0.98), rgba(238,228,255,0.90));
+      box-shadow: 0 0 0 2px rgba(155,110,255,0.20), var(--shadow);
+    }
+    .result-card::before {
+      content: "";
+      position: absolute; inset: -50px -50px auto auto;
+      width: 120px; height: 120px; border-radius: 999px;
+      background: radial-gradient(circle, rgba(155,110,255,0.14), transparent 65%);
+      pointer-events: none;
+    }
+    .result-card > * { position: relative; z-index: 1; }
+
+    .rc-num { font-size: 10px; font-weight: 700; color: rgba(155,110,255,0.40); letter-spacing: 0.04em; }
+    .rc-name { font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--text); letter-spacing: -0.01em; }
+    .rc-meta { font-size: 11px; color: var(--muted); }
+    .rc-diff {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      width: fit-content;
+    }
+    .rc-diff.easy { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.18); color: #047857; }
+    .rc-diff.moderate { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); color: #b45309; }
+    .rc-measures {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      background: rgba(155,110,255,0.08);
+      border: 1px solid rgba(155,110,255,0.16);
+      color: var(--violetDeep); width: fit-content;
+    }
+
+    .group-block { margin-bottom: 24px; }
+    .group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(155,110,255,0.12); }
+    .group-header-text { font-family: "Cormorant Garamond", serif; font-size: 19px; font-weight: 700; color: var(--violetDeep); letter-spacing: -0.01em; }
+    .group-header-sub { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    .diff-label {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 999px;
+      margin: 10px 0 8px;
+    }
+    .diff-label.easy { background: rgba(16,185,129,0.10); color: #047857; border: 1px solid rgba(16,185,129,0.22); }
+    .diff-label.moderate { background: rgba(245,158,11,0.10); color: #b45309; border: 1px solid rgba(245,158,11,0.22); }
+
+    .right-sidebar {
+      position: sticky; top: 62px; align-self: start;
+      height: calc(100vh - 62px); overflow-y: auto;
+      padding: 24px 0 24px 14px;
+      border-left: 1px solid var(--border);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(155,110,255,0.15) transparent;
+    }
+    .right-sidebar::-webkit-scrollbar { width: 3px; }
+    .right-sidebar::-webkit-scrollbar-thumb { background: rgba(155,110,255,0.18); border-radius: 3px; }
+
+    .rs-header { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(155,110,255,0.50); padding: 0 4px; margin-bottom: 10px; display: block; }
+
+    .progress-wrap { margin-bottom: 16px; padding: 10px 4px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .progress-bar { height: 4px; border-radius: 999px; background: rgba(155,110,255,0.12); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--violetDeep), var(--violet)); transition: width 0.4s ease; }
+
+    .rs-song-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 8px; border-radius: 10px; border: 1px solid transparent;
+      cursor: pointer; transition: all 0.12s; margin-bottom: 2px;
+    }
+    .rs-song-item:hover { background: rgba(155,110,255,0.06); border-color: rgba(155,110,255,0.14); }
+    .rs-song-item.selected { background: linear-gradient(135deg, rgba(155,110,255,0.12), rgba(255,120,160,0.06)); border-color: rgba(155,110,255,0.26); }
+    .rs-song-item.completed .rs-num { color: #10b981; }
+
+    .rs-num { font-size: 10px; font-weight: 700; color: rgba(155,110,255,0.38); width: 20px; flex-shrink: 0; text-align: right; }
+    .rs-info { flex: 1; min-width: 0; }
+    .rs-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rs-song-item.selected .rs-name { color: var(--violetDeep); }
+    .rs-key { font-size: 10px; color: var(--muted); }
+
+    .rs-check {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid rgba(155,110,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: transparent; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .rs-song-item.completed .rs-check { background: #10b981; border-color: #10b981; color: white; }
+    .rs-divider { height: 1px; background: var(--border); margin: 10px 0 10px 28px; }
+
+    .no-results { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; display: none; }
+
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,5,25,0.45); backdrop-filter: blur(6px);
+      z-index: 99999; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal-box {
+      width: 100%; max-width: 500px; border-radius: 24px;
+      border: 1px solid rgba(155,110,255,0.20);
+      background: linear-gradient(145deg, rgba(255,255,255,0.99), rgba(248,244,255,0.98));
+      box-shadow: 0 32px 80px rgba(100,60,200,0.22);
+      padding: 32px; position: relative;
+      animation: modalIn 0.22s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 30px; height: 30px; border: none; border-radius: 50%;
+      background: rgba(155,110,255,0.08); color: var(--text);
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s;
+    }
+    .modal-close:hover { background: rgba(155,110,255,0.18); transform: rotate(90deg); }
+
+    .modal-title { font-family: "Cormorant Garamond", serif; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .modal-tagline { font-family: "Cormorant Garamond", serif; font-size: 15px; font-style: italic; color: rgba(85,55,190,0.65); margin-bottom: 14px; }
+    .modal-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+    .modal-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .modal-chip.easy { background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.24); color: #047857; }
+    .modal-chip.moderate { background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.28); color: #b45309; }
+    .modal-chip.violet { background: rgba(155,110,255,0.10); border: 1px solid rgba(155,110,255,0.24); color: var(--violetDeep); }
+    .modal-chip.muted { background: rgba(30,22,48,0.06); border: 1px solid rgba(30,22,48,0.10); color: var(--muted); }
+
+    .modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .meta-row { display: flex; gap: 5px; font-size: 13px; }
+    .meta-lbl { color: rgba(155,110,255,0.65); font-weight: 700; }
+
+    .modal-desc { font-size: 14px; line-height: 1.68; color: var(--text); margin-bottom: 22px; }
+
+    .modal-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 13px;
+      font-size: 14px; font-weight: 700; text-decoration: none;
+      color: var(--violetDeep);
+      border: 1px solid rgba(155,110,255,0.32);
+      background: linear-gradient(135deg, rgba(155,110,255,0.14), rgba(255,120,160,0.08));
+      transition: all 0.14s; box-shadow: 0 4px 14px rgba(85,55,190,0.08);
+    }
+    .modal-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(85,55,190,0.16); }
+
+    .modal-yt-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 20px; border-radius: 13px;
+      font-size: 14px; font-weight: 700;
+      text-decoration: none; color: #cc0000;
+      border: 1px solid rgba(204,0,0,0.28);
+      background: rgba(204,0,0,0.07);
+      transition: all 0.14s; cursor: pointer;
+    }
+    .modal-yt-btn:hover { background: rgba(204,0,0,0.15); transform: translateY(-1px); }
+    .modal-cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .yt-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,5,25,0.72); backdrop-filter: blur(10px);
+      z-index: 999999; align-items: center; justify-content: center; padding: 20px;
+    }
+    .yt-backdrop.open { display: flex; }
+    .yt-box {
+      width: 100%; max-width: 700px; border-radius: 20px; overflow: hidden;
+      background: #0f0a1e; border: 1px solid rgba(155,110,255,0.28);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.65); animation: modalIn 0.22s ease;
+    }
+    .yt-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 18px; background: rgba(155,110,255,0.12);
+      border-bottom: 1px solid rgba(155,110,255,0.15); gap: 12px;
+    }
+    .yt-song-name { font-family: "Cormorant Garamond", serif; font-size: 17px; font-weight: 700; color: rgba(230,220,255,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .yt-close {
+      width: 30px; height: 30px; flex-shrink: 0;
+      border: none; border-radius: 50%;
+      background: rgba(155,110,255,0.18); color: rgba(230,220,255,0.85);
+      font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .yt-close:hover { background: rgba(155,110,255,0.35); transform: rotate(90deg); }
+    .yt-frame-wrap { position: relative; padding-bottom: 56.25%; height: 0; }
+    .yt-frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    footer {
+      max-width: 1400px; margin: 0 auto;
+      padding: 20px 20px 28px; text-align: center;
+      color: var(--muted); font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: rgba(30,22,48,0.65); text-decoration: none; border-bottom: 1px solid rgba(155,110,255,0.20); }
+    footer a:hover { border-bottom-color: rgba(155,110,255,0.45); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-title, #glitter { animation: none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="glitter" aria-hidden="true"></canvas>
+
+  <header class="banner">
+    <div class="navGrid">
+      <a class="back-btn" href="./index.html">← Back</a>
+      <a class="banner-link" href="./index.html">Ria Om Shandilya™</a>
+      <div class="level-chip"><span class="dot"></span>Intermediate</div>
+    </div>
+  </header>
+
+  <div class="app-wrapper">
+
+    <aside class="left-sidebar">
+      <span class="sidebar-section-label">Search</span>
+      <input class="sidebar-search" id="searchInput" placeholder="Song name, key…" oninput="renderCenter()" />
+
+      <div class="sidebar-divider"></div>
+      <span class="sidebar-section-label">Sort & Filter</span>
+
+      <button class="filter-btn active" data-mode="all" onclick="setMode('all',this)">
+        <span class="filter-icon">♩</span> All Songs
+      </button>
+
+      <button class="filter-btn" data-mode="quick" onclick="setMode('quick',this)">
+        <span class="filter-icon">⚡</span> Quick to Learn
+      </button>
+
+      <button class="filter-btn" data-mode="key" onclick="setMode('key',this)">
+        <span class="filter-icon">🎼</span> By Key / Scale
+      </button>
+      <div class="sub-filters" id="keyNav">
+        <button class="sub-btn active" data-key="all"      onclick="setKeyFilter('all',this)">All Keys</button>
+        <button class="sub-btn" data-key="C Major"         onclick="setKeyFilter('C Major',this)">🎼 C Major</button>
+        <button class="sub-btn" data-key="G Major"         onclick="setKeyFilter('G Major',this)">🎼 G Major</button>
+        <button class="sub-btn" data-key="E Minor"         onclick="setKeyFilter('E Minor',this)">🎼 E Minor</button>
+        <button class="sub-btn" data-key="F Major"         onclick="setKeyFilter('F Major',this)">🎼 F Major</button>
+        <button class="sub-btn" data-key="D Major"         onclick="setKeyFilter('D Major',this)">🎼 D Major</button>
+        <button class="sub-btn" data-key="A Major"         onclick="setKeyFilter('A Major',this)">🎼 A Major</button>
+        <button class="sub-btn" data-key="B♭ Major"        onclick="setKeyFilter('B♭ Major',this)">🎼 B♭ Major</button>
+        <button class="sub-btn" data-key="C Minor"         onclick="setKeyFilter('C Minor',this)">🎼 C Minor</button>
+      </div>
+
+      <button class="filter-btn" data-mode="occasion" onclick="setMode('occasion',this)">
+        <span class="filter-icon">★</span> By Occasion
+      </button>
+      <div class="sub-filters" id="occasionNav">
+        <button class="sub-btn active" data-occ="wedding"    onclick="setOccasion('wedding',this)">💍 Wedding / Sangeet</button>
+        <button class="sub-btn"        data-occ="school"     onclick="setOccasion('school',this)">🎓 School / Annual Day</button>
+        <button class="sub-btn"        data-occ="festival"   onclick="setOccasion('festival',this)">🎉 Festivals / Cultural</button>
+        <button class="sub-btn"        data-occ="valentine"  onclick="setOccasion('valentine',this)">❤️ Valentine's / Romantic</button>
+        <button class="sub-btn"        data-occ="stage"      onclick="setOccasion('stage',this)">🎤 Stage / Talent Shows</button>
+        <button class="sub-btn"        data-occ="retro"      onclick="setOccasion('retro',this)">🎼 Retro / Old Bollywood</button>
+        <button class="sub-btn"        data-occ="farewell"   onclick="setOccasion('farewell',this)">🌙 Farewell / Emotional</button>
+        <button class="sub-btn"        data-occ="devotional" onclick="setOccasion('devotional',this)">🙏 Devotional / Meaningful</button>
+      </div>
+    </aside>
+
+    <div class="center-area">
+      <div class="song-hero" id="songHero">
+        <div class="hero-num" id="heroNum">SONG 01 OF 16</div>
+        <h1 class="hero-title" id="heroTitle">Hai Apna Dil To Aawara</h1>
+        <p class="hero-tagline" id="heroTagline"></p>
+        <div class="hero-chips" id="heroChips"></div>
+        <p class="hero-desc" id="heroDesc"></p>
+        <div class="hero-cta-row">
+          <a class="hero-cta" id="heroCta" href="#" target="_blank" rel="noopener">Open Book
+            <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="hero-yt-btn" id="heroYt" href="javascript:void(0)" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+            Listen
+          </a>
+        </div>
+      </div>
+
+      <div id="modeBar" class="mode-bar" style="display:none;">
+        <span class="mode-bar-title" id="modeBarTitle">—</span>
+        <span class="mode-bar-count" id="modeBarCount">—</span>
+      </div>
+      <div id="centerOutput"></div>
+      <div class="no-results" id="noResults">No songs match. Try a different filter.</div>
+    </div>
+
+    <aside class="right-sidebar">
+      <span class="rs-header">All Songs</span>
+
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Your progress</span>
+          <span id="progressText">0 / 16</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="rs-divider"></div>
+      <div id="rightSongList"></div>
+    </aside>
+
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModalDirect()">×</button>
+      <div class="modal-title" id="mTitle"></div>
+      <div class="modal-tagline" id="mTagline"></div>
+      <div class="modal-chips" id="mChips"></div>
+      <div class="modal-meta" id="mMeta"></div>
+      <div class="modal-desc" id="mDesc"></div>
+      <div class="modal-cta-row">
+        <a class="modal-cta" id="mCta" href="#" target="_blank" rel="noopener">Open Book
+          <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="modal-yt-btn" id="mYt" href="javascript:void(0)" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+          Listen
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="yt-backdrop" id="ytBackdrop" onclick="closeYt(event)">
+    <div class="yt-box">
+      <div class="yt-header">
+        <div class="yt-song-name" id="ytSongName">Now Playing</div>
+        <button class="yt-close" onclick="closeYtDirect()">×</button>
+      </div>
+      <div class="yt-frame-wrap">
+        <iframe id="ytFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>© <span id="year"></span> Ria Om Shandilya™. All rights reserved.</div>
+    <div style="margin-top:5px;">Contact: <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a></div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  </script>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    async function isLoggedIn() {
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session && session.user) return true;
+      } catch(e) {}
+      try { return !!localStorage.getItem("pj_logged_in"); }
+      catch { return false; }
+    }
+
+    function openYt(ytId, name) {
+      document.getElementById("ytSongName").textContent = name;
+      document.getElementById("ytFrame").src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
+      document.getElementById("ytBackdrop").classList.add("open");
+    }
+    function closeYt(e) {
+      if (e.target === document.getElementById("ytBackdrop")) closeYtDirect();
+    }
+    function closeYtDirect() {
+      document.getElementById("ytFrame").src = "";
+      document.getElementById("ytBackdrop").classList.remove("open");
+    }
+
+    /* ═══════════════════════════════════════════════
+       DATA
+    ═══════════════════════════════════════════════ */
+    const BOOK_URLS = {
+      soulful:  "./soulfulindex.html",
+      romantic: "./romanticindex.html",
+      peppy:    "./peppyindex.html",
+      classic:  "./classicindex.html"
+    };
+    const BOOK_LABELS = {
+      soulful: "Soulful Melodies", romantic: "Romantic Melodies",
+      peppy: "Peppy Melodies", classic: "Classic Melodies"
+    };
+
+    const MEASURES = {
+      "Hai Apna Dil To Aawara":    38,
+      "Srivalli":                  44,
+      "Main Agar Kahun":           49,
+      "Allah Ke Bande":            52,
+      "Kal Ho Na Ho":              58,
+      "Kalank":                    69,
+      "Aao Ge Jab Tum Saajna":    70,
+      "Moh Moh Ke Dhaage":        71,
+      "Piyu Bole":                 71,
+      "Zubi Doobi":                80,
+      "Senorita":                  83,
+      "Naina Da Kya Kasoor":       87,
+      "Teri Deewani":              90,
+      "Ajeeb Dastaan Hai Yeh":    100,
+      "Gore Gore Baanke Chhore":  101,
+      "Slow Motion Angreza":      200
+    };
+
+    const songs = [
+      {
+        name: "Hai Apna Dil To Aawara", key: "G Major", bpm: 92, time: "4/4", diff: "easy", book: "classic", ytId: "XPbsK5QBKSY",
+        tagline: "Timeless and carefree — Hemant Kumar's nostalgia.",
+        desc: "A graceful G Major classic with a lilting, carefree character. Ideal for building phrasing over longer melodic arcs while maintaining a relaxed, singing tone."
+      },
+      {
+        name: "Srivalli", key: "D Major", bpm: 138, time: "4/4", diff: "easy", book: "peppy", ytId: "HGHjzfvBBic",
+        tagline: "Spirited and soaring — folk soul in D Major.",
+        desc: "A bright D Major folk melody with an upward, spirited energy. Excellent for practising clean finger articulation at a lively tempo with confident dynamics."
+      },
+      {
+        name: "Main Agar Kahun", key: "E Minor", bpm: 72, time: "4/4", diff: "easy", book: "romantic", ytId: "lWsjhfSvUgQ",
+        tagline: "Tender and aching — love phrased with restraint.",
+        desc: "A tender E Minor ballad at a gentle pace — perfect for developing sensitivity to melodic shaping and learning to express emotional restraint through dynamics."
+      },
+      {
+        name: "Allah Ke Bande", key: "G Major", bpm: 96, time: "4/4", diff: "easy", book: "soulful", ytId: "PK5YZEiYFB0",
+        tagline: "Soulful and searching — a question asked in G Major.",
+        desc: "A soulful G Major melody with a searching, philosophical character. Develops sustained phrasing and the ability to carry emotional weight through long melodic lines."
+      },
+      {
+        name: "Kal Ho Na Ho", key: "C Major", bpm: 84, time: "4/4", diff: "easy", book: "soulful", ytId: "y9RLVpfWHp0",
+        tagline: "Bittersweet and luminous — every note a goodbye.",
+        desc: "A luminous C Major melody loaded with emotional contrast. One of the finest pieces for learning to balance tender legato passages against moments of dynamic lift."
+      },
+      {
+        name: "Kalank", key: "B♭ Major", bpm: 60, time: "4/4", diff: "moderate", book: "soulful", ytId: "kStdBZmGEIs",
+        tagline: "Majestic and slow — every silence speaks.",
+        desc: "A majestic B♭ Major melody at a slow tempo that rewards meticulous attention to voicing, sustain pedal technique, and the colour of each individual note."
+      },
+      {
+        name: "Aao Ge Jab Tum Saajna", key: "G Major", bpm: 78, time: "4/4", diff: "moderate", book: "romantic", ytId: "nfkfFCjYMAc",
+        tagline: "Wistful and longing — waiting captured in melody.",
+        desc: "A wistful G Major melody ideal for exploring the art of the romantic ballad — sustained cantabile, expressive rubato, and singing tone in the right hand."
+      },
+      {
+        name: "Moh Moh Ke Dhaage", key: "D Major", bpm: 80, time: "4/4", diff: "moderate", book: "soulful", ytId: "QIFU_xBpOFU",
+        tagline: "Silken and deep — threads of feeling in D Major.",
+        desc: "A deeply expressive D Major piece that challenges the pianist to weave seamless melodic lines with warmth and quiet intensity, building emotional depth phrase by phrase."
+      },
+      {
+        name: "Piyu Bole", key: "F Major", bpm: 110, time: "4/4", diff: "moderate", book: "romantic", ytId: "Nn-GQB79iCs",
+        tagline: "Playful and bright — a duet of hearts in F Major.",
+        desc: "A bright, playful F Major melody with a light, dancing character. Ideal for developing clarity of articulation and a naturally warm tone in a cheerful romantic context."
+      },
+      {
+        name: "Zubi Doobi", key: "C Minor", bpm: 90, time: "4/4", diff: "moderate", book: "peppy", ytId: "OTtSjDDblU8",
+        tagline: "Jazzy and effervescent — C Minor with a groove.",
+        desc: "A lively C Minor number with a jazz-influenced groove. Teaches syncopated phrasing, rhythmic precision, and how to keep a light, playful touch even in a minor key."
+      },
+      {
+        name: "Senorita", key: "A Major", bpm: 120, time: "4/4", diff: "moderate", book: "peppy", ytId: "f0YGYy2o0OQ",
+        tagline: "Rhythmically bold — syncopation with a grin.",
+        desc: "A polished A Major piece that challenges pianists with its syncopated feel and expressive phrasing demands. Builds rhythmic confidence and a crisp, articulate touch."
+      },
+      {
+        name: "Naina Da Kya Kasoor", key: "D Major", bpm: 76, time: "4/4", diff: "moderate", book: "soulful", ytId: "I-rBGJp2YgA",
+        tagline: "Haunting and pure — beauty in restraint.",
+        desc: "A hauntingly pure D Major melody that asks for absolute control of tone and touch. Teaches pianists to let silence breathe and to trust the simplicity of a beautiful line."
+      },
+      {
+        name: "Teri Deewani", key: "E Minor", bpm: 68, time: "4/4", diff: "moderate", book: "soulful", ytId: "HHkslFG9ThI",
+        tagline: "Devotional and aching — surrender through sound.",
+        desc: "A deeply devotional E Minor piece with a slow, searching quality. Develops mastery of gentle dynamics, sustained notes, and playing with a meditative inner stillness."
+      },
+      {
+        name: "Ajeeb Dastaan Hai Yeh", key: "G Major", bpm: 80, time: "4/4", diff: "moderate", book: "classic", ytId: "gLaFKTvZBZY",
+        tagline: "Poetic and wistful — a story told in G Major.",
+        desc: "A poetic G Major classic with an elegiac, story-telling quality. Ideal for developing a flowing legato touch and the ability to project a sustained narrative through the melody."
+      },
+      {
+        name: "Gore Gore Baanke Chhore", key: "G Major", bpm: 148, time: "4/4", diff: "moderate", book: "classic", ytId: "Uqh3l5XKUVY",
+        tagline: "Quick and light-footed — joy at full speed.",
+        desc: "A bright, fast-paced G Major classic that builds technical dexterity and fluency at speed. Challenges the pianist to maintain an even, light touch and musical joy at a brisk tempo."
+      },
+      {
+        name: "Slow Motion Angreza", key: "C Major", bpm: 110, time: "4/4", diff: "moderate", book: "peppy", ytId: "t4PEFjVkz6s",
+        tagline: "Lush and cinematic — melody as a wide landscape.",
+        desc: "A lush C Major melody with a sweeping, cinematic quality. Develops the ability to project broad dynamic arcs and sustain musical interest across a large number of measures."
+      }
+    ];
+
+    const KEY_ORDER_DATA = [
+      { key: "C Major",  songs: ["Kal Ho Na Ho", "Slow Motion Angreza"] },
+      { key: "G Major",  songs: ["Hai Apna Dil To Aawara", "Allah Ke Bande", "Aao Ge Jab Tum Saajna", "Ajeeb Dastaan Hai Yeh", "Gore Gore Baanke Chhore"] },
+      { key: "E Minor",  songs: ["Main Agar Kahun", "Teri Deewani"] },
+      { key: "F Major",  songs: ["Piyu Bole"] },
+      { key: "D Major",  songs: ["Srivalli", "Moh Moh Ke Dhaage", "Naina Da Kya Kasoor"] },
+      { key: "A Major",  songs: ["Senorita"] },
+      { key: "B♭ Major", songs: ["Kalank"] },
+      { key: "C Minor",  songs: ["Zubi Doobi"] }
+    ];
+
+    const OCCASION_DATA = {
+      wedding: {
+        label: "💍 Wedding / Sangeet",
+        easy:     ["Srivalli", "Main Agar Kahun", "Hai Apna Dil To Aawara"],
+        moderate: ["Piyu Bole", "Moh Moh Ke Dhaage", "Aao Ge Jab Tum Saajna", "Senorita"]
+      },
+      school: {
+        label: "🎓 School Functions / Annual Day",
+        easy:     ["Allah Ke Bande", "Kal Ho Na Ho"],
+        moderate: ["Gore Gore Baanke Chhore", "Ajeeb Dastaan Hai Yeh", "Naina Da Kya Kasoor"]
+      },
+      festival: {
+        label: "🎉 Festivals / Cultural Events",
+        easy:     ["Srivalli", "Hai Apna Dil To Aawara"],
+        moderate: ["Zubi Doobi", "Senorita", "Gore Gore Baanke Chhore", "Slow Motion Angreza"]
+      },
+      valentine: {
+        label: "❤️ Valentine's / Romantic",
+        easy:     ["Main Agar Kahun", "Kal Ho Na Ho"],
+        moderate: ["Piyu Bole", "Aao Ge Jab Tum Saajna", "Moh Moh Ke Dhaage"]
+      },
+      stage: {
+        label: "🎤 Stage Performances / Talent Shows",
+        easy:     ["Kal Ho Na Ho", "Main Agar Kahun"],
+        moderate: ["Kalank", "Moh Moh Ke Dhaage", "Teri Deewani", "Naina Da Kya Kasoor"]
+      },
+      retro: {
+        label: "🎼 Retro / Old Bollywood",
+        easy:     ["Hai Apna Dil To Aawara"],
+        moderate: ["Ajeeb Dastaan Hai Yeh", "Gore Gore Baanke Chhore", "Piyu Bole"]
+      },
+      farewell: {
+        label: "🌙 Farewell / Emotional",
+        easy:     ["Kal Ho Na Ho", "Main Agar Kahun", "Allah Ke Bande"],
+        moderate: ["Moh Moh Ke Dhaage", "Aao Ge Jab Tum Saajna", "Teri Deewani"]
+      },
+      devotional: {
+        label: "🙏 Devotional / Meaningful",
+        easy:     ["Allah Ke Bande"],
+        moderate: ["Teri Deewani", "Kalank"]
+      }
+    };
+
+    /* ═══════════════════════════════════════════════
+       STATE
+    ═══════════════════════════════════════════════ */
+    let currentMode     = "all";
+    let currentOccasion = "wedding";
+    let currentKey      = "all";
+    let selectedSongIdx = 0;
+
+    function getCompleted() {
+      try { return JSON.parse(localStorage.getItem("pj_int_completed") || "[]"); }
+      catch { return []; }
+    }
+    function toggleCompleted(name) {
+      let arr = getCompleted();
+      if (arr.includes(name)) arr = arr.filter(n => n !== name);
+      else arr.push(name);
+      localStorage.setItem("pj_int_completed", JSON.stringify(arr));
+      renderRight();
+    }
+
+    /* ═══════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════ */
+    function renderHero(idx) {
+      selectedSongIdx = idx;
+      const s = songs[idx];
+      const measures = MEASURES[s.name];
+      const num = String(idx + 1).padStart(2, "0");
+
+      document.getElementById("heroNum").textContent = `SONG ${num} OF ${songs.length}`;
+      document.getElementById("heroTitle").textContent = s.name;
+      document.getElementById("heroTagline").textContent = s.tagline;
+      document.getElementById("heroDesc").textContent = s.desc;
+
+      const diffLabel = s.diff === "easy" ? "🟢 Easy" : "🟡 Moderate";
+      const diffClass = s.diff === "easy" ? "easy" : "moderate";
+
+      const chips = document.getElementById("heroChips");
+      chips.innerHTML = `
+        <span class="hero-chip ${diffClass}">${diffLabel}</span>
+        <span class="hero-chip violet">🎼 ${s.key}</span>
+        <span class="hero-chip">${s.bpm} BPM · ${s.time}</span>
+        ${measures ? `<span class="hero-chip violet">⚡ ${measures} unique measures</span>` : ""}
+        <span class="hero-chip">${BOOK_LABELS[s.book]}</span>
+      `;
+
+      const cta = document.getElementById("heroCta");
+      cta.href = BOOK_URLS[s.book];
+      cta.innerHTML = `Open ${BOOK_LABELS[s.book]} <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      cta.onclick = async function(e) {
+        if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
+      };
+
+      const heroYt = document.getElementById("heroYt");
+      if (s.ytId) {
+        heroYt.onclick = (e) => { e.preventDefault(); openYt(s.ytId, s.name); };
+        heroYt.style.display = "inline-flex";
+      } else {
+        heroYt.style.display = "none";
+      }
+
+      document.querySelectorAll(".rs-song-item").forEach((el, i) => {
+        el.classList.toggle("selected", i === idx);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════
+       RIGHT SIDEBAR
+    ═══════════════════════════════════════════════ */
+    function renderRight() {
+      const completed = getCompleted();
+      const list = document.getElementById("rightSongList");
+      list.innerHTML = songs.map((s, i) => {
+        const done = completed.includes(s.name);
+        const num = String(i + 1).padStart(2, "0");
+        return `
+        <div class="rs-song-item ${done ? "completed" : ""} ${i === selectedSongIdx ? "selected" : ""}"
+             onclick="selectSong(${i})">
+          <span class="rs-num">${num}</span>
+          <div class="rs-info">
+            <div class="rs-name">${s.name}</div>
+            <div class="rs-key">${s.key}</div>
+          </div>
+          <div class="rs-check" onclick="event.stopPropagation();toggleCompleted('${s.name.replace(/'/g,"\\'")}')">
+            ${done ? "✓" : ""}
+          </div>
+        </div>
+        ${i < songs.length - 1 && (i + 1) % 5 === 0 ? '<div class="rs-divider"></div>' : ""}
+        `;
+      }).join("");
+
+      const doneCount = completed.filter(n => songs.some(s => s.name === n)).length;
+      document.getElementById("progressText").textContent = `${doneCount} / ${songs.length}`;
+      document.getElementById("progressFill").style.width = `${(doneCount / songs.length) * 100}%`;
+    }
+
+    function selectSong(idx) {
+      selectedSongIdx = idx;
+      renderHero(idx);
+      document.querySelectorAll(".rs-song-item").forEach((el, i) => {
+        el.classList.toggle("selected", i === idx);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════
+       CENTER FILTER RESULTS
+    ═══════════════════════════════════════════════ */
+    function resultCardHTML(s, showMeasures = false) {
+      const idx = songs.indexOf(s);
+      const num = String(idx + 1).padStart(2, "0");
+      const measures = MEASURES[s.name];
+      const diffLabel = s.diff === "easy" ? "🟢 Easy" : "🟡 Moderate";
+      const diffClass = s.diff === "easy" ? "easy" : "moderate";
+      return `
+      <div class="result-card ${idx === selectedSongIdx ? "selected" : ""}" onclick="selectSong(${idx})">
+        <span class="rc-num">${num}</span>
+        <div class="rc-name">${s.name}</div>
+        <div class="rc-meta">${s.key} · ${s.bpm} BPM</div>
+        <span class="rc-diff ${diffClass}">${diffLabel}</span>
+        ${showMeasures && measures ? `<span class="rc-measures">⚡ ${measures} unique measures</span>` : ""}
+      </div>`;
+    }
+
+    function renderCenter() {
+      const q = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+      const out = document.getElementById("centerOutput");
+      const noRes = document.getElementById("noResults");
+      const modeBar = document.getElementById("modeBar");
+      const modeTitle = document.getElementById("modeBarTitle");
+      const modeCount = document.getElementById("modeBarCount");
+
+      if (currentMode === "all" && !q) {
+        out.innerHTML = "";
+        modeBar.style.display = "none";
+        noRes.style.display = "none";
+        return;
+      }
+
+      modeBar.style.display = "flex";
+
+      if (q) {
+        const filtered = songs.filter(s =>
+          s.name.toLowerCase().includes(q) ||
+          s.key.toLowerCase().includes(q) ||
+          BOOK_LABELS[s.book].toLowerCase().includes(q)
+        );
+        modeTitle.textContent = `Search: "${q}"`;
+        modeCount.textContent = `${filtered.length} song${filtered.length !== 1 ? "s" : ""}`;
+        if (!filtered.length) { out.innerHTML = ""; noRes.style.display = "block"; return; }
+        noRes.style.display = "none";
+        out.innerHTML = `<div class="result-grid">${filtered.map(s => resultCardHTML(s)).join("")}</div>`;
+        return;
+      }
+
+      if (currentMode === "quick") {
+        const sorted = [...songs].sort((a, b) => {
+          const ma = MEASURES[a.name] || 999;
+          const mb = MEASURES[b.name] || 999;
+          return ma - mb;
+        });
+        modeTitle.textContent = "⚡ Quick to Learn";
+        modeCount.textContent = "Sorted by unique measures (fewest first)";
+        noRes.style.display = "none";
+        out.innerHTML = `<div class="result-grid">${sorted.map(s => resultCardHTML(s, true)).join("")}</div>`;
+        return;
+      }
+
+      if (currentMode === "key") {
+        let html = "";
+        let total = 0;
+        const groups = currentKey === "all" ? KEY_ORDER_DATA : KEY_ORDER_DATA.filter(g => g.key === currentKey);
+        groups.forEach(g => {
+          const group = songs.filter(s => g.songs.includes(s.name));
+          if (!group.length) return;
+          total += group.length;
+          html += `<div class="group-block">
+            <div class="group-header">
+              <span class="group-header-text">🎼 ${g.key}</span>
+              <span class="group-header-sub">${group.length} song${group.length !== 1 ? "s" : ""}</span>
+            </div>
+            <div class="result-grid">${group.map(s => resultCardHTML(s)).join("")}</div>
+          </div>`;
+        });
+        modeTitle.textContent = currentKey === "all" ? "🎼 By Key / Scale" : `🎼 ${currentKey}`;
+        modeCount.textContent = `${total} song${total !== 1 ? "s" : ""}`;
+        noRes.style.display = !total ? "block" : "none";
+        out.innerHTML = html;
+        return;
+      }
+
+      if (currentMode === "occasion") {
+        const occ = OCCASION_DATA[currentOccasion];
+        modeTitle.textContent = occ.label;
+        let html = "";
+        let total = 0;
+
+        if (occ.easy && occ.easy.length) {
+          html += `<div class="diff-label easy">🟢 Easy</div>`;
+          const easyCards = occ.easy.map(name => {
+            const s = songs.find(s => s.name === name);
+            if (s) { total++; return resultCardHTML(s); }
+            return `<div class="result-card" style="opacity:0.55;">
+              <span class="rc-num">—</span>
+              <div class="rc-name">${name}</div>
+              <div class="rc-meta" style="font-style:italic;">Coming soon</div>
+            </div>`;
+          });
+          html += `<div class="result-grid">${easyCards.join("")}</div>`;
+        }
+
+        if (occ.moderate && occ.moderate.length) {
+          html += `<div class="diff-label moderate" style="margin-top:16px;">🟡 Moderate</div>`;
+          const modCards = occ.moderate.map(name => {
+            const s = songs.find(s => s.name === name);
+            if (s) { total++; return resultCardHTML(s); }
+            return `<div class="result-card" style="opacity:0.55;">
+              <span class="rc-num">—</span>
+              <div class="rc-name">${name}</div>
+              <div class="rc-meta" style="font-style:italic;">Coming soon</div>
+            </div>`;
+          });
+          html += `<div class="result-grid">${modCards.join("")}</div>`;
+        }
+
+        modeCount.textContent = `${total} in your catalog`;
+        noRes.style.display = !html ? "block" : "none";
+        out.innerHTML = html;
+        return;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════
+       MODE SWITCHING
+    ═══════════════════════════════════════════════ */
+    function setMode(mode, el) {
+      currentMode = mode;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      el.classList.add("active");
+      document.getElementById("occasionNav").classList.toggle("open", mode === "occasion");
+      document.getElementById("keyNav").classList.toggle("open", mode === "key");
+      renderCenter();
+    }
+    function setOccasion(occ, el) {
+      currentOccasion = occ;
+      document.querySelectorAll("#occasionNav .sub-btn").forEach(b => b.classList.remove("active"));
+      el.classList.add("active");
+      renderCenter();
+    }
+    function setKeyFilter(key, el) {
+      currentKey = key;
+      document.querySelectorAll("#keyNav .sub-btn").forEach(b => b.classList.remove("active"));
+      el.classList.add("active");
+      renderCenter();
+    }
+
+    /* ═══════════════════════════════════════════════
+       MODAL
+    ═══════════════════════════════════════════════ */
+    function openModal(idx) {
+      const s = songs[idx];
+      const measures = MEASURES[s.name];
+      const diffLabel = s.diff === "easy" ? "🟢 Easy" : "🟡 Moderate";
+      const diffClass = s.diff === "easy" ? "easy" : "moderate";
+      document.getElementById("mTitle").textContent = s.name;
+      document.getElementById("mTagline").textContent = s.tagline;
+      document.getElementById("mChips").innerHTML = `
+        <span class="modal-chip ${diffClass}">${diffLabel}</span>
+        <span class="modal-chip violet">🎼 ${s.key}</span>
+        ${measures ? `<span class="modal-chip violet">⚡ ${measures} unique measures</span>` : ""}
+        <span class="modal-chip muted">${BOOK_LABELS[s.book]}</span>
+      `;
+      document.getElementById("mMeta").innerHTML = `
+        <div class="meta-row"><span class="meta-lbl">BPM:</span><span>${s.bpm}</span></div>
+        <div class="meta-row"><span class="meta-lbl">Time:</span><span>${s.time}</span></div>
+        <div class="meta-row"><span class="meta-lbl">Key:</span><span>${s.key}</span></div>
+        <div class="meta-row"><span class="meta-lbl">Book:</span><span>${BOOK_LABELS[s.book]}</span></div>
+      `;
+      document.getElementById("mDesc").textContent = s.desc;
+      const cta = document.getElementById("mCta");
+      cta.href = BOOK_URLS[s.book];
+      cta.innerHTML = `Open ${BOOK_LABELS[s.book]} <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      cta.onclick = async function(e) {
+        if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
+      };
+      const mYt = document.getElementById("mYt");
+      if (s.ytId) {
+        mYt.onclick = (e) => { e.preventDefault(); closeModalDirect(); openYt(s.ytId, s.name); };
+        mYt.style.display = "inline-flex";
+      } else {
+        mYt.style.display = "none";
+      }
+      document.getElementById("modalBackdrop").classList.add("open");
+    }
+    function closeModal(e) {
+      if (e.target === document.getElementById("modalBackdrop")) closeModalDirect();
+    }
+    function closeModalDirect() {
+      document.getElementById("modalBackdrop").classList.remove("open");
+    }
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModalDirect(); closeYtDirect(); } });
+
+    /* ═══════════════════════════════════════════════
+       INIT
+    ═══════════════════════════════════════════════ */
+    renderHero(0);
+    renderRight();
+    renderCenter();
+  </script>
+
+  <script>
+    /* Glitter cursor */
+    (function(){
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+      const canvas = document.getElementById('glitter');
+      const ctx = canvas.getContext('2d', { alpha: true });
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize, { passive: true });
+      resize();
+      const particles = []; const MAX = 280;
+      function addSpark(x, y, intensity = 1){
+        const count = Math.floor(5 * intensity);
+        for (let i = 0; i < count; i++){
+          if (particles.length > MAX) particles.shift();
+          const angle = Math.random() * Math.PI * 2;
+          const speed = (0.25 + Math.random() * 1.6) * intensity;
+          particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 0.15,
+            life: 30 + Math.random() * 28,
+            size: 0.8 + Math.random() * 2.4,
+            tw: Math.random() * Math.PI * 2,
+            alpha: 0.45 + Math.random() * 0.35,
+            hue: Math.random() < 0.65 ? "violet" : "amber"
+          });
+        }
+      }
+      let last = { x: window.innerWidth/2, y: window.innerHeight/2 };
+      window.addEventListener('pointermove', (e) => {
+        const d = Math.min(30, Math.hypot(e.clientX - last.x, e.clientY - last.y));
+        addSpark(e.clientX, e.clientY, Math.max(0.6, d / 16));
+        last = { x: e.clientX, y: e.clientY };
+      }, { passive: true });
+      window.addEventListener('pointerdown', (e) => addSpark(e.clientX, e.clientY, 1.7), { passive: true });
+      function tick(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = particles.length - 1; i >= 0; i--){
+          const p = particles[i];
+          p.life -= 1; if (p.life <= 0){ particles.splice(i,1); continue; }
+          p.vx *= 0.987; p.vy *= 0.987; p.vy += 0.016;
+          p.x += p.vx; p.y += p.vy; p.tw += 0.20;
+          const twinkle = 0.60 + Math.sin(p.tw) * 0.40;
+          const fade = Math.min(1, p.life / 40);
+          const a = p.alpha * fade * twinkle;
+          ctx.beginPath();
+          ctx.fillStyle = p.hue === "amber" ? `rgba(245,158,11,${a*0.85})` : `rgba(170,130,255,${a})`;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255,255,255,${a*0.50})`;
+          ctx.arc(p.x, p.y, p.size*0.5, 0, Math.PI*2); ctx.fill();
+          if (Math.random() < 0.22){
+            ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.tw * 0.3);
+            ctx.globalAlpha = a * 0.85; ctx.strokeStyle = `rgba(245,200,100,${a})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(-p.size*2,0); ctx.lineTo(p.size*2,0);
+            ctx.moveTo(0,-p.size*2); ctx.lineTo(0,p.size*2);
+            ctx.stroke(); ctx.restore();
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+      tick();
+    })();
+  </script>
+</body>
+</html>
