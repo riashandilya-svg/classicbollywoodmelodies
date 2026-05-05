@@ -772,6 +772,22 @@
     document.getElementById("year").textContent = new Date().getFullYear();
 
     /* ═══════════════════════════════════════════════
+       LOGIN GATE
+    ═══════════════════════════════════════════════ */
+    function isLoggedIn() {
+      try { return !!localStorage.getItem("pj_logged_in"); }
+      catch { return false; }
+    }
+
+    function requireLogin() {
+      if (!isLoggedIn()) {
+        window.location.href = "login.html";
+        return true; // blocked
+      }
+      return false; // allowed
+    }
+
+    /* ═══════════════════════════════════════════════
        DATA
     ═══════════════════════════════════════════════ */
     const BOOK_URLS = {
@@ -962,6 +978,9 @@
       cta.href = BOOK_URLS[s.book];
       cta.textContent = `Open ${BOOK_LABELS[s.book]}`;
       cta.innerHTML += ` <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      cta.onclick = function(e) {
+        if (!isLoggedIn()) { e.preventDefault(); window.location.href = "login.html"; }
+      };
 
       // highlight in right sidebar
       document.querySelectorAll(".rs-song-item").forEach((el, i) => {
@@ -1001,6 +1020,7 @@
     }
 
     function selectSong(idx) {
+      if (requireLogin()) return;
       selectedSongIdx = idx;
       renderHero(idx);
       // Re-highlight in right
@@ -1193,6 +1213,9 @@
       cta.href = BOOK_URLS[s.book];
       cta.textContent = `Open ${BOOK_LABELS[s.book]}`;
       cta.innerHTML += ` <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      cta.onclick = function(e) {
+        if (!isLoggedIn()) { e.preventDefault(); window.location.href = "login.html"; }
+      };
       document.getElementById("modalBackdrop").classList.add("open");
     }
     function closeModal(e) {
