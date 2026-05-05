@@ -636,13 +636,17 @@
         <p class="hero-tagline" id="heroTagline"></p>
         <div class="hero-chips" id="heroChips"></div>
         <p class="hero-desc" id="heroDesc"></p>
+        <div id="heroYtPreview" style="display:none; margin-bottom:18px; width:100%; max-width:420px; border-radius:14px; overflow:hidden; box-shadow:0 8px 28px rgba(100,60,200,0.16); border:1px solid rgba(155,110,255,0.22); cursor:pointer; position:relative;" onclick="(function(){var id=document.getElementById('heroYtPreview').dataset.ytid,name=document.getElementById('heroTitle').textContent;if(id){openYt(id,name);}})()">
+          <img id="heroYtThumb" src="" alt="Preview" style="width:100%;display:block;aspect-ratio:16/9;object-fit:cover;" />
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.18);transition:background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.30)'" onmouseout="this.style.background='rgba(0,0,0,0.18)'">
+            <div style="width:54px;height:54px;border-radius:50%;background:rgba(204,0,0,0.88);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,0,0,0.35);">
+              <svg viewBox="0 0 24 24" fill="white" style="width:22px;height:22px;margin-left:3px;"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+        </div>
         <div class="hero-cta-row">
           <a class="hero-cta" id="heroCta" href="#" target="_blank" rel="noopener">Open Book
             <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </a>
-          <a class="hero-yt-btn" id="heroYt" href="javascript:void(0)" style="display:none;">
-            <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
-            Listen
           </a>
         </div>
       </div>
@@ -685,10 +689,6 @@
       <div class="modal-cta-row">
         <a class="modal-cta" id="mCta" href="#" target="_blank" rel="noopener">Open Book
           <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-        <a class="modal-yt-btn" id="mYt" href="javascript:void(0)" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
-          Listen
         </a>
       </div>
     </div>
@@ -965,12 +965,13 @@
         if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
       };
 
-      const heroYt = document.getElementById("heroYt");
+      const heroYtPreview = document.getElementById("heroYtPreview");
       if (s.ytId) {
-        heroYt.onclick = (e) => { e.preventDefault(); openYt(s.ytId, s.name); };
-        heroYt.style.display = "inline-flex";
+        heroYtPreview.dataset.ytid = s.ytId;
+        document.getElementById("heroYtThumb").src = `https://img.youtube.com/vi/${s.ytId}/hqdefault.jpg`;
+        heroYtPreview.style.display = "block";
       } else {
-        heroYt.style.display = "none";
+        heroYtPreview.style.display = "none";
       }
 
       document.querySelectorAll(".rs-song-item").forEach((el, i) => {
@@ -1196,13 +1197,7 @@
       cta.onclick = async function(e) {
         if (!(await isLoggedIn())) { e.preventDefault(); window.location.href = "login.html"; }
       };
-      const mYt = document.getElementById("mYt");
-      if (s.ytId) {
-        mYt.onclick = (e) => { e.preventDefault(); closeModalDirect(); openYt(s.ytId, s.name); };
-        mYt.style.display = "inline-flex";
-      } else {
-        mYt.style.display = "none";
-      }
+
       document.getElementById("modalBackdrop").classList.add("open");
     }
     function closeModal(e) {
