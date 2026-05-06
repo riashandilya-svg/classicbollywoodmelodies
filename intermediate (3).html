@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beginner Songs — Ria Om Shandilya™</title>
+  <title>Intermediate Songs — Ria Om Shandilya™</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +23,11 @@
       --teal-deep: #075F5C;
       --purple: #6B2BB5;
       --purple-soft: #9B6EFF;
+
+      /* Intermediate accent — fuchsia/rose tones */
+      --accent: #E8156B;
+      --accent-deep: #9A0F43;
+      --accent-light: rgba(232,21,107,0.10);
 
       --gold-1: #D4A24A;
       --gold-2: #F5D67E;
@@ -53,11 +58,11 @@
       color: var(--text);
       font-family: 'DM Sans', system-ui, sans-serif;
       background:
-        radial-gradient(ellipse 900px 600px at 12% -5%, rgba(255,176,0,0.22), transparent 60%),
-        radial-gradient(ellipse 800px 500px at 92% 6%, rgba(232,21,107,0.16), transparent 60%),
-        radial-gradient(ellipse 700px 500px at 50% 38%, rgba(107,43,181,0.07), transparent 60%),
-        radial-gradient(ellipse 800px 500px at 8% 70%, rgba(14,142,138,0.10), transparent 60%),
-        radial-gradient(ellipse 700px 500px at 96% 95%, rgba(255,176,0,0.16), transparent 60%),
+        radial-gradient(ellipse 900px 600px at 12% -5%, rgba(255,176,0,0.18), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 92% 6%, rgba(232,21,107,0.20), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 50% 38%, rgba(107,43,181,0.08), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 8% 70%, rgba(14,142,138,0.08), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 96% 95%, rgba(232,21,107,0.12), transparent 60%),
         var(--ivory);
       overflow-x: hidden;
     }
@@ -66,10 +71,10 @@
       content: "";
       position: fixed; inset: 0;
       pointer-events: none; z-index: 0;
-      opacity: 0.35;
+      opacity: 0.30;
       background-image:
-        radial-gradient(rgba(184,134,44,0.06) 1px, transparent 1px),
-        radial-gradient(rgba(232,21,107,0.04) 1px, transparent 1px);
+        radial-gradient(rgba(232,21,107,0.06) 1px, transparent 1px),
+        radial-gradient(rgba(184,134,44,0.04) 1px, transparent 1px);
       background-size: 18px 18px, 24px 24px;
       background-position: 0 0, 9px 9px;
       mix-blend-mode: multiply;
@@ -82,13 +87,13 @@
     .petal {
       position: absolute; width: 22px; height: 22px;
       opacity: 0; animation: drift linear infinite;
-      filter: drop-shadow(0 2px 5px rgba(184,134,44,0.45));
+      filter: drop-shadow(0 2px 5px rgba(232,21,107,0.35));
     }
     .petal svg { width: 100%; height: 100%; display: block; }
     @keyframes drift {
       0% { transform: translate3d(0,-10vh,0) rotate(0deg); opacity: 0; }
-      10% { opacity: 0.7; }
-      90% { opacity: 0.7; }
+      10% { opacity: 0.65; }
+      90% { opacity: 0.65; }
       100% { transform: translate3d(40px,110vh,0) rotate(540deg); opacity: 0; }
     }
 
@@ -117,36 +122,27 @@
       grid-template-columns: auto 1fr auto;
       align-items: center;
       min-height: 68px;
-      padding: 0 20px;
-      gap: 16px;
-      max-width: 1400px;
-      margin: 0 auto;
+      padding: 0 20px; gap: 16px;
+      max-width: 1400px; margin: 0 auto;
     }
 
     .back-btn {
       display: inline-flex; align-items: center; gap: 6px;
       font-size: 13px; font-weight: 700;
-      color: var(--maroon);
-      text-decoration: none;
-      padding: 8px 16px;
-      border-radius: 999px;
+      color: var(--maroon); text-decoration: none;
+      padding: 8px 16px; border-radius: 999px;
       border: 1.5px solid var(--border-gold-strong);
       background: linear-gradient(180deg, #FFFFFF, #FFF4E0);
-      transition: all 0.16s;
-      white-space: nowrap;
+      transition: all 0.16s; white-space: nowrap;
       box-shadow: var(--shadow-sm);
       font-family: 'DM Sans', sans-serif;
     }
-    .back-btn:hover {
-      background: linear-gradient(180deg, #FFF4E0, #FFE9C2);
-      transform: translateX(-2px);
-    }
+    .back-btn:hover { background: linear-gradient(180deg, #FFF4E0, #FFE9C2); transform: translateX(-2px); }
 
     .banner-link {
       font-family: "Playfair Display", serif;
       font-weight: 700; font-style: italic; font-size: 24px;
-      letter-spacing: 0.5px;
-      text-decoration: none;
+      letter-spacing: 0.5px; text-decoration: none;
       padding: 4px 10px; border-radius: 12px;
       justify-self: center; text-align: center;
       background: linear-gradient(100deg,
@@ -160,20 +156,21 @@
       50% { background-position: 100% 50%; }
     }
 
+    /* Intermediate chip — fuchsia toned */
     .level-chip {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 7px 16px; border-radius: 999px;
       font-size: 11px; font-weight: 800; letter-spacing: 0.14em;
       text-transform: uppercase;
-      background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(14,142,138,0.10));
-      border: 1.5px solid rgba(16,185,129,0.35);
-      color: #047857;
+      background: linear-gradient(135deg, rgba(232,21,107,0.12), rgba(184,134,44,0.10));
+      border: 1.5px solid rgba(232,21,107,0.38);
+      color: var(--accent-deep);
       white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(16,185,129,0.15);
+      box-shadow: 0 2px 8px rgba(232,21,107,0.14);
     }
     .level-chip .dot {
       width: 6px; height: 6px; border-radius: 50%;
-      background: #10b981;
+      background: var(--fuchsia);
       animation: pulse 2.2s ease-in-out infinite;
     }
     @keyframes pulse {
@@ -183,8 +180,7 @@
 
     /* ─── LAYOUT ─── */
     .app-wrapper {
-      max-width: 1400px;
-      margin: 0 auto;
+      max-width: 1400px; margin: 0 auto;
       padding: 0 16px 80px;
       display: grid;
       grid-template-columns: var(--sidebar-w) 1fr var(--right-w);
@@ -208,16 +204,16 @@
       height: calc(100vh - 68px); overflow-y: auto;
       padding: 24px 14px 24px 0;
       scrollbar-width: thin;
-      scrollbar-color: rgba(184,134,44,0.20) transparent;
+      scrollbar-color: rgba(232,21,107,0.18) transparent;
       border-right: 1px solid var(--border-gold);
     }
     .left-sidebar::-webkit-scrollbar { width: 4px; }
-    .left-sidebar::-webkit-scrollbar-thumb { background: rgba(184,134,44,0.22); border-radius: 4px; }
+    .left-sidebar::-webkit-scrollbar-thumb { background: rgba(232,21,107,0.18); border-radius: 4px; }
 
     .sidebar-section-label {
       font-size: 9px; font-weight: 800;
       letter-spacing: 0.22em; text-transform: uppercase;
-      color: rgba(184,134,44,0.60);
+      color: rgba(232,21,107,0.50);
       padding: 0 10px; margin: 18px 0 6px; display: block;
       font-family: 'DM Sans', sans-serif;
     }
@@ -235,8 +231,8 @@
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .sidebar-search:focus {
-      border-color: var(--gold-1);
-      box-shadow: 0 0 0 3px rgba(212,162,74,0.15);
+      border-color: rgba(232,21,107,0.40);
+      box-shadow: 0 0 0 3px rgba(232,21,107,0.10);
     }
     .sidebar-search::placeholder { color: var(--muted); }
 
@@ -251,26 +247,25 @@
       font-family: 'DM Sans', sans-serif; text-align: left;
     }
     .filter-btn:hover {
-      background: rgba(255,176,0,0.08);
+      background: rgba(232,21,107,0.07);
       color: var(--maroon);
-      border-color: var(--border-gold);
+      border-color: rgba(232,21,107,0.20);
     }
     .filter-btn.active {
-      background: linear-gradient(135deg, rgba(255,176,0,0.14), rgba(232,21,107,0.07));
-      border-color: var(--border-gold-strong);
-      color: var(--maroon);
-      font-weight: 700;
+      background: linear-gradient(135deg, rgba(232,21,107,0.12), rgba(255,176,0,0.08));
+      border-color: rgba(232,21,107,0.30);
+      color: var(--maroon); font-weight: 700;
     }
 
     .filter-icon {
       width: 28px; height: 28px; border-radius: 8px;
-      background: linear-gradient(135deg, rgba(255,176,0,0.15), rgba(184,134,44,0.20));
-      border: 1px solid var(--border-gold);
+      background: linear-gradient(135deg, rgba(232,21,107,0.12), rgba(184,134,44,0.15));
+      border: 1px solid rgba(232,21,107,0.20);
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; flex-shrink: 0;
     }
     .filter-btn.active .filter-icon {
-      background: linear-gradient(135deg, rgba(255,176,0,0.25), rgba(232,21,107,0.15));
+      background: linear-gradient(135deg, rgba(232,21,107,0.22), rgba(255,176,0,0.15));
     }
 
     .sub-filters { display: none; flex-direction: column; gap: 1px; padding-left: 8px; margin-top: 2px; }
@@ -286,17 +281,17 @@
       cursor: pointer; transition: all 0.12s;
       font-family: 'DM Sans', sans-serif; text-align: left;
     }
-    .sub-btn:hover { background: rgba(255,176,0,0.07); color: var(--maroon); }
+    .sub-btn:hover { background: rgba(232,21,107,0.06); color: var(--maroon); }
     .sub-btn.active {
-      background: rgba(255,176,0,0.12);
-      border-color: var(--border-gold);
+      background: rgba(232,21,107,0.10);
+      border-color: rgba(232,21,107,0.25);
       color: var(--maroon); font-weight: 700;
     }
 
     /* ─── CENTER ─── */
     .center-area { padding: 28px 28px 0; min-width: 0; }
 
-    /* ─── SONG HERO (Bollywood ticket style) ─── */
+    /* ─── SONG HERO ─── */
     .song-hero {
       position: relative;
       min-height: 300px;
@@ -305,9 +300,9 @@
       text-align: center;
       padding: 40px 32px 36px;
       background:
-        radial-gradient(ellipse 600px 320px at 50% 8%, rgba(255,176,0,0.28), transparent 60%),
+        radial-gradient(ellipse 600px 320px at 50% 8%, rgba(232,21,107,0.18), transparent 60%),
         linear-gradient(180deg, rgba(255,244,224,0.95), rgba(255,255,255,0.60));
-      border: 1.5px solid var(--border-gold-strong);
+      border: 1.5px solid rgba(232,21,107,0.30);
       border-radius: 28px;
       box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,0.55);
       overflow: hidden;
@@ -319,9 +314,9 @@
       transform: translateX(-50%);
       width: 900px; height: 900px;
       background: repeating-conic-gradient(from 0deg at 50% 50%,
-        rgba(255,176,0,0.10) 0deg 6deg, transparent 6deg 14deg);
-      border-radius: 50%; filter: blur(2px);
-      pointer-events: none; z-index: 0;
+        rgba(232,21,107,0.28) 0deg 6deg, transparent 6deg 14deg);
+      border-radius: 50%; filter: blur(1px);
+      pointer-events: none; z-index: -1;
       animation: spinSun 90s linear infinite;
     }
     @keyframes spinSun { to { transform: translateX(-50%) rotate(360deg); } }
@@ -329,19 +324,20 @@
       content: "";
       position: absolute; inset: 14px;
       border-radius: 20px;
-      border: 1px dashed rgba(184,134,44,0.40);
-      pointer-events: none;
+      border: 1px dashed rgba(232,21,107,0.30);
+      pointer-events: none; z-index: 0;
     }
-    /* Corner flourishes */
     .song-hero .hcorner {
       position: absolute; width: 38px; height: 38px;
-      border: 1.5px solid var(--gold-1); opacity: 0.85; z-index: 1;
+      border: 1.5px solid rgba(232,21,107,0.55); opacity: 0.90; z-index: 1;
     }
     .song-hero .hcorner.tl { top: 14px; left: 14px; border-right:0; border-bottom:0; border-top-left-radius: 10px; }
     .song-hero .hcorner.tr { top: 14px; right: 14px; border-left:0; border-bottom:0; border-top-right-radius: 10px; }
     .song-hero .hcorner.bl { bottom: 14px; left: 14px; border-right:0; border-top:0; border-bottom-left-radius: 10px; }
     .song-hero .hcorner.br { bottom: 14px; right: 14px; border-left:0; border-top:0; border-bottom-right-radius: 10px; }
-    .song-hero > * { position: relative; z-index: 1; }
+    .song-hero > * { position: relative; z-index: 2; }
+    .hero-yt-preview, .hero-cta, .hero-chips, .hero-desc,
+    .hero-title, .hero-tagline, .hero-eyebrow { z-index: 2; }
 
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
@@ -350,12 +346,12 @@
       letter-spacing: 0.22em; text-transform: uppercase;
       color: var(--maroon-soft);
       padding: 5px 14px; border-radius: 999px;
-      background: linear-gradient(180deg, #FFF, #FFF4E0);
-      border: 1px solid var(--border-gold-strong);
-      box-shadow: 0 2px 10px rgba(184,134,44,0.14);
+      background: linear-gradient(180deg, #FFF, rgba(255,224,234,0.80));
+      border: 1px solid rgba(232,21,107,0.30);
+      box-shadow: 0 2px 10px rgba(232,21,107,0.12);
       margin-bottom: 14px;
     }
-    .hero-eyebrow .star { color: var(--marigold-deep); font-size: 10px; }
+    .hero-eyebrow .star { color: var(--fuchsia); font-size: 10px; }
 
     .hero-title {
       font-family: "Playfair Display", serif;
@@ -363,11 +359,11 @@
       font-weight: 800; font-style: italic;
       letter-spacing: -0.02em; line-height: 1.05;
       background: linear-gradient(100deg,
-        #6B2BB5 0%, #E8156B 22%, #FFB000 42%,
-        #F5D67E 50%, #FFB000 58%, #E8156B 78%, #6B2BB5 100%);
+        #9A0F43 0%, #E8156B 22%, #FFB000 42%,
+        #F5D67E 50%, #FFB000 58%, #E8156B 78%, #9A0F43 100%);
       background-size: 240% 100%;
       -webkit-background-clip: text; background-clip: text; color: transparent;
-      filter: drop-shadow(0 2px 8px rgba(232,21,107,0.20));
+      filter: drop-shadow(0 2px 8px rgba(232,21,107,0.25));
       animation: shimmerGold 8s ease-in-out infinite;
       margin-bottom: 10px;
     }
@@ -390,38 +386,37 @@
       color: var(--maroon-soft);
     }
     .hero-chip.green { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.10); color: #047857; }
+    .hero-chip.pink  { border-color: rgba(232,21,107,0.35); background: rgba(232,21,107,0.10); color: var(--accent-deep); }
     .hero-chip.gold  { border-color: var(--border-gold-strong); background: linear-gradient(135deg, rgba(255,176,0,0.15), rgba(184,134,44,0.20)); color: var(--maroon); }
-    .hero-chip.pink  { border-color: rgba(232,21,107,0.30); background: rgba(232,21,107,0.09); color: #9A0F43; }
 
     .hero-desc {
-      font-size: 14px; line-height: 1.70;
+      font-size: 15px; line-height: 1.70;
       color: var(--muted); max-width: 480px;
       margin: 0 auto 24px;
       font-family: 'Cormorant Garamond', serif;
-      font-style: italic; font-size: 15px;
+      font-style: italic;
     }
 
     .hero-yt-preview {
       display: none; margin-bottom: 20px;
       width: 100%; max-width: 420px;
       border-radius: 16px; overflow: hidden;
-      box-shadow: 0 12px 36px rgba(58,15,42,0.22), 0 0 0 1px var(--border-gold-strong);
-      border: 1.5px solid var(--border-gold-strong);
-      cursor: pointer; position: relative;
+      box-shadow: 0 12px 36px rgba(232,21,107,0.22), 0 0 0 1px rgba(232,21,107,0.28);
+      border: 1.5px solid rgba(232,21,107,0.28);
+      cursor: pointer; position: relative; z-index: 2;
     }
     .hero-yt-preview img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
     .yt-play-overlay {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(58,15,42,0.18);
-      transition: background 0.15s;
+      background: rgba(58,15,42,0.18); transition: background 0.15s;
     }
     .hero-yt-preview:hover .yt-play-overlay { background: rgba(58,15,42,0.32); }
     .yt-play-btn {
       width: 56px; height: 56px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--marigold), var(--fuchsia));
+      background: linear-gradient(135deg, var(--fuchsia), #9A0F43);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 6px 22px rgba(232,21,107,0.45);
+      box-shadow: 0 6px 22px rgba(232,21,107,0.50);
     }
     .yt-play-btn svg { width: 22px; height: 22px; margin-left: 3px; }
 
@@ -430,22 +425,21 @@
       padding: 12px 26px; border-radius: 999px;
       font-size: 13px; font-weight: 700;
       text-decoration: none; color: var(--maroon);
-      border: 1.5px solid var(--border-gold-strong);
-      background: linear-gradient(135deg, rgba(255,176,0,0.20), rgba(232,21,107,0.12), rgba(255,176,0,0.12));
+      border: 1.5px solid rgba(232,21,107,0.35);
+      background: linear-gradient(135deg, rgba(232,21,107,0.16), rgba(255,176,0,0.12));
       transition: all 0.15s;
-      box-shadow: 0 4px 16px rgba(184,134,44,0.18);
+      box-shadow: 0 4px 16px rgba(232,21,107,0.16);
       font-family: 'DM Sans', sans-serif;
     }
-    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(184,134,44,0.28); filter: brightness(1.05); }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,21,107,0.26); filter: brightness(1.05); }
 
     /* ─── MODE BAR ─── */
     .mode-bar {
       display: flex; align-items: center; justify-content: space-between;
       gap: 12px; margin-bottom: 16px; padding: 14px 20px;
       background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,248,238,0.85));
-      border: 1px solid var(--border-gold);
-      border-radius: 16px;
-      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(232,21,107,0.20);
+      border-radius: 16px; box-shadow: var(--shadow-sm);
     }
     .mode-bar-title {
       font-family: "Playfair Display", serif;
@@ -454,13 +448,13 @@
     }
     .mode-bar-count { font-size: 12px; color: var(--muted); font-weight: 600; }
 
-    /* ─── RESULT CARDS (ticket style) ─── */
+    /* ─── RESULT CARDS ─── */
     .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 
     .result-card {
       border-radius: 16px; padding: 18px;
-      border: 1.5px solid var(--border-gold);
-      background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,248,224,0.85));
+      border: 1.5px solid rgba(232,21,107,0.12);
+      background: linear-gradient(145deg, rgba(255,255,255,0.97), rgba(255,248,252,0.90));
       box-shadow: var(--shadow-sm);
       position: relative; overflow: hidden;
       transition: all 0.18s; cursor: pointer;
@@ -470,25 +464,25 @@
       content: "";
       position: absolute; inset: 8px;
       border-radius: 10px;
-      border: 1px dashed rgba(184,134,44,0.30);
+      border: 1px dashed rgba(232,21,107,0.14);
       pointer-events: none; z-index: 0;
     }
     .result-card::after {
       content: "";
       position: absolute; inset: -60px -60px auto auto;
       width: 140px; height: 140px; border-radius: 999px;
-      background: radial-gradient(circle, rgba(255,176,0,0.14), transparent 65%);
-      pointer-events: none;
+      background: radial-gradient(circle, rgba(232,21,107,0.05), transparent 65%);
+      pointer-events: none; z-index: 0;
     }
     .result-card > * { position: relative; z-index: 1; }
-    .result-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--gold-1); }
+    .result-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: rgba(232,21,107,0.25); }
     .result-card.selected {
-      border-color: var(--gold-1);
-      background: linear-gradient(145deg, rgba(255,248,224,0.98), rgba(255,237,190,0.90));
-      box-shadow: 0 0 0 2px rgba(255,176,0,0.20), var(--shadow);
+      border-color: rgba(232,21,107,0.28);
+      background: linear-gradient(145deg, rgba(255,248,252,0.99), rgba(255,238,246,0.92));
+      box-shadow: 0 0 0 2px rgba(232,21,107,0.08), var(--shadow);
     }
 
-    .rc-num { font-size: 10px; font-weight: 800; color: rgba(184,134,44,0.55); letter-spacing: 0.06em; }
+    .rc-num { font-size: 10px; font-weight: 800; color: rgba(232,21,107,0.45); letter-spacing: 0.06em; }
     .rc-name { font-size: 13px; font-weight: 700; line-height: 1.3; color: var(--text); letter-spacing: -0.01em; font-family: 'Playfair Display', serif; font-style: italic; }
     .rc-meta { font-size: 11px; color: var(--muted); font-weight: 500; }
     .rc-diff {
@@ -496,14 +490,14 @@
       padding: 3px 9px; border-radius: 999px;
       font-size: 10px; font-weight: 800; width: fit-content;
     }
-    .rc-diff.beginner { background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.25); color: #047857; }
-    .rc-diff.intermediate { background: rgba(232,21,107,0.10); border: 1px solid rgba(232,21,107,0.25); color: #9A0F43; }
+    .rc-diff.beginner     { background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.25); color: #047857; }
+    .rc-diff.intermediate { background: rgba(232,21,107,0.10); border: 1px solid rgba(232,21,107,0.28); color: var(--accent-deep); }
     .rc-measures {
       display: inline-flex; align-items: center;
       padding: 3px 9px; border-radius: 999px;
       font-size: 10px; font-weight: 700;
-      background: linear-gradient(135deg, rgba(255,176,0,0.14), rgba(184,134,44,0.20));
-      border: 1px solid var(--border-gold);
+      background: linear-gradient(135deg, rgba(232,21,107,0.10), rgba(184,134,44,0.12));
+      border: 1px solid rgba(232,21,107,0.22);
       color: var(--maroon); width: fit-content;
     }
 
@@ -511,7 +505,7 @@
     .group-header {
       display: flex; align-items: center; gap: 10px;
       margin-bottom: 10px; padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-gold);
+      border-bottom: 1px solid rgba(232,21,107,0.16);
     }
     .group-header-text {
       font-family: "Playfair Display", serif;
@@ -526,8 +520,8 @@
       text-transform: uppercase; padding: 4px 12px; border-radius: 999px;
       margin: 10px 0 8px;
     }
-    .diff-label.beginner { background: rgba(16,185,129,0.10); color: #047857; border: 1px solid rgba(16,185,129,0.28); }
-    .diff-label.intermediate { background: rgba(232,21,107,0.10); color: #9A0F43; border: 1px solid rgba(232,21,107,0.28); }
+    .diff-label.beginner     { background: rgba(16,185,129,0.10); color: #047857; border: 1px solid rgba(16,185,129,0.28); }
+    .diff-label.intermediate { background: rgba(232,21,107,0.10); color: var(--accent-deep); border: 1px solid rgba(232,21,107,0.28); }
 
     /* ─── RIGHT SIDEBAR ─── */
     .right-sidebar {
@@ -536,24 +530,24 @@
       padding: 24px 0 24px 14px;
       border-left: 1px solid var(--border-gold);
       scrollbar-width: thin;
-      scrollbar-color: rgba(184,134,44,0.18) transparent;
+      scrollbar-color: rgba(232,21,107,0.16) transparent;
     }
     .right-sidebar::-webkit-scrollbar { width: 3px; }
-    .right-sidebar::-webkit-scrollbar-thumb { background: rgba(184,134,44,0.22); border-radius: 3px; }
+    .right-sidebar::-webkit-scrollbar-thumb { background: rgba(232,21,107,0.18); border-radius: 3px; }
 
     .rs-header {
       font-size: 9px; font-weight: 800; letter-spacing: 0.22em;
-      text-transform: uppercase; color: rgba(184,134,44,0.65);
+      text-transform: uppercase; color: rgba(232,21,107,0.55);
       padding: 0 4px; margin-bottom: 12px; display: block;
       font-family: 'DM Sans', sans-serif;
     }
 
     .progress-wrap { margin-bottom: 16px; padding: 10px 4px; }
     .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
-    .progress-bar { height: 5px; border-radius: 999px; background: rgba(184,134,44,0.14); overflow: hidden; }
+    .progress-bar { height: 5px; border-radius: 999px; background: rgba(232,21,107,0.10); overflow: hidden; }
     .progress-fill {
       height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, var(--marigold-deep), var(--fuchsia));
+      background: linear-gradient(90deg, var(--fuchsia), var(--marigold-deep));
       transition: width 0.4s ease;
     }
 
@@ -562,13 +556,13 @@
       padding: 9px 8px; border-radius: 10px; border: 1px solid transparent;
       cursor: pointer; transition: all 0.12s; margin-bottom: 2px;
     }
-    .rs-song-item:hover { background: rgba(255,176,0,0.07); border-color: var(--border-gold); }
+    .rs-song-item:hover { background: rgba(232,21,107,0.06); border-color: rgba(232,21,107,0.18); }
     .rs-song-item.selected {
-      background: linear-gradient(135deg, rgba(255,176,0,0.14), rgba(232,21,107,0.07));
-      border-color: var(--border-gold-strong);
+      background: linear-gradient(135deg, rgba(232,21,107,0.12), rgba(255,176,0,0.07));
+      border-color: rgba(232,21,107,0.28);
     }
 
-    .rs-num { font-size: 10px; font-weight: 800; color: rgba(184,134,44,0.45); width: 20px; flex-shrink: 0; text-align: right; }
+    .rs-num { font-size: 10px; font-weight: 800; color: rgba(232,21,107,0.38); width: 20px; flex-shrink: 0; text-align: right; }
     .rs-song-item.completed .rs-num { color: #10b981; }
     .rs-info { flex: 1; min-width: 0; }
     .rs-name {
@@ -580,7 +574,7 @@
 
     .rs-check {
       width: 16px; height: 16px; border-radius: 50%;
-      border: 1.5px solid var(--border-gold);
+      border: 1.5px solid rgba(232,21,107,0.22);
       display: flex; align-items: center; justify-content: center;
       font-size: 9px; color: transparent; flex-shrink: 0; transition: all 0.15s;
     }
@@ -589,7 +583,7 @@
 
     .no-results {
       text-align: center; padding: 40px 20px; color: var(--muted);
-      font-size: 14px; display: none;
+      display: none;
       font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16px;
     }
 
@@ -603,15 +597,15 @@
 
     .modal-box {
       width: 100%; max-width: 500px; border-radius: 24px;
-      border: 1.5px solid var(--border-gold-strong);
-      background: linear-gradient(160deg, #FFFAF0, #FFF4E0);
-      box-shadow: 0 32px 80px rgba(58,15,42,0.28);
+      border: 1.5px solid rgba(232,21,107,0.30);
+      background: linear-gradient(160deg, #FFFAF0, rgba(255,240,246,0.98));
+      box-shadow: 0 32px 80px rgba(232,21,107,0.20), 0 8px 24px rgba(58,15,42,0.14);
       padding: 32px; position: relative;
       animation: modalIn 0.22s ease;
     }
     .modal-box::before {
       content: ""; position: absolute; inset: 12px;
-      border-radius: 16px; border: 1px dashed rgba(184,134,44,0.40);
+      border-radius: 16px; border: 1px dashed rgba(232,21,107,0.28);
       pointer-events: none;
     }
     @keyframes modalIn {
@@ -622,12 +616,12 @@
     .modal-close {
       position: absolute; top: 14px; right: 14px;
       width: 30px; height: 30px; border: none; border-radius: 50%;
-      background: rgba(255,176,0,0.12); color: var(--text);
+      background: rgba(232,21,107,0.10); color: var(--text);
       font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: all 0.18s; border: 1px solid var(--border-gold);
+      transition: all 0.18s; border: 1px solid rgba(232,21,107,0.22);
     }
-    .modal-close:hover { background: rgba(255,176,0,0.25); transform: rotate(90deg); }
+    .modal-close:hover { background: rgba(232,21,107,0.22); transform: rotate(90deg); }
 
     .modal-title {
       font-family: "Playfair Display", serif;
@@ -645,19 +639,19 @@
       padding: 4px 11px; border-radius: 999px;
       font-size: 11px; font-weight: 700;
     }
-    .modal-chip.beginner { background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.28); color: #047857; }
-    .modal-chip.gold { background: linear-gradient(135deg, rgba(255,176,0,0.14), rgba(184,134,44,0.20)); border: 1px solid var(--border-gold-strong); color: var(--maroon); }
+    .modal-chip.beginner     { background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.28); color: #047857; }
+    .modal-chip.intermediate { background: rgba(232,21,107,0.10); border: 1px solid rgba(232,21,107,0.28); color: var(--accent-deep); }
+    .modal-chip.gold  { background: linear-gradient(135deg, rgba(255,176,0,0.14), rgba(184,134,44,0.20)); border: 1px solid var(--border-gold-strong); color: var(--maroon); }
     .modal-chip.muted { background: rgba(58,15,42,0.06); border: 1px solid rgba(58,15,42,0.10); color: var(--muted); }
 
     .modal-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .meta-row { display: flex; gap: 5px; font-size: 13px; }
-    .meta-lbl { color: var(--marigold-deep); font-weight: 800; }
+    .meta-lbl { color: var(--fuchsia); font-weight: 800; }
 
     .modal-desc {
-      font-size: 14px; line-height: 1.68; color: var(--text);
+      font-size: 15px; line-height: 1.68; color: var(--text);
       margin-bottom: 22px;
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic; font-size: 15px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
     }
 
     .modal-cta {
@@ -665,12 +659,12 @@
       padding: 12px 22px; border-radius: 999px;
       font-size: 14px; font-weight: 700; text-decoration: none;
       color: var(--maroon);
-      border: 1.5px solid var(--border-gold-strong);
-      background: linear-gradient(135deg, rgba(255,176,0,0.20), rgba(232,21,107,0.12));
-      transition: all 0.14s; box-shadow: 0 4px 14px rgba(184,134,44,0.16);
+      border: 1.5px solid rgba(232,21,107,0.30);
+      background: linear-gradient(135deg, rgba(232,21,107,0.14), rgba(255,176,0,0.10));
+      transition: all 0.14s; box-shadow: 0 4px 14px rgba(232,21,107,0.14);
       font-family: 'DM Sans', sans-serif;
     }
-    .modal-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(184,134,44,0.28); }
+    .modal-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,21,107,0.24); }
     .modal-cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
     /* ─── YT PLAYER ─── */
@@ -682,27 +676,27 @@
     .yt-backdrop.open { display: flex; }
     .yt-box {
       width: 100%; max-width: 700px; border-radius: 20px; overflow: hidden;
-      background: #1a0a14; border: 1.5px solid var(--border-gold-strong);
+      background: #1a050f; border: 1.5px solid rgba(232,21,107,0.35);
       box-shadow: 0 40px 100px rgba(0,0,0,0.65); animation: modalIn 0.22s ease;
     }
     .yt-header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 13px 18px;
-      background: linear-gradient(135deg, rgba(255,176,0,0.18), rgba(232,21,107,0.12));
-      border-bottom: 1px solid var(--border-gold); gap: 12px;
+      background: linear-gradient(135deg, rgba(232,21,107,0.18), rgba(255,176,0,0.10));
+      border-bottom: 1px solid rgba(232,21,107,0.20); gap: 12px;
     }
     .yt-song-name {
       font-family: "Playfair Display", serif; font-size: 17px; font-weight: 700; font-style: italic;
-      color: #FFE9C2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: rgba(255,220,234,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .yt-close {
       width: 30px; height: 30px; flex-shrink: 0;
-      border: 1px solid rgba(255,176,0,0.35); border-radius: 50%;
-      background: rgba(255,176,0,0.14); color: #FFE9C2;
+      border: 1px solid rgba(232,21,107,0.35); border-radius: 50%;
+      background: rgba(232,21,107,0.14); color: rgba(255,220,234,0.85);
       font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; transition: all 0.15s;
     }
-    .yt-close:hover { background: rgba(255,176,0,0.30); transform: rotate(90deg); }
+    .yt-close:hover { background: rgba(232,21,107,0.32); transform: rotate(90deg); }
     .yt-frame-wrap { position: relative; padding-bottom: 56.25%; height: 0; }
     .yt-frame-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
@@ -718,7 +712,7 @@
       content: "❋ ✦ ❋"; display: block;
       color: var(--gold-1); letter-spacing: 0.6em; font-size: 14px; margin-bottom: 12px;
     }
-    footer a { color: var(--fuchsia); text-decoration: none; border-bottom: 1px solid var(--border-gold-strong); }
+    footer a { color: var(--fuchsia); text-decoration: none; border-bottom: 1px solid rgba(232,21,107,0.30); }
     footer a:hover { color: var(--marigold-deep); }
     footer .made-with { margin-top: 6px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--maroon-soft); }
     footer .heart { color: var(--fuchsia); }
@@ -739,7 +733,7 @@
     <div class="navGrid">
       <a class="back-btn" href="./index.html">← Back</a>
       <a class="banner-link" href="./index.html">Ria Om Shandilya™</a>
-      <div class="level-chip"><span class="dot"></span>Beginner</div>
+      <div class="level-chip"><span class="dot"></span>Intermediate</div>
     </div>
   </header>
 
@@ -765,13 +759,13 @@
       <div class="sub-filters" id="keyNav">
         <button class="sub-btn active" data-key="all"      onclick="setKeyFilter('all',this)">All Keys</button>
         <button class="sub-btn" data-key="C Major"         onclick="setKeyFilter('C Major',this)">🎼 C Major</button>
-        <button class="sub-btn" data-key="A Minor"         onclick="setKeyFilter('A Minor',this)">🎼 A Minor</button>
         <button class="sub-btn" data-key="G Major"         onclick="setKeyFilter('G Major',this)">🎼 G Major</button>
+        <button class="sub-btn" data-key="E Minor"         onclick="setKeyFilter('E Minor',this)">🎼 E Minor</button>
         <button class="sub-btn" data-key="F Major"         onclick="setKeyFilter('F Major',this)">🎼 F Major</button>
-        <button class="sub-btn" data-key="D Minor"         onclick="setKeyFilter('D Minor',this)">🎼 D Minor</button>
         <button class="sub-btn" data-key="D Major"         onclick="setKeyFilter('D Major',this)">🎼 D Major</button>
         <button class="sub-btn" data-key="A Major"         onclick="setKeyFilter('A Major',this)">🎼 A Major</button>
         <button class="sub-btn" data-key="B♭ Major"        onclick="setKeyFilter('B♭ Major',this)">🎼 B♭ Major</button>
+        <button class="sub-btn" data-key="C Minor"         onclick="setKeyFilter('C Minor',this)">🎼 C Minor</button>
       </div>
 
       <button class="filter-btn" data-mode="occasion" onclick="setMode('occasion',this)">
@@ -792,17 +786,16 @@
     <!-- CENTER -->
     <div class="center-area">
       <div class="song-hero" id="songHero">
-        <!-- Corner flourishes -->
         <span class="hcorner tl"></span><span class="hcorner tr"></span>
         <span class="hcorner bl"></span><span class="hcorner br"></span>
 
         <div class="hero-eyebrow">
           <span class="star">★</span>
-          <span id="heroNum">SONG 01 OF 15</span>
+          <span id="heroNum">SONG 01 OF 16</span>
           <span class="star">★</span>
         </div>
-        <h1 class="hero-title" id="heroTitle">Ae Hairate</h1>
-        <p class="hero-tagline" id="heroTagline">Graceful and quiet — introspection at the piano.</p>
+        <h1 class="hero-title" id="heroTitle">Hai Apna Dil To Aawara</h1>
+        <p class="hero-tagline" id="heroTagline"></p>
         <div class="hero-chips" id="heroChips"></div>
         <p class="hero-desc" id="heroDesc"></p>
 
@@ -838,7 +831,7 @@
       <div class="progress-wrap">
         <div class="progress-label">
           <span>Your progress</span>
-          <span id="progressText">0 / 15</span>
+          <span id="progressText">0 / 16</span>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" id="progressFill" style="width:0%"></div>
@@ -850,7 +843,7 @@
 
   </div>
 
-  <!-- Song Detail Modal -->
+  <!-- Modal -->
   <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
     <div class="modal-box">
       <button class="modal-close" onclick="closeModalDirect()">×</button>
@@ -899,10 +892,7 @@
     document.getElementById("year").textContent = new Date().getFullYear();
 
     async function isLoggedIn() {
-      try {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session && session.user) return true;
-      } catch(e) {}
+      try { const { data: { session } } = await sb.auth.getSession(); if (session && session.user) return true; } catch(e) {}
       try { return !!localStorage.getItem("pj_logged_in"); } catch { return false; }
     }
 
@@ -915,106 +905,102 @@
     function closeYtDirect() { document.getElementById("ytFrame").src = ""; document.getElementById("ytBackdrop").classList.remove("open"); }
 
     /* ══════════════════════ DATA ══════════════════════ */
-    const BOOK_URLS   = { soulful: "./soulfulindex.html", romantic: "./romanticindex.html", peppy: "./peppyindex.html", classic: "./classicindex.html" };
-    const BOOK_LABELS = { soulful: "Soulful Melodies", romantic: "Romantic Melodies", peppy: "Peppy Melodies", classic: "Classic Melodies" };
+    const BOOK_URLS   = { soulful:"./soulfulindex.html", romantic:"./romanticindex.html", peppy:"./peppyindex.html", classic:"./classicindex.html" };
+    const BOOK_LABELS = { soulful:"Soulful Melodies", romantic:"Romantic Melodies", peppy:"Peppy Melodies", classic:"Classic Melodies" };
 
     const MEASURES = {
-      "Ae Hairate": 31, "Ek Ladki Bheegi Bhaagi Si": 32,
-      "Jaane Kahan Mera Jigar Gaya Ji": 40, "Chhoo Kar Mere Man Ko": 41,
-      "Itna Na Mujhse Jo Pyaar Bhantha": 41, "Mere Saamne Waale": 44,
-      "Raat Kali Ek Khwaab Mein Aayi": 55, "Khwab Ho Tum Ya": 60,
-      "Jashn-e-Bahaara": 72, "Kaisi Paheli Zindagani": 73,
-      "Aaj Kal Tere Mere Pyaar Ke": 74, "Gulabi Aankhen": 83,
-      "Pal Pal Har Pal": 89, "Darling": 103, "Bade Acche Lagte Hain": 113,
-      "Hai Apna Dil To Aawara": 38, "Srivalli": 44, "Main Agar Kahun": 49,
-      "Allah Ke Bande": 52, "Kal Ho Na Ho": 58, "Kalank": 69,
-      "Aao Ge Jab Tum Saajna": 70, "Moh Moh Ke Dhaage": 71, "Piyu Bole": 71,
-      "Zubi Doobi": 80, "Senorita": 83, "Naina Da Kya Kasoor": 87,
-      "Teri Deewani": 90, "Ajeeb Dastaan Hai Yeh": 100,
-      "Gore Gore Baanke Chhore": 101, "Slow Motion Angreza": 200
+      "Hai Apna Dil To Aawara":38, "Srivalli":44, "Main Agar Kahun":49, "Allah Ke Bande":52,
+      "Kal Ho Na Ho":58, "Kalank":69, "Aao Ge Jab Tum Saajna":70, "Moh Moh Ke Dhaage":71,
+      "Piyu Bole":71, "Zubi Doobi":80, "Senorita":83, "Naina Da Kya Kasoor":87,
+      "Teri Deewani":90, "Ajeeb Dastaan Hai Yeh":100, "Gore Gore Baanke Chhore":101, "Slow Motion Angreza":200,
+      "Ae Hairate":31, "Ek Ladki Bheegi Bhaagi Si":32, "Jaane Kahan Mera Jigar Gaya Ji":40,
+      "Chhoo Kar Mere Man Ko":41, "Itna Na Mujhse Jo Pyaar Bhantha":41, "Mere Saamne Waale":44,
+      "Raat Kali Ek Khwaab Mein Aayi":55, "Khwab Ho Tum Ya":60, "Jashn-e-Bahaara":72,
+      "Kaisi Paheli Zindagani":73, "Aaj Kal Tere Mere Pyaar Ke":74, "Gulabi Aankhen":83,
+      "Pal Pal Har Pal":89, "Darling":103, "Bade Acche Lagte Hain":113
     };
 
     const songs = [
-      { name:"Ae Hairate", key:"D Major", bpm:110, time:"4/4", book:"soulful", ytId:"lyKP5oJtsJQ", level:"beginner", tagline:"Graceful and quiet — introspection at the piano.", desc:"A graceful D Major melody at a gentle tempo — ideal for building confidence with smooth, even legato and quiet introspection." },
-      { name:"Ek Ladki Bheegi Bhaagi Si", key:"A Minor", bpm:125, time:"4/4", book:"classic", ytId:"mHWOvNtAyBE", level:"beginner", tagline:"Breezy and familiar — a classic in minor.", desc:"A breezy A Minor tune excellent for getting comfortable with minor key melodies at a moderate pace." },
-      { name:"Jaane Kahan Mera Jigar Gaya Ji", key:"G Major", bpm:130, time:"4/4", book:"peppy", ytId:"JP2t2gjBdNY", level:"beginner", tagline:"Folk energy with a cheerful, dancing pulse.", desc:"A cheerful classic in G Major — ideal for cementing four-beat counting while exploring a lively, folk-tinged melody." },
-      { name:"Chhoo Kar Mere Man Ko", key:"F Major", bpm:120, time:"4/4", book:"classic", ytId:"0ADhi47WPaI", level:"beginner", tagline:"Warm legato — a melody that asks to be sung.", desc:"A warm F Major melody suited for practising smooth finger legato and basic dynamic shaping." },
-      { name:"Mere Saamne Waale", key:"G Major", bpm:125, time:"4/4", book:"romantic", ytId:"RFgB64CydVo", level:"beginner", tagline:"Warm and singable — a cantabile dream.", desc:"A warm G Major melody perfect for learning to project a smooth cantabile line with genuine feeling." },
-      { name:"Itna Na Mujhse Jo Pyaar Bhantha", key:"A Minor", bpm:140, time:"4/4", book:"soulful", ytId:"wtZY7Uu-GYU", level:"beginner", tagline:"Flowing and controlled — emotion at pace.", desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness and emotional control." },
-      { name:"Raat Kali Ek Khwaab Mein Aayi", key:"C Major", bpm:130, time:"4/4", book:"romantic", ytId:"1GbtE_vPbi4", level:"beginner", tagline:"Flowing, dreamy — like music in a reverie.", desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination." },
-      { name:"Khwab Ho Tum Ya", key:"G Major", bpm:120, time:"3/4", book:"romantic", ytId:"8bRQeedskxM", level:"beginner", tagline:"Dreamy waltz — soft moonlight in 3/4.", desc:"A dreamy G Major waltz suited for consolidating 3/4 metre with a soft, moonlit touch." },
-      { name:"Jashn-e-Bahaara", key:"A Major", bpm:140, time:"4/4", book:"soulful", ytId:"srgXZQmKogo", level:"beginner", tagline:"Celebratory and bright — joy in A Major.", desc:"A bright, celebratory A Major melody that develops clean finger articulation and confident playing at a lively tempo." },
-      { name:"Kaisi Paheli Zindagani", key:"B♭ Major", bpm:120, time:"2/4", book:"peppy", ytId:"Su8XHG1HEaU", level:"beginner", tagline:"Bright and bouncy — like a warm sunny afternoon.", desc:"A playful, rhythmically crisp melody in 2/4 — great for developing a clean sense of two-beat phrasing." },
-      { name:"Aaj Kal Tere Mere Pyaar Ke", key:"A Major", bpm:80, time:"2/2", book:"romantic", ytId:"La1cR4_YMQU", level:"beginner", tagline:"Broad and graceful — two heartbeats in a bar.", desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse with warmth." },
-      { name:"Gulabi Aankhen", key:"A Minor", bpm:100, time:"2/4", book:"classic", ytId:"fD5YRvicrLg", level:"beginner", tagline:"Slow and rich — attention to every tone.", desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone, phrasing, and sensitivity." },
-      { name:"Pal Pal Har Pal", key:"F Major", bpm:120, time:"4/4", book:"romantic", ytId:"RrYR90HqKOU", level:"beginner", tagline:"Gentle, flowing… like your thoughts turning into music.", desc:"A gentle F Major piece that develops your ability to sustain melodic phrases over a steady pulse." },
-      { name:"Darling", key:"D Minor", bpm:125, time:"2/4", book:"peppy", ytId:"8tgxBEBvmUM", level:"beginner", tagline:"Light-footed and full of spirit.", desc:"This D Minor gem in 2/4 gives space to shape melodic phrases with warmth and slight melancholy." },
-      { name:"Bade Acche Lagte Hain", key:"G Major", bpm:200, time:"3/4", book:"romantic", ytId:"X8WqxtQpRWg", level:"beginner", tagline:"A lilting waltz — tender and timeless.", desc:"A waltz in G Major — a superb introduction to 3/4 metre for pianists who love tender expression." }
+      { name:"Hai Apna Dil To Aawara", key:"G Major", bpm:92, time:"4/4", book:"classic", ytId:"QLs8T-CjiP4", level:"intermediate", tagline:"Timeless and carefree — Hemant Kumar's nostalgia.", desc:"A graceful G Major classic with a lilting, carefree character. Ideal for building phrasing over longer melodic arcs while maintaining a relaxed, singing tone." },
+      { name:"Srivalli", key:"D Major", bpm:138, time:"4/4", book:"peppy", ytId:"XMTiWXdVTJw", level:"intermediate", tagline:"Spirited and soaring — folk soul in D Major.", desc:"A bright D Major folk melody with an upward, spirited energy. Excellent for practising clean finger articulation at a lively tempo with confident dynamics." },
+      { name:"Main Agar Kahun", key:"E Minor", bpm:72, time:"4/4", book:"romantic", ytId:"WcVA8hrtpSI", level:"intermediate", tagline:"Tender and aching — love phrased with restraint.", desc:"A tender E Minor ballad at a gentle pace — perfect for developing sensitivity to melodic shaping and learning to express emotional restraint through dynamics." },
+      { name:"Allah Ke Bande", key:"G Major", bpm:96, time:"4/4", book:"soulful", ytId:"c3-9cD4ehAw", level:"intermediate", tagline:"Soulful and searching — a question asked in G Major.", desc:"A soulful G Major melody with a searching, philosophical character. Develops sustained phrasing and the ability to carry emotional weight through long melodic lines." },
+      { name:"Kal Ho Na Ho", key:"C Major", bpm:84, time:"4/4", book:"soulful", ytId:"KPOeHQMqEBs", level:"intermediate", tagline:"Bittersweet and luminous — every note a goodbye.", desc:"A luminous C Major melody loaded with emotional contrast. One of the finest pieces for learning to balance tender legato passages against moments of dynamic lift." },
+      { name:"Kalank", key:"B♭ Major", bpm:60, time:"4/4", book:"soulful", ytId:"4QgVwqUxd4k", level:"intermediate", tagline:"Majestic and slow — every silence speaks.", desc:"A majestic B♭ Major melody at a slow tempo that rewards meticulous attention to voicing, sustain pedal technique, and the colour of each individual note." },
+      { name:"Aao Ge Jab Tum Saajna", key:"G Major", bpm:78, time:"4/4", book:"romantic", ytId:"PlJOa8VbZH4", level:"intermediate", tagline:"Wistful and longing — waiting captured in melody.", desc:"A wistful G Major melody ideal for exploring the art of the romantic ballad — sustained cantabile, expressive rubato, and singing tone in the right hand." },
+      { name:"Moh Moh Ke Dhaage", key:"D Major", bpm:80, time:"4/4", book:"soulful", ytId:"-Nd05JvMAKk", level:"intermediate", tagline:"Silken and deep — threads of feeling in D Major.", desc:"A deeply expressive D Major piece that challenges the pianist to weave seamless melodic lines with warmth and quiet intensity, building emotional depth phrase by phrase." },
+      { name:"Piyu Bole", key:"F Major", bpm:110, time:"4/4", book:"romantic", ytId:"wiYBzBzKn5Q", level:"intermediate", tagline:"Playful and bright — a duet of hearts in F Major.", desc:"A bright, playful F Major melody with a light, dancing character. Ideal for developing clarity of articulation and a naturally warm tone in a cheerful romantic context." },
+      { name:"Zubi Doobi", key:"C Minor", bpm:90, time:"4/4", book:"peppy", ytId:"ePewedmrAb8", level:"intermediate", tagline:"Jazzy and effervescent — C Minor with a groove.", desc:"A lively C Minor number with a jazz-influenced groove. Teaches syncopated phrasing, rhythmic precision, and how to keep a light, playful touch even in a minor key." },
+      { name:"Senorita", key:"A Major", bpm:120, time:"4/4", book:"peppy", ytId:"f0YGYy2o0OQ", level:"intermediate", tagline:"Rhythmically bold — syncopation with a grin.", desc:"A polished A Major piece that challenges pianists with its syncopated feel and expressive phrasing demands. Builds rhythmic confidence and a crisp, articulate touch." },
+      { name:"Naina Da Kya Kasoor", key:"D Major", bpm:76, time:"4/4", book:"soulful", ytId:"A9-ZigWb5AE", level:"intermediate", tagline:"Haunting and pure — beauty in restraint.", desc:"A hauntingly pure D Major melody that asks for absolute control of tone and touch. Teaches pianists to let silence breathe and to trust the simplicity of a beautiful line." },
+      { name:"Teri Deewani", key:"E Minor", bpm:68, time:"4/4", book:"soulful", ytId:"UR8ynoLyJ-8", level:"intermediate", tagline:"Devotional and aching — surrender through sound.", desc:"A deeply devotional E Minor piece with a slow, searching quality. Develops mastery of gentle dynamics, sustained notes, and playing with a meditative inner stillness." },
+      { name:"Ajeeb Dastaan Hai Yeh", key:"G Major", bpm:80, time:"4/4", book:"classic", ytId:"gLaFKTvZBZY", level:"intermediate", tagline:"Poetic and wistful — a story told in G Major.", desc:"A poetic G Major classic with an elegiac, story-telling quality. Ideal for developing a flowing legato touch and the ability to project a sustained narrative through the melody." },
+      { name:"Gore Gore Baanke Chhore", key:"G Major", bpm:148, time:"4/4", book:"classic", ytId:"KHvc1e0Up1E", level:"intermediate", tagline:"Quick and light-footed — joy at full speed.", desc:"A bright, fast-paced G Major classic that builds technical dexterity and fluency at speed. Challenges the pianist to maintain an even, light touch and musical joy at a brisk tempo." },
+      { name:"Slow Motion Angreza", key:"C Major", bpm:110, time:"4/4", book:"peppy", ytId:"_hWLQAkjWDQ", level:"intermediate", tagline:"Lush and cinematic — melody as a wide landscape.", desc:"A lush C Major melody with a sweeping, cinematic quality. Develops the ability to project broad dynamic arcs and sustain musical interest across a large number of measures." }
     ];
 
-    const intSongs = [
-      { name:"Hai Apna Dil To Aawara", key:"G Major", bpm:92, time:"4/4", book:"classic", ytId:"QLs8T-CjiP4", level:"intermediate", tagline:"Timeless and carefree — Hemant Kumar's nostalgia.", desc:"A graceful G Major classic with a lilting, carefree character." },
-      { name:"Srivalli", key:"D Major", bpm:138, time:"4/4", book:"peppy", ytId:"XMTiWXdVTJw", level:"intermediate", tagline:"Spirited and soaring — folk soul in D Major.", desc:"A bright D Major folk melody with an upward, spirited energy." },
-      { name:"Main Agar Kahun", key:"E Minor", bpm:72, time:"4/4", book:"romantic", ytId:"WcVA8hrtpSI", level:"intermediate", tagline:"Tender and aching — love phrased with restraint.", desc:"A tender E Minor ballad at a gentle pace." },
-      { name:"Allah Ke Bande", key:"G Major", bpm:96, time:"4/4", book:"soulful", ytId:"c3-9cD4ehAw", level:"intermediate", tagline:"Soulful and searching — a question asked in G Major.", desc:"A soulful G Major melody with a searching, philosophical character." },
-      { name:"Kal Ho Na Ho", key:"C Major", bpm:84, time:"4/4", book:"soulful", ytId:"KPOeHQMqEBs", level:"intermediate", tagline:"Bittersweet and luminous — every note a goodbye.", desc:"A luminous C Major melody loaded with emotional contrast." },
-      { name:"Kalank", key:"B♭ Major", bpm:60, time:"4/4", book:"soulful", ytId:"4QgVwqUxd4k", level:"intermediate", tagline:"Majestic and slow — every silence speaks.", desc:"A majestic B♭ Major melody at a slow tempo." },
-      { name:"Aao Ge Jab Tum Saajna", key:"G Major", bpm:78, time:"4/4", book:"romantic", ytId:"PlJOa8VbZH4", level:"intermediate", tagline:"Wistful and longing — waiting captured in melody.", desc:"A wistful G Major melody ideal for exploring the art of the romantic ballad." },
-      { name:"Moh Moh Ke Dhaage", key:"D Major", bpm:80, time:"4/4", book:"soulful", ytId:"-Nd05JvMAKk", level:"intermediate", tagline:"Silken and deep — threads of feeling in D Major.", desc:"A deeply expressive D Major piece." },
-      { name:"Piyu Bole", key:"F Major", bpm:110, time:"4/4", book:"romantic", ytId:"wiYBzBzKn5Q", level:"intermediate", tagline:"Playful and bright — a duet of hearts in F Major.", desc:"A bright, playful F Major melody." },
-      { name:"Zubi Doobi", key:"C Minor", bpm:90, time:"4/4", book:"peppy", ytId:"ePewedmrAb8", level:"intermediate", tagline:"Jazzy and effervescent — C Minor with a groove.", desc:"A lively C Minor number with a jazz-influenced groove." },
-      { name:"Senorita", key:"A Major", bpm:120, time:"4/4", book:"peppy", ytId:"f0YGYy2o0OQ", level:"intermediate", tagline:"Rhythmically bold — syncopation with a grin.", desc:"A polished A Major piece that challenges pianists with its syncopated feel." },
-      { name:"Naina Da Kya Kasoor", key:"D Major", bpm:76, time:"4/4", book:"soulful", ytId:"A9-ZigWb5AE", level:"intermediate", tagline:"Haunting and pure — beauty in restraint.", desc:"A hauntingly pure D Major melody." },
-      { name:"Teri Deewani", key:"E Minor", bpm:68, time:"4/4", book:"soulful", ytId:"UR8ynoLyJ-8", level:"intermediate", tagline:"Devotional and aching — surrender through sound.", desc:"A deeply devotional E Minor piece." },
-      { name:"Ajeeb Dastaan Hai Yeh", key:"G Major", bpm:80, time:"4/4", book:"classic", ytId:"gLaFKTvZBZY", level:"intermediate", tagline:"Poetic and wistful — a story told in G Major.", desc:"A poetic G Major classic with an elegiac quality." },
-      { name:"Gore Gore Baanke Chhore", key:"G Major", bpm:148, time:"4/4", book:"classic", ytId:"KHvc1e0Up1E", level:"intermediate", tagline:"Quick and light-footed — joy at full speed.", desc:"A bright, fast-paced G Major classic." },
-      { name:"Slow Motion Angreza", key:"C Major", bpm:110, time:"4/4", book:"peppy", ytId:"_hWLQAkjWDQ", level:"intermediate", tagline:"Lush and cinematic — melody as a wide landscape.", desc:"A lush C Major melody with a sweeping, cinematic quality." }
+    const beginnerSongs = [
+      { name:"Ae Hairate", key:"D Major", bpm:110, time:"4/4", book:"soulful", ytId:"lyKP5oJtsJQ", level:"beginner", tagline:"Graceful and quiet — introspection at the piano.", desc:"A graceful D Major melody at a gentle tempo." },
+      { name:"Ek Ladki Bheegi Bhaagi Si", key:"A Minor", bpm:125, time:"4/4", book:"classic", ytId:"mHWOvNtAyBE", level:"beginner", tagline:"Breezy and familiar — a classic in minor.", desc:"A breezy A Minor tune." },
+      { name:"Jaane Kahan Mera Jigar Gaya Ji", key:"G Major", bpm:130, time:"4/4", book:"peppy", ytId:"JP2t2gjBdNY", level:"beginner", tagline:"Folk energy with a cheerful, dancing pulse.", desc:"A cheerful classic in G Major." },
+      { name:"Chhoo Kar Mere Man Ko", key:"F Major", bpm:120, time:"4/4", book:"classic", ytId:"0ADhi47WPaI", level:"beginner", tagline:"Warm legato — a melody that asks to be sung.", desc:"A warm F Major melody." },
+      { name:"Mere Saamne Waale", key:"G Major", bpm:125, time:"4/4", book:"romantic", ytId:"RFgB64CydVo", level:"beginner", tagline:"Warm and singable — a cantabile dream.", desc:"A warm G Major melody." },
+      { name:"Itna Na Mujhse Jo Pyaar Bhantha", key:"A Minor", bpm:140, time:"4/4", book:"soulful", ytId:"wtZY7Uu-GYU", level:"beginner", tagline:"Flowing and controlled — emotion at pace.", desc:"A flowing A Minor melody." },
+      { name:"Raat Kali Ek Khwaab Mein Aayi", key:"C Major", bpm:130, time:"4/4", book:"romantic", ytId:"1GbtE_vPbi4", level:"beginner", tagline:"Flowing, dreamy — like music in a reverie.", desc:"A flowing C Major melody." },
+      { name:"Khwab Ho Tum Ya", key:"G Major", bpm:120, time:"3/4", book:"romantic", ytId:"8bRQeedskxM", level:"beginner", tagline:"Dreamy waltz — soft moonlight in 3/4.", desc:"A dreamy G Major waltz." },
+      { name:"Jashn-e-Bahaara", key:"A Major", bpm:140, time:"4/4", book:"soulful", ytId:"srgXZQmKogo", level:"beginner", tagline:"Celebratory and bright — joy in A Major.", desc:"A bright, celebratory A Major melody." },
+      { name:"Kaisi Paheli Zindagani", key:"B♭ Major", bpm:120, time:"2/4", book:"peppy", ytId:"Su8XHG1HEaU", level:"beginner", tagline:"Bright and bouncy — like a warm sunny afternoon.", desc:"A playful, rhythmically crisp melody in 2/4." },
+      { name:"Aaj Kal Tere Mere Pyaar Ke", key:"A Major", bpm:80, time:"2/2", book:"romantic", ytId:"La1cR4_YMQU", level:"beginner", tagline:"Broad and graceful — two heartbeats in a bar.", desc:"In cut time (2/2), this piece trains pianists to feel a broad pulse." },
+      { name:"Gulabi Aankhen", key:"A Minor", bpm:100, time:"2/4", book:"classic", ytId:"fD5YRvicrLg", level:"beginner", tagline:"Slow and rich — attention to every tone.", desc:"A slower 2/4 piece in A Minor." },
+      { name:"Pal Pal Har Pal", key:"F Major", bpm:120, time:"4/4", book:"romantic", ytId:"RrYR90HqKOU", level:"beginner", tagline:"Gentle, flowing… like your thoughts turning into music.", desc:"A gentle F Major piece." },
+      { name:"Darling", key:"D Minor", bpm:125, time:"2/4", book:"peppy", ytId:"8tgxBEBvmUM", level:"beginner", tagline:"Light-footed and full of spirit.", desc:"This D Minor gem in 2/4." },
+      { name:"Bade Acche Lagte Hain", key:"G Major", bpm:200, time:"3/4", book:"romantic", ytId:"X8WqxtQpRWg", level:"beginner", tagline:"A lilting waltz — tender and timeless.", desc:"A waltz in G Major." }
     ];
 
-    function findSong(name) { return songs.find(s => s.name === name) || intSongs.find(s => s.name === name) || null; }
+    function findSong(name) { return songs.find(s => s.name === name) || beginnerSongs.find(s => s.name === name) || null; }
 
     const KEY_ORDER_DATA = [
-      { key:"C Major",  songs:["Raat Kali Ek Khwaab Mein Aayi"] },
-      { key:"A Minor",  songs:["Ek Ladki Bheegi Bhaagi Si","Itna Na Mujhse Jo Pyaar Bhantha","Gulabi Aankhen"] },
-      { key:"G Major",  songs:["Jaane Kahan Mera Jigar Gaya Ji","Mere Saamne Waale","Khwab Ho Tum Ya","Bade Acche Lagte Hain"] },
-      { key:"F Major",  songs:["Chhoo Kar Mere Man Ko","Pal Pal Har Pal"] },
-      { key:"D Minor",  songs:["Darling"] },
-      { key:"D Major",  songs:["Ae Hairate"] },
-      { key:"A Major",  songs:["Jashn-e-Bahaara","Aaj Kal Tere Mere Pyaar Ke"] },
-      { key:"B♭ Major", songs:["Kaisi Paheli Zindagani"] }
+      { key:"C Major",  songs:["Kal Ho Na Ho","Slow Motion Angreza"] },
+      { key:"G Major",  songs:["Hai Apna Dil To Aawara","Allah Ke Bande","Aao Ge Jab Tum Saajna","Ajeeb Dastaan Hai Yeh","Gore Gore Baanke Chhore"] },
+      { key:"E Minor",  songs:["Main Agar Kahun","Teri Deewani"] },
+      { key:"F Major",  songs:["Piyu Bole"] },
+      { key:"D Major",  songs:["Srivalli","Moh Moh Ke Dhaage","Naina Da Kya Kasoor"] },
+      { key:"A Major",  songs:["Senorita"] },
+      { key:"B♭ Major", songs:["Kalank"] },
+      { key:"C Minor",  songs:["Zubi Doobi"] }
     ];
 
     const OCCASION_DATA = {
-      wedding:    { label:"💍 Wedding / Sangeet",           beginner:["Jashn-e-Bahaara","Aaj Kal Tere Mere Pyaar Ke","Khwab Ho Tum Ya","Mere Saamne Waale"], intermediate:["Srivalli","Main Agar Kahun","Piyu Bole","Moh Moh Ke Dhaage","Aao Ge Jab Tum Saajna","Senorita"] },
+      wedding:    { label:"💍 Wedding / Sangeet", beginner:["Jashn-e-Bahaara","Aaj Kal Tere Mere Pyaar Ke","Khwab Ho Tum Ya","Mere Saamne Waale"], intermediate:["Srivalli","Main Agar Kahun","Piyu Bole","Moh Moh Ke Dhaage","Aao Ge Jab Tum Saajna","Senorita"] },
       school:     { label:"🎓 School Functions / Annual Day", beginner:["Ae Hairate","Itna Na Mujhse Jo Pyaar Bhantha"], intermediate:["Kal Ho Na Ho","Allah Ke Bande","Ajeeb Dastaan Hai Yeh","Naina Da Kya Kasoor"] },
-      festival:   { label:"🎉 Festivals / Cultural Events",  beginner:["Aaj Kal Tere Mere Pyaar Ke","Jashn-e-Bahaara","Kaisi Paheli Zindagani"], intermediate:["Srivalli","Zubi Doobi","Senorita","Gore Gore Baanke Chhore","Slow Motion Angreza"] },
-      valentine:  { label:"❤️ Valentine's / Romantic",       beginner:["Khwab Ho Tum Ya","Mere Saamne Waale","Pal Pal Har Pal","Raat Kali Ek Khwaab Mein Aayi"], intermediate:["Main Agar Kahun","Piyu Bole","Aao Ge Jab Tum Saajna","Moh Moh Ke Dhaage"] },
+      festival:   { label:"🎉 Festivals / Cultural Events", beginner:["Aaj Kal Tere Mere Pyaar Ke","Jashn-e-Bahaara","Kaisi Paheli Zindagani"], intermediate:["Srivalli","Zubi Doobi","Senorita","Gore Gore Baanke Chhore","Slow Motion Angreza"] },
+      valentine:  { label:"❤️ Valentine's / Romantic", beginner:["Khwab Ho Tum Ya","Mere Saamne Waale","Pal Pal Har Pal","Raat Kali Ek Khwaab Mein Aayi"], intermediate:["Main Agar Kahun","Piyu Bole","Aao Ge Jab Tum Saajna","Moh Moh Ke Dhaage"] },
       stage:      { label:"🎤 Stage Performances / Talent Shows", beginner:["Khwab Ho Tum Ya","Bade Acche Lagte Hain"], intermediate:["Kalank","Moh Moh Ke Dhaage","Teri Deewani","Naina Da Kya Kasoor"] },
-      retro:      { label:"🎼 Retro / Old Bollywood",        beginner:["Ek Ladki Bheegi Bhaagi Si","Jaane Kahan Mera Jigar Gaya Ji","Mere Saamne Waale","Gulabi Aankhen","Raat Kali Ek Khwaab Mein Aayi"], intermediate:["Hai Apna Dil To Aawara","Ajeeb Dastaan Hai Yeh","Gore Gore Baanke Chhore","Piyu Bole"] },
-      farewell:   { label:"🌙 Farewell / Emotional",         beginner:["Chhoo Kar Mere Man Ko","Itna Na Mujhse Jo Pyaar Bhantha","Pal Pal Har Pal"], intermediate:["Kal Ho Na Ho","Aao Ge Jab Tum Saajna","Moh Moh Ke Dhaage","Teri Deewani"] },
-      devotional: { label:"🙏 Devotional / Meaningful",      beginner:[], intermediate:["Allah Ke Bande","Teri Deewani","Kalank"] }
+      retro:      { label:"🎼 Retro / Old Bollywood", beginner:["Ek Ladki Bheegi Bhaagi Si","Jaane Kahan Mera Jigar Gaya Ji","Mere Saamne Waale","Gulabi Aankhen","Raat Kali Ek Khwaab Mein Aayi"], intermediate:["Hai Apna Dil To Aawara","Ajeeb Dastaan Hai Yeh","Gore Gore Baanke Chhore","Piyu Bole"] },
+      farewell:   { label:"🌙 Farewell / Emotional", beginner:["Chhoo Kar Mere Man Ko","Itna Na Mujhse Jo Pyaar Bhantha","Pal Pal Har Pal"], intermediate:["Kal Ho Na Ho","Aao Ge Jab Tum Saajna","Moh Moh Ke Dhaage","Teri Deewani"] },
+      devotional: { label:"🙏 Devotional / Meaningful", beginner:[], intermediate:["Allah Ke Bande","Teri Deewani","Kalank"] }
     };
 
     /* ══════════════════════ STATE ══════════════════════ */
     let currentMode = "all", currentOccasion = "wedding", currentKey = "all", selectedSongIdx = 0;
 
-    function getCompleted() { try { return JSON.parse(localStorage.getItem("pj_completed") || "[]"); } catch { return []; } }
+    function getCompleted() { try { return JSON.parse(localStorage.getItem("pj_int_completed") || "[]"); } catch { return []; } }
     function toggleCompleted(name) {
       let arr = getCompleted();
       arr = arr.includes(name) ? arr.filter(n => n !== name) : [...arr, name];
-      localStorage.setItem("pj_completed", JSON.stringify(arr));
+      localStorage.setItem("pj_int_completed", JSON.stringify(arr));
       renderRight();
     }
 
     /* ══════════════════════ HERO ══════════════════════ */
     function renderHeroSong(s) {
-      const ownIdx = songs.findIndex(x => x.name === s.name);
-      const isOwn  = ownIdx >= 0;
+      const ownIdx  = songs.findIndex(x => x.name === s.name);
+      const isOwn   = ownIdx >= 0;
       const measures = MEASURES[s.name];
       const num = isOwn ? String(ownIdx + 1).padStart(2, "0") : "—";
 
       document.getElementById("heroNum").textContent = isOwn
-        ? `SONG ${num} OF ${songs.length}` : (s.level === "intermediate" ? "INTERMEDIATE LEVEL" : "BEGINNER LEVEL");
+        ? `SONG ${num} OF ${songs.length}` : (s.level === "beginner" ? "BEGINNER LEVEL" : "INTERMEDIATE LEVEL");
       document.getElementById("heroTitle").textContent  = s.name;
       document.getElementById("heroTagline").textContent = s.tagline || "";
       document.getElementById("heroDesc").textContent    = s.desc || "";
@@ -1072,8 +1058,8 @@
       }).join("");
 
       const doneCount = completed.filter(n => songs.some(s => s.name === n)).length;
-      document.getElementById("progressText").textContent  = `${doneCount} / ${songs.length}`;
-      document.getElementById("progressFill").style.width  = `${(doneCount / songs.length) * 100}%`;
+      document.getElementById("progressText").textContent = `${doneCount} / ${songs.length}`;
+      document.getElementById("progressFill").style.width = `${(doneCount / songs.length) * 100}%`;
     }
 
     function selectSong(idx) {
@@ -1091,7 +1077,7 @@
         <span class="rc-num">№ ${num}</span>
         <div class="rc-name">${s.name}</div>
         <div class="rc-meta">${s.key} · ${s.bpm} BPM</div>
-        <span class="rc-diff beginner">🟢 Beginner</span>
+        <span class="rc-diff intermediate">🟠 Intermediate</span>
         ${showMeasures && measures ? `<span class="rc-measures">⚡ ${measures} measures</span>` : ""}
       </div>`;
     }
@@ -1154,7 +1140,7 @@
           html += `<div class="group-block">
             <div class="group-header">
               <span class="group-header-text">🎼 ${g.key}</span>
-              <span class="group-header-sub">${group.length} song${group.length !== 1 ? "s" : ""} · Beginner</span>
+              <span class="group-header-sub">${group.length} song${group.length !== 1 ? "s" : ""} · Intermediate</span>
             </div>
             <div class="result-grid">${group.map(s => resultCardHTML(s)).join("")}</div>
           </div>`;
@@ -1216,34 +1202,7 @@
     renderCenter();
   </script>
 
-  <!-- Drifting musical notes -->
-  <script>
-    (function(){
-      const petalsLayer = document.getElementById('petals');
-      if (!petalsLayer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      const NOTE_SVGS = [
-        `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="8" cy="18" rx="5" ry="3.5" fill="#D4A24A" opacity="0.85"/><rect x="12.5" y="3" width="2" height="15" fill="#D4A24A" opacity="0.85"/></svg>`,
-        `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="7" cy="19" rx="4.5" ry="3" fill="#E8156B" opacity="0.80"/><rect x="11" y="4" width="2" height="15" fill="#E8156B" opacity="0.80"/><path d="M13 4 Q22 6 20 13" stroke="#E8156B" stroke-width="2" fill="none" opacity="0.80"/></svg>`,
-        `<svg viewBox="0 0 28 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="6" cy="20" rx="4" ry="2.8" fill="#F5D67E" opacity="0.85"/><rect x="9.5" y="6" width="2" height="14" fill="#F5D67E" opacity="0.85"/><ellipse cx="18" cy="17" rx="4" ry="2.8" fill="#F5D67E" opacity="0.85"/><rect x="21.5" y="3" width="2" height="14" fill="#F5D67E" opacity="0.85"/><rect x="9.5" y="6" width="14" height="2.5" fill="#F5D67E" opacity="0.85"/></svg>`,
-        `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="8" cy="18" rx="5" ry="3.5" fill="none" stroke="#FFB000" stroke-width="2" opacity="0.85"/><rect x="12.5" y="3" width="2" height="15" fill="#FFB000" opacity="0.85"/></svg>`
-      ];
-      for (let i = 0; i < 7; i++) {
-        const p = document.createElement('div');
-        p.className = 'petal';
-        p.innerHTML = NOTE_SVGS[i % NOTE_SVGS.length];
-        const dur = 18 + Math.random() * 22;
-        const size = 18 + Math.random() * 20;
-        const side = i % 2 === 0 ? Math.random() * 10 : 90 + Math.random() * 10;
-        p.style.left = side + 'vw';
-        p.style.width = size + 'px'; p.style.height = size + 'px';
-        p.style.animationDuration = dur + 's';
-        p.style.animationDelay = (-Math.random() * dur) + 's';
-        petalsLayer.appendChild(p);
-      }
-    })();
-  </script>
-
-  <!-- Gold glitter -->
+  <!-- Fuchsia + gold glitter (intermediate variant) -->
   <script>
     (function(){
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -1270,7 +1229,7 @@
             x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 0.20,
             life: 34 + Math.random()*30, size: 1.0 + Math.random()*2.8,
             tw: Math.random()*Math.PI*2, alpha: 0.52 + Math.random()*0.34,
-            hue: Math.random() < 0.6 ? 'gold' : Math.random() < 0.5 ? 'pink' : 'white'
+            hue: Math.random() < 0.55 ? 'pink' : Math.random() < 0.5 ? 'gold' : 'white'
           });
         }
       }
@@ -1291,16 +1250,16 @@
           const twinkle = 0.62 + Math.sin(p.tw)*0.38;
           const fade = Math.min(1, p.life/44);
           const a = p.alpha * fade * twinkle;
-          const col = p.hue === 'pink' ? `rgba(232,21,107,${a*0.80})`
+          const col = p.hue === 'pink'  ? `rgba(232,21,107,${a*0.90})`
                     : p.hue === 'white' ? `rgba(255,255,255,${a*0.85})`
                     : `rgba(255,186,0,${a})`;
           ctx.beginPath(); ctx.fillStyle = col;
           ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
-          ctx.beginPath(); ctx.fillStyle = `rgba(255,220,100,${a*0.45})`;
+          ctx.beginPath(); ctx.fillStyle = `rgba(255,160,195,${a*0.40})`;
           ctx.arc(p.x, p.y, p.size*0.55, 0, Math.PI*2); ctx.fill();
           if (Math.random() < 0.24) {
             ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.tw*0.35);
-            ctx.globalAlpha = a*0.90; ctx.strokeStyle = `rgba(245,214,126,${a})`;
+            ctx.globalAlpha = a*0.90; ctx.strokeStyle = `rgba(232,21,107,${a*0.80})`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(-p.size*2.2,0); ctx.lineTo(p.size*2.2,0);
