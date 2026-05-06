@@ -7,877 +7,703 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Yatra+One&display=swap" rel="stylesheet">
 
   <style>
-    html{
-  scroll-behavior: smooth;
-}
-
     :root{
-      --bg: #ffffff;
-      --surface: rgba(255,255,255,0.82);
-      --surface2: rgba(255,255,255,0.68);
-      --text: #1A1A1F;
-      --muted: rgba(26,26,31,0.70);
-      --border: rgba(140, 120, 160, 0.18);
-      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
-      --shadowHover: 0 24px 55px rgba(22, 10, 35, 0.13);
-
-      --accent1: rgba(255,120,160,0.28);
-      --accent2: rgba(155,110,255,0.26);
-      --accent3: rgba(255,80,90,0.16);
-      --accent4: rgba(255,90,210,0.14);
-
-      --brand: #2b1140;
-      --primaryBorder: rgba(155,110,255,0.30);
-
-      --radius: 22px;
-      --radiusSm: 16px;
+      --ivory: #FFF8EE;
+      --cream: #FBEFD8;
+      --paper: #FFF4E0;
+      --marigold: #FFB000;
+      --marigold-deep: #E8890B;
+      --fuchsia: #E8156B;
+      --pink-soft: #FF78A0;
+      --teal: #0E8E8A;
+      --teal-deep: #075F5C;
+      --purple: #6B2BB5;
+      --purple-soft: #9B6EFF;
+      --gold-1: #D4A24A;
+      --gold-2: #F5D67E;
+      --gold-3: #B8862C;
+      --gold-grad: linear-gradient(135deg, #B8862C 0%, #F5D67E 35%, #D4A24A 65%, #B8862C 100%);
+      --maroon: #3A0F2A;
+      --maroon-soft: #5C1B40;
+      --text: #3A0F2A;
+      --muted: rgba(58,15,42,0.62);
+      --border-gold: rgba(184,134,44,0.32);
+      --border-gold-strong: rgba(184,134,44,0.55);
+      --shadow-sm: 0 2px 12px rgba(184,134,44,0.10);
+      --shadow: 0 10px 32px rgba(58,15,42,0.12), 0 2px 8px rgba(184,134,44,0.10);
+      --shadow-lg: 0 24px 60px rgba(58,15,42,0.18), 0 6px 16px rgba(232,21,107,0.10);
     }
 
     *{ box-sizing: border-box; }
-    html,body{ height: 100%; }
+    html, body{ overflow-x: hidden; scroll-behavior: smooth; }
 
     body{
       margin: 0;
       min-height: 100vh;
       color: var(--text);
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-font-size: 14px;
-
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
       background:
-        radial-gradient(900px 520px at 20% 0%, var(--accent1), transparent 60%),
-        radial-gradient(900px 520px at 85% 10%, var(--accent2), transparent 62%),
-        radial-gradient(780px 480px at 50% 80%, var(--accent3), transparent 60%),
-        radial-gradient(520px 320px at 35% 55%, var(--accent4), transparent 60%),
-        var(--bg);
-
-padding: 0;
-      overflow-x: hidden;
-    }
-
-    /* cursor glitter canvas */
-    #glitter{
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
-      pointer-events: none;
-      mix-blend-mode: screen;
-    }
-
-    .container{
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    /* Top banner */
-.banner{
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(140,120,160,0.18);
-  margin-bottom: 20px;
-  width: 100%;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-}
-
-.banner-link{
-  font-family: "Cormorant Garamond", serif;
-  font-weight: 600;
-  font-size: 22px;
-  letter-spacing: 0.7px;
-  color: inherit;
-  text-decoration: none;
-  padding: 8px 10px;
-  border-radius: 12px;
-  white-space: nowrap;
-}
-.banner-link:hover{ text-decoration: underline; }
-
-.navGrid{
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  min-height: 64px;
-  padding: 8px 12px;
-  width: 100%;
-}
-
-.navTitle{
-  grid-column: 2;
-  justify-self: center;
-  text-align: center;
-  min-width: 0;
-}
-
-    /* Header card */
-    .header{
-      border-radius: var(--radius);
-      padding: 32px 22px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+        radial-gradient(ellipse 900px 600px at 12% -5%, rgba(255,176,0,0.22), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 92% 6%, rgba(232,21,107,0.16), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 50% 38%, rgba(107,43,181,0.07), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 8% 70%, rgba(14,142,138,0.10), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 96% 95%, rgba(255,176,0,0.16), transparent 60%),
+        var(--ivory);
       position: relative;
-      overflow: hidden;
-      text-align: center;
-      margin-bottom: 24px;
     }
 
-    .header::before{
-      content:"";
-      position:absolute;
-      inset:-80px -90px auto auto;
-      width: 250px;
-      height: 250px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%,
-        rgba(255,120,160,0.40),
-        rgba(155,110,255,0.28),
-        rgba(255,90,210,0.18),
-        transparent 62%);
-      pointer-events:none;
+    body::before{
+      content: "";
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0; opacity: 0.35;
+      background-image:
+        radial-gradient(rgba(184,134,44,0.06) 1px, transparent 1px),
+        radial-gradient(rgba(232,21,107,0.04) 1px, transparent 1px);
+      background-size: 18px 18px, 24px 24px;
+      background-position: 0 0, 9px 9px;
+      mix-blend-mode: multiply;
     }
 
-    .header > *{ position: relative; z-index: 1; }
-
-    .header h1{
-      margin: 0 0 10px;
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: clamp(32px, 5vw, 52px);
-      letter-spacing: -0.02em;
-      color: var(--brand);
+    .petals{ position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+    .petal{
+      position: absolute; width: 22px; height: 22px;
+      opacity: 0; animation: drift linear infinite;
+      filter: drop-shadow(0 2px 5px rgba(184,134,44,0.45));
+    }
+    .petal svg{ width: 100%; height: 100%; display: block; }
+    @keyframes drift{
+      0%{ transform: translate3d(0,-10vh,0) rotate(0deg); opacity: 0; }
+      10%{ opacity: 0.7; }
+      90%{ opacity: 0.7; }
+      100%{ transform: translate3d(40px,110vh,0) rotate(540deg); opacity: 0; }
     }
 
-    .header .sub{
-      margin: 0 auto;
-      max-width: 680px;
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.6;
+    #glitter{ position: fixed; inset: 0; z-index: 2; pointer-events: none; mix-blend-mode: screen; }
+
+    /* ── Nav ── */
+    .banner{
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(180deg, rgba(255,248,238,0.96), rgba(251,239,216,0.92));
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border-gold);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.7), 0 6px 22px rgba(184,134,44,0.10);
+    }
+    .banner::before, .banner::after{
+      content:""; position:absolute; left:0; right:0; height: 2px;
+      background: var(--gold-grad); opacity: 0.85;
+    }
+    .banner::before{ top: 0; }
+    .banner::after{ bottom: -1px; height: 1px; opacity: 0.55; }
+
+    .navGrid{
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; min-height: 68px; padding: 8px 16px; gap: 12px; position: relative;
     }
 
-    /* Section cards */
-    .section{
-      border-radius: var(--radius);
-      padding: 0;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+    .navLogo{
+      display:flex; align-items:center; text-decoration:none; flex-shrink:0;
+      grid-column:1; grid-row:1; padding-left: 4px;
+    }
+    .navLogo .logoMedallion{
+      width: 50px; height: 50px; border-radius: 999px;
+      background: var(--gold-grad); display: grid; place-items: center;
+      box-shadow: 0 6px 18px rgba(184,134,44,0.30), inset 0 0 0 2px rgba(255,255,255,0.35);
       position: relative;
-      overflow: hidden;
-      margin-bottom: 20px;
-      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .navLogo .logoMedallion::after{
+      content:""; position:absolute; inset: 4px; border-radius: 999px;
+      border: 1px dashed rgba(58,15,42,0.35);
+    }
+    .navLogo .logoMedallion span{
+      font-family: 'Playfair Display', serif; font-style: italic; font-weight: 800;
+      font-size: 22px; color: var(--maroon); text-shadow: 0 1px 0 rgba(255,255,255,0.4);
     }
 
-    .section:hover{
-      transform: translateY(-2px);
-      box-shadow: var(--shadowHover);
-      border-color: var(--primaryBorder);
+    .navTitle{ grid-column: 2; justify-self: center; text-align: center; min-width: 0; }
+
+    .banner-link{
+      font-family: "Playfair Display", "Cormorant Garamond", serif;
+      font-weight: 700; font-style: italic; font-size: 26px; letter-spacing: 0.5px;
+      text-decoration: none; padding: 4px 10px; border-radius: 12px; white-space: nowrap;
+      background: linear-gradient(100deg, #B8862C 0%, #D4A24A 18%, #F5D67E 38%, #FFFFFF 50%, #F5D67E 62%, #D4A24A 82%, #B8862C 100%);
+      background-size: 220% 100%; -webkit-background-clip: text; background-clip: text;
+      color: transparent; filter: drop-shadow(0 1px 2px rgba(58,15,42,0.18));
+      animation: shimmerGold 7s ease-in-out infinite;
+    }
+    @keyframes shimmerGold{
+      0%,100%{ background-position: 0% 50%; }
+      50%{ background-position: 100% 50%; }
     }
 
-    .section::before{
-      content:"";
-      position:absolute;
-      left:-100px;
-      bottom:-120px;
-      width: 240px;
-      height: 240px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 60% 40%,
-        rgba(255,80,90,0.18),
-        rgba(255,120,160,0.14),
-        transparent 62%);
-      pointer-events:none;
-      opacity: .85;
+    .accountDock{ grid-column: 3; justify-self: end; min-width: 0; max-width: 60vw; }
+    .accountLayout{
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 10px; flex-wrap: wrap; min-width: 0;
     }
-
-    .section > *{ position: relative; z-index: 1; }
-
-    .section-header{
-      padding: 24px 28px;
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: background 0.2s ease;
+    .welcomeText{
+      font-family: "Cormorant Garamond", serif; font-style: italic; font-weight: 700;
+      font-size: 18px; letter-spacing: -0.01em; line-height: 1.1;
+      background: linear-gradient(100deg, #B8862C 0%, #D4A24A 18%, #F5D67E 40%, #FFFFFF 50%, #F5D67E 62%, #D4A24A 82%, #B8862C 100%);
+      background-size: 220% 100%; -webkit-background-clip: text; background-clip: text;
+      color: transparent; filter: drop-shadow(0 0 12px rgba(255,176,0,0.18));
+      animation: shimmerGold 6.5s ease-in-out infinite;
+      padding: 2px 2px; white-space: nowrap; max-width: 240px;
+      overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto;
     }
-
-    .section-header:hover{
-      background: rgba(155,110,255,0.04);
-    }
-
-    .section h2{
-      margin: 0;
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: clamp(22px, 3vw, 28px);
-      letter-spacing: -0.01em;
-      color: var(--brand);
-    }
-
-    .section-toggle{
-      flex-shrink: 0;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: rgba(155,110,255,0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--brand);
-      transition: transform 0.3s ease, background 0.2s ease;
-    }
-
-    .section.open .section-toggle{
-      transform: rotate(180deg);
-      background: rgba(155,110,255,0.20);
-    }
-
-    .section-content{
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.4s ease;
-    }
-
-    .section.open .section-content{
-      max-height: 5000px;
-    }
-
-    .section-inner{
-      padding: 0 28px 28px 28px;
-    }
-
-    .section-icon{
-      font-size: 28px;
-    }
-
-    .section p{
-      color: rgba(26,26,31,0.82);
-      line-height: 1.7;
-      margin: 0 0 14px;
-    }
-
-    .section ul{
-      margin: 14px 0;
-      padding-left: 24px;
-    }
-
-    .section li{
-      color: rgba(26,26,31,0.82);
-      line-height: 1.8;
-      margin-bottom: 10px;
-    }
-
-    .section li strong{
-      color: var(--brand);
-      font-weight: 700;
-    }
-
-    /* Step cards */
-    .steps{
-      display: grid;
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .step-card{
-      display: flex;
-      gap: 16px;
-      padding: 18px;
-      border-radius: var(--radiusSm);
-      border: 1px solid rgba(140,120,160,0.16);
-      background: rgba(255,255,255,0.70);
-      box-shadow: 0 10px 26px rgba(22,10,35,0.06);
-      transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
-    }
-
-    .step-card:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 14px 32px rgba(22,10,35,0.10);
-      border-color: rgba(155,110,255,0.26);
-    }
-
-    .step-number{
-      flex-shrink: 0;
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: linear-gradient(135deg,
-        rgba(255,120,160,0.26),
-        rgba(155,110,255,0.20),
-        rgba(255,90,210,0.14));
-      border: 1px solid rgba(155,110,255,0.30);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 18px;
-      color: var(--brand);
-    }
-
-    .step-content h3{
-      margin: 0 0 6px;
-      font-weight: 700;
-      font-size: 17px;
-      color: var(--brand);
-    }
-
-    .step-content p{
-      margin: 0;
-      font-size: 14.5px;
-      line-height: 1.6;
-      color: rgba(26,26,31,0.78);
-    }
-
-    /* Info boxes */
-    .info-box{
-      padding: 16px 18px;
-      border-radius: var(--radiusSm);
-      margin: 16px 0;
-      border: 1px solid;
+    .actionStrip{
+      display: inline-flex; align-items: center; overflow: hidden;
+      border-radius: 999px; border: 1px solid var(--border-gold-strong);
+      background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,244,224,0.88));
       backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-sm), inset 0 0 0 1px rgba(255,255,255,0.6);
+      max-width: 100%; flex: 0 0 auto;
+    }
+    .stripItem{
+      appearance: none; border: 0; background: transparent;
+      padding: 10px 16px; font-weight: 600; font-size: 13px;
+      color: var(--maroon-soft); text-decoration: none; cursor: pointer;
+      display: inline-flex; align-items: center; user-select: none;
+      white-space: nowrap; transition: background .14s ease, color .14s ease;
+      font-family: 'DM Sans', sans-serif; letter-spacing: 0.02em;
+    }
+    .stripItem:hover{ background: linear-gradient(135deg, rgba(255,176,0,0.18), rgba(232,21,107,0.10)); color: var(--maroon); }
+    .stripItem.primary{ color: #fff; background: linear-gradient(135deg, var(--marigold) 0%, var(--fuchsia) 100%); font-weight: 700; text-shadow: 0 1px 0 rgba(58,15,42,0.18); }
+    .stripItem.primary:hover{ filter: brightness(1.05); }
+    .stripDivider{ width: 1px; align-self: stretch; background: var(--border-gold); }
+
+    /* ── Social Dock ── */
+    .floatingSocialDock{
+      position: fixed; right: 18px; top: 50%; transform: translateY(-50%);
+      z-index: 90; display: flex; flex-direction: column; gap: 12px; align-items: center;
+    }
+    .socialBtnWrap{ position: relative; display: flex; align-items: center; }
+    .socialBtnWrap .socialTooltip{
+      position: absolute; right: calc(100% + 12px); top: 50%;
+      transform: translateY(-50%) translateX(6px);
+      background: linear-gradient(180deg, #FFFFFF, #FFF4E0);
+      border: 1px solid var(--border-gold-strong); box-shadow: var(--shadow);
+      color: var(--maroon); font-size: 12px; font-weight: 700;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      letter-spacing: 0.03em; white-space: nowrap; padding: 7px 14px;
+      border-radius: 999px; pointer-events: none; opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .socialBtnWrap .socialTooltip::after{
+      content:""; position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+      border: 5px solid transparent; border-left-color: #FFF4E0;
+    }
+    .socialBtnWrap:hover .socialTooltip{ opacity: 1; transform: translateY(-50%) translateX(0); }
+    .socialBtn{
+      width: 44px; height: 44px; display: inline-grid; place-items: center;
+      border-radius: 999px; border: 1.5px solid var(--gold-1);
+      background: linear-gradient(180deg, #FFFFFF, #FFF4E0);
+      box-shadow: 0 4px 14px rgba(184,134,44,0.20), inset 0 0 0 1px rgba(255,255,255,0.7);
+      transition: transform .18s ease, box-shadow .18s ease; text-decoration: none; position: relative;
+    }
+    .socialBtn::before{
+      content:""; position:absolute; inset: -3px; border-radius: 999px;
+      background: var(--gold-grad); opacity: 0; filter: blur(8px);
+      transition: opacity .25s ease; z-index: -1;
+    }
+    .socialBtn:hover{ transform: translateY(-3px) scale(1.06); background: linear-gradient(180deg, #FFF4E0, #FFE4B5); }
+    .socialBtn:hover::before{ opacity: 0.85; }
+    .socialBtn svg{ width: 20px; height: 20px; display: block; }
+    .socialBtn svg, .socialBtn svg *{ fill: var(--maroon) !important; stroke: none !important; transition: fill .18s ease; }
+    .socialBtn:hover svg, .socialBtn:hover svg *{ fill: var(--fuchsia) !important; }
+
+    /* ── Main layout ── */
+    main{
+      position: relative; z-index: 3;
+      max-width: 980px; margin: 0 auto; padding: 28px 18px 60px;
     }
 
-    .info-box.success{
-      background: rgba(40,167,69,0.10);
-      border-color: rgba(40,167,69,0.28);
-      color: rgba(26,26,31,0.86);
+    /* ── Page header ── */
+    .pageHeader{
+      text-align: center; margin-bottom: 32px;
     }
-
-    .info-box.warning{
-      background: rgba(255,193,7,0.12);
-      border-color: rgba(255,193,7,0.32);
-      color: rgba(26,26,31,0.86);
+    .pageEyebrow{
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 14px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--maroon-soft); padding: 6px 16px; border-radius: 999px;
+      background: linear-gradient(180deg, #FFF, #FFF4E0);
+      border: 1px solid var(--border-gold-strong); box-shadow: 0 4px 14px rgba(184,134,44,0.16);
+      margin-bottom: 14px;
     }
+    .pageEyebrow .star{ color: var(--marigold-deep); font-size: 12px; }
 
-    .info-box.info{
-      background: rgba(13,110,253,0.10);
-      border-color: rgba(13,110,253,0.28);
-      color: rgba(26,26,31,0.86);
-    }
-
-    .info-box strong{
-      font-weight: 700;
-    }
-
-    /* FAQ */
-    .faq-item{
-      padding: 18px;
-      border-radius: var(--radiusSm);
-      border: 1px solid rgba(140,120,160,0.16);
-      background: rgba(255,255,255,0.70);
-      margin-bottom: 12px;
-      box-shadow: 0 10px 26px rgba(22,10,35,0.06);
-    }
-
-    .faq-question{
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--brand);
-      margin-bottom: 8px;
-    }
-
-    .faq-answer{
-      color: rgba(26,26,31,0.78);
-      line-height: 1.7;
-      font-size: 14.5px;
-    }
-
-    /* Buttons */
-    .btn{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 20px;
-      border-radius: 14px;
-      text-decoration: none;
-      font-weight: 800;
-      font-size: 14px;
-      color: var(--brand);
-      border: 1px solid var(--primaryBorder);
-      background: linear-gradient(135deg,
-        rgba(255,120,160,0.22),
-        rgba(155,110,255,0.18),
-        rgba(255,90,210,0.12));
-      box-shadow: 0 14px 40px rgba(22,10,35,0.10);
-      transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
-      cursor: pointer;
-    }
-
-    .btn:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.03);
-      box-shadow: 0 18px 44px rgba(22,10,35,0.14);
-    }
-
-    .btn-row{
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 20px;
-    }
-
-    /* Contact card */
-    .contact-card{
-      text-align: center;
-      padding: 28px 24px;
-      border-radius: var(--radius);
-      border: 1px solid rgba(155,110,255,0.24);
-      background: linear-gradient(135deg,
-        rgba(255,120,160,0.12),
-        rgba(155,110,255,0.10),
-        rgba(255,90,210,0.08));
-      box-shadow: var(--shadow);
-      margin-top: 28px;
-    }
-
-    .contact-card h3{
+    h1.pageTitle{
+      font-family: 'Playfair Display', serif; font-style: italic; font-weight: 800;
+      font-size: clamp(34px, 5.5vw, 58px); line-height: 1.05; letter-spacing: -0.02em;
       margin: 0 0 12px;
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 700;
-      font-size: 26px;
-      color: var(--brand);
+      background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-soft) 40%, #8B3560 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .pageSub{
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: clamp(17px, 2vw, 21px); color: var(--muted); margin: 0 0 22px;
     }
 
-    .contact-card p{
-      margin: 0 0 18px;
-      color: rgba(26,26,31,0.76);
-      line-height: 1.6;
+    /* ── Quick nav btn row ── */
+    .btnRow{
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      margin: 18px 0 0;
+    }
+    .navBtn{
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; border-radius: 14px; text-decoration: none;
+      font-weight: 700; font-size: 13px; font-family: 'DM Sans', sans-serif;
+      color: var(--maroon); border: 1.5px solid var(--border-gold-strong);
+      background: linear-gradient(135deg, rgba(255,176,0,0.18), rgba(232,21,107,0.10), rgba(255,176,0,0.10));
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+      box-shadow: 0 4px 14px rgba(184,134,44,0.14);
+    }
+    .navBtn:hover{ transform: translateY(-2px); box-shadow: 0 8px 22px rgba(184,134,44,0.24); }
+
+    /* ── Section accordion ── */
+    .section{
+      margin-bottom: 14px;
+      border-radius: 24px;
+      border: 1px solid var(--border-gold);
+      background: linear-gradient(160deg, rgba(255,255,255,0.95), rgba(255,248,224,0.88));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-header{
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; cursor: pointer; gap: 14px;
+      transition: background 0.18s;
+      border-bottom: 1px solid transparent;
+    }
+    .section-header:hover{ background: rgba(255,176,0,0.07); }
+    .section.open .section-header{
+      border-bottom-color: var(--border-gold);
+    }
+    .section-header h2{
+      font-family: 'Playfair Display', serif; font-style: italic;
+      font-size: clamp(18px, 2.2vw, 22px); font-weight: 700;
+      margin: 0; color: var(--maroon); line-height: 1.25;
+    }
+    .section-toggle{
+      width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%;
+      display: grid; place-items: center; font-size: 13px; color: var(--marigold-deep);
+      background: rgba(255,176,0,0.12); border: 1px solid var(--border-gold);
+      transition: transform 0.28s ease;
+    }
+    .section.open .section-toggle{ transform: rotate(180deg); }
+    .section-content{ display: none; }
+    .section.open .section-content{ display: block; }
+    .section-inner{ padding: 22px 24px 24px; }
+
+    /* ── Prose elements ── */
+    .section-inner p{ color: var(--maroon-soft); line-height: 1.7; margin: 0 0 14px; }
+    .section-inner ul{ color: var(--maroon-soft); line-height: 1.8; padding-left: 22px; margin: 10px 0 14px; }
+    .section-inner li{ margin-bottom: 6px; }
+    .section-inner a{ color: var(--fuchsia); text-decoration: none; border-bottom: 1px solid var(--border-gold-strong); }
+    .section-inner a:hover{ color: var(--marigold-deep); }
+
+    h3.sub-heading{
+      font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+      font-size: 18px; color: var(--maroon); margin: 22px 0 10px;
     }
 
-    /* Link styling */
-    a:not(.btn):not(.banner-link){
-      color: rgba(85,55,190,0.92);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(155,110,255,0.30);
-      transition: border-color 0.14s ease;
+    /* ── Info boxes ── */
+    .info-box{
+      padding: 14px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6;
+      margin: 14px 0; color: var(--maroon-soft);
+    }
+    .info-box.info{
+      background: rgba(14,142,138,0.08); border: 1px solid rgba(14,142,138,0.26);
+    }
+    .info-box.success{
+      background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.26);
+    }
+    .info-box.warning{
+      background: rgba(255,176,0,0.10); border: 1px solid rgba(255,176,0,0.32);
     }
 
-    a:not(.btn):not(.banner-link):hover{
-      border-bottom-color: rgba(155,110,255,0.60);
+    /* ── Steps ── */
+    .steps{ display: grid; gap: 10px; margin: 14px 0; }
+    .step-card{
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 16px 18px; border-radius: 18px;
+      border: 1px solid var(--border-gold);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,248,224,0.80));
+    }
+    .step-number{
+      width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 800; font-size: 15px;
+      color: var(--maroon); font-family: 'Playfair Display', serif;
+      background: var(--gold-grad);
+      box-shadow: 0 4px 12px rgba(184,134,44,0.30);
+    }
+    .step-content h3{
+      font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 15px;
+      margin: 0 0 5px; color: var(--maroon);
+    }
+    .step-content p{ font-size: 14px; margin: 0; color: var(--maroon-soft); }
+
+    /* ── Chips ── */
+    .chip-row{ display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 6px; }
+    .chip{
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 14px; border-radius: 999px;
+      border: 1px solid var(--border-gold-strong);
+      background: linear-gradient(135deg, rgba(255,176,0,0.12), rgba(232,21,107,0.07));
+      color: var(--maroon-soft); font-size: 13.5px; font-weight: 600;
     }
 
-    /* Footer */
-    footer{
-      max-width: 1100px;
-      margin: 40px auto 0;
-      padding: 20px 18px;
-      text-align: center;
-      color: rgba(26,26,31,0.62);
-      font-size: 13px;
-      border-top: 1px solid rgba(140,120,160,0.14);
-    }
-
-    @media (max-width: 768px){
-      .step-card{
-        flex-direction: column;
-        text-align: center;
-      }
-      .step-number{
-        margin: 0 auto;
-      }
-    }
-
-  /* --- MIDI / keyboard connection image helpers --- */
-.img-grid{
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 per row on big screens */
-  gap: 12px;
-  margin: 14px 0 6px;
-}
-
-  .img-grid figure{
-    margin: 0;
-    border-radius: var(--radiusSm);
-    border: 1px solid rgba(140,120,160,0.16);
-    background: rgba(255,255,255,0.72);
-    box-shadow: 0 10px 26px rgba(22,10,35,0.06);
-    overflow: hidden;
-  }
-.img-grid img{
-  width: 100%;
-  height: 85px;         /* desktop default */
-  object-fit: contain;
-  display: block;
-  padding: 8px;
-}
-
-  .img-grid figcaption{
-    padding: 8px 10px 10px;
-    font-size: 12px;
-    line-height: 1.35;
-    color: rgba(26,26,31,0.76);
-  }
-  
-  .img-grid figcaption strong{
-    color: var(--brand);
-  }
-  .chip-row{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 10px 0 2px;
-  }
-  .chip{
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(155,110,255,0.28);
-    background: rgba(155,110,255,0.10);
-    color: rgba(26,26,31,0.82);
-    font-size: 13.5px;
-    font-weight: 600;
-  }
-  .muted-small{
-    margin-top: 8px;
-    font-size: 13px;
-    color: rgba(26,26,31,0.66);
-    line-height: 1.6;
-  }
-
-  @media (max-width: 900px){
+    /* ── Image grid ── */
     .img-grid{
-      grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 per row */
+      display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px; margin: 14px 0 8px;
     }
-  }
-  
-@media (max-width: 520px){
-  .img-grid{
-    grid-template-columns: 1fr; /* 1 per row on phones */
-  }
+    .img-grid figure{
+      margin: 0; border-radius: 16px;
+      border: 1px solid var(--border-gold);
+      background: rgba(255,255,255,0.85);
+      box-shadow: var(--shadow-sm); overflow: hidden;
+    }
+    .img-grid img{
+      width: 100%; height: 85px; object-fit: contain; display: block; padding: 8px;
+    }
+    .img-grid figcaption{
+      padding: 8px 10px 10px; font-size: 12px; line-height: 1.35; color: var(--muted);
+    }
+    .img-grid figcaption strong{ color: var(--maroon); }
 
-  .img-grid img{
-    height: 120px;  /* bigger on phones so it’s easy to see */
-    padding: 10px;
-  }
-}
+    /* ── FAQ ── */
+    .faq-item{
+      border-radius: 16px; border: 1px solid var(--border-gold); overflow: hidden; margin-bottom: 8px;
+    }
+    .faq-question{
+      padding: 14px 18px; font-weight: 700; font-size: 14px; color: var(--maroon);
+      background: linear-gradient(135deg, rgba(255,176,0,0.10), rgba(232,21,107,0.06));
+    }
+    .faq-answer{
+      padding: 12px 18px 14px; font-size: 14px; color: var(--maroon-soft);
+      line-height: 1.7; border-top: 1px solid var(--border-gold);
+    }
+    .faq-answer a{ color: var(--fuchsia); text-decoration: none; border-bottom: 1px solid var(--border-gold-strong); }
 
+    /* ── Legal notice ── */
+    .legal-notice{
+      margin-top: 20px; padding: 20px;
+      border-radius: 18px; border: 2px solid rgba(220,38,38,0.35);
+      background: rgba(220,38,38,0.06);
+    }
+    .legal-notice h3{
+      margin: 0 0 12px; font-size: 17px; font-weight: 800; color: #991b1b;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .legal-notice h4{ margin: 14px 0 6px; font-size: 14px; font-weight: 700; color: rgba(26,26,31,0.86); }
+    .legal-notice p{ margin: 0 0 10px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.80); }
 
-/* ---- Lightbox (click-to-zoom image popup) ---- */
-.lightbox{
-  width: min(960px, 92vw);
-  border: 0;
-  padding: 0;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.95);
-  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
-}
+    /* ── Contact card ── */
+    .contact-card{
+      text-align: center; padding: 32px 28px;
+      border-radius: 22px;
+      border: 1px solid var(--border-gold-strong);
+      background: linear-gradient(135deg, rgba(255,176,0,0.14), rgba(232,21,107,0.08), rgba(107,43,181,0.06));
+      box-shadow: var(--shadow);
+    }
+    .contact-card h3{
+      margin: 0 0 10px; font-family: 'Playfair Display', serif; font-style: italic;
+      font-weight: 800; font-size: 26px; color: var(--maroon);
+    }
+    .contact-card p{ margin: 0 0 18px; color: var(--muted); line-height: 1.6; }
 
-.lightbox::backdrop{
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(6px);
-}
+    /* ── Muted small ── */
+    .muted-small{ margin-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.6; }
 
-.lightbox img{
-  width: 100%;
-  height: auto;
-  display: block;
-  max-height: 78vh;
-  object-fit: contain;
-  cursor: zoom-in;
-}
+    /* ── Ornament divider ── */
+    .ornament{
+      display: flex; align-items: center; gap: 16px;
+      margin: 28px 0; color: var(--gold-1); font-size: 18px; letter-spacing: 0.15em;
+    }
+    .ornament .line{ flex: 1; height: 1px; background: var(--gold-grad); opacity: 0.55; }
 
-.lightbox-caption{
-  margin: 0;
-  padding: 12px 14px 16px;
-  font-size: 13px;
-  color: rgba(26,26,31,0.78);
-  border-top: 1px solid rgba(140,120,160,0.16);
-}
+    /* ── Footer ── */
+    footer{
+      position: relative; z-index: 3;
+      max-width: 980px; margin: 24px auto 0;
+      padding: 28px 18px 40px; text-align: center;
+      color: var(--muted); font-size: 13px;
+      border-top: 1px solid var(--border-gold);
+    }
+    footer::before{
+      content:"❋ ✦ ❋"; display:block; color: var(--gold-1);
+      letter-spacing: 0.6em; font-size: 14px; margin-bottom: 14px;
+    }
+    footer a{ color: var(--fuchsia); text-decoration: none; border-bottom: 1px solid var(--border-gold-strong); }
+    footer a:hover{ color: var(--marigold-deep); }
+    footer .madeWith{ margin-top: 8px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--maroon-soft); }
+    footer .madeWith .heart{ color: var(--fuchsia); }
 
-.lightbox-close{
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  border: 1px solid rgba(140,120,160,0.22);
-  background: rgba(255,255,255,0.90);
-  font-size: 18px;
-  font-weight: 800;
-  cursor: pointer;
-}
+    /* ── Lightbox ── */
+    .lightbox{
+      width: min(960px, 92vw); border: 0; padding: 0; border-radius: 22px;
+      background: linear-gradient(160deg, #FFFAF0, #FFF4E0);
+      box-shadow: 0 30px 80px rgba(58,15,42,0.32);
+    }
+    .lightbox::backdrop{ background: rgba(58,15,42,0.55); backdrop-filter: blur(8px); }
+    .lightbox img{ width: 100%; height: auto; display: block; max-height: 78vh; object-fit: contain; cursor: zoom-in; }
+    .lightbox-caption{ margin: 0; padding: 12px 14px 16px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--border-gold); }
+    .lightbox-close{
+      position: absolute; top: 10px; right: 10px;
+      width: 38px; height: 38px; border-radius: 999px;
+      border: 1px solid var(--border-gold-strong);
+      background: rgba(255,255,255,0.90); font-size: 18px; font-weight: 800; cursor: pointer;
+      color: var(--maroon);
+    }
+    .lightbox-close:hover{ filter: brightness(0.96); }
+    .lightbox.zoomed img{ cursor: zoom-out; max-height: none; width: auto; max-width: 92vw; margin: 0 auto; }
 
-.lightbox-close:hover{
-  filter: brightness(0.98);
-}
-
-/* Zoom toggle state */
-.lightbox.zoomed img{
-  cursor: zoom-out;
-  max-height: none;       /* allow large */
-  width: auto;            /* allow natural size */
-  max-width: 92vw;
-  margin: 0 auto;
-}
-
+    /* ── Responsive ── */
+    @media (max-width: 980px){ .accountDock{ display: none; } }
+    @media (max-width: 768px){
+      .step-card{ flex-direction: column; }
+      .step-number{ margin: 0; }
+      .img-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 520px){
+      .img-grid{ grid-template-columns: 1fr; }
+      .img-grid img{ height: 120px; padding: 10px; }
+      .section-inner{ padding: 16px; }
+      .banner-link{ font-size: 20px; padding: 4px 6px; }
+    }
+    @media (max-width: 480px){
+      .floatingSocialDock{ right: 10px; gap: 9px; }
+      .socialBtnWrap .socialTooltip{ display: none; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .banner-link, .welcomeText{ animation: none !important; }
+      #glitter, .petals{ display:none !important; }
+    }
   </style>
 </head>
 
 <body>
-  <!-- glitter cursor canvas -->
+  <div class="petals" aria-hidden="true" id="petals"></div>
   <canvas id="glitter" aria-hidden="true"></canvas>
-    <!-- Banner -->
-<header class="banner">
-  <div class="navGrid">
-    <div class="navTitle">
-      <a class="banner-link" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">
-        Ria Om Shandilya
+
+  <!-- ── Floating Social Dock ── -->
+  <div class="floatingSocialDock" aria-label="Social links">
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">Listen to All Songs</span>
+      <a class="socialBtn" href="https://www.youtube.com/playlist?list=PLZhlXNLIR_y2kh3jwUmOObFkFRDPxF9vy" target="_blank" rel="noopener" aria-label="YouTube Playlist">
+        <svg viewBox="0 0 461.001 461.001" aria-hidden="true"><path d="M365.257,67.393H95.744C42.866,67.393,0,110.259,0,163.137v134.728c0,52.878,42.866,95.744,95.744,95.744h269.513c52.878,0,95.744-42.866,95.744-95.744V163.137C461.001,110.259,418.135,67.393,365.257,67.393z M300.506,237.056l-126.06,60.123c-3.359,1.602-7.239-0.847-7.239-4.568V168.607c0-3.774,3.982-6.22,7.348-4.514l126.06,63.881C304.363,229.873,304.298,235.248,300.506,237.056z"/></svg>
+      </a>
+    </div>
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">Follow on Instagram</span>
+      <a class="socialBtn" href="https://www.instagram.com/riaomshandilya/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 551.034 551.034" aria-hidden="true"><path d="M386.878,0H164.156C73.64,0,0,73.64,0,164.156v222.722c0,90.516,73.64,164.156,164.156,164.156h222.722c90.516,0,164.156-73.64,164.156-164.156V164.156C551.033,73.64,477.393,0,386.878,0z M495.6,386.878c0,60.045-48.677,108.722-108.722,108.722H164.156c-60.045,0-108.722-48.677-108.722-108.722V164.156c0-60.046,48.677-108.722,108.722-108.722h222.722c60.045,0,108.722,48.676,108.722,108.722L495.6,386.878L495.6,386.878z"/><path d="M275.517,133C196.933,133,133,196.933,133,275.516s63.933,142.517,142.517,142.517S418.034,354.1,418.034,275.516S354.101,133,275.517,133z M275.517,362.6c-48.095,0-87.083-38.988-87.083-87.083s38.989-87.083,87.083-87.083c48.095,0,87.083,38.988,87.083,87.083C362.6,323.611,323.611,362.6,275.517,362.6z"/><circle cx="418.31" cy="134.07" r="34.15"/></svg>
+      </a>
+    </div>
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">All My Links</span>
+      <a class="socialBtn" href="https://linktr.ee/riashandilya" target="_blank" rel="noopener" aria-label="Linktree">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.736 5.853 4.005-4.117 2.325 2.38-4.2 4.005h5.908v3.305h-5.937l4.229 4.108-2.325 2.334-5.74-5.769-5.741 5.769-2.325-2.325 4.229-4.108H2.226V8.121h5.909l-4.2-4.004 2.324-2.381 4.005 4.117V0h3.472v5.853zM10.229 24v-6.3h3.473V24h-3.473z"/></svg>
+      </a>
+    </div>
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">Buy My Books</span>
+      <a class="socialBtn" href="https://www.amazon.com/stores/Ria-Om-Shandilya/author/B09QN8NFFD" target="_blank" rel="noopener" aria-label="Amazon Store">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5zm10 15H4V9h2v2c0 .55.45 1 1 1s1-.45 1-1V9h8v2c0 .55.45 1 1 1s1-.45 1-1V9h2v11z"/></svg>
       </a>
     </div>
   </div>
-</header>
 
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1>User Guide</h1>
-      <p class="sub">Everything you need to know about verifying books, using bundles, and getting support</p>
-  <div class="btn-row" style="margin-top: 16px;">
-  <a class="btn" href="#connect-keyboard">Connect Keyboard</a>
-  <a class="btn" href="#verify-book">Verify Book</a>
-  <a class="btn" href="#bundles">Bundles</a>
-  <a class="btn" href="#faq">FAQ</a>
-  <a class="btn" href="#support">Support</a>
-</div>
+  <!-- ── Nav ── -->
+  <header class="banner">
+    <div class="navGrid">
+      <a href="https://riashandilya-svg.github.io/riaomshandilya/" class="navLogo" aria-label="Ria Om Shandilya Home">
+        <img src="logo1.png" alt="riaaz logo" style="height:50px;width:auto;display:block;object-fit:contain;" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
+        <div class="logoMedallion" style="display:none;"><span>R</span></div>
+      </a>
+      <div class="navTitle">
+        <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya™</a>
+      </div>
+      <div id="accountDock" class="accountDock" aria-label="Account actions">
+        <div class="accountLayout">
+          <div id="welcomeText" class="welcomeText">~ Namaste, Sangeet Lover ~</div>
+          <div class="actionStrip" role="navigation" aria-label="Account navigation">
+            <a class="stripItem primary" href="./dashboard.html">Dashboard</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <a class="stripItem" href="./user-guide.html">User Guide</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <a id="verifyBookLink" class="stripItem" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" style="display:none;">Verify Book</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <a class="stripItem" href="./pricing.html">Pricing</a>
+            <div class="stripDivider" aria-hidden="true"></div>
+            <button id="logoutBtn" class="stripItem" type="button">Logout</button>
+          </div>
+        </div>
+      </div>
     </div>
-    
-<!-- Connect Your Digital Piano / MIDI Keyboard (TOP SECTION) -->
-<section class="section" id="connect-keyboard">
+  </header>
 
-  <div class="section-header" onclick="toggleSection(this)">
-    <h2>Connect Your Digital Piano / Keyboard to Your Laptop (USB-MIDI Setup)</h2>
-    <div class="section-toggle">▼</div>
-  </div>
-
-  <div class="section-content">
-    <div class="section-inner">
-      <p>
-        You can use this app on a laptop, tablet, or mobile device. You can also play notes using your mouse or touch.
-        For the best experience, connect a digital piano or MIDI keyboard so the app can detect the notes you play and
-        display them instantly on screen.
-      </p>
-
-      <div class="info-box info">
-        <strong>Good to know:</strong> In most cases, this is “plug-and-play.”
-        Many keyboards support <strong>USB-MIDI</strong> and your device will recognize them automatically.
+  <main>
+    <!-- Page header -->
+    <div class="pageHeader">
+      <div class="pageEyebrow"><span class="star">★</span> riaaz platform <span class="star">★</span></div>
+      <h1 class="pageTitle">User Guide</h1>
+      <p class="pageSub">Everything you need to know about verifying books, connecting keyboards, bundles &amp; support</p>
+      <div class="btnRow">
+        <a class="navBtn" href="#connect-keyboard">🎹 Connect Keyboard</a>
+        <a class="navBtn" href="#verify-book">📖 Verify Book</a>
+        <a class="navBtn" href="#bundles">🎁 Bundles</a>
+        <a class="navBtn" href="#faq">❓ FAQ</a>
+        <a class="navBtn" href="#support">💬 Support</a>
       </div>
-
-      <h3 style="margin-top: 18px; font-size: 18px; font-weight: 700; color: var(--brand);">
-        What you need
-      </h3>
-
-      <div class="chip-row">
-        <div class="chip">1) A digital piano / MIDI keyboard</div>
-        <div class="chip">2) A USB cable (usually USB-B on the keyboard)</div>
-        <div class="chip">3) Your laptop (USB-A or USB-C port)</div>
-      </div>
-
-      <p class="muted-small">
-        Most keyboards have a square-ish <strong>USB-B</strong> port (often labeled “USB to Host”, “USB”, or “MIDI USB”).
-        Your laptop side may be <strong>USB-A</strong> (classic rectangle) or <strong>USB-C</strong> (small oval).
-      </p>
-
-      <!-- Images -->
-      <div class="img-grid">
-        <figure>
-          <img src="USB_A_TO_USB_B_CABLE.jpg" alt="USB-A to USB-B cable (printer-style cable) showing both ends">
-          <figcaption>
-            <strong>USB-A to USB-B cable</strong> (very common). The <strong>USB-B end</strong> goes into the keyboard.
-          </figcaption>
-        </figure>
-
-        <figure>
-          <img src="USB_B_PORT_ON_KEYBOARD.jpg" alt="Digital piano rear panel showing the USB-B / USB to Host port">
-          <figcaption>
-            <strong>Keyboard port (USB-B)</strong>. Look for labels like <strong>USB to Host</strong>, <strong>USB</strong>, or <strong>MIDI USB</strong>.
-          </figcaption>
-        </figure>
-
-        <figure>
-          <img src="USB_A_PORT_ON_LAPTOP.jpg" alt="USB-A ports on a laptop">
-          <figcaption>
-            <strong>Laptop USB-A port</strong> (rectangle). If you have this, use a <strong>USB-A to USB-B</strong> cable.
-          </figcaption>
-        </figure>
-
-        <figure>
-          <img src="USB_C_PORT_ON_LAPTOP.jpg" alt="USB-C port and/or Thunderbolt symbol on a laptop">
-          <figcaption>
-            <strong>Laptop USB-C port</strong> (small oval). If you have only USB-C, use a <strong>USB-C to USB-B</strong> cable
-            or a USB-C adapter/hub.
-          </figcaption>
-        </figure>
-      </div>
-
-      <div class="info-box warning">
-        <strong>Make sure you buy the right cable:</strong><br>
-        • If your laptop has USB-A: get <strong>USB-A → USB-B</strong><br>
-        • If your laptop has USB-C only: get <strong>USB-C → USB-B</strong> (or use a USB-C hub + USB-A → USB-B cable)<br>
-        • If your keyboard has only round 5-pin MIDI ports (no USB): you’ll need a <strong>USB-MIDI interface</strong> (MIDI IN/OUT).
-      </div>
-
-      <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">
-        Step-by-step setup
-      </h3>
-
-      <div class="steps">
-        <div class="step-card">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h3>Find the correct port on your keyboard</h3>
-            <p>
-              Turn the keyboard around and look for a port labeled <strong>USB</strong>, <strong>USB to Host</strong>, or <strong>MIDI USB</strong>.
-              This is usually a <strong>USB-B</strong> port (square-ish, “printer style”).
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h3>Connect the cable (keyboard first, then laptop)</h3>
-            <p>
-              Plug the <strong>USB-B end</strong> into your keyboard, then plug the other end into your laptop
-              (<strong>USB-A</strong> or <strong>USB-C</strong>, depending on your cable/adapter).
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h3>Power on the keyboard</h3>
-            <p>
-              Turn the keyboard on. Some models only “announce” themselves to the computer after they’re powered on,
-              so if the app doesn’t detect it immediately, power-cycle the keyboard once.
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">4</div>
-          <div class="step-content">
-            <h3>Open the app and allow MIDI access (if prompted)</h3>
-            <p>
-              In some browsers/devices you may see a prompt asking to allow a MIDI device. Click <strong>Allow</strong>.
-              Once connected, the app will detect your playing and show the notes on screen.
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">5</div>
-          <div class="step-content">
-            <h3>Play a few notes to confirm</h3>
-            <p>
-              Play single notes and then a chord. You should see the corresponding notes appear in the app immediately.
-              If nothing shows up, use the troubleshooting tips below.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">
-        Drivers and common installation notes
-      </h3>
-
-      <div class="info-box success">
-        <strong>Most keyboards:</strong> No driver needed. They are “class-compliant” USB-MIDI devices and work automatically.
-      </div>
-
-      <ul>
-        <li>
-          <strong>Windows:</strong> Usually installs the device automatically the first time you plug it in.
-          If Windows shows an error, or your keyboard brand provides a dedicated “USB-MIDI driver,” install the driver from the manufacturer’s official support page,
-          then unplug/replug the keyboard and try again.
-        </li>
-        <li>
-          <strong>Mac:</strong> Typically no driver needed for USB-MIDI. Just plug in the keyboard and refresh/reopen the browser tab if needed.
-        </li>
-        <li>
-          <strong>Chromebook:</strong> Many USB-MIDI keyboards work, but compatibility can vary by model and browser settings.
-          If it’s not detected, try a different browser or a powered USB-C hub.
-        </li>
-        <li>
-          <strong>Tablets / phones:</strong> You may need an <strong>OTG adapter</strong> (USB-C OTG or Lightning to USB adapter).
-          Once connected, allow MIDI/USB access when prompted.
-        </li>
-      </ul>
-
-      <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">
-        Troubleshooting (quick fixes)
-      </h3>
-
-      <div class="steps">
-        <div class="step-card">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h3>Try a different USB port or cable</h3>
-            <p>
-              Bad cables are more common than you’d think. If you’re using a hub, try plugging directly into the laptop (or try another hub).
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h3>Unplug → close the browser tab → reconnect</h3>
-            <p>
-              Some browsers only detect MIDI devices when the page loads. Close the app tab, reconnect the keyboard, then reopen the page.
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h3>Check the keyboard’s USB mode (if available)</h3>
-            <p>
-              A few keyboards have a setting related to USB/MIDI. If your keyboard has a “USB Mode,” set it to <strong>MIDI</strong> or <strong>USB-MIDI</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-number">4</div>
-          <div class="step-content">
-            <h3>Install the manufacturer driver (Windows, only if needed)</h3>
-            <p>
-              If your keyboard is not recognized or shows warnings in Windows, download and install the official driver for your exact model,
-              restart, then reconnect.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="info-box info" style="margin-top: 18px;">
-        <strong>Still stuck?</strong> Contact support and include:
-        your keyboard model name, your device (Windows/Mac/Chromebook), and whether you’re using a hub/adapter.
-      </div>
-
     </div>
-  </div>
-</section>
 
-    <!-- Book Verification Section -->
-<section class="section" id="verify-book">
+    <div class="ornament" aria-hidden="true"><span class="line"></span>❋ ✦ ❋<span class="line"></span></div>
+
+    <!-- Connect Your Digital Piano / MIDI Keyboard -->
+    <section class="section open" id="connect-keyboard">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h2>Connect Your Digital Piano / Keyboard (USB-MIDI Setup)</h2>
+        <div class="section-toggle">▼</div>
+      </div>
+      <div class="section-content">
+        <div class="section-inner">
+          <p>You can use this app on a laptop, tablet, or mobile device. You can also play notes using your mouse or touch. For the best experience, connect a digital piano or MIDI keyboard so the app can detect the notes you play and display them instantly on screen.</p>
+
+          <div class="info-box info">
+            <strong>Good to know:</strong> In most cases, this is "plug-and-play." Many keyboards support <strong>USB-MIDI</strong> and your device will recognize them automatically.
+          </div>
+
+          <h3 class="sub-heading">What you need</h3>
+          <div class="chip-row">
+            <div class="chip">1) A digital piano / MIDI keyboard</div>
+            <div class="chip">2) A USB cable (usually USB-B on the keyboard)</div>
+            <div class="chip">3) Your laptop (USB-A or USB-C port)</div>
+          </div>
+          <p class="muted-small">Most keyboards have a square-ish <strong>USB-B</strong> port (often labeled "USB to Host", "USB", or "MIDI USB"). Your laptop side may be <strong>USB-A</strong> (classic rectangle) or <strong>USB-C</strong> (small oval).</p>
+
+          <div class="img-grid">
+            <figure>
+              <img src="USB_A_TO_USB_B_CABLE.jpg" alt="USB-A to USB-B cable (printer-style cable) showing both ends">
+              <figcaption><strong>USB-A to USB-B cable</strong> (very common). The <strong>USB-B end</strong> goes into the keyboard.</figcaption>
+            </figure>
+            <figure>
+              <img src="USB_B_PORT_ON_KEYBOARD.jpg" alt="Digital piano rear panel showing the USB-B / USB to Host port">
+              <figcaption><strong>Keyboard port (USB-B)</strong>. Look for labels like <strong>USB to Host</strong>, <strong>USB</strong>, or <strong>MIDI USB</strong>.</figcaption>
+            </figure>
+            <figure>
+              <img src="USB_A_PORT_ON_LAPTOP.jpg" alt="USB-A ports on a laptop">
+              <figcaption><strong>Laptop USB-A port</strong> (rectangle). If you have this, use a <strong>USB-A to USB-B</strong> cable.</figcaption>
+            </figure>
+            <figure>
+              <img src="USB_C_PORT_ON_LAPTOP.jpg" alt="USB-C port and/or Thunderbolt symbol on a laptop">
+              <figcaption><strong>Laptop USB-C port</strong> (small oval). If you have only USB-C, use a <strong>USB-C to USB-B</strong> cable or a USB-C adapter/hub.</figcaption>
+            </figure>
+          </div>
+
+          <div class="info-box warning">
+            <strong>Make sure you buy the right cable:</strong><br>
+            • If your laptop has USB-A: get <strong>USB-A → USB-B</strong><br>
+            • If your laptop has USB-C only: get <strong>USB-C → USB-B</strong> (or use a USB-C hub + USB-A → USB-B cable)<br>
+            • If your keyboard has only round 5-pin MIDI ports (no USB): you'll need a <strong>USB-MIDI interface</strong> (MIDI IN/OUT).
+          </div>
+
+          <h3 class="sub-heading">Step-by-step setup</h3>
+          <div class="steps">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Find the correct port on your keyboard</h3>
+                <p>Turn the keyboard around and look for a port labeled <strong>USB</strong>, <strong>USB to Host</strong>, or <strong>MIDI USB</strong>. This is usually a <strong>USB-B</strong> port (square-ish, "printer style").</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Connect the cable (keyboard first, then laptop)</h3>
+                <p>Plug the <strong>USB-B end</strong> into your keyboard, then plug the other end into your laptop (<strong>USB-A</strong> or <strong>USB-C</strong>, depending on your cable/adapter).</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Power on the keyboard</h3>
+                <p>Turn the keyboard on. Some models only "announce" themselves to the computer after they're powered on, so if the app doesn't detect it immediately, power-cycle the keyboard once.</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h3>Open the app and allow MIDI access (if prompted)</h3>
+                <p>In some browsers/devices you may see a prompt asking to allow a MIDI device. Click <strong>Allow</strong>. Once connected, the app will detect your playing and show the notes on screen.</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">5</div>
+              <div class="step-content">
+                <h3>Play a few notes to confirm</h3>
+                <p>Play single notes and then a chord. You should see the corresponding notes appear in the app immediately. If nothing shows up, use the troubleshooting tips below.</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="sub-heading">Drivers and common installation notes</h3>
+          <div class="info-box success">
+            <strong>Most keyboards:</strong> No driver needed. They are "class-compliant" USB-MIDI devices and work automatically.
+          </div>
+          <ul>
+            <li><strong>Windows:</strong> Usually installs the device automatically the first time you plug it in. If Windows shows an error, install the driver from the manufacturer's official support page, then unplug/replug the keyboard and try again.</li>
+            <li><strong>Mac:</strong> Typically no driver needed for USB-MIDI. Just plug in the keyboard and refresh/reopen the browser tab if needed.</li>
+            <li><strong>Chromebook:</strong> Many USB-MIDI keyboards work, but compatibility can vary. If it's not detected, try a different browser or a powered USB-C hub.</li>
+            <li><strong>Tablets / phones:</strong> You may need an <strong>OTG adapter</strong> (USB-C OTG or Lightning to USB adapter). Once connected, allow MIDI/USB access when prompted.</li>
+          </ul>
+
+          <h3 class="sub-heading">Troubleshooting (quick fixes)</h3>
+          <div class="steps">
+            <div class="step-card">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Try a different USB port or cable</h3>
+                <p>Bad cables are more common than you'd think. If you're using a hub, try plugging directly into the laptop (or try another hub).</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Unplug → close the browser tab → reconnect</h3>
+                <p>Some browsers only detect MIDI devices when the page loads. Close the app tab, reconnect the keyboard, then reopen the page.</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Check the keyboard's USB mode (if available)</h3>
+                <p>A few keyboards have a setting related to USB/MIDI. If your keyboard has a "USB Mode," set it to <strong>MIDI</strong> or <strong>USB-MIDI</strong>.</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h3>Install the manufacturer driver (Windows, only if needed)</h3>
+                <p>If your keyboard is not recognized or shows warnings in Windows, download and install the official driver for your exact model, restart, then reconnect.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box info" style="margin-top: 18px;">
+            <strong>Still stuck?</strong> Contact support and include: your keyboard model name, your device (Windows/Mac/Chromebook), and whether you're using a hub/adapter.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Book Verification -->
+    <section class="section" id="verify-book">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>How to Verify Book Codes</h2>
         <div class="section-toggle">▼</div>
@@ -885,7 +711,6 @@ padding: 0;
       <div class="section-content">
         <div class="section-inner">
           <p>Follow these simple steps to verify your physical book and unlock book owner benefits:</p>
-
           <div class="steps">
             <div class="step-card">
               <div class="step-number">1</div>
@@ -894,7 +719,6 @@ padding: 0;
                 <p>Open your phone's camera and scan the QR code on your physical book. This will take you to the book code generation page.</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">2</div>
               <div class="step-content">
@@ -902,7 +726,6 @@ padding: 0;
                 <p>You'll be redirected to <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/get-book-code.html" target="_blank">get-book-code.html</a> where you'll receive a unique verification ID.</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">3</div>
               <div class="step-content">
@@ -910,7 +733,6 @@ padding: 0;
                 <p>Click the button to generate your personal verification code. Save this code!</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">4</div>
               <div class="step-content">
@@ -918,7 +740,6 @@ padding: 0;
                 <p>Navigate to <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/verify-book.html" target="_blank">verify-book.html</a> and paste your unique code.</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">5</div>
               <div class="step-content">
@@ -926,7 +747,6 @@ padding: 0;
                 <p>Upload a clear photo of your book as proof of ownership. This helps us prevent fraud.</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">6</div>
               <div class="step-content">
@@ -939,45 +759,28 @@ padding: 0;
           <div class="info-box success">
             <strong>That's it!</strong> Once verified, you'll unlock book owner pricing. The verify page will no longer be accessible as you're already verified. You'll continue to receive book owner discounts on all future purchases.
           </div>
-
           <div class="info-box warning">
             <strong>Video Bonus:</strong> Videos earn you 1 credit that can be redeemed for any song. By uploading a video, you agree to the terms outlined in our <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/video-consent-terms.html" target="_blank">video consent policy</a>.
           </div>
-
           <div class="info-box info">
             <strong>One-Time Verification:</strong> You only need to verify once. After verification, you permanently unlock book owner pricing and the verify page will no longer appear in your account.
           </div>
 
-          <div style="margin-top: 20px; padding: 20px; border-radius: 16px; border: 2px solid rgba(220,38,38,0.35); background: rgba(220,38,38,0.08);">
-            <h3 style="margin: 0 0 12px; font-size: 17px; font-weight: 800; color: #991b1b;">IMPORTANT LEGAL NOTICE: Verification Policy</h3>
-            
-            <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.86); font-weight: 600;">
-              <strong>Fraudulent Photo Submissions:</strong>
-            </p>
-            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.82);">
-              By submitting a photo during book verification, you hereby affirm and represent that said photo constitutes genuine proof of physical book ownership. Any submission of false, misleading, unrelated, or fraudulent imagery shall constitute a material breach of these terms. Upon detection of such violation, we reserve the absolute right to: (i) immediately and permanently revoke your account access; (ii) terminate all licenses to purchased content without refund or compensation; and (iii) permanently delete all purchased songs and associated materials from your account. All payments made prior to such revocation shall be deemed non-refundable. This is a zero-tolerance policy and such termination shall be final and irreversible.
-            </p>
-
-            <p style="margin: 0 0 12px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.86); font-weight: 600;">
-              <strong>Video Submission Policy and Violations:</strong>
-            </p>
-            <p style="margin: 0 0 16px; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.82);">
-              Video submissions must strictly pertain to your genuine review, commentary, or discussion of the physical book. The following shall constitute grounds for immediate and permanent account termination, forfeiture of all purchases, and potential legal action: (i) submission of any obscene, pornographic, sexually explicit, or indecent material; (ii) submission of violent, threatening, harassing, or defamatory content; (iii) submission of content unrelated to book review or discussion; (iv) submission of videos not featuring the submitting user; (v) submission of copyrighted material without proper authorization; or (vi) any content that violates applicable laws or regulations. We take the safety and integrity of our community with the utmost seriousness. Any violation of this policy will result in permanent account ban, forfeiture of all purchased content without refund, and we reserve the right to pursue all available legal remedies including but not limited to civil and criminal prosecution where applicable under local, state, federal, or international law.
-            </p>
-
-            <p style="margin: 0; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.86); font-weight: 600;">
-              <strong>Community Safety Commitment:</strong>
-            </p>
-            <p style="margin: 0; font-size: 14px; line-height: 1.7; color: rgba(26,26,31,0.82);">
-              We are committed to maintaining a safe, respectful, and lawful community for all users. By using our verification system, you acknowledge that you have read, understood, and agree to comply with these terms. Violations compromise the safety and trust of our entire user community and will be prosecuted to the fullest extent permitted by law. We maintain comprehensive logs and records of all submissions which may be provided to law enforcement authorities upon request or as required by law.
-            </p>
+          <div class="legal-notice">
+            <h3>⚠ IMPORTANT LEGAL NOTICE: Verification Policy</h3>
+            <h4>Fraudulent Photo Submissions:</h4>
+            <p>By submitting a photo during book verification, you hereby affirm and represent that said photo constitutes genuine proof of physical book ownership. Any submission of false, misleading, unrelated, or fraudulent imagery shall constitute a material breach of these terms. Upon detection of such violation, we reserve the absolute right to: (i) immediately and permanently revoke your account access; (ii) terminate all licenses to purchased content without refund or compensation; and (iii) permanently delete all purchased songs and associated materials from your account. All payments made prior to such revocation shall be deemed non-refundable. This is a zero-tolerance policy and such termination shall be final and irreversible.</p>
+            <h4>Video Submission Policy and Violations:</h4>
+            <p>Video submissions must strictly pertain to your genuine review, commentary, or discussion of the physical book. The following shall constitute grounds for immediate and permanent account termination, forfeiture of all purchases, and potential legal action: (i) submission of any obscene, pornographic, sexually explicit, or indecent material; (ii) submission of violent, threatening, harassing, or defamatory content; (iii) submission of content unrelated to book review or discussion; (iv) submission of videos not featuring the submitting user; (v) submission of copyrighted material without proper authorization; or (vi) any content that violates applicable laws or regulations.</p>
+            <h4>Community Safety Commitment:</h4>
+            <p>We are committed to maintaining a safe, respectful, and lawful community for all users. By using our verification system, you acknowledge that you have read, understood, and agree to comply with these terms. Violations compromise the safety and trust of our entire user community and will be prosecuted to the fullest extent permitted by law. We maintain comprehensive logs and records of all submissions which may be provided to law enforcement authorities upon request or as required by law.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- How Bundles Work Section -->
-<section class="section" id="bundles">
+    <!-- Bundles -->
+    <section class="section" id="bundles">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>How Bundles Work</h2>
         <div class="section-toggle">▼</div>
@@ -985,22 +788,19 @@ padding: 0;
       <div class="section-content">
         <div class="section-inner">
           <p>Bundles are a cost-effective way to unlock multiple songs at once. Here's everything you need to know:</p>
-
           <div class="info-box info">
             <strong>What is a bundle?</strong><br>
             A bundle gives you <strong>5 song credits</strong> at a discounted price. Each credit unlocks <strong>1 song</strong> of your choice.
           </div>
-
-          <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">Key Features:</h3>
+          <h3 class="sub-heading">Key Features</h3>
           <ul>
             <li><strong>Choose ANY song:</strong> Credits work across all books and all songs. No restrictions!</li>
             <li><strong>No expiration:</strong> Your credits never expire. Use them whenever you want.</li>
             <li><strong>Available to everyone:</strong> Both book owners and non-book owners can purchase bundles.</li>
             <li><strong>Best value:</strong> Bundles offer the lowest per-song price compared to individual purchases.</li>
-            <li><strong>Book owner discount:</strong> Book owners get bundles at a discounted rate compared to non-book owners.</li>
+            <li><strong>Book owner discount:</strong> Book owners get bundles at a discounted rate.</li>
           </ul>
-
-          <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700; color: var(--brand);">How to Use Your Credits:</h3>
+          <h3 class="sub-heading">How to Use Your Credits</h3>
           <div class="steps">
             <div class="step-card">
               <div class="step-number">1</div>
@@ -1009,7 +809,6 @@ padding: 0;
                 <p>Buy a 5-song bundle from the main site or your dashboard. Book owners get a discounted price.</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">2</div>
               <div class="step-content">
@@ -1017,7 +816,6 @@ padding: 0;
                 <p>Your 5 credits are instantly added to your account. Check your dashboard to see your balance.</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">3</div>
               <div class="step-content">
@@ -1025,7 +823,6 @@ padding: 0;
                 <p>Browse any book and select any song you like. No restrictions!</p>
               </div>
             </div>
-
             <div class="step-card">
               <div class="step-number">4</div>
               <div class="step-content">
@@ -1034,7 +831,6 @@ padding: 0;
               </div>
             </div>
           </div>
-
           <div class="info-box success">
             <strong>Pricing Example (INR):</strong><br>
             Book Owner Bundle: ₹550 for 5 songs (₹110 per song)<br>
@@ -1045,89 +841,34 @@ padding: 0;
       </div>
     </section>
 
-    <!-- FAQ Section -->
-<section class="section" id="faq">
+    <!-- FAQ -->
+    <section class="section" id="faq">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>Frequently Asked Questions</h2>
         <div class="section-toggle">▼</div>
       </div>
       <div class="section-content">
         <div class="section-inner">
-          <div class="faq-item">
-            <div class="faq-question">Q: How long does book verification take?</div>
-            <div class="faq-answer">A: Book verification is usually instant! Once you submit your code and photo, the system automatically verifies your book and updates your account immediately.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Can I verify multiple books?</div>
-            <div class="faq-answer">A: You only need to verify once. After your first verification, you permanently unlock book owner pricing and the verify page will no longer be accessible. You don't need to verify additional books.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: What if my QR code doesn't work?</div>
-            <div class="faq-answer">A: If the QR code isn't scanning, you can manually visit the book code generation page and follow the steps. If you continue to have issues, contact support.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Do bundle credits expire?</div>
-            <div class="faq-answer">A: No! Your credits never expire. Use them whenever you're ready to unlock new songs.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Can I use credits for any song in any book?</div>
-            <div class="faq-answer">A: Absolutely! Credits work across all four books with no restrictions. Mix and match songs from different books as you like.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Can non-book owners purchase bundles?</div>
-            <div class="faq-answer">A: Yes! Both book owners and non-book owners can purchase bundles. The difference is that book owners get bundles at a discounted price.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: What happens to my credits if I buy more songs individually?</div>
-            <div class="faq-answer">A: Your credits stay in your account. You can choose whether to use a credit or pay for each song individually.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: How do I earn the video bonus credit?</div>
-            <div class="faq-answer">A: During book verification, you'll have the option to upload a video review. If you do, you'll receive 1 free credit (worth 1 song). Make sure to read the <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/video-consent-terms.html" target="_blank">video consent terms</a> first.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Can I get a refund on bundle credits?</div>
-            <div class="faq-answer">A: Bundle purchases are final and non-refundable. However, since credits never expire, you can use them at your own pace.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: What's the difference between book owner and non-book owner pricing?</div>
-            <div class="faq-answer">A: Book owners get discounted pricing on both individual songs AND bundles. Non-book owners pay standard pricing but can still purchase bundles at a higher price. See the <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/pricing.html">pricing page</a> for details.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Can I share my account with friends or family?</div>
-            <div class="faq-answer">A: Each account is personal and tied to one email address. Account sharing is not permitted as it violates our terms of service.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: How do I track my progress on songs?</div>
-            <div class="faq-answer">A: Visit your dashboard to see all your purchased songs. You can mark each song as "Not Started," "In Progress," or "Completed" to track your learning journey.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: What payment methods do you accept?</div>
-            <div class="faq-answer">A: We use Razorpay as our payment processor, which accepts all major credit/debit cards, UPI (for Indian users), net banking, and various wallets.</div>
-          </div>
-
-          <div class="faq-item">
-            <div class="faq-question">Q: Will I lose book owner pricing if I don't verify all my books?</div>
-            <div class="faq-answer">A: No! Once you verify any book, you permanently unlock book owner pricing. You don't need to verify multiple books to maintain your discount.</div>
-          </div>
+          <div class="faq-item"><div class="faq-question">Q: How long does book verification take?</div><div class="faq-answer">A: Book verification is usually instant! Once you submit your code and photo, the system automatically verifies your book and updates your account immediately.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Can I verify multiple books?</div><div class="faq-answer">A: You only need to verify once. After your first verification, you permanently unlock book owner pricing and the verify page will no longer be accessible. You don't need to verify additional books.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: What if my QR code doesn't work?</div><div class="faq-answer">A: If the QR code isn't scanning, you can manually visit the book code generation page and follow the steps. If you continue to have issues, contact support.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Do bundle credits expire?</div><div class="faq-answer">A: No! Your credits never expire. Use them whenever you're ready to unlock new songs.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Can I use credits for any song in any book?</div><div class="faq-answer">A: Absolutely! Credits work across all four books with no restrictions. Mix and match songs from different books as you like.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Can non-book owners purchase bundles?</div><div class="faq-answer">A: Yes! Both book owners and non-book owners can purchase bundles. The difference is that book owners get bundles at a discounted price.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: What happens to my credits if I buy more songs individually?</div><div class="faq-answer">A: Your credits stay in your account. You can choose whether to use a credit or pay for each song individually.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: How do I earn the video bonus credit?</div><div class="faq-answer">A: During book verification, you'll have the option to upload a video review. If you do, you'll receive 1 free credit (worth 1 song). Make sure to read the <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/video-consent-terms.html" target="_blank">video consent terms</a> first.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Can I get a refund on bundle credits?</div><div class="faq-answer">A: Bundle purchases are final and non-refundable. However, since credits never expire, you can use them at your own pace.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: What's the difference between book owner and non-book owner pricing?</div><div class="faq-answer">A: Book owners get discounted pricing on both individual songs AND bundles. See the <a href="./pricing.html">pricing page</a> for full details.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Can I share my account with friends or family?</div><div class="faq-answer">A: Each account is personal and tied to one email address. Account sharing is not permitted as it violates our terms of service.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: How do I track my progress on songs?</div><div class="faq-answer">A: Visit your dashboard to see all your purchased songs. You can mark each song as "Not Started," "In Progress," or "Completed" to track your learning journey.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: What payment methods do you accept?</div><div class="faq-answer">A: We use Razorpay as our payment processor, which accepts all major credit/debit cards, UPI (for Indian users), net banking, and various wallets.</div></div>
+          <div class="faq-item"><div class="faq-question">Q: Will I lose book owner pricing if I don't verify all my books?</div><div class="faq-answer">A: No! Once you verify any book, you permanently unlock book owner pricing. You don't need to verify multiple books to maintain your discount.</div></div>
         </div>
       </div>
     </section>
 
-    <!-- Contact Support Section -->
-<section class="section" id="support">
+    <!-- Support -->
+    <section class="section" id="support">
       <div class="section-header" onclick="toggleSection(this)">
         <h2>Contact Support</h2>
         <div class="section-toggle">▼</div>
@@ -1137,235 +878,182 @@ padding: 0;
           <div class="contact-card">
             <h3>Need Help?</h3>
             <p>Can't find what you're looking for? Our support team is here to help!</p>
-            <div class="btn-row">
-              <a class="btn" href="https://riashandilya-svg.github.io/riaomshandilya/connect.html" target="_blank">
-                Contact Support
-              </a>
+            <div class="btnRow">
+              <a class="navBtn" href="https://riashandilya-svg.github.io/riaomshandilya/connect.html" target="_blank" style="background:linear-gradient(135deg,var(--marigold),var(--fuchsia));color:#fff;border-color:var(--gold-1);">💌 Contact Support</a>
             </div>
-            <p style="margin-top: 16px; font-size: 13px; color: rgba(26,26,31,0.64);">
-              We typically respond within 24 hours
-            </p>
+            <p style="margin-top: 16px; font-size: 13px; color: var(--muted);">We typically respond within 24 hours</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Quick Links -->
-    <div class="btn-row">
-      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/">Home</a>
-      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html">Dashboard</a>
-      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/verify-book.html">Verify Book</a>
-      <a class="btn" href="https://riashandilya-svg.github.io/classicbollywoodmelodies/pricing.html">Pricing</a>
+    <div class="ornament" aria-hidden="true" style="margin-top:32px;"><span class="line"></span>❋ ✦ ❋<span class="line"></span></div>
+
+    <!-- Quick links -->
+    <div class="btnRow" style="margin-bottom:8px;">
+      <a class="navBtn" href="https://riashandilya-svg.github.io/riaomshandilya/">🏠 Home</a>
+      <a class="navBtn" href="./dashboard.html">📊 Dashboard</a>
+      <a class="navBtn" href="./verify-book.html">📖 Verify Book</a>
+      <a class="navBtn" href="./pricing.html">💰 Pricing</a>
     </div>
+  </main>
 
-    <!-- Footer -->
-    <footer>
-      <div>© <span id="year"></span> Ria Om Shandilya. All rights reserved.</div>
-      <div style="margin-top:6px;">
-        Questions? <a href="https://riashandilya-svg.github.io/riaomshandilya/connect.html" target="_blank">Contact us</a>
-      </div>
-    </footer>
-  </div>
+  <footer>
+    <div>© <span id="year"></span> Ria Om Shandilya. All rights reserved.</div>
+    <div style="margin-top:6px;">Questions? <a href="https://riashandilya-svg.github.io/riaomshandilya/connect.html" target="_blank">Contact us</a></div>
+    <div class="madeWith">Made with <span class="heart">♥</span> for Bollywood music lovers</div>
+  </footer>
 
-  <!-- Image Lightbox (click to zoom) -->
-<dialog id="imgLightbox" class="lightbox" aria-label="Image preview">
-  <button class="lightbox-close" type="button" aria-label="Close">✕</button>
-  <img id="lightboxImg" alt="">
-  <p id="lightboxCaption" class="lightbox-caption"></p>
-</dialog>
-  
-  <!-- Glitter cursor (same as your other pages) -->
+  <!-- Lightbox -->
+  <dialog id="imgLightbox" class="lightbox" aria-label="Image preview">
+    <button class="lightbox-close" type="button" aria-label="Close">✕</button>
+    <img id="lightboxImg" alt="">
+    <p id="lightboxCaption" class="lightbox-caption"></p>
+  </dialog>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    (function(){
-      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const canvas = document.getElementById('glitter');
-      const ctx = canvas.getContext('2d', { alpha: true });
+    document.getElementById('year').textContent = new Date().getFullYear();
 
-      function resize(){
-        canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
-        canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
-        canvas.style.width = window.innerWidth + 'px';
-        canvas.style.height = window.innerHeight + 'px';
-        ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-      }
-      window.addEventListener('resize', resize);
-      resize();
+    function toggleSection(header) {
+      header.parentElement.classList.toggle('open');
+    }
 
-      const particles = [];
-      const MAX = 320;
-
-      function addSpark(x, y, intensity=1){
-        if(prefersReduced) return;
-
-        const count = Math.floor(7 * intensity);
-        for(let i=0;i<count;i++){
-          if(particles.length > MAX) particles.shift();
-
-          const angle = Math.random() * Math.PI * 2;
-          const speed = (0.30 + Math.random() * 2.0) * intensity;
-
-          particles.push({
-            x, y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 0.20,
-            life: 34 + Math.random() * 30,
-            size: 1.0 + Math.random() * 2.8,
-            tw: Math.random() * Math.PI * 2,
-            alpha: 0.52 + Math.random() * 0.34
-          });
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target && target.classList.contains('section')) {
+          document.querySelectorAll('.section').forEach(s => s.classList.remove('open'));
+          target.classList.add('open');
+          setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
         }
       }
+      document.querySelectorAll('a[href^="#"]').forEach((link) => {
+        link.addEventListener('click', () => {
+          const id = link.getAttribute('href');
+          const target = document.querySelector(id);
+          if (target && target.classList.contains('section')) target.classList.add('open');
+        });
+      });
 
+      // Auth
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) logoutBtn.addEventListener("click", async () => { await sb.auth.signOut(); await renderAuthUI(); });
+      sb.auth.onAuthStateChange(() => { renderAuthUI(); });
+      renderAuthUI();
+    });
+
+    async function renderAuthUI(){
+      try{
+        const { data: { session } } = await sb.auth.getSession();
+        const accountDock = document.getElementById("accountDock");
+        if (session && session.user) {
+          const { data: prof } = await sb.from("profiles").select("display_name, setup_completed, is_book_owner").eq("id", session.user.id).maybeSingle();
+          if (prof && prof.setup_completed === false){ window.location.href = "./setup.html"; return; }
+          const name = (prof && prof.display_name && String(prof.display_name).trim()) ? String(prof.display_name).trim() : "";
+          document.getElementById("welcomeText").textContent = name ? `Welcome, ${name}` : "~ Namaste, Sangeet Lover ~";
+          accountDock.style.display = "block";
+          const verifyBookLink = document.getElementById("verifyBookLink");
+          if (verifyBookLink) verifyBookLink.style.display = (prof && prof.is_book_owner === true) ? "none" : "inline-flex";
+        } else {
+          accountDock.style.display = "none";
+        }
+      } catch(e){ console.log("renderAuthUI error:", e); }
+    }
+
+    // Lightbox
+    (function(){
+      const dialog = document.getElementById('imgLightbox');
+      const imgEl = document.getElementById('lightboxImg');
+      const capEl = document.getElementById('lightboxCaption');
+      const closeBtn = dialog.querySelector('.lightbox-close');
+      document.querySelectorAll('.img-grid img').forEach((img) => {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', () => {
+          imgEl.src = img.src; imgEl.alt = img.alt || 'Image preview';
+          const fig = img.closest('figure');
+          const caption = fig ? fig.querySelector('figcaption') : null;
+          capEl.textContent = caption ? caption.innerText.trim() : '';
+          dialog.classList.remove('zoomed'); dialog.showModal();
+        });
+      });
+      closeBtn.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', (e) => {
+        const rect = dialog.getBoundingClientRect();
+        if (!(e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom)) dialog.close();
+      });
+      imgEl.addEventListener('click', (e) => { e.stopPropagation(); dialog.classList.toggle('zoomed'); });
+    })();
+
+    // Drifting music notes petals
+    (function(){
+      const petalsLayer = document.getElementById('petals');
+      if (!petalsLayer) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const NOTE_SVGS = [
+        `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="8" cy="18" rx="5" ry="3.5" fill="#D4A24A" opacity="0.85"/><rect x="12.5" y="3" width="2" height="15" fill="#D4A24A" opacity="0.85"/></svg>`,
+        `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="7" cy="19" rx="4.5" ry="3" fill="#B8862C" opacity="0.85"/><rect x="11" y="4" width="2" height="15" fill="#B8862C" opacity="0.85"/><path d="M13 4 Q22 6 20 13" stroke="#B8862C" stroke-width="2" fill="none" opacity="0.85"/></svg>`,
+        `<svg viewBox="0 0 28 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="6" cy="20" rx="4" ry="2.8" fill="#F5D67E" opacity="0.85"/><rect x="9.5" y="6" width="2" height="14" fill="#F5D67E" opacity="0.85"/><ellipse cx="18" cy="17" rx="4" ry="2.8" fill="#F5D67E" opacity="0.85"/><rect x="21.5" y="3" width="2" height="14" fill="#F5D67E" opacity="0.85"/><rect x="9.5" y="6" width="14" height="2.5" fill="#F5D67E" opacity="0.85"/></svg>`
+      ];
+      const COUNT = 6;
+      for (let i = 0; i < COUNT; i++){
+        const p = document.createElement('div');
+        p.className = 'petal'; p.innerHTML = NOTE_SVGS[i % NOTE_SVGS.length];
+        const dur = 18 + Math.random() * 22; const delay = -Math.random() * dur;
+        const size = 18 + Math.random() * 20;
+        const side = i % 2 === 0 ? Math.random() * 10 : 90 + Math.random() * 10;
+        p.style.left = side + 'vw'; p.style.width = size + 'px'; p.style.height = size + 'px';
+        p.style.animationDuration = dur + 's'; p.style.animationDelay = delay + 's'; p.style.opacity = 0.7;
+        petalsLayer.appendChild(p);
+      }
+    })();
+
+    // Gold glitter
+    (function(){
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const canvas = document.getElementById('glitter');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d', { alpha: true });
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(window.innerWidth * dpr); canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize, { passive: true }); resize();
+      const particles = []; const MAX = 320;
+      function addSpark(x, y, intensity) {
+        intensity = intensity || 1;
+        const count = Math.floor(7 * intensity);
+        for (let i = 0; i < count; i++) {
+          if (particles.length > MAX) particles.shift();
+          const angle = Math.random() * Math.PI * 2; const speed = (0.30 + Math.random() * 2.0) * intensity;
+          particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 0.20, life: 34+Math.random()*30, size: 1.0+Math.random()*2.8, tw: Math.random()*Math.PI*2, alpha: 0.52+Math.random()*0.34, hue: Math.random()<0.65?'gold':'white' });
+        }
+      }
       let last = { x: window.innerWidth/2, y: window.innerHeight/2 };
-      window.addEventListener('pointermove', (e) => {
-        const dx = e.clientX - last.x;
-        const dy = e.clientY - last.y;
-        const d = Math.min(34, Math.hypot(dx, dy));
-        const intensity = Math.max(0.75, d / 16);
-        addSpark(e.clientX, e.clientY, intensity);
-        last = { x: e.clientX, y: e.clientY };
-      }, { passive: true });
-
-      window.addEventListener('pointerdown', (e) => addSpark(e.clientX, e.clientY, 1.9), { passive: true });
-
+      window.addEventListener('pointermove', function(e){ const dx=e.clientX-last.x,dy=e.clientY-last.y; const d=Math.min(34,Math.hypot(dx,dy)); addSpark(e.clientX,e.clientY,Math.max(0.75,d/16)); last={x:e.clientX,y:e.clientY}; }, {passive:true});
+      window.addEventListener('pointerdown', function(e){ addSpark(e.clientX,e.clientY,1.9); }, {passive:true});
       function tick(){
         ctx.clearRect(0,0,canvas.width,canvas.height);
-
         for(let i=particles.length-1;i>=0;i--){
-          const p = particles[i];
-          p.life -= 1;
-          if(p.life <= 0){ particles.splice(i,1); continue; }
-
-          p.vx *= 0.986;
-          p.vy *= 0.986;
-          p.vy += 0.018;
-
-          p.x += p.vx;
-          p.y += p.vy;
-
-          p.tw += 0.22;
-          const twinkle = 0.62 + Math.sin(p.tw) * 0.38;
-          const fade = Math.min(1, p.life / 44);
-          const a = p.alpha * fade * twinkle;
-
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 191, 47, ${a})`;
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 255, 255, ${a * 0.55})`;
-          ctx.arc(p.x, p.y, p.size * 0.55, 0, Math.PI*2);
-          ctx.fill();
-
-          if(Math.random() < 0.24){
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.tw * 0.35);
-            ctx.globalAlpha = a * 0.90;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${a})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(-p.size*2.2, 0); ctx.lineTo(p.size*2.2, 0);
-            ctx.moveTo(0, -p.size*2.2); ctx.lineTo(0, p.size*2.2);
-            ctx.stroke();
-            ctx.restore();
-          }
+          const p=particles[i]; p.life-=1;
+          if(p.life<=0){particles.splice(i,1);continue;}
+          p.vx*=0.986; p.vy*=0.986; p.vy+=0.018; p.x+=p.vx; p.y+=p.vy; p.tw+=0.22;
+          const twinkle=0.62+Math.sin(p.tw)*0.38; const fade=Math.min(1,p.life/44); const a=p.alpha*fade*twinkle;
+          const dot=(p.hue==='white')?`rgba(255,255,255,${a*0.85})`:`rgba(255,186,0,${a})`;
+          ctx.beginPath(); ctx.fillStyle=dot; ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle=`rgba(255,220,100,${a*0.55})`; ctx.arc(p.x,p.y,p.size*0.55,0,Math.PI*2); ctx.fill();
+          if(Math.random()<0.24){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.tw*0.35);ctx.globalAlpha=a*0.92;ctx.strokeStyle=`rgba(245,214,126,${a})`;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-p.size*2.2,0);ctx.lineTo(p.size*2.2,0);ctx.moveTo(0,-p.size*2.2);ctx.lineTo(0,p.size*2.2);ctx.stroke();ctx.restore();}
         }
         requestAnimationFrame(tick);
       }
       tick();
     })();
-
-    // Set current year
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Toggle accordion sections
-    function toggleSection(header) {
-      const section = header.parentElement;
-      section.classList.toggle('open');
-    }
-
-    // Open first section by default
-    document.addEventListener('DOMContentLoaded', function() {
-      const firstSection = document.querySelector('.section');
-      if (firstSection) {
-        firstSection.classList.add('open');
-          // If the URL has a hash (ex: #faq), open that section automatically
-  if (window.location.hash) {
-    const target = document.querySelector(window.location.hash);
-    if (target && target.classList.contains('section')) {
-      target.classList.add('open');
-
-      // Optional: close the first section so only the target is open
-      if (firstSection && firstSection !== target) firstSection.classList.remove('open');
-    }
-  }
-
-  // When clicking the skip buttons, open the target section
-  document.querySelectorAll('a[href^="#"]').forEach((link) => {
-    link.addEventListener('click', () => {
-      const id = link.getAttribute('href');
-      const target = document.querySelector(id);
-      if (target && target.classList.contains('section')) {
-        target.classList.add('open');
-      }
-    });
-  });
-
-      }
-    });
-    // ---- Lightbox: click images to zoom ----
-(function(){
-  const dialog = document.getElementById('imgLightbox');
-  const imgEl = document.getElementById('lightboxImg');
-  const capEl = document.getElementById('lightboxCaption');
-  const closeBtn = dialog.querySelector('.lightbox-close');
-
-  // Make every image inside .img-grid clickable
-  document.querySelectorAll('.img-grid img').forEach((img) => {
-    img.style.cursor = 'zoom-in';
-
-    img.addEventListener('click', () => {
-      // Set the preview image + caption
-      imgEl.src = img.src;
-      imgEl.alt = img.alt || 'Image preview';
-
-      const fig = img.closest('figure');
-      const caption = fig ? fig.querySelector('figcaption') : null;
-      capEl.textContent = caption ? caption.innerText.trim() : '';
-
-      dialog.classList.remove('zoomed');
-      dialog.showModal();
-    });
-  });
-
-  // Close button
-  closeBtn.addEventListener('click', () => dialog.close());
-
-  // Click outside the image closes (clicking the backdrop)
-  dialog.addEventListener('click', (e) => {
-    const rect = dialog.getBoundingClientRect();
-    const clickedInDialog =
-      e.clientX >= rect.left && e.clientX <= rect.right &&
-      e.clientY >= rect.top  && e.clientY <= rect.bottom;
-
-    // If they clicked outside the dialog box area, close
-    if (!clickedInDialog) dialog.close();
-  });
-
-  // Pressing Escape closes automatically (dialog default behavior)
-
-  // Click the big preview image to toggle zoom mode
-  imgEl.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dialog.classList.toggle('zoomed');
-  });
-})();
-
-    
   </script>
 </body>
 </html>
