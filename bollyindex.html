@@ -1267,6 +1267,206 @@
       .courseHead{ grid-column:1; grid-row:2; }
       .courseBody{ grid-column:1; grid-row:3; }
     }
+
+    /* ── Browse All Songs Collapsible ── */
+    .songsSectionWrap{
+      margin-top: 28px; max-width: 1080px; margin-left: auto; margin-right: auto;
+    }
+    .actionBtnRow{
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .toggleBtn{
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 28px; border-radius: 999px;
+      border: 1.5px solid var(--border-gold-strong);
+      background: linear-gradient(135deg, rgba(255,176,0,0.18), rgba(232,21,107,0.10), rgba(255,176,0,0.10));
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+      color: var(--maroon); cursor: pointer;
+      transition: transform 0.14s, box-shadow 0.14s;
+      box-shadow: 0 6px 20px rgba(184,134,44,0.16);
+    }
+    .toggleBtn:hover{ transform: translateY(-1px); box-shadow: 0 10px 28px rgba(184,134,44,0.24); filter: brightness(1.04); }
+    .toggleBtn .chevron{ font-size: 13px; transition: transform 0.3s ease; display:inline-flex; }
+    .toggleBtn.open .chevron{ transform: rotate(180deg); }
+
+    .decideBtn{
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 13px 24px; border-radius: 999px;
+      border: 1.5px solid rgba(232,21,107,0.38);
+      background: linear-gradient(135deg, rgba(232,21,107,0.16), rgba(255,90,210,0.10), rgba(107,43,181,0.10));
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700;
+      color: var(--fuchsia); text-decoration: none; cursor: pointer;
+      transition: transform 0.14s, box-shadow 0.14s;
+      box-shadow: 0 6px 20px rgba(232,21,107,0.14); white-space: nowrap;
+    }
+    .decideBtn:hover{ transform: translateY(-1px); box-shadow: 0 10px 28px rgba(232,21,107,0.24); filter: brightness(1.05); }
+
+    .songsPanel{ display: none; margin-top: 22px; animation: slideDown 0.3s ease; }
+    .songsPanel.visible{ display: block; }
+    @keyframes slideDown{ from{ opacity:0; transform:translateY(-10px); } to{ opacity:1; transform:translateY(0); } }
+
+    .filterBar{
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center;
+      padding: 16px 20px; border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,244,224,0.75));
+      border: 1px solid var(--border-gold); box-shadow: var(--shadow-sm);
+    }
+    .searchInput{
+      flex: 1; min-width: 180px; padding: 10px 16px; border-radius: 999px;
+      border: 1px solid var(--border-gold-strong);
+      background: rgba(255,255,255,0.90); font-size: 14px;
+      font-family: 'DM Sans', sans-serif; color: var(--text); outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .searchInput:focus{ border-color: var(--marigold-deep); box-shadow: 0 0 0 3px rgba(255,176,0,0.14); }
+    .filterPills{ display: flex; gap: 7px; flex-wrap: wrap; }
+    .pill{
+      padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-gold);
+      background: rgba(255,255,255,0.70); font-size: 12px; font-weight: 700;
+      color: var(--muted); cursor: pointer; transition: all 0.14s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .pill:hover{ border-color: var(--border-gold-strong); color: var(--maroon); }
+    .pill.active-all{ background: linear-gradient(135deg, rgba(255,176,0,0.18), rgba(232,21,107,0.10)); border-color: var(--border-gold-strong); color: var(--maroon); }
+    .pill.active-easy{ background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(16,185,129,0.07)); border-color: rgba(16,185,129,0.30); color: #047857; }
+    .pill.active-moderate{ background: linear-gradient(135deg, rgba(245,158,11,0.14), rgba(245,158,11,0.07)); border-color: rgba(245,158,11,0.30); color: #b45309; }
+    .pill.pill-yt{
+      display: inline-flex; align-items: center;
+      background: linear-gradient(135deg, rgba(232,21,107,0.12), rgba(232,21,107,0.06));
+      border-color: rgba(232,21,107,0.28); color: var(--fuchsia); text-decoration: none;
+    }
+    .pill.pill-yt:hover{ background: linear-gradient(135deg, rgba(232,21,107,0.20), rgba(232,21,107,0.12)); }
+    .countLabel{ font-size: 14px; color: var(--muted); margin-left: auto; font-family: 'Cormorant Garamond', serif; font-style: italic; }
+
+    .songsGrid{ display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    @media (max-width: 900px){ .songsGrid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 480px){ .songsGrid{ grid-template-columns: 1fr; } }
+
+    .songCard{
+      border-radius: 18px; padding: 14px 15px 13px;
+      border: 1px solid var(--border-gold);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,248,224,0.80));
+      box-shadow: 0 6px 18px rgba(58,15,42,0.06), 0 2px 6px rgba(184,134,44,0.08);
+      backdrop-filter: blur(14px); position: relative; overflow: hidden;
+      transition: all 0.18s ease; display: flex; flex-direction: column; gap: 5px;
+      animation: fadeInUp 0.3s ease; min-height: 120px;
+    }
+    @keyframes fadeInUp{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+    .songCard:hover{
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 16px 40px rgba(58,15,42,0.14), 0 0 0 1px rgba(184,134,44,0.35);
+      border-color: var(--gold-1);
+    }
+    .songCard::before{
+      content:""; position:absolute; inset:-80px -60px auto auto;
+      width:180px; height:180px; border-radius:999px; opacity:0.6; pointer-events:none;
+    }
+    .songCard[data-book="romantic"]::before{ background: radial-gradient(circle, rgba(232,21,107,0.28), transparent 65%); }
+    .songCard[data-book="soulful"]::before{ background: radial-gradient(circle, rgba(107,43,181,0.28), transparent 65%); }
+    .songCard[data-book="peppy"]::before{ background: radial-gradient(circle, rgba(255,176,0,0.28), transparent 65%); }
+    .songCard[data-book="classic"]::before{ background: radial-gradient(circle, rgba(14,142,138,0.28), transparent 65%); }
+    .songCard > *{ position: relative; z-index: 1; }
+
+    .songHeader{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom: 2px; }
+    .songTitleRow{ display:flex; align-items:flex-start; gap:8px; flex:1; flex-wrap:wrap; }
+    .songName{ font-size:13px; font-weight:700; letter-spacing:-0.015em; line-height:1.3; color: var(--maroon); font-family: 'DM Sans', sans-serif; }
+    .infoBtn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:22px; height:22px; border-radius:50%;
+      border:1.5px solid var(--border-gold-strong); background: rgba(255,176,0,0.08);
+      color: var(--marigold-deep); font-size:12px; font-weight:700;
+      cursor:pointer; transition:all 0.2s; flex-shrink:0; margin-top:2px;
+      font-family:'DM Sans',sans-serif;
+    }
+    .infoBtn:hover{ background:rgba(255,176,0,0.18); border-color:var(--marigold); transform:scale(1.1); }
+    .songMeta{ font-size:11px; color: var(--muted); line-height:1.4; font-family: 'DM Sans', sans-serif; }
+    .songFooter{
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      margin-top: auto; padding-top: 8px;
+      border-top: 1px dashed rgba(184,134,44,0.28);
+    }
+    .diffCircle{
+      width: 22px; height: 22px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; flex-shrink: 0;
+    }
+    .diffCircle.easy{ background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(16,185,129,0.08)); color: #047857; border: 1px solid rgba(16,185,129,0.28); }
+    .diffCircle.moderate{ background: linear-gradient(135deg, rgba(245,158,11,0.18), rgba(245,158,11,0.08)); color: #b45309; border: 1px solid rgba(245,158,11,0.28); }
+    .diffCircle.advanced{ background: linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.08)); color: #991b1b; border: 1px solid rgba(239,68,68,0.28); }
+    .openLink{
+      display:inline-flex; align-items:center; gap:5px;
+      padding:6px 14px; border-radius:999px; font-size:11px; font-weight:700;
+      text-decoration:none; color: var(--maroon);
+      border:1px solid var(--border-gold-strong);
+      background: linear-gradient(135deg, rgba(255,176,0,0.16), rgba(232,21,107,0.08));
+      transition:all 0.14s; font-family:'DM Sans',sans-serif;
+    }
+    .openLink:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(184,134,44,0.22); }
+    .openLink svg{ width:11px; height:11px; }
+    .noResults{ text-align:center; padding:40px 20px; color:var(--muted); font-size:15px; font-family: 'Cormorant Garamond', serif; font-style: italic; }
+
+    /* ── Song Detail Modal ── */
+    .modalBackdrop{
+      display:none; position:fixed; inset:0;
+      background:rgba(58,15,42,0.50); backdrop-filter:blur(6px);
+      z-index:99999; align-items:center; justify-content:center; padding:18px;
+    }
+    .modalBackdrop.open{ display:flex; animation:fadeIn 0.2s ease; }
+    @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+    .modalBox{
+      width:100%; max-width:480px; border-radius:26px;
+      border:1px solid var(--border-gold-strong);
+      background: linear-gradient(160deg, #FFFAF0, #FFF4E0);
+      box-shadow:0 32px 80px rgba(58,15,42,0.32);
+      padding:30px; position:relative;
+      animation:slideUp 0.28s ease;
+    }
+    .modalBox::before{
+      content:""; position:absolute; inset: 10px; border-radius:18px;
+      border:1px dashed rgba(184,134,44,0.45); pointer-events:none;
+    }
+    @keyframes slideUp{ from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .modalClose{
+      position:absolute; top:14px; right:14px;
+      width:30px; height:30px; border:none; border-radius:50%;
+      background:rgba(255,176,0,0.12); color:var(--maroon);
+      font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all 0.2s;
+    }
+    .modalClose:hover{ background:rgba(255,176,0,0.22); transform:rotate(90deg); }
+    .modalSongTitle{ font-size:22px; font-weight:700; margin-bottom:8px; font-family:'Playfair Display',serif; font-style:italic; letter-spacing:-0.01em; color: var(--maroon); }
+    .modalBadgeRow{ display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .modalMetaGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; font-size:13px; }
+    .metaItem{ display:flex; gap:5px; }
+    .metaLabel{ color: var(--marigold-deep); font-weight:700; font-family:'DM Sans',sans-serif; }
+    .modalDesc{ font-size:15px; line-height:1.7; color:var(--maroon-soft); margin-bottom:18px; font-family:'Cormorant Garamond',serif; font-style:italic; }
+    .modalCta{
+      display:inline-flex; align-items:center; gap:7px;
+      padding:12px 22px; border-radius:999px; font-size:14px; font-weight:700;
+      text-decoration:none; color:#fff;
+      border:1.5px solid var(--gold-1);
+      background:linear-gradient(135deg,var(--marigold),var(--fuchsia));
+      transition:all 0.14s; box-shadow:0 6px 18px rgba(232,21,107,0.26);
+      font-family:'DM Sans',sans-serif; text-shadow:0 1px 0 rgba(58,15,42,0.18);
+    }
+    .modalCta:hover{ transform:translateY(-2px); box-shadow:0 10px 28px rgba(232,21,107,0.36); filter:brightness(1.05); }
+    .diffBadge{
+      display:inline-flex; align-items:center;
+      padding:4px 12px; border-radius:999px; font-size:10px; font-weight:700;
+      letter-spacing:0.6px; text-transform:uppercase; white-space:nowrap;
+    }
+    .diffBadge.easy{ background:linear-gradient(135deg,rgba(16,185,129,0.16),rgba(16,185,129,0.07)); color:#047857; border:1px solid rgba(16,185,129,0.24); }
+    .diffBadge.moderate{ background:linear-gradient(135deg,rgba(245,158,11,0.16),rgba(245,158,11,0.07)); color:#b45309; border:1px solid rgba(245,158,11,0.24); }
+    .diffBadge.advanced{ background:linear-gradient(135deg,rgba(239,68,68,0.16),rgba(239,68,68,0.07)); color:#991b1b; border:1px solid rgba(239,68,68,0.24); }
+    .bookTag{
+      display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
+      border-radius:999px; font-size:11px; font-weight:700; text-decoration:none; white-space:nowrap;
+    }
+    .bookTag.soulful{ background:rgba(107,43,181,0.10); border:1px solid rgba(107,43,181,0.24); color:var(--purple); }
+    .bookTag.romantic{ background:rgba(232,21,107,0.10); border:1px solid rgba(232,21,107,0.30); color:var(--fuchsia); }
+    .bookTag.peppy{ background:rgba(255,176,0,0.12); border:1px solid rgba(255,176,0,0.32); color:var(--marigold-deep); }
+    .bookTag.classic{ background:rgba(14,142,138,0.10); border:1px solid rgba(14,142,138,0.26); color:var(--teal-deep); }
   </style>
 </head>
 
@@ -1446,6 +1646,56 @@
 
     </section>
 
+    <!-- ── Browse All Songs + Help Me Decide ── -->
+    <div class="songsSectionWrap">
+      <div class="actionBtnRow">
+        <button class="toggleBtn" id="toggleBtn" onclick="togglePanel()">
+          <span style="font-size:16px;">🎹</span>
+          Browse All Songs
+          <span class="chevron">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4.5l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+        <a class="decideBtn" href="https://app.riaomshandilya.com/findsong.html" target="_blank" rel="noopener">
+          <span style="font-size:16px;">✨</span>
+          Help Me Decide
+        </a>
+      </div>
+
+      <div class="songsPanel" id="songsPanel">
+        <div class="filterBar">
+          <input class="searchInput" id="searchInput" placeholder="Search songs, keys, books…" oninput="renderSongs()" />
+          <div class="filterPills">
+            <button class="pill active-all" data-filter="all" onclick="setFilter('all',this)">All</button>
+            <button class="pill" data-filter="easy" onclick="setFilter('easy',this)">Easy</button>
+            <button class="pill" data-filter="moderate" onclick="setFilter('moderate',this)">Moderate</button>
+            <a class="pill pill-yt" href="https://www.youtube.com/playlist?list=PLZhlXNLIR_y2kh3jwUmOObFkFRDPxF9vy" target="_blank" rel="noopener">
+              <svg width="13" height="13" viewBox="0 0 461 461" style="flex-shrink:0;margin-right:3px;"><path d="M365.257,67.393H95.744C42.866,67.393,0,110.259,0,163.137v134.728c0,52.878,42.866,95.744,95.744,95.744h269.513c52.878,0,95.744-42.866,95.744-95.744V163.137C461.001,110.259,418.135,67.393,365.257,67.393z M300.506,237.056l-126.06,60.123c-3.359,1.602-7.239-0.847-7.239-4.568V168.607c0-3.774,3.982-6.22,7.348-4.514l126.06,63.881C304.363,229.873,304.298,235.248,300.506,237.056z" fill="currentColor"/></svg>
+              Listen to All
+            </a>
+          </div>
+          <span class="countLabel" id="countLabel"></span>
+        </div>
+        <div class="songsGrid" id="songsGrid"></div>
+        <div class="noResults" id="noResults" style="display:none">No songs match your search.</div>
+      </div>
+    </div>
+
+    <!-- Song Detail Modal -->
+    <div class="modalBackdrop" id="modalBackdrop" onclick="closeModal(event)">
+      <div class="modalBox">
+        <button class="modalClose" onclick="closeModalDirect()">×</button>
+        <div class="modalSongTitle" id="mTitle"></div>
+        <div class="modalBadgeRow" id="mBadge"></div>
+        <div class="modalMetaGrid" id="mMeta"></div>
+        <div class="modalDesc" id="mDesc"></div>
+        <a class="modalCta" id="mCta" href="#" target="_blank" rel="noopener">
+          Open Book
+          <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+
     <!-- ── Learn Piano Course ── -->
     <div style="margin-top:28px;max-width:1080px;margin-left:auto;margin-right:auto;">
       <p class="sectionLabel" style="margin-bottom:12px;text-align:left;padding-left:4px;">✦ New — Learn to Play</p>
@@ -1525,6 +1775,128 @@
 
     // Year
     document.getElementById('yr').textContent = new Date().getFullYear();
+
+    // ─────────── Songs data & logic ───────────
+    const BOOK_URLS = {
+      soulful:"https://app.riaomshandilya.com/soulfulindex.html",
+      romantic:"https://app.riaomshandilya.com/romanticindex.html",
+      peppy:"https://app.riaomshandilya.com/peppyindex.html",
+      classic:"https://app.riaomshandilya.com/classicindex.html"
+    };
+    const BOOK_LABELS = { soulful:"Soulful Melodies", romantic:"Romantic Melodies", peppy:"Peppy Melodies", classic:"Classic Melodies" };
+    const BOOK_EMOJIS = { soulful:"🎶", romantic:"💜", peppy:"🌟", classic:"🎵" };
+
+    const songs = [
+      { name:"Kaisi Paheli Zindagani", key:"B♭ Major", bpm:120, time:"2/4", diff:"easy", book:"peppy", desc:"A playful, rhythmically crisp melody in 2/4 — great for pianists developing a clean sense of two-beat phrasing." },
+      { name:"Darling", key:"D Minor", bpm:125, time:"2/4", diff:"easy", book:"peppy", desc:"This D Minor gem in 2/4 is a wonderful entry point for understanding minor key character at the piano." },
+      { name:"Jaane Kahan Mera Jigar Gaya Ji", key:"G Major", bpm:130, time:"4/4", diff:"easy", book:"peppy", desc:"A cheerful classic in G Major — ideal for pianists cementing four-beat counting." },
+      { name:"Senorita", key:"A Major", bpm:120, time:"4/4", diff:"moderate", book:"peppy", desc:"A polished A Major piece that challenges pianists with its syncopated rhythmic feel." },
+      { name:"Zoobie Doobie", key:"C Minor", bpm:90, time:"4/4", diff:"moderate", book:"peppy", desc:"The slower tempo of this C Minor piece is deceptive — it demands excellent control of touch." },
+      { name:"Gore Gore O Banke Chorre", key:"G Major", bpm:120, time:"2/4", diff:"moderate", book:"peppy", desc:"A spirited 2/4 piece that builds nimbleness and rhythmic precision." },
+      { name:"Naina Da Kya Kasoor", key:"D Major", bpm:120, time:"4/4", diff:"moderate", book:"peppy", desc:"A tender D Major melody requiring sensitive touch and tonal shaping." },
+      { name:"Slow Motion Angreza", key:"C Major", bpm:100, time:"2/4", diff:"moderate", book:"peppy", desc:"This C Major piece in 2/4 is a great study in controlled, unhurried articulation." },
+      { name:"Mere Saamne Wali Khidki Mein", key:"G Major", bpm:125, time:"4/4", diff:"easy", book:"romantic", desc:"A warm, singable G Major melody perfect for pianists learning to project a smooth cantabile line." },
+      { name:"Bade Acche Lagte Hain", key:"G Major", bpm:200, time:"3/4", diff:"easy", book:"romantic", desc:"A lilting waltz in G Major — a superb introduction to 3/4 metre for pianists." },
+      { name:"Raat Kali Ek Khwab Mein Aayi", key:"C Major", bpm:130, time:"4/4", diff:"easy", book:"romantic", desc:"A flowing C Major melody at a comfortable tempo — a pianist's dream for practising smooth hand coordination." },
+      { name:"Pal Pal Har Pal", key:"F Major", bpm:120, time:"4/4", diff:"easy", book:"romantic", desc:"A gentle F Major piece that develops a pianist's ability to sustain melodic phrases." },
+      { name:"Aaj Kal Tere Mere Pyaar Ke Charche", key:"A Major", bpm:80, time:"2/2", diff:"easy", book:"romantic", desc:"In cut time (2/2), this piece trains pianists to feel a broad, two-in-a-bar pulse." },
+      { name:"Piyu Bole", key:"F Major", bpm:160, time:"8/8", diff:"moderate", book:"romantic", desc:"An 8/8 groove in F Major — a rare and rewarding challenge for the rhythmically curious pianist." },
+      { name:"Khwab Ho Tum Ya Koi Haqeeqat", key:"G Major", bpm:120, time:"3/4", diff:"easy", book:"romantic", desc:"A dreamy waltz in G Major well suited for pianists consolidating 3/4 metre." },
+      { name:"Main Agar Kahun", key:"E Minor", bpm:120, time:"12/8", diff:"moderate", book:"romantic", desc:"A deeply expressive E Minor piece in 12/8 — compound metre that creates a natural rolling, triplet feel." },
+      { name:"Ek Ladki Bheegi Bhaagi Si", key:"A Minor", bpm:125, time:"4/4", diff:"easy", book:"classic", desc:"A breezy A Minor tune excellent for pianists getting comfortable with minor key melodies." },
+      { name:"Gulaabi Aankhen", key:"A Minor", bpm:100, time:"2/4", diff:"easy", book:"classic", desc:"A slower 2/4 piece in A Minor that rewards careful attention to tone and phrasing." },
+      { name:"Chookar Mere Mann Ko", key:"F Major", bpm:120, time:"4/4", diff:"easy", book:"classic", desc:"A warm F Major melody well suited to pianists practising smooth finger legato." },
+      { name:"Hai Apna Dil Toh Awaara", key:"G Major", bpm:120, time:"4/4", diff:"moderate", book:"classic", desc:"A lively G Major piece that challenges pianists with its rhythmic energy." },
+      { name:"Kal Ho Na Ho", key:"C Major", bpm:80, time:"4/4", diff:"moderate", book:"classic", desc:"A sweeping C Major ballad that demands real musical maturity at the piano." },
+      { name:"Ajeeb Dastan Hai Yeh", key:"G Major", bpm:160, time:"2/4", diff:"moderate", book:"classic", desc:"A brisk 2/4 piece that builds dexterity and rhythmic lightness." },
+      { name:"Aaoge Jab Tum Saajnaa", key:"G Major", bpm:120, time:"4/4", diff:"moderate", book:"classic", desc:"A soulful G Major melody that asks pianists to develop a searching, expressive tone." },
+      { name:"Maula Mere Le Le Meri Jaan", key:"D Major", bpm:120, time:"4/4", diff:"moderate", book:"classic", desc:"An intense D Major piece requiring committed dynamic shaping and strong melodic projection." },
+      { name:"Ae Hairate", key:"D Major", bpm:110, time:"4/4", diff:"easy", book:"soulful", desc:"A graceful D Major melody at a gentle tempo — ideal for pianists building confidence with smooth legato." },
+      { name:"Itna Na Mujhse Tu", key:"A Minor", bpm:140, time:"4/4", diff:"easy", book:"soulful", desc:"A flowing A Minor melody at a brisk pace that trains pianists to maintain smoothness." },
+      { name:"Jashn-e-Bahara", key:"A Major", bpm:140, time:"4/4", diff:"easy", book:"soulful", desc:"A bright, celebratory A Major melody that develops clean finger articulation." },
+      { name:"Srivalli", key:"A Major", bpm:125, time:"4/4", diff:"moderate", book:"soulful", desc:"A contemporary A Major piece with engaging rhythmic patterns that challenge pianists." },
+      { name:"Moh Moh Ke Dhaage", key:"D Major", bpm:120, time:"4/4", diff:"moderate", book:"soulful", desc:"An emotionally rich D Major piece where micro-dynamic shadings make all the difference." },
+      { name:"Allah Ke Bande", key:"G Major", bpm:175, time:"4/4", diff:"moderate", book:"soulful", desc:"A spiritually charged G Major piece at a lively tempo demanding strong rhythmic stamina." },
+      { name:"Kalank", key:"B♭ Major", bpm:110, time:"4/4", diff:"moderate", book:"soulful", desc:"A melancholic B♭ Major piece that develops sensitivity to harmonic colour and tonal weight." },
+      { name:"Teri Deewani", key:"E Minor", bpm:120, time:"6/8", diff:"moderate", book:"soulful", desc:"A distinctive E Minor piece in 6/8 that expands a pianist's rhythmic understanding." },
+    ];
+
+    let currentFilter = "all";
+
+    function togglePanel(){
+      const btn = document.getElementById("toggleBtn");
+      const panel = document.getElementById("songsPanel");
+      const isOpen = panel.classList.contains("visible");
+      panel.classList.toggle("visible", !isOpen);
+      btn.classList.toggle("open", !isOpen);
+      if(!isOpen) renderSongs();
+    }
+
+    function setFilter(f, el){
+      currentFilter = f;
+      document.querySelectorAll(".pill").forEach(p => {
+        const isYt = p.classList.contains("pill-yt");
+        p.className = "pill" + (isYt ? " pill-yt" : "");
+        if(p.dataset.filter === f) p.classList.add("active-" + f);
+      });
+      renderSongs();
+    }
+
+    function renderSongs(){
+      const q = (document.getElementById("searchInput").value || "").toLowerCase().trim();
+      const grid = document.getElementById("songsGrid");
+      const noRes = document.getElementById("noResults");
+      const countLabel = document.getElementById("countLabel");
+      const filtered = songs.filter(s => {
+        const mf = currentFilter === "all" || s.diff === currentFilter;
+        const ms = !q || s.name.toLowerCase().includes(q) || s.key.toLowerCase().includes(q) || BOOK_LABELS[s.book].toLowerCase().includes(q);
+        return mf && ms;
+      });
+      countLabel.textContent = filtered.length + " song" + (filtered.length !== 1 ? "s" : "");
+      if(!filtered.length){ grid.innerHTML = ""; noRes.style.display = "block"; return; }
+      noRes.style.display = "none";
+      grid.innerHTML = filtered.map(s => {
+        const idx = songs.indexOf(s);
+        const url = BOOK_URLS[s.book];
+        return `<div class="songCard" data-book="${s.book}">
+          <div class="songHeader">
+            <div class="songTitleRow"><span class="songName">${s.name}</span></div>
+            <button class="infoBtn" onclick="openSongModal(${idx})" aria-label="About ${s.name}">ⓘ</button>
+          </div>
+          <div class="songMeta">${s.key} · ${s.bpm} BPM · ${s.time}</div>
+          <div class="songFooter">
+            <span class="diffCircle ${s.diff}">${s.diff==='easy'?'E':s.diff==='moderate'?'M':'A'}</span>
+            <a class="openLink" href="${url}" target="_blank" rel="noopener">
+              Open
+              <svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6.5 2.5L10 6l-3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function openSongModal(idx){
+      const s = songs[idx];
+      const url = BOOK_URLS[s.book];
+      const label = BOOK_LABELS[s.book];
+      const emoji = BOOK_EMOJIS[s.book];
+      const diffLabel = s.diff === "easy" ? "Easy" : s.diff === "moderate" ? "Moderate" : "Advanced";
+      document.getElementById("mTitle").textContent = s.name;
+      document.getElementById("mBadge").innerHTML = `<span class="diffBadge ${s.diff}">${diffLabel}</span><a class="bookTag ${s.book}" href="${url}" target="_blank" rel="noopener">${emoji} ${label}</a>`;
+      document.getElementById("mMeta").innerHTML = `
+        <div class="metaItem"><span class="metaLabel">Key:</span><span>${s.key}</span></div>
+        <div class="metaItem"><span class="metaLabel">BPM:</span><span>${s.bpm}</span></div>
+        <div class="metaItem"><span class="metaLabel">Time:</span><span>${s.time}</span></div>
+        <div class="metaItem"><span class="metaLabel">Book:</span><span>${label}</span></div>`;
+      document.getElementById("mDesc").textContent = s.desc;
+      const cta = document.getElementById("mCta");
+      cta.href = url;
+      cta.innerHTML = `Open ${label} <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      document.getElementById("modalBackdrop").classList.add("open");
+    }
+    function closeModal(e){ if(e.target === document.getElementById("modalBackdrop")) closeModalDirect(); }
+    function closeModalDirect(){ document.getElementById("modalBackdrop").classList.remove("open"); }
+    document.addEventListener("keydown", e => { if(e.key === "Escape") closeModalDirect(); });
 
     // ─────────── Feedback modal ───────────
     function openFeedbackModal(){
