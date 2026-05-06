@@ -3,258 +3,470 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Get Your Book Code - Ria Om Shandilya</title>
-  
+  <title>Get Your Book Code — Ria Om Shandilya™</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600;1,700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Yatra+One&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #ffffff;
-      --surface: rgba(255,255,255,0.82);
-      --text: #1A1A1F;
-      --muted: rgba(26,26,31,0.70);
-      --border: rgba(140, 120, 160, 0.18);
-      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
-      --primary: #9b6eff;
+      --ivory: #FFF8EE;
+      --cream: #FBEFD8;
+      --paper: #FFF4E0;
+
+      --marigold: #FFB000;
+      --marigold-deep: #E8890B;
+      --fuchsia: #E8156B;
+      --teal: #0E8E8A;
+      --teal-deep: #075F5C;
+      --purple: #6B2BB5;
+      --purple-soft: #9B6EFF;
+
+      --gold-1: #D4A24A;
+      --gold-2: #F5D67E;
+      --gold-3: #B8862C;
+      --gold-grad: linear-gradient(135deg, #B8862C 0%, #F5D67E 35%, #D4A24A 65%, #B8862C 100%);
+
+      --maroon: #3A0F2A;
+      --maroon-soft: #5C1B40;
+      --text: #3A0F2A;
+      --muted: rgba(58,15,42,0.62);
+
+      --border-gold: rgba(184,134,44,0.32);
+      --border-gold-strong: rgba(184,134,44,0.55);
+
+      --shadow-sm: 0 2px 12px rgba(184,134,44,0.10);
+      --shadow: 0 10px 32px rgba(58,15,42,0.12), 0 2px 8px rgba(184,134,44,0.10);
+      --shadow-lg: 0 24px 60px rgba(58,15,42,0.18), 0 6px 16px rgba(232,21,107,0.10);
+
       --success: #10b981;
       --error: #ef4444;
     }
 
     * { box-sizing: border-box; }
+    html, body { overflow-x: hidden; }
 
     body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--text);
-      font-family: Inter, system-ui, -apple-system, sans-serif;
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
       background:
-        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
-        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
-        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
-        var(--bg);
+        radial-gradient(ellipse 900px 600px at 12% -5%, rgba(255,176,0,0.22), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 92% 6%, rgba(232,21,107,0.16), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 50% 38%, rgba(107,43,181,0.07), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 8% 70%, rgba(14,142,138,0.10), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 96% 95%, rgba(255,176,0,0.16), transparent 60%),
+        var(--ivory);
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.35;
+      background-image:
+        radial-gradient(rgba(184,134,44,0.06) 1px, transparent 1px),
+        radial-gradient(rgba(232,21,107,0.04) 1px, transparent 1px);
+      background-size: 18px 18px, 24px 24px;
+      background-position: 0 0, 9px 9px;
+      mix-blend-mode: multiply;
     }
 
+    /* ── Petals ── */
+    .petals { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+    .petal { position: absolute; width: 22px; height: 22px; opacity: 0; animation: drift linear infinite; filter: drop-shadow(0 2px 5px rgba(184,134,44,0.45)); }
+    .petal svg { width: 100%; height: 100%; display: block; }
+    @keyframes drift {
+      0%   { transform: translate3d(0,-10vh,0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.7; }
+      90%  { opacity: 0.7; }
+      100% { transform: translate3d(40px,110vh,0) rotate(540deg); opacity: 0; }
+    }
+    #glitter { position: fixed; inset: 0; z-index: 2; pointer-events: none; mix-blend-mode: screen; }
+
+    /* ── Banner / Nav ── */
     .banner {
-      position: sticky;
-      top: 0;
-      z-index: 9999;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.72);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(180deg, rgba(255,248,238,0.96), rgba(251,239,216,0.92));
+      backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border-gold);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.7), 0 6px 22px rgba(184,134,44,0.10);
     }
+    .banner::before, .banner::after {
+      content: ""; position: absolute; left: 0; right: 0; height: 2px;
+      background: var(--gold-grad); opacity: 0.85;
+    }
+    .banner::before { top: 0; }
+    .banner::after  { bottom: -1px; height: 1px; opacity: 0.55; }
 
+    .navGrid {
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; min-height: 68px; padding: 8px 16px; gap: 12px;
+    }
+    .navLogo { display: flex; align-items: center; text-decoration: none; grid-column: 1; padding-left: 4px; }
+    .navTitle { grid-column: 2; justify-self: center; text-align: center; min-width: 0; }
     .banner-link {
-      font-family: "Cormorant Garamond", serif;
-      font-weight: 600;
-      font-size: 22px;
-      letter-spacing: 0.7px;
-      color: inherit;
-      text-decoration: none;
-      padding: 8px 12px;
-      border-radius: 12px;
+      font-family: "Playfair Display", "Cormorant Garamond", serif;
+      font-weight: 700; font-style: italic; font-size: 26px;
+      letter-spacing: 0.5px; text-decoration: none; padding: 4px 10px;
+      border-radius: 12px; white-space: nowrap;
+      background: linear-gradient(100deg, #B8862C 0%, #D4A24A 18%, #F5D67E 38%, #FFFFFF 50%, #F5D67E 62%, #D4A24A 82%, #B8862C 100%);
+      background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(58,15,42,0.18));
+      animation: shimmerGold 7s ease-in-out infinite;
     }
+    @keyframes shimmerGold { 0%,100%{ background-position: 0% 50%; } 50%{ background-position: 100% 50%; } }
 
-    .banner-link:hover {
-      text-decoration: underline;
+    .navBack { grid-column: 3; justify-self: end; }
+    .backLink {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      color: var(--maroon-soft); text-decoration: none; padding: 8px 16px;
+      border-radius: 999px; border: 1px solid var(--border-gold-strong);
+      background: linear-gradient(180deg, #FFFFFF, #FFF4E0); box-shadow: var(--shadow-sm);
+      transition: background .14s, color .14s;
     }
+    .backLink:hover { background: linear-gradient(180deg, #FFF4E0, #FFE9C2); color: var(--maroon); }
 
+    /* ── Floating Social Dock ── */
+    .floatingSocialDock {
+      position: fixed; right: 18px; top: 50%; transform: translateY(-50%);
+      z-index: 90; display: flex; flex-direction: column; gap: 12px; align-items: center;
+    }
+    .socialBtnWrap { position: relative; display: flex; align-items: center; }
+    .socialBtnWrap .socialTooltip {
+      position: absolute; right: calc(100% + 12px); top: 50%;
+      transform: translateY(-50%) translateX(6px);
+      background: linear-gradient(180deg, #FFFFFF, #FFF4E0);
+      border: 1px solid var(--border-gold-strong); box-shadow: var(--shadow);
+      color: var(--maroon); font-size: 12px; font-weight: 700;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      letter-spacing: 0.03em; white-space: nowrap; padding: 7px 14px;
+      border-radius: 999px; pointer-events: none; opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .socialBtnWrap .socialTooltip::after {
+      content: ""; position: absolute; left: 100%; top: 50%;
+      transform: translateY(-50%); border: 5px solid transparent; border-left-color: #FFF4E0;
+    }
+    .socialBtnWrap:hover .socialTooltip { opacity: 1; transform: translateY(-50%) translateX(0); }
+    .socialBtn {
+      width: 44px; height: 44px; display: inline-grid; place-items: center;
+      border-radius: 999px; border: 1.5px solid var(--gold-1);
+      background: linear-gradient(180deg, #FFFFFF, #FFF4E0);
+      box-shadow: 0 4px 14px rgba(184,134,44,0.20), inset 0 0 0 1px rgba(255,255,255,0.7);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      text-decoration: none; position: relative;
+    }
+    .socialBtn::before {
+      content: ""; position: absolute; inset: -3px; border-radius: 999px;
+      background: var(--gold-grad); opacity: 0; filter: blur(8px);
+      transition: opacity .25s ease; z-index: -1;
+    }
+    .socialBtn:hover { transform: translateY(-3px) scale(1.06); background: linear-gradient(180deg, #FFF4E0, #FFE4B5); }
+    .socialBtn:hover::before { opacity: 0.85; }
+    .socialBtn svg { width: 20px; height: 20px; display: block; }
+    .socialBtn svg, .socialBtn svg * { fill: var(--maroon) !important; stroke: none !important; transition: fill .18s ease; }
+    .socialBtn:hover svg, .socialBtn:hover svg * { fill: var(--fuchsia) !important; }
+
+    /* ── Main ── */
     main {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 44px 18px 70px;
+      position: relative; z-index: 3;
+      max-width: 720px; margin: 0 auto;
+      padding: 32px 18px 72px;
     }
 
+    /* ── Page Hero ── */
+    .pageHero { text-align: center; margin-bottom: 28px; }
+    .heroEyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--maroon-soft); padding: 6px 16px; border-radius: 999px;
+      background: linear-gradient(180deg, #FFF, #FFF4E0);
+      border: 1px solid var(--border-gold-strong);
+      box-shadow: 0 4px 14px rgba(184,134,44,0.16); margin-bottom: 14px;
+    }
+    .heroEyebrow .star { color: var(--marigold-deep); font-size: 12px; }
+    .pageTitle {
+      font-family: 'Playfair Display', serif; font-weight: 800; font-style: italic;
+      font-size: clamp(28px, 4vw, 46px); line-height: 1.10; letter-spacing: -0.015em; margin: 0 0 10px;
+      background: linear-gradient(100deg, #6B2BB5 0%, #E8156B 22%, #FFB000 42%, #F5D67E 50%, #FFB000 58%, #E8156B 78%, #6B2BB5 100%);
+      background-size: 240% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(232,21,107,0.20));
+      animation: shimmerGold 8s ease-in-out infinite;
+    }
+    .pageSub {
+      color: var(--maroon-soft); font-size: 16px; line-height: 1.55; margin: 0;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500;
+    }
+
+    /* ── Ornament ── */
+    .ornament {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; margin: 20px auto 26px; max-width: 480px;
+    }
+    .ornament .line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-1), transparent); }
+    .ornament .glyph { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--gold-1); letter-spacing: 0.4em; }
+
+    /* ── Card ── */
     .card {
-      background: var(--surface);
-      border-radius: 22px;
-      padding: 40px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
+      position: relative; border-radius: 28px; padding: 36px 32px 32px;
+      background:
+        radial-gradient(ellipse 420px 260px at 100% 0%, rgba(255,176,0,0.12), transparent 55%),
+        linear-gradient(160deg, #FFFAF0 0%, #FFF4E0 100%);
+      border: 1.5px solid var(--border-gold-strong);
+      box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(255,255,255,0.55);
+      overflow: hidden;
+    }
+    .card::before {
+      content: ""; position: absolute; inset: 12px; border-radius: 20px;
+      border: 1px dashed rgba(184,134,44,0.40); pointer-events: none;
     }
 
-    h1 {
-      font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.2;
-      margin: 0 0 12px;
-      text-align: center;
+    /* ── Loading ── */
+    .loading {
+      text-align: center; padding: 48px 20px;
+      color: var(--maroon-soft); font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 17px;
+    }
+    .spinner {
+      width: 42px; height: 42px; border-radius: 50%; margin: 0 auto 18px;
+      border: 3px solid var(--border-gold);
+      border-top: 3px solid var(--marigold-deep);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Form elements ── */
+    .cardSectionLabel {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600;
+      font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--marigold-deep); margin: 0 0 4px;
     }
 
-    .subtitle {
-      text-align: center;
-      color: var(--muted);
-      margin: 0 0 32px;
-      font-size: 16px;
-      line-height: 1.6;
+    .welcomeText {
+      color: var(--maroon-soft); font-size: 15px; line-height: 1.75; margin: 0 0 24px;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 500;
     }
 
-    .form-group {
-      margin-bottom: 24px;
-    }
-
-    label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 8px;
-      font-size: 15px;
+    .form-group { margin-bottom: 22px; }
+    .fieldLabel {
+      display: block; font-weight: 700; font-size: 12px;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--maroon); margin-bottom: 8px;
     }
 
     select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font-size: 16px;
-      font-family: inherit;
-      background: white;
+      width: 100%; padding: 12px 16px; border-radius: 14px;
+      border: 1px solid var(--border-gold-strong);
+      font-size: 15px; font-family: 'DM Sans', sans-serif;
+      background: rgba(255,255,255,0.95); color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M2 4.5l5 5 5-5' stroke='%235C1B40' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
     }
-
     select:focus {
-      outline: none;
-      border-color: var(--primary);
+      outline: none; border-color: var(--marigold-deep);
+      box-shadow: 0 0 0 3px rgba(255,176,0,0.18);
     }
 
+    /* ── Buttons ── */
     .btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
-      color: #2b1140;
-      font-weight: 650;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
+      width: 100%; padding: 15px 24px; border-radius: 999px;
+      border: 1.5px solid var(--gold-1);
+      background: linear-gradient(135deg, var(--marigold) 0%, var(--fuchsia) 60%, var(--purple) 120%);
+      color: #fff; font-weight: 700; font-size: 15px; letter-spacing: 0.04em;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      text-shadow: 0 1px 0 rgba(58,15,42,0.18);
+      box-shadow: 0 8px 24px rgba(232,21,107,0.28), inset 0 0 0 1px rgba(255,255,255,0.22);
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
     }
-
     .btn:hover:not(:disabled) {
       transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(232,21,107,0.38), 0 0 0 3px rgba(255,176,0,0.20);
       filter: brightness(1.05);
     }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    /* ── Code result ── */
+    .successBox {
+      background: rgba(14,142,138,0.06); border: 1px solid rgba(14,142,138,0.28);
+      border-radius: 18px; padding: 28px 24px; margin: 0 0 22px; text-align: center;
+    }
+    .successLabel {
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600;
+      font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--teal-deep); margin: 0 0 14px;
+    }
+    .codeDisplay {
+      font-family: 'Playfair Display', serif; font-style: italic; font-weight: 800;
+      font-size: clamp(26px, 5vw, 38px); letter-spacing: 5px;
+      background: var(--gold-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 2px 6px rgba(184,134,44,0.22));
+      padding: 18px 20px; margin: 0 0 14px;
+      background-color: rgba(255,255,255,0.85);
+      border: 1.5px dashed var(--border-gold-strong);
+      border-radius: 16px; display: block;
+    }
+    .saveHint {
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: 14px; color: var(--teal-deep); font-weight: 600; margin: 0;
     }
 
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: var(--muted);
+    /* ── Instruction box ── */
+    .instructionBox {
+      position: relative; border-radius: 18px; padding: 22px 24px; margin: 0 0 22px;
+      background: linear-gradient(135deg, rgba(255,176,0,0.08), rgba(232,21,107,0.05));
+      border: 1px solid var(--border-gold-strong);
+      overflow: hidden;
     }
-
-    .spinner {
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--primary);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 16px;
+    .instructionBox::before {
+      content: ""; position: absolute; inset: 8px; border-radius: 12px;
+      border: 1px dashed rgba(184,134,44,0.35); pointer-events: none;
     }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .instructionBox h3 {
+      font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700;
+      font-size: 18px; color: var(--maroon); margin: 0 0 14px; position: relative; z-index: 1;
     }
-
-    .hidden {
-      display: none !important;
+    .instructionBox ol {
+      margin: 0; padding-left: 22px; position: relative; z-index: 1;
     }
-
-    .success-box {
-      background: rgba(16, 185, 129, 0.08);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 12px;
-      padding: 24px;
-      margin: 24px 0;
-      text-align: center;
+    .instructionBox li {
+      margin: 9px 0; line-height: 1.65; font-size: 14px; color: var(--maroon-soft);
+      font-family: 'DM Sans', sans-serif;
     }
+    .instructionBox li strong { color: var(--maroon); }
 
-    .code-display {
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--primary);
-      letter-spacing: 3px;
-      margin: 20px 0;
-      padding: 20px;
-      background: white;
-      border-radius: 12px;
-      border: 2px dashed var(--primary);
+    /* ── Status messages ── */
+    .success-text {
+      background: rgba(14,142,138,0.07); border: 1px solid rgba(14,142,138,0.25);
+      border-radius: 12px; padding: 13px 16px; margin: 12px 0;
+      color: var(--teal-deep); font-size: 15px; line-height: 1.65; font-weight: 600;
     }
-
-    .info-text {
-      color: var(--success);
-      font-size: 15px;
-      line-height: 1.6;
-      margin: 12px 0;
-    }
-
     .error-text {
-      color: var(--error);
-      font-size: 15px;
-      margin: 16px 0;
+      background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 12px; padding: 13px 16px; margin: 12px 0;
+      color: #991b1b; font-size: 15px; line-height: 1.65; font-weight: 600;
     }
+    .success-text p, .error-text p { margin: 0; }
 
-    .instruction-box {
-      background: rgba(255, 200, 100, 0.1);
-      border: 1px solid rgba(255, 200, 100, 0.3);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 24px 0;
+    .hidden { display: none !important; }
+
+    /* ── Footer ── */
+    footer {
+      position: relative; z-index: 3; max-width: 720px; margin: 24px auto 0;
+      padding: 24px 18px 40px; text-align: center; color: var(--muted);
+      font-size: 13px; border-top: 1px solid var(--border-gold);
     }
-
-    .instruction-box h3 {
-      color: #d97706;
-      font-size: 18px;
-      margin: 0 0 12px;
+    footer::before {
+      content: "❋ ✦ ❋"; display: block; color: var(--gold-1);
+      letter-spacing: 0.6em; font-size: 14px; margin-bottom: 14px;
     }
+    footer a { color: var(--fuchsia); text-decoration: none; border-bottom: 1px solid var(--border-gold-strong); }
+    footer a:hover { color: var(--marigold-deep); }
+    footer .madeWith { margin-top: 8px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 14px; color: var(--maroon-soft); }
+    footer .heart { color: var(--fuchsia); }
 
-    .instruction-box ol {
-      margin: 0;
-      padding-left: 20px;
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      .banner-link { font-size: 20px; }
+      .card { padding: 26px 18px 22px; border-radius: 22px; }
+      .card::before { inset: 8px; }
+      .codeDisplay { font-size: 22px; letter-spacing: 3px; }
+      .floatingSocialDock { right: 10px; gap: 9px; }
+      .floatingSocialDock .socialBtn { width: 38px; height: 38px; }
+      .socialBtnWrap .socialTooltip { display: none; }
     }
-
-    .instruction-box li {
-      margin: 8px 0;
-      line-height: 1.6;
+    @media (prefers-reduced-motion: reduce) {
+      .pageTitle, .banner-link { animation: none !important; }
+      #glitter, .petals { display: none !important; }
     }
   </style>
 </head>
 <body>
+
+  <div class="petals" aria-hidden="true" id="petals"></div>
+  <canvas id="glitter" aria-hidden="true"></canvas>
+
+  <!-- Floating Social Dock -->
+  <div class="floatingSocialDock" aria-label="Social links">
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">Listen to All Songs</span>
+      <a class="socialBtn" href="https://www.youtube.com/playlist?list=PLZhlXNLIR_y2kh3jwUmOObFkFRDPxF9vy" target="_blank" rel="noopener" aria-label="YouTube Playlist">
+        <svg viewBox="0 0 461.001 461.001" aria-hidden="true"><path d="M365.257,67.393H95.744C42.866,67.393,0,110.259,0,163.137v134.728c0,52.878,42.866,95.744,95.744,95.744h269.513c52.878,0,95.744-42.866,95.744-95.744V163.137C461.001,110.259,418.135,67.393,365.257,67.393z M300.506,237.056l-126.06,60.123c-3.359,1.602-7.239-0.847-7.239-4.568V168.607c0-3.774,3.982-6.22,7.348-4.514l126.06,63.881C304.363,229.873,304.298,235.248,300.506,237.056z"/></svg>
+      </a>
+    </div>
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">Follow on Instagram</span>
+      <a class="socialBtn" href="https://www.instagram.com/riaomshandilya/" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg viewBox="0 0 551.034 551.034" aria-hidden="true"><path d="M386.878,0H164.156C73.64,0,0,73.64,0,164.156v222.722c0,90.516,73.64,164.156,164.156,164.156h222.722c90.516,0,164.156-73.64,164.156-164.156V164.156C551.033,73.64,477.393,0,386.878,0z M495.6,386.878c0,60.045-48.677,108.722-108.722,108.722H164.156c-60.045,0-108.722-48.677-108.722-108.722V164.156c0-60.046,48.677-108.722,108.722-108.722h222.722c60.045,0,108.722,48.676,108.722,108.722L495.6,386.878L495.6,386.878z"/><path d="M275.517,133C196.933,133,133,196.933,133,275.516s63.933,142.517,142.517,142.517S418.034,354.1,418.034,275.516S354.101,133,275.517,133z M275.517,362.6c-48.095,0-87.083-38.988-87.083-87.083s38.989-87.083,87.083-87.083c48.095,0,87.083,38.988,87.083,87.083C362.6,323.611,323.611,362.6,275.517,362.6z"/><circle cx="418.31" cy="134.07" r="34.15"/></svg>
+      </a>
+    </div>
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">All My Links</span>
+      <a class="socialBtn" href="https://linktr.ee/riashandilya" target="_blank" rel="noopener" aria-label="Linktree">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13.736 5.853 4.005-4.117 2.325 2.38-4.2 4.005h5.908v3.305h-5.937l4.229 4.108-2.325 2.334-5.74-5.769-5.741 5.769-2.325-2.325 4.229-4.108H2.226V8.121h5.909l-4.2-4.004 2.324-2.381 4.005 4.117V0h3.472v5.853zM10.229 24v-6.3h3.473V24h-3.473z"/></svg>
+      </a>
+    </div>
+    <div class="socialBtnWrap">
+      <span class="socialTooltip">Buy My Books</span>
+      <a class="socialBtn" href="https://www.amazon.com/stores/Ria-Om-Shandilya/author/B09QN8NFFD" target="_blank" rel="noopener" aria-label="Amazon Store">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5zm10 15H4V9h2v2c0 .55.45 1 1 1s1-.45 1-1V9h8v2c0 .55.45 1 1 1s1-.45 1-1V9h2v11z"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Nav -->
   <header class="banner">
-    <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+    <div class="navGrid">
+      <a href="https://riashandilya-svg.github.io/riaomshandilya/" class="navLogo" aria-label="Ria Om Shandilya Home">
+        <img src="logo1.png" alt="riaaz logo" style="height:50px;width:auto;display:block;object-fit:contain;">
+      </a>
+      <div class="navTitle">
+        <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya™</a>
+      </div>
+      <div class="navBack">
+        <a class="backLink" href="./dashboard.html">← Dashboard</a>
+      </div>
+    </div>
   </header>
 
   <main>
+
+    <!-- Page Hero -->
+    <div class="pageHero">
+      <div class="heroEyebrow"><span class="star">★</span> Book Owners <span class="star">★</span></div>
+      <h1 class="pageTitle">📖 Welcome, Book Owner!</h1>
+      <p class="pageSub">Get your unique verification code and unlock exclusive benefits</p>
+    </div>
+
+    <!-- Ornament -->
+    <div class="ornament" aria-hidden="true">
+      <span class="line"></span><span class="glyph">✦</span><span class="line"></span>
+    </div>
+
+    <!-- Card -->
     <div class="card">
-      <h1>📖 Welcome Book Owner!</h1>
-      <p class="subtitle">Get your unique verification code and unlock exclusive benefits</p>
 
       <div id="authCheck" class="loading">
         <div class="spinner"></div>
-        <p>Checking your account...</p>
+        <p>Checking your account…</p>
       </div>
 
       <div id="codeGenerator" class="hidden">
         <div id="messageArea"></div>
 
+        <!-- Book selection form -->
         <div id="selectBookForm">
-          <p style="color: var(--text); line-height: 1.7; margin-bottom: 24px;">
-            Thank you for purchasing our book! To unlock your book owner benefits and exclusive discounted pricing, 
+          <p class="cardSectionLabel">Step 1 of 2 — Select Your Book</p>
+          <p class="welcomeText">
+            Thank you for purchasing our book! To unlock your book owner benefits and exclusive discounted pricing,
             we'll generate a unique verification code just for you.
           </p>
 
           <div class="form-group">
-            <label for="bookType">Which book did you purchase?</label>
+            <label class="fieldLabel" for="bookType">Which book did you purchase?</label>
             <select id="bookType">
-              <option value="">-- Select your book --</option>
+              <option value="">— Select your book —</option>
               <option value="soulful">Soulful Bollywood Melodies</option>
               <option value="peppy">Peppy Bollywood Melodies</option>
               <option value="romantic">Romantic Bollywood Melodies</option>
@@ -263,21 +475,24 @@
           </div>
 
           <button class="btn" id="generateBtn" onclick="generateCode()">
-            Generate My Code
+            ✨ Generate My Code
           </button>
         </div>
 
+        <!-- Code result -->
         <div id="codeResult" class="hidden">
-          <div class="success-box">
-            <p class="info-text">✅ <strong>Your unique verification code:</strong></p>
-            <div class="code-display" id="codeDisplay"></div>
-            <p class="info-text">📝 Write this code down or take a screenshot!</p>
+          <p class="cardSectionLabel">Step 2 of 2 — Your Code is Ready</p>
+
+          <div class="successBox">
+            <p class="successLabel">★ Your Unique Verification Code ★</p>
+            <span class="codeDisplay" id="codeDisplay"></span>
+            <p class="saveHint">📝 Write this down or take a screenshot before continuing!</p>
           </div>
 
-          <div class="instruction-box">
-            <h3>🎯 Next Steps:</h3>
+          <div class="instructionBox">
+            <h3>🎯 Next Steps</h3>
             <ol>
-              <li><strong>Save your code</strong> - You'll need it to verify your book ownership</li>
+              <li><strong>Save your code</strong> — you'll need it to verify your book ownership</li>
               <li><strong>Click the button below</strong> to go to the verification page</li>
               <li><strong>Enter this code</strong> on the verification page</li>
               <li><strong>Upload a photo</strong> of your book to complete verification</li>
@@ -289,43 +504,41 @@
             Continue to Verification →
           </button>
         </div>
+
       </div>
     </div>
+
   </main>
+
+  <footer>
+    <div>© <span id="yr"></span> Ria Om Shandilya™. All rights reserved.</div>
+    <div style="margin-top:6px;">
+      <a href="https://riashandilya-svg.github.io/riaomshandilya/">riaomshandilya.com</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:riaomshandilya@gmail.com">riaomshandilya@gmail.com</a>
+    </div>
+    <div class="madeWith">Made with <span class="heart">❤</span> in India · सुर · ताल · सुरूर</div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
-    
     window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let generatedCode = '';
+    document.getElementById('yr').textContent = new Date().getFullYear();
 
     async function checkAuth() {
       try {
         const { data: { session }, error } = await window.supabase.auth.getSession();
-        
         const authCheck = document.getElementById('authCheck');
         const codeGenerator = document.getElementById('codeGenerator');
 
-        if (error) {
-          console.error('Auth error:', error);
+        if (error || !session) {
           authCheck.innerHTML = `
-            <p style="color: var(--error);">Error checking authentication. Please try again.</p>
-            <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
-              Go to Login
-            </a>
-          `;
-          return;
-        }
-
-        if (!session) {
-          authCheck.innerHTML = `
-            <p style="color: var(--error);">You must be logged in to get your verification code.</p>
-            <a href="./login.html" class="btn" style="display: inline-block; text-decoration: none; max-width: 200px; margin: 20px auto;">
-              Go to Login
-            </a>
+            <p style="color:#991b1b;font-weight:600;margin-bottom:14px;">You must be logged in to get your verification code.</p>
+            <a href="./login.html" class="btn" style="display:inline-block;text-decoration:none;max-width:200px;margin:0 auto;">Go to Login</a>
           `;
           return;
         }
@@ -333,10 +546,8 @@
         authCheck.classList.add('hidden');
         codeGenerator.classList.remove('hidden');
       } catch (err) {
-        console.error('Unexpected error:', err);
-        document.getElementById('authCheck').innerHTML = `
-          <p style="color: var(--error);">An error occurred. Please refresh the page.</p>
-        `;
+        document.getElementById('authCheck').innerHTML =
+          '<p style="color:#991b1b;font-weight:600;">An error occurred. Please refresh the page.</p>';
       }
     }
 
@@ -344,136 +555,64 @@
       const prefix = bookType.toUpperCase().substring(0, 4);
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let code = '';
-      for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
+      for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
       return `${prefix}-${code}`;
     }
 
     async function generateCode() {
       const bookType = document.getElementById('bookType').value;
       const btn = document.getElementById('generateBtn');
-      
-      if (!bookType) {
-        showMessage('Please select which book you purchased', 'error');
-        return;
-      }
 
-      btn.disabled = true;
-      btn.textContent = 'Generating your code...';
+      if (!bookType) { showMessage('Please select which book you purchased', 'error'); return; }
+
+      btn.disabled = true; btn.textContent = 'Generating your code…';
 
       try {
         const { data: { session } } = await window.supabase.auth.getSession();
-        if (!session) {
-          throw new Error('Not authenticated');
-        }
-
+        if (!session) throw new Error('Not authenticated');
         const userId = session.user.id;
 
-        // Check if user has EVER verified ANY book
-        const { data: userProfile, error: profileError } = await window.supabase
-          .from('profiles')
-          .select('is_book_owner')
-          .eq('id', userId)
-          .maybeSingle();
+        const { data: userProfile } = await window.supabase
+          .from('profiles').select('is_book_owner').eq('id', userId).maybeSingle();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error checking profile:', profileError);
-        }
-
-        // If they already verified a book, redirect them
         if (userProfile && userProfile.is_book_owner === true) {
-          showMessage('You have already verified a book! Redirecting to dashboard...', 'error');
-          setTimeout(() => {
-            window.location.href = './dashboard.html';
-          }, 2000);
+          showMessage('You have already verified a book! Redirecting to dashboard…', 'error');
+          setTimeout(() => { window.location.href = './dashboard.html'; }, 2000);
           return;
         }
 
-        // ✅ FIXED: Check for unused codes and DELETE them (user is starting over)
-        const { data: existingUnusedCodes, error: unusedCheckError } = await window.supabase
-          .from('book_verification_codes')
-          .select('id, code')
-          .eq('generated_by_user_id', userId)
-          .eq('is_used', false);
+        const { data: existingUnusedCodes } = await window.supabase
+          .from('book_verification_codes').select('id, code')
+          .eq('generated_by_user_id', userId).eq('is_used', false);
 
-        if (unusedCheckError && unusedCheckError.code !== 'PGRST116') {
-          console.error('Error checking for unused codes:', unusedCheckError);
-        }
-
-        // Delete any old unused codes (they're refreshing/starting over)
         if (existingUnusedCodes && existingUnusedCodes.length > 0) {
-          console.log('🗑️ Deleting', existingUnusedCodes.length, 'old unused code(s)');
-          
-          const codeIds = existingUnusedCodes.map(c => c.id);
-          const { error: deleteError } = await window.supabase
-            .from('book_verification_codes')
-            .delete()
-            .in('id', codeIds);
-
-          if (deleteError) {
-            console.error('Error deleting old codes:', deleteError);
-            // Continue anyway
-          } else {
-            console.log('✅ Old unused codes deleted successfully');
-          }
+          await window.supabase.from('book_verification_codes')
+            .delete().in('id', existingUnusedCodes.map(c => c.id));
         }
 
-        // Generate unique code
         let code = generateUniqueCode(bookType);
-        let attempts = 0;
-        let codeExists = true;
-
-        // Keep generating until we get a unique code
+        let attempts = 0, codeExists = true;
         while (codeExists && attempts < 10) {
           const { data: checkCode } = await window.supabase
-            .from('book_verification_codes')
-            .select('code')
-            .eq('code', code)
-            .maybeSingle();
-          
-          if (!checkCode) {
-            codeExists = false;
-          } else {
-            code = generateUniqueCode(bookType);
-            attempts++;
-          }
+            .from('book_verification_codes').select('code').eq('code', code).maybeSingle();
+          if (!checkCode) { codeExists = false; } else { code = generateUniqueCode(bookType); attempts++; }
         }
+        if (attempts >= 10) throw new Error('Could not generate unique code. Please try again.');
 
-        if (attempts >= 10) {
-          throw new Error('Could not generate unique code. Please try again.');
-        }
-
-        // Insert the new code into database
-        const { data: insertData, error: insertError } = await window.supabase
+        const { error: insertError } = await window.supabase
           .from('book_verification_codes')
-          .insert({
-            code: code,
-            book_name: bookType,
-            is_used: false,
-            generated_by_user_id: userId,
-            created_at: new Date().toISOString()
-          })
-          .select();
+          .insert({ code, book_name: bookType, is_used: false, generated_by_user_id: userId, created_at: new Date().toISOString() });
 
-        if (insertError) {
-          console.error('Error inserting code:', insertError);
-          throw new Error('Failed to generate code. Please try again.');
-        }
+        if (insertError) throw new Error('Failed to generate code. Please try again.');
 
-        console.log('✅ Code generated:', code);
-
-        // Show the code to user
         generatedCode = code;
         document.getElementById('codeDisplay').textContent = code;
         document.getElementById('selectBookForm').classList.add('hidden');
         document.getElementById('codeResult').classList.remove('hidden');
 
       } catch (error) {
-        console.error('❌ Error:', error);
         showMessage(error.message || 'Failed to generate code. Please try again.', 'error');
-        btn.disabled = false;
-        btn.textContent = 'Generate My Code';
+        btn.disabled = false; btn.textContent = '✨ Generate My Code';
       }
     }
 
@@ -482,12 +621,84 @@
     }
 
     function showMessage(text, type) {
-      const messageArea = document.getElementById('messageArea');
-      const className = type === 'error' ? 'error-text' : 'info-text';
-      messageArea.innerHTML = `<p class="${className}">${text}</p>`;
+      const el = document.getElementById('messageArea');
+      el.className = type === 'error' ? 'error-text' : 'success-text';
+      el.innerHTML = '<p>' + text + '</p>';
     }
 
     checkAuth();
+
+    // ── Drifting music note petals ──
+    (function(){
+      const layer = document.getElementById('petals');
+      if (!layer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const SVGS = [
+        `<svg viewBox="0 0 24 24"><ellipse cx="8" cy="18" rx="5" ry="3.5" fill="#D4A24A" opacity=".85"/><rect x="12.5" y="3" width="2" height="15" fill="#D4A24A" opacity=".85"/></svg>`,
+        `<svg viewBox="0 0 24 24"><ellipse cx="7" cy="19" rx="4.5" ry="3" fill="#B8862C" opacity=".85"/><rect x="11" y="4" width="2" height="15" fill="#B8862C" opacity=".85"/><path d="M13 4 Q22 6 20 13" stroke="#B8862C" stroke-width="2" fill="none" opacity=".85"/></svg>`,
+        `<svg viewBox="0 0 28 24"><ellipse cx="6" cy="20" rx="4" ry="2.8" fill="#F5D67E" opacity=".85"/><rect x="9.5" y="6" width="2" height="14" fill="#F5D67E" opacity=".85"/><ellipse cx="18" cy="17" rx="4" ry="2.8" fill="#F5D67E" opacity=".85"/><rect x="21.5" y="3" width="2" height="14" fill="#F5D67E" opacity=".85"/><rect x="9.5" y="6" width="14" height="2.5" fill="#F5D67E" opacity=".85"/></svg>`,
+      ];
+      for (let i = 0; i < 6; i++){
+        const p = document.createElement('div'); p.className = 'petal';
+        p.innerHTML = SVGS[i % SVGS.length];
+        const dur = 18 + Math.random() * 22;
+        p.style.left = (i % 2 === 0 ? Math.random() * 10 : 90 + Math.random() * 10) + 'vw';
+        p.style.width = p.style.height = (18 + Math.random() * 20) + 'px';
+        p.style.animationDuration = dur + 's';
+        p.style.animationDelay = (-Math.random() * dur) + 's';
+        layer.appendChild(p);
+      }
+    })();
+
+    // ── Gold glitter cursor ──
+    (function(){
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const canvas = document.getElementById('glitter'); if (!canvas) return;
+      const ctx = canvas.getContext('2d', { alpha: true });
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + 'px'; canvas.style.height = window.innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize, { passive: true }); resize();
+      const particles = []; const MAX = 280;
+      function addSpark(x, y, intensity){
+        intensity = intensity || 1;
+        for (let i = 0; i < Math.floor(6 * intensity); i++){
+          if (particles.length > MAX) particles.shift();
+          const angle = Math.random() * Math.PI * 2, speed = (0.28 + Math.random() * 1.8) * intensity;
+          particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 0.18,
+            life: 32 + Math.random()*28, size: 1+Math.random()*2.6,
+            tw: Math.random()*Math.PI*2, alpha: 0.5+Math.random()*0.32,
+            hue: Math.random()<0.65?'gold':'white' });
+        }
+      }
+      let last = { x: window.innerWidth/2, y: window.innerHeight/2 };
+      window.addEventListener('pointermove', e => {
+        addSpark(e.clientX, e.clientY, Math.max(0.7, Math.min(34, Math.hypot(e.clientX-last.x, e.clientY-last.y))/16));
+        last = { x: e.clientX, y: e.clientY };
+      }, { passive: true });
+      window.addEventListener('pointerdown', e => addSpark(e.clientX, e.clientY, 1.8), { passive: true });
+      (function tick(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = particles.length-1; i >= 0; i--){
+          const p = particles[i]; p.life--;
+          if (p.life <= 0){ particles.splice(i,1); continue; }
+          p.vx *= 0.986; p.vy *= 0.986; p.vy += 0.018; p.x += p.vx; p.y += p.vy; p.tw += 0.22;
+          const a = p.alpha * Math.min(1, p.life/42) * (0.62 + Math.sin(p.tw)*0.38);
+          ctx.beginPath(); ctx.fillStyle = p.hue==='white' ? `rgba(255,255,255,${a*0.82})` : `rgba(255,186,0,${a})`;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+          if (Math.random() < 0.22){
+            ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.tw*0.35);
+            ctx.globalAlpha = a*0.9; ctx.strokeStyle = `rgba(245,214,126,${a})`; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(-p.size*2.2,0); ctx.lineTo(p.size*2.2,0);
+            ctx.moveTo(0,-p.size*2.2); ctx.lineTo(0,p.size*2.2); ctx.stroke(); ctx.restore();
+          }
+        }
+        requestAnimationFrame(tick);
+      })();
+    })();
   </script>
 </body>
 </html>
