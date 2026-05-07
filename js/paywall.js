@@ -825,7 +825,13 @@ const res = await fetch(
       body: JSON.stringify({ plan_type: planType }),
     }
   );
-  const data = await res.json();
+const data = await res.json();
+
+  if (!res.ok) {
+    console.error("[PAYWALL] ❌ create-subscription failed:", data);
+    alert("Subscription error: " + (data?.error || JSON.stringify(data)));
+    return;
+  }
 
   const options = {
     key: data.key_id,
