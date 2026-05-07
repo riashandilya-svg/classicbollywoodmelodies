@@ -3346,63 +3346,29 @@ async function initScoreMode() {
 
 // SVG pages: aajkal-1.svg, aajkal-2.svg, aajkal-3.svg
 // Must be served from same folder as the HTML
-
-  // Row definitions: each row = one system (treble+bass), cropped viewBox
-const SVG_ROWS = {
-    1: [ // Page 1 has 5 rows
-        {viewBox: '0 620 2977.2 440',  measures: [1,2,3,4,5,6,7]},
-        {viewBox: '0 1310 2977.2 450', measures: [8,9,10,11,12,13,14]},
-        {viewBox: '0 2050 2977.2 410', measures: [15,16,17,18,19,20,21]},
-        {viewBox: '0 2745 2977.2 410', measures: [22,23,24,25,26,27,28]},
-        {viewBox: '0 3440 2977.2 400', measures: [29,30,31,32,33,34,35,36]},
-    ],
-    2: [ // Page 2 — use full page single view until we analyze it
-        {viewBox: '0 0 2977.2 4208.4', measures: []},
-    ],
-    3: [
-        {viewBox: '0 0 2977.2 4208.4', measures: []},
-    ],
-};
-
-let _rawSvgText = {}; // cache raw SVG text per page
-
 async function renderScorePage(pageNum) {
     const container = document.getElementById('scoreObj');
-
-    // Fetch and cache SVG text
-    if (!_rawSvgText[pageNum]) {
-        const response = await fetch(`aajkal-${pageNum}.svg`);
-        _rawSvgText[pageNum] = await response.text();
+    const response = await fetch(`aajkal-${pageNum}.svg`);
+    const svgText = await response.text();
+    container.innerHTML = svgText;
+    const svgEl = container.querySelector('svg');
+    if (svgEl) {
+        svgEl.style.width = '100%';
+        svgEl.style.height = 'auto';
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
     }
-    const svgText = _rawSvgText[pageNum];
-    const rows = SVG_ROWS[pageNum] || [{viewBox: '0 0 2977.2 4208.4', measures: []}];
-
-    // Render one <svg> per row, each with its own cropped viewBox
-    container.innerHTML = rows.map((row, i) => {
-        // Extract just the inner SVG content (everything between <svg ...> and </svg>)
-        const innerMatch = svgText.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
-        const inner = innerMatch ? innerMatch[1] : '';
-        return `<div class="score-row" data-row="${i}" style="width:100%;margin-bottom:8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                 viewBox="${row.viewBox}"
-                 style="width:100%;height:auto;display:block;background:white;border-radius:6px;border:1px solid rgba(235,50,70,0.15);">
-                ${inner}
-            </svg>
-        </div>`;
-    }).join('');
-
-    // Reset MIDI map — now built across ALL rows' SVGs
+    // Build MIDI→element map for this page
     _svgMidiMap = new Map();
     _svgStaffGroups = [];
     _buildSvgMidiMap();
     updateScorePageLabel();
-
+    // Re-highlight if practice is active
     if (scoreModeActive && currentTrainingNote) {
         const noteObj = practiceNotes[trainingIndex];
         if (noteObj) highlightScoreNote(currentTrainingNote, noteObj.midi, noteObj.track, noteObj);
     }
 }
-  
 
 function updateScorePageLabel() {
     document.getElementById('scorePageLabel').textContent =
@@ -3507,11 +3473,11 @@ let _svgStaffGroups = [];
 function _buildSvgMidiMap() {
     const container = document.getElementById('scoreObj');
     if (!container) return;
-    const svgEl = container.querySelector('svg'); // use first SVG for staff geometry
+    const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
     const allY = [];
-    container.querySelectorAll('.StaffLines').forEach(el => {
+    svgEl.querySelectorAll('.StaffLines').forEach(el => {
         const pts = el.getAttribute('points');
         if (pts) allY.push(parseFloat(pts.split(',')[1]));
     });
@@ -3528,8 +3494,8 @@ function _buildSvgMidiMap() {
         clef: i%2===0 ? 'treble' : 'bass'
     }));
 
-  _svgMidiMap = new Map();
-    container.querySelectorAll('.Note').forEach(el => {
+    _svgMidiMap = new Map();
+    svgEl.querySelectorAll('.Note').forEach(el => {
         const t = el.getAttribute('transform') || '';
         const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
         if (!mm) return;
@@ -3547,19 +3513,17 @@ function _buildSvgMidiMap() {
         if (!_svgMidiMap.has(midi)) _svgMidiMap.set(midi, []);
         _svgMidiMap.get(midi).push({ el, tx, ty });
     });
-console.log('✅ SVG map:', _svgMidiMap.size, 'pitches');
+    console.log('✅ SVG map:', _svgMidiMap.size, 'pitches');
 
-    // Add glow filter to every SVG row
-    container.querySelectorAll('svg').forEach(svg => {
-        if (!svg.querySelector('#hlGlow')) {
-            const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-            defs.innerHTML = `<filter id="hlGlow" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>`;
-            svg.insertBefore(defs, svg.firstChild);
-        }
-    });
+    // Add glow filter to SVG
+    if (!svgEl.querySelector('#hlGlow')) {
+        const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+        defs.innerHTML = `<filter id="hlGlow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>`;
+        svgEl.insertBefore(defs, svgEl.firstChild);
+    }
 }
 
 function _doSvgHighlight(midiNote, logicalMeasure) {
@@ -3601,20 +3565,15 @@ function _doSvgHighlight(midiNote, logicalMeasure) {
 }
 
 function _scrollToSystemY(staffTopY) {
-    // Find which row div contains this staffTopY and scroll to it
-    const rows = SVG_ROWS[scoreCurrentPage] || [];
-    let rowIndex = 0;
-    for (let i = 0; i < rows.length; i++) {
-        if (rows[i].measures && rows[i].measures.length > 0) {
-            const entry = MEASURE_SVG_MAP.find(e => e.sy === staffTopY && rows[i].measures.includes(e.m));
-            if (entry) { rowIndex = i; break; }
-        }
-    }
-    const rowDiv = document.querySelector(`#scoreObj .score-row[data-row="${rowIndex}"]`);
-    if (rowDiv) {
-        const top = rowDiv.getBoundingClientRect().top + window.scrollY - 70;
-        window.scrollTo({ top, behavior: 'smooth' });
-    }
+    const container = document.getElementById('scoreObj');
+    if (!container) return;
+    const svgNativeW = 2977.2;
+    const renderedW = container.clientWidth || 900;
+    const scale = renderedW / svgNativeW;
+    const pixelY = staffTopY * scale;
+    // Scroll so the staff row appears near top of viewport (below brand bar ~60px + some padding)
+    const containerTop = container.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: containerTop + pixelY - 80, behavior: 'smooth' });
 }
 
 function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
