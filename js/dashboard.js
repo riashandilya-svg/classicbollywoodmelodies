@@ -137,11 +137,12 @@ async function initDashboard() {
     if (userEmailEl) userEmailEl.textContent = '';
 
     // Load all dashboard data
-    await Promise.all([
+  await Promise.all([
       loadStats(user.id),
       loadBookStatus(user.id),
       loadSongs(user.id),
-      loadPurchaseHistory(user.id)
+      loadPurchaseHistory(user.id),
+      loadSubscription()
     ]);
 
   } catch (error) {
@@ -1094,3 +1095,272 @@ if (document.readyState === 'loading') {
 } else {
   initDashboard();
 }
+<script>
+  <script id="PASTE-INTO-DASHBOARD-JS">
+(function () {
+  const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c';
+ 
+  // ── Helpers ──────────────────────────────────────────────
+  function fmt(date) {
+    return new Date(date).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+  }
+ 
+  function daysUntil(dateStr) {
+    const diff = new Date(dateStr) - new Date();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }
+ 
+  function fmtAmount(amountPaise, currency) {
+    const symbols = { INR: '₹', USD: '$', GBP: '£', EUR: '€' };
+    const sym = symbols[currency] || currency + ' ';
+    const noDecimals = ['INR', 'JPY', 'KRW'];
+    const val = noDecimals.includes(currency) ? Math.round(amountPaise / 100) : (amountPaise / 100).toFixed(2);
+    return sym + val;
+  }
+ 
+  function planLabel(planType) {
+    if (!planType) return 'Monthly';
+    if (planType === 'annual' || planType === 'yearly') return 'Annual';
+    return 'Monthly';
+  }
+ 
+  function planFrequency(planType) {
+    if (!planType) return '/month';
+    if (planType === 'annual' || planType === 'yearly') return '/year';
+    return '/month';
+  }
+ 
+  // ── Render ───────────────────────────────────────────────
+  function renderSubscription(sub) {
+    const el = document.getElementById('subscriptionContent');
+    if (!el) return;
+ 
+    if (!sub) {
+      el.innerHTML = `
+        <div class="sub-empty">
+          <div class="sub-empty-icon">🎵</div>
+          <h4>No Active Subscription</h4>
+          <p>Subscribe to unlock every song — new and old. Cancel anytime.</p>
+          <button class="sub-empty-cta" onclick="window.startSubscription && window.startSubscription('monthly')">
+            🎵 Subscribe for ₹249/month
+          </button>
+        </div>
+      `;
+      return;
+    }
+ 
+    const status = (sub.status || '').toLowerCase();
+    const days = daysUntil(sub.current_period_end);
+    const urgent = days <= 5;
+    const isCancelled = sub.cancel_at_period_end || status === 'cancelled';
+    const amount = fmtAmount(sub.amount || 24900, sub.currency || 'INR');
+    const plan = planLabel(sub.plan_type);
+    const freq = planFrequency(sub.plan_type);
+    const renewLabel = isCancelled ? 'Access ends' : 'Next renewal';
+    const startedOn = sub.created_at ? fmt(sub.created_at) : '—';
+    const periodEnd = sub.current_period_end ? fmt(sub.current_period_end) : '—';
+ 
+    const statusHtml = status === 'active' && !isCancelled
+      ? `<span class="sub-status-badge active"><span class="sub-pulse"></span>Active</span>`
+      : isCancelled
+        ? `<span class="sub-status-badge cancelled">⏸ Cancelling</span>`
+        : `<span class="sub-status-badge past_due">⚠️ ${status}</span>`;
+ 
+    const countdownHtml = `
+      <div class="sub-countdown ${urgent ? 'urgent' : ''}">
+        ⏰ ${days === 0 ? 'Ends today' : days === 1 ? '1 day left' : days + ' days left'}
+      </div>
+    `;
+ 
+    const rzpId = sub.razorpay_subscription_id
+      ? `<div class="sub-info-sub">ID: ${sub.razorpay_subscription_id}</div>`
+      : '';
+ 
+    const actionsHtml = isCancelled
+      ? `<button class="sub-action-btn reactivate-btn" id="reactivateSubBtn" type="button">
+           🔄 Reactivate Subscription
+         </button>`
+      : `<button class="sub-action-btn cancel-btn" id="openCancelModalBtn" type="button">
+           Cancel Subscription
+         </button>`;
+ 
+    el.innerHTML = `
+      <div class="sub-card">
+        <div class="sub-card-header">
+          <div class="sub-badge-row">
+            <span class="sub-plan-badge">🎵 ${plan}</span>
+            ${statusHtml}
+          </div>
+          <div class="sub-amount">${amount}<span>${freq}</span></div>
+          <div class="sub-started">Member since ${startedOn}</div>
+        </div>
+ 
+        <div class="sub-info-grid">
+          <div class="sub-info-cell">
+            <div class="sub-info-label">${renewLabel}</div>
+            <div class="sub-info-value ${urgent ? 'warning' : 'highlight'}">${periodEnd}</div>
+            ${countdownHtml}
+          </div>
+          <div class="sub-info-cell">
+            <div class="sub-info-label">Plan type</div>
+            <div class="sub-info-value">${plan}</div>
+            <div class="sub-info-sub">Billed ${plan.toLowerCase()}${freq}</div>
+          </div>
+          <div class="sub-info-cell">
+            <div class="sub-info-label">Amount charged</div>
+            <div class="sub-info-value">${amount}</div>
+            <div class="sub-info-sub">${sub.currency || 'INR'} · Auto-renews</div>
+          </div>
+          <div class="sub-info-cell">
+            <div class="sub-info-label">Status</div>
+            <div class="sub-info-value">${isCancelled ? 'Cancelling at period end' : 'Active'}</div>
+            ${isCancelled ? '<div class="sub-info-sub">Access continues till expiry</div>' : '<div class="sub-info-sub">Full access enabled</div>'}
+          </div>
+          <div class="sub-info-cell">
+            <div class="sub-info-label">What's included</div>
+            <div class="sub-info-value" style="font-size:13px; font-family: 'DM Sans', sans-serif; font-weight: 600;">All songs unlocked</div>
+            <div class="sub-info-sub">New songs included automatically</div>
+          </div>
+          <div class="sub-info-cell">
+            <div class="sub-info-label">Subscription ID</div>
+            <div class="sub-info-value" style="font-size:11px; font-family: monospace; word-break: break-all; color: var(--muted);">
+              ${sub.razorpay_subscription_id || '—'}
+            </div>
+          </div>
+        </div>
+ 
+        <div class="sub-actions">
+          ${actionsHtml}
+        </div>
+      </div>
+    `;
+ 
+    // Wire up cancel button
+    const openCancelBtn = document.getElementById('openCancelModalBtn');
+    if (openCancelBtn) {
+      openCancelBtn.onclick = () => {
+        document.getElementById('cancelModalOverlay').classList.add('open');
+        document.getElementById('cancelModal').classList.add('open');
+      };
+    }
+ 
+    // Wire up reactivate button
+    const reactivateBtn = document.getElementById('reactivateSubBtn');
+    if (reactivateBtn) {
+      reactivateBtn.onclick = () => handleReactivate(reactivateBtn, sub.razorpay_subscription_id);
+    }
+  }
+ 
+  // ── Cancel flow ──────────────────────────────────────────
+  function closeCancelModal() {
+    document.getElementById('cancelModalOverlay').classList.remove('open');
+    document.getElementById('cancelModal').classList.remove('open');
+    const fb = document.getElementById('cancelModalFeedback');
+    if (fb) { fb.textContent = ''; fb.className = 'cancel-modal-feedback'; }
+  }
+ 
+  async function handleCancelSubscription(btn) {
+    const fb = document.getElementById('cancelModalFeedback');
+    btn.disabled = true;
+    btn.textContent = 'Cancelling...';
+    fb.className = 'cancel-modal-feedback';
+    fb.textContent = '';
+ 
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) throw new Error('Not logged in');
+ 
+      const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/cancel-subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Cancellation failed');
+ 
+      fb.className = 'cancel-modal-feedback success';
+      fb.textContent = '✅ Cancelled. Access continues until your billing period ends.';
+      setTimeout(() => { closeCancelModal(); loadSubscription(); }, 2200);
+    } catch (e) {
+      fb.className = 'cancel-modal-feedback error';
+      fb.textContent = e.message || 'Something went wrong. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Yes, cancel';
+    }
+  }
+ 
+  async function handleReactivate(btn, rzpSubId) {
+    btn.disabled = true;
+    btn.textContent = 'Reactivating...';
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/reactivate-subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ razorpay_subscription_id: rzpSubId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Reactivation failed');
+      alert('🎉 Subscription reactivated! Welcome back.');
+      loadSubscription();
+    } catch (e) {
+      alert(e.message || 'Could not reactivate. Please contact support.');
+      btn.disabled = false;
+      btn.textContent = '🔄 Reactivate Subscription';
+    }
+  }
+ 
+  // ── Load ─────────────────────────────────────────────────
+  async function loadSubscription() {
+    const el = document.getElementById('subscriptionContent');
+    if (!el) return;
+ 
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) { renderSubscription(null); return; }
+ 
+      const { data: sub, error } = await window.supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+ 
+      if (error) throw error;
+      renderSubscription(sub || null);
+    } catch (e) {
+      console.error('[SUBSCRIPTION]', e);
+      if (el) el.innerHTML = `<p style="color:var(--muted);text-align:center;padding:20px;">Could not load subscription details. Please refresh.</p>`;
+    }
+  }
+ 
+  // ── Init ─────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    loadSubscription();
+ 
+    // Close modal on overlay click
+    document.getElementById('cancelModalOverlay')?.addEventListener('click', closeCancelModal);
+    document.getElementById('keepSubBtn')?.addEventListener('click', closeCancelModal);
+ 
+    // Confirm cancel
+    document.getElementById('confirmCancelBtn')?.addEventListener('click', function () {
+      handleCancelSubscription(this);
+    });
+  });
+ 
+  // Also call if DOMContentLoaded already fired (e.g. script loaded late)
+  if (document.readyState !== 'loading') loadSubscription();
+})();
+</script>
