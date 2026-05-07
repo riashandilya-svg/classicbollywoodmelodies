@@ -1432,7 +1432,7 @@
           html += `<div class="songs-panel active" id="panel-purchased">`;
           html += (purchases || []).map(purchase => {
             const songId        = purchase.song_id;
-            const songSlug      = purchase.song_slug || songId.replace('song:', '');
+            const songSlug      = purchase.song_slug || songId;
             const songName      = SONG_NAMES[songId] || songId.replace('song:', '');
             const category      = SONG_CATEGORIES[songId];
             const bookName      = category ? BOOK_NAMES[category] : 'Individual song';
@@ -1483,7 +1483,7 @@
           }
 
           html += subscriptionSongs.map(songId => {
-            const songSlug      = songId.replace('song:', '');
+            const songSlug      = songId;
             const songName      = SONG_NAMES[songId] || songSlug;
             const category      = SONG_CATEGORIES[songId];
             const bookName      = category ? BOOK_NAMES[category] : 'Individual song';
