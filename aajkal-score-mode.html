@@ -1518,6 +1518,7 @@ const ctx = canvas.getContext('2d');
 
 // ---- Score mode state (declared early to avoid TDZ errors) ----
 let scoreModeActive = false;
+let scoreNoteOffset = 0; // ← FIX: offset so highlighting starts at correct SVG note
 let scoreCurrentPage = 1;
 const SCORE_TOTAL_PAGES = 3;
 const scoreCanvases = {};
@@ -3075,6 +3076,11 @@ if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null
 // Order notes by practice playback time (not original MIDI time)
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
+// ── FIX: compute SVG note offset so score highlighting starts at correct element ──
+scoreNoteOffset = (scoreModeActive && practiceNotes.length > 0)
+    ? _computeScoreNoteOffset(practiceNotes[0], selectedHand)
+    : 0;
+
 // ✅ ADD THIS BLOCK RIGHT HERE
 const emptyBars = reportEmptyLogicalMeasures(startMeasure, endMeasure, practiceNotes);
 
@@ -3208,6 +3214,7 @@ function resetAll() {
 
     // 🔄 Reset indices and arrays
     trainingIndex = 0;
+    scoreNoteOffset = 0;
     playbackTimeouts = [];
     previewTimeouts = [];
     fallingRectangles = [];
@@ -3378,40 +3385,16 @@ function _buildSvgNoteIndex() {
 
     const getRow = ty => rowRanges.findIndex(([lo, hi]) => ty >= lo - 5 && ty <= hi + 5);
 
-    // Find the minimum X of actual noteheads per row (to exclude key sig glyphs)
-    // Key sig sharps/flats are exported as class="Note" but sit left of the first barline.
-    // We find the leftmost barline X per system row and exclude notes before it.
-    const barlineXPerRow = new Map(); // rowIndex -> min barline X
-    svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
-        const pts = bl.getAttribute('points') || '';
-        const first = pts.trim().split(/\s+/)[0];
-        if (!first) return;
-        const [bx, by] = first.split(',').map(parseFloat);
-        const rowIdx = getRow(by);
-        if (rowIdx < 0) return;
-        const prev = barlineXPerRow.get(rowIdx);
-        if (prev === undefined || bx < prev) barlineXPerRow.set(rowIdx, bx);
-    });
-
-    // Filter out key-sig glyphs: exclude notes whose tx is left of the first barline in their row
-    const filtered = raw.filter(n => {
-        const rowIdx = getRow(n.ty);
-        const firstBl = barlineXPerRow.get(rowIdx);
-        // If no barline found for this row, keep the note (safe fallback)
-        if (firstBl === undefined) return true;
-        return n.tx >= firstBl;
-    });
-
     // Sort by row index then X (left-to-right reading order)
-    filtered.sort((a, b) => {
+    raw.sort((a, b) => {
         const ra = getRow(a.ty), rb = getRow(b.ty);
         return ra !== rb ? ra - rb : a.tx - b.tx;
     });
 
     // Tag each element with its clef (even row = treble, odd row = bass)
-    filtered.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
+    raw.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
 
-    _svgNoteElements = filtered;
+    _svgNoteElements = raw;
 
     // Add glow filter if not present
     if (!svgEl.querySelector('#hlGlow')) {
@@ -3424,6 +3407,24 @@ function _buildSvgNoteIndex() {
     }
 
     console.log(`✅ SVG index: ${_svgNoteElements.length} notes (${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass)`);
+}
+
+// ── FIX: compute how many SVG note elements precede the first practice note ──
+function _computeScoreNoteOffset(firstPracticeNote, hand) {
+    const firstTime = firstPracticeNote.time;
+    let count = 0;
+    for (const n of allMidiNotes) {
+        if (n.time >= firstTime - 0.001) break;
+        if (hand === 'both') { count++; continue; }
+        const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
+        if (isMatch) count++;
+    }
+    // Subtract the current page's base offset so the index is page-relative
+    const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble
+                      : hand === 'bass'   ? PAGE_OFFSETS.bass
+                      : PAGE_OFFSETS.all;
+    const pageOffset = offsetTable[scoreCurrentPage] || 0;
+    return Math.max(0, count - pageOffset);
 }
 
 function _highlightSvgNote(globalTrainingIndex, clefMode) {
@@ -3494,7 +3495,7 @@ function _buildSvgMidiMap() {
 
 function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
-    _highlightSvgNote(trainingIndex, clefMode);
+    _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
 }
 
 function onTrainingNoteSpawned(noteObj) {
@@ -3503,7 +3504,7 @@ function onTrainingNoteSpawned(noteObj) {
     const beats = noteObj.duration / secondsPerBeat;
     const beatLabel = beatsToNoteName(beats);
     showScoreNoteDisplay(noteName, beatLabel);
-    _highlightSvgNote(trainingIndex, clefMode);
+    _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
 }
 
 // Keep these as-is (they're used elsewhere)
@@ -3517,6 +3518,7 @@ function showScoreNoteDisplay(noteName, hint) {
 function hideScoreNoteDisplay() {
     document.getElementById('scoreNoteDisplay').classList.remove('active');
 }
+
 // ============================================================
 // SCORE VIEW — SVG LOADING & PAGE NAVIGATION
 // ============================================================
@@ -3543,7 +3545,7 @@ async function renderScorePage(pageNum) {
     _buildSvgNoteIndex();
     updateScorePageLabel();
     if (scoreModeActive && currentTrainingNote) {
-        _highlightSvgNote(trainingIndex, clefMode);
+        _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
     }
 }
 
@@ -3584,7 +3586,7 @@ scoreModeToggle.addEventListener('change', async () => {
         await initScoreMode();
         if (trainingActive && currentTrainingNote) {
             showScoreNoteDisplay(currentTrainingNote);
-            _highlightSvgNote(trainingIndex, clefMode);
+            _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
         }
     } else {
         bottomDock.classList.remove('score-mode');
@@ -3594,6 +3596,7 @@ scoreModeToggle.addEventListener('change', async () => {
         resizeCanvas();
     }
 });
+
 function handleMIDIMessage(event) {
     if (previewMode) return;
     
@@ -3728,7 +3731,5 @@ window.location.replace("/login.html");
   });
 </script>
 
-</body>
-</html>
 </body>
 </html>
