@@ -809,7 +809,7 @@ canvas {
         <button id="scoreNextBtn">Next ▶</button>
     </div>
 <div id="scorePageWrapper">
-        <object id="scoreObj" type="image/svg+xml" data="" style="width:100%;display:block;border:1px solid rgba(235,50,70,0.15);border-radius:8px;background:white;"></object>
+        <div id="scoreObj" style="width:100%;display:block;border:1px solid rgba(235,50,70,0.15);border-radius:8px;background:white;overflow:hidden;"></div>
         <div id="scoreHighlight" style="display:none;"></div>
     </div>
 </div>
@@ -3333,16 +3333,19 @@ async function initScoreMode() {
 // SVG pages: aajkal-1.svg, aajkal-2.svg, aajkal-3.svg
 // Must be served from same folder as the HTML
 async function renderScorePage(pageNum) {
-    const obj = document.getElementById('scoreObj');
-    obj.data = `aajkal-${pageNum}.svg`;
-    // Wait for SVG to load so we can access its DOM
-    await new Promise((resolve) => {
-        obj.onload = resolve;
-        // If already loaded, resolve immediately
-        if (obj.contentDocument && obj.contentDocument.querySelector('svg')) resolve();
-    });
+    const container = document.getElementById('scoreObj');
+    const response = await fetch(`aajkal-${pageNum}.svg`);
+    const svgText = await response.text();
+    container.innerHTML = svgText;
+    // Make the inline SVG scale to fit
+    const svgEl = container.querySelector('svg');
+    if (svgEl) {
+        svgEl.style.width = '100%';
+        svgEl.style.height = 'auto';
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
+    }
     updateScorePageLabel();
-    // Re-apply highlight if there's an active note
     if (scoreModeActive && window._lastHighlightedNoteIndex !== undefined) {
         _doSvgHighlight(window._lastHighlightedNoteIndex);
     }
@@ -3419,11 +3422,10 @@ scoreModeToggle.addEventListener('change', async () => {
 
 // Build a flat ordered list of NoteHead elements across the SVG
 function getSvgNoteHeads() {
-    const obj = document.getElementById('scoreObj');
-    if (!obj || !obj.contentDocument) return [];
-    const svgDoc = obj.contentDocument;
-    // MuseScore uses class="NoteHead" on noteheads
-    return Array.from(svgDoc.querySelectorAll('.NoteHead'));
+    const container = document.getElementById('scoreObj');
+    if (!container) return [];
+    // MuseScore uses class="Note" for noteheads (confirmed from SVG source)
+    return Array.from(container.querySelectorAll('.Note'));
 }
 
 // Keep track of currently highlighted element so we can unhighlight
