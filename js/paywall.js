@@ -191,37 +191,36 @@ async function detectCurrency() {
       return false;
     }
   
-    // Check if owner
+// Check if owner
     const email = normalizeEmail(session.user.email);
     if (OWNER_EMAILS.includes(email)) {
       console.log("[PAYWALL] ✅ User is owner - granting access");
       return true;
     }
-  
-    // ── SUBSCRIPTION CHECK ──
-    const { data: sub, error: subError } = await window.supabase
-      .from('subscriptions')
-      .select('status, current_period_end')
-      .eq('user_id', session.user.id)
-      .eq('status', 'active')
-      .gte('current_period_end', new Date().toISOString())
-      .maybeSingle();
-  
-    console.log('[PAYWALL] 🔍 Sub query result:', JSON.stringify(sub), 'Error:', JSON.stringify(subError));
-  
-    if (sub) {
-      console.log("[PAYWALL] ✅ User has active subscription - granting access");
-      return true;
-    }
-    // ────────────────────────
-  
-    const userId = session.user.id;
+  // Replace your existing subscription block with this:
+const { data: sub, error: subError } = await window.supabase
+.from('subscriptions')
+.select('status, current_period_end')
+.eq('user_id', session.user.id)
+.eq('status', 'active')
+.gte('current_period_end', new Date().toISOString())
+.maybeSingle();
+
+console.log('[PAYWALL] 🔍 Sub query result:', JSON.stringify(sub), 'Error:', JSON.stringify(subError));
+
+if (sub) {
+console.log("[PAYWALL] ✅ User has active subscription - granting access");
+return true;
+}
+
+    const userId = session.user.id;  // ← this line was already there;
     const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
   
     console.log(`[PAYWALL] 🔍 Checking ownership for song_slug: ${songSlug}`);
     console.log(`[PAYWALL] 👤 User ID: ${userId}`);
     
     try {
+      // 🚨 FIX: Check ENTITLEMENTS table instead of purchases
       const { data: entitlementData, error: entitlementError } = await window.supabase
         .from("entitlements")
         .select("id, product_id")
@@ -241,7 +240,8 @@ async function detectCurrency() {
         return true;
       }
   
-      const { data: purchaseData } = await window.supabase
+      // Also check purchases table as fallback (for old purchases)
+      const { data: purchaseData, error: purchaseError } = await window.supabase
         .from("purchases")
         .select("id")
         .eq("user_id", userId)
