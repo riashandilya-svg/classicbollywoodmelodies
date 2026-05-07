@@ -892,6 +892,49 @@
 #grantSongModal .warning-box h3 {
   color: var(--success);
 }
+
+/* Subscription management button */
+.sub-manage-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #7c3aed;
+  background: white;
+  color: #7c3aed;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+.sub-manage-btn:hover {
+  background: rgba(124, 58, 237, 0.09);
+  transform: translateY(-1px);
+}
+
+/* Subscription modal plan selector */
+.plan-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.plan-card {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  background: white;
+}
+.plan-card:hover { border-color: var(--primary); background: rgba(155,110,255,0.04); }
+.plan-card.selected { border-color: var(--primary); background: rgba(155,110,255,0.08); }
+.plan-card .plan-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.plan-card .plan-desc { font-size: 12px; color: var(--muted); }
+.btn-grant { background: #7c3aed; color: white; }
+.btn-grant:hover { background: #6d28d9; transform: translateY(-1px); }
+.btn-revoke { background: var(--error); color: white; }
+.btn-revoke:hover { background: #dc2626; transform: translateY(-1px); }
   </style>
 </head>
 <body>
@@ -1718,6 +1761,101 @@ placeholder="Search by message, request type, or user..."
   </div>
 </div>
   
+  <!-- Subscription Management Modal -->
+<div id="subscriptionModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="subModalTitle" style="color:var(--primary)">💳 Manage Subscription</h2>
+      <p class="modal-subtitle" id="subModalSubtitle"></p>
+    </div>
+
+    <!-- View: choose action -->
+    <div id="subActionStep">
+      <!-- Active subscription info banner -->
+      <div id="subActiveBanner" class="hidden" style="background:rgba(16,185,129,0.08);border:1px solid var(--success);border-radius:12px;padding:16px;margin-bottom:20px">
+        <div style="font-weight:700;color:var(--success);margin-bottom:4px">✅ Active Subscription</div>
+        <div id="subActivePlanLabel" style="font-size:14px;color:var(--text)"></div>
+        <div id="subActiveRenewalLabel" style="font-size:13px;color:var(--muted);margin-top:4px"></div>
+      </div>
+      <!-- No subscription info banner -->
+      <div id="subNoneBanner" class="hidden" style="background:rgba(239,68,68,0.07);border:1px solid var(--error);border-radius:12px;padding:16px;margin-bottom:20px">
+        <div style="font-weight:700;color:var(--error)">⛔ No Active Subscription</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">This user currently has no active subscription.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-grant" onclick="showSubGrantStep()">🎁 Grant Free Subscription</button>
+        <button class="btn btn-revoke" id="subRevokeActionBtn" onclick="showSubRevokeStep()">🚫 Revoke Active Subscription</button>
+      </div>
+      <div class="modal-actions" style="margin-top:16px">
+        <button class="btn btn-cancel" onclick="closeSubscriptionModal()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Grant step -->
+    <div id="subGrantStep" class="hidden">
+      <p style="margin:0 0 12px;font-size:15px;color:var(--muted)">Select plan type and duration to grant:</p>
+      <div class="plan-selector">
+        <div class="plan-card selected" id="planCardMonthly" onclick="selectSubPlan('monthly')">
+          <div class="plan-name">📅 Monthly</div>
+          <div class="plan-desc">30 days access</div>
+        </div>
+        <div class="plan-card" id="planCardAnnual" onclick="selectSubPlan('annual')">
+          <div class="plan-name">🗓️ Annual</div>
+          <div class="plan-desc">365 days access</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Custom end date (optional)</label>
+        <input type="date" id="subCustomEndDate" class="search-box" style="margin:0" placeholder="Leave blank to use default">
+      </div>
+      <div style="background:rgba(124,58,237,0.07);border:1px solid #c4b5fd;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#5b21b6">
+        ⚠️ This creates a manual/admin-granted subscription row. It does <strong>not</strong> go through Razorpay — no charge is made.
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="showSubActionStep()">← Back</button>
+        <button class="btn btn-grant" onclick="confirmGrantSubscription()">Grant Subscription →</button>
+      </div>
+    </div>
+
+    <!-- Grant confirm step -->
+    <div id="subGrantConfirmStep" class="hidden">
+      <div class="warning-box" style="background:rgba(124,58,237,0.07);border-color:#c4b5fd">
+        <h3 style="color:#7c3aed">Confirm Grant</h3>
+        <ul>
+          <li>User: <strong id="subGrantUserLabel"></strong></li>
+          <li>Plan: <strong id="subGrantPlanLabel"></strong></li>
+          <li>Ends: <strong id="subGrantEndLabel"></strong></li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="showSubGrantStep()">← Back</button>
+        <button class="btn btn-grant" onclick="executeGrantSubscription()">✅ Confirm Grant</button>
+      </div>
+    </div>
+
+    <!-- Revoke confirm step -->
+    <div id="subRevokeStep" class="hidden">
+      <div class="warning-box">
+        <h3>⚠️ Revoke Subscription</h3>
+        <ul>
+          <li>This will immediately set the subscription status to <strong>cancelled</strong></li>
+          <li>User: <strong id="subRevokeUserLabel"></strong></li>
+          <li>The user will lose access at their next session check</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="showSubActionStep()">← Back</button>
+        <button class="btn btn-revoke" onclick="executeRevokeSubscription()">🚫 Confirm Revoke</button>
+      </div>
+    </div>
+
+    <!-- Working spinner -->
+    <div id="subWorkingStep" class="hidden">
+      <div class="loading"><div class="spinner"></div><p id="subWorkingLabel">Processing...</p></div>
+    </div>
+  </div>
+</div>
+
   <!-- Media Lightbox Modal (photo + video) -->
   <div id="mediaModal" class="media-modal-overlay hidden" onclick="closeMediaModal()">
     <img id="mediaModalImg" src="" alt="Book verification photo" style="display:none;">
@@ -2190,7 +2328,7 @@ placeholder="Search by message, request type, or user..."
         const videoHTML = videoUrl ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>` : '<span style="color: var(--muted); font-size: 13px;">None</span>';
         const sub = allSubscriptions.find(s => s.user_id === user.id && s.status === 'active');
         const subBadge = sub ? (sub.plan_type === 'monthly' ? `<span class="badge badge-success">Monthly</span>` : sub.plan_type === 'annual' ? `<span class="badge" style="background:rgba(59,130,246,0.1);color:#1d4ed8;">Annual</span>` : `<span class="badge badge-warning">${sub.plan_type}</span>`) : `<span class="badge badge-error">No</span>`;
-        const actionButtons = isAdmin ? '<span class="badge badge-warning">ADMIN</span>' : `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button><button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
+        const actionButtons = isAdmin ? '<span class="badge badge-warning">ADMIN</span>' : `<button class="sub-manage-btn" onclick='openSubscriptionModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>💳 Sub</button><button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🎵 Manage Songs</button><button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g, "&#39;")})'>🗑️ Delete</button>`;
         const gender = user.gender || '-';
         const level = user.difficulty_level || '-';
         const optIn = user.marketing_opt_in ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>';
@@ -2575,6 +2713,171 @@ placeholder="Search by message, request type, or user..."
         return matchQ && matchStatus;
       });
       renderSubscriptions(filtered);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // SUBSCRIPTION MANAGEMENT (GRANT / REVOKE)
+    // ═══════════════════════════════════════════════════════
+
+    let subModalUser = null;
+    let subSelectedPlan = 'monthly';
+
+    function openSubscriptionModal(user) {
+      subModalUser = user;
+      subSelectedPlan = 'monthly';
+
+      document.getElementById('subModalTitle').textContent = '💳 Manage Subscription';
+      document.getElementById('subModalSubtitle').textContent = `${user.display_name || 'Unknown'} · ${user.email || ''}`;
+
+      // Find active subscription
+      const activeSub = allSubscriptions.find(s => s.user_id === user.id && s.status === 'active');
+
+      // Show/hide banners
+      const activeBanner = document.getElementById('subActiveBanner');
+      const noneBanner = document.getElementById('subNoneBanner');
+      const revokeBtn = document.getElementById('subRevokeActionBtn');
+
+      if (activeSub) {
+        activeBanner.classList.remove('hidden');
+        noneBanner.classList.add('hidden');
+        revokeBtn.disabled = false;
+        revokeBtn.style.opacity = '1';
+        const planLabel = activeSub.plan_type === 'annual' ? 'Annual Plan' : 'Monthly Plan';
+        document.getElementById('subActivePlanLabel').textContent = `Plan: ${planLabel}`;
+        const renewsDate = activeSub.current_period_end
+          ? new Date(activeSub.current_period_end).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+          : 'Unknown';
+        document.getElementById('subActiveRenewalLabel').textContent = `Next renewal / expires: ${renewsDate}`;
+      } else {
+        activeBanner.classList.add('hidden');
+        noneBanner.classList.remove('hidden');
+        revokeBtn.disabled = true;
+        revokeBtn.style.opacity = '0.4';
+      }
+
+      // Reset plan cards
+      document.getElementById('planCardMonthly').classList.add('selected');
+      document.getElementById('planCardAnnual').classList.remove('selected');
+      document.getElementById('subCustomEndDate').value = '';
+
+      showSubActionStep();
+      document.getElementById('subscriptionModal').classList.remove('hidden');
+    }
+
+    function closeSubscriptionModal() {
+      document.getElementById('subscriptionModal').classList.add('hidden');
+      subModalUser = null;
+    }
+
+    function _hideAllSubSteps() {
+      ['subActionStep','subGrantStep','subGrantConfirmStep','subRevokeStep','subWorkingStep']
+        .forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+
+    function showSubActionStep() { _hideAllSubSteps(); document.getElementById('subActionStep').classList.remove('hidden'); }
+    function showSubGrantStep()  { _hideAllSubSteps(); document.getElementById('subGrantStep').classList.remove('hidden'); }
+    function showSubRevokeStep() { _hideAllSubSteps(); document.getElementById('subRevokeStep').classList.remove('hidden'); document.getElementById('subRevokeUserLabel').textContent = subModalUser?.display_name || subModalUser?.email || 'Unknown'; }
+
+    function selectSubPlan(plan) {
+      subSelectedPlan = plan;
+      document.getElementById('planCardMonthly').classList.toggle('selected', plan === 'monthly');
+      document.getElementById('planCardAnnual').classList.toggle('selected', plan === 'annual');
+    }
+
+    function confirmGrantSubscription() {
+      if (!subModalUser) return;
+
+      const customEnd = document.getElementById('subCustomEndDate').value;
+      let endDate;
+      if (customEnd) {
+        endDate = new Date(customEnd);
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        endDate = new Date();
+        endDate.setDate(endDate.getDate() + (subSelectedPlan === 'annual' ? 365 : 30));
+      }
+
+      document.getElementById('subGrantUserLabel').textContent = subModalUser.display_name || subModalUser.email;
+      document.getElementById('subGrantPlanLabel').textContent = subSelectedPlan === 'annual' ? 'Annual (365 days)' : 'Monthly (30 days)';
+      document.getElementById('subGrantEndLabel').textContent = endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      _hideAllSubSteps();
+      document.getElementById('subGrantConfirmStep').classList.remove('hidden');
+    }
+
+    async function executeGrantSubscription() {
+      if (!subModalUser) return;
+
+      _hideAllSubSteps();
+      document.getElementById('subWorkingStep').classList.remove('hidden');
+      document.getElementById('subWorkingLabel').textContent = 'Granting subscription...';
+
+      try {
+        const customEnd = document.getElementById('subCustomEndDate').value;
+        let endDate;
+        if (customEnd) {
+          endDate = new Date(customEnd);
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          endDate = new Date();
+          endDate.setDate(endDate.getDate() + (subSelectedPlan === 'annual' ? 365 : 30));
+        }
+
+        const { error } = await window.supabase.from('subscriptions').insert({
+          user_id: subModalUser.id,
+          status: 'active',
+          plan_type: subSelectedPlan,
+          current_period_end: endDate.toISOString(),
+          razorpay_subscription_id: `admin_granted_${Date.now()}`,
+          created_at: new Date().toISOString()
+        });
+
+        if (error) throw error;
+
+        alert(`✅ Subscription granted!\n\nUser: ${subModalUser.display_name || subModalUser.email}\nPlan: ${subSelectedPlan}\nExpires: ${endDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`);
+        closeSubscriptionModal();
+
+        // Refresh data everywhere
+        await loadSubscriptionsData();
+        renderUsers(sortArray(allUsers, 'users'));
+        if (!document.getElementById('subscriptionsTab').classList.contains('hidden')) {
+          renderSubscriptions(allSubscriptions);
+        }
+      } catch (e) {
+        alert('❌ Error granting subscription: ' + e.message);
+        showSubGrantStep();
+      }
+    }
+
+    async function executeRevokeSubscription() {
+      if (!subModalUser) return;
+
+      _hideAllSubSteps();
+      document.getElementById('subWorkingStep').classList.remove('hidden');
+      document.getElementById('subWorkingLabel').textContent = 'Revoking subscription...';
+
+      try {
+        const { error } = await window.supabase
+          .from('subscriptions')
+          .update({ status: 'cancelled' })
+          .eq('user_id', subModalUser.id)
+          .eq('status', 'active');
+
+        if (error) throw error;
+
+        alert(`✅ Subscription revoked for ${subModalUser.display_name || subModalUser.email}.`);
+        closeSubscriptionModal();
+
+        // Refresh data everywhere
+        await loadSubscriptionsData();
+        renderUsers(sortArray(allUsers, 'users'));
+        if (!document.getElementById('subscriptionsTab').classList.contains('hidden')) {
+          renderSubscriptions(allSubscriptions);
+        }
+      } catch (e) {
+        alert('❌ Error revoking subscription: ' + e.message);
+        showSubActionStep();
+      }
     }
 
     // ═══════════════════════════════════════════════════════
