@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Ria Om Shandilya</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: rgba(255,255,255,0.82);
+      --text: #1A1A1F;
+      --muted: rgba(26,26,31,0.70);
+      --border: rgba(140, 120, 160, 0.18);
+      --shadow: 0 18px 44px rgba(22, 10, 35, 0.10);
+      --primary: #9b6eff;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(255,120,160,0.28), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(155,110,255,0.26), transparent 62%),
+        radial-gradient(780px 480px at 50% 80%, rgba(255,80,90,0.16), transparent 60%),
+        var(--bg);
+    }
+
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .banner-left { display: flex; align-items: center; gap: 16px; }
+
+    .banner-link {
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: 0.7px;
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+
+    .admin-badge {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(251, 146, 60, 0.2));
+      color: var(--error);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .banner-link:hover { text-decoration: underline; }
+
+    main { max-width: 1400px; margin: 0 auto; padding: 32px 24px 70px; }
+
+    .header { margin-bottom: 32px; }
+
+    h1 { font-size: clamp(32px, 4vw, 48px); line-height: 1.2; margin: 0 0 8px; }
+
+    .subtitle { color: var(--muted); font-size: 16px; margin: 0; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      border-radius: 12px;
+      background: white;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--muted);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab:hover { background: rgba(155, 110, 255, 0.05); border-color: var(--primary); }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(255,120,160,0.26), rgba(155,110,255,0.20));
+      color: #2b1140;
+      border-color: var(--primary);
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 22px;
+      padding: 32px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      margin-bottom: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .card-title { font-size: 24px; font-weight: 700; margin: 0; }
+
+    .refresh-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover { background: rgba(155, 110, 255, 0.05); transform: translateY(-1px); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value { font-size: 36px; font-weight: 700; color: var(--primary); margin: 0; }
+    .stat-label { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    table { width: 100%; border-collapse: collapse; background: white; }
+
+    th {
+      background: rgba(155, 110, 255, 0.08);
+      padding: 16px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background: rgba(155, 110, 255, 0.02); }
+
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .badge-error { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+    .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+    .badge-blue { background: rgba(59, 130, 246, 0.1); color: #1d4ed8; }
+
+    .delete-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--error);
+      background: white;
+      color: var(--error);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .delete-btn:hover { background: rgba(239, 68, 68, 0.1); transform: translateY(-1px); }
+
+    .manage-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--primary);
+      background: white;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+      margin-right: 8px;
+    }
+
+    .manage-btn:hover { background: rgba(155, 110, 255, 0.1); transform: translateY(-1px); }
+
+    /* ── Sub action buttons ── */
+    .grant-sub-btn {
+      padding: 7px 13px;
+      border-radius: 8px;
+      border: 1px solid var(--success);
+      background: white;
+      color: var(--success);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.2s;
+      margin-right: 6px;
+    }
+    .grant-sub-btn:hover { background: rgba(16,185,129,0.1); transform: translateY(-1px); }
+
+    .revoke-sub-btn {
+      padding: 7px 13px;
+      border-radius: 8px;
+      border: 1px solid var(--error);
+      background: white;
+      color: var(--error);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .revoke-sub-btn:hover { background: rgba(239,68,68,0.1); transform: translateY(-1px); }
+
+    .song-list { margin: 20px 0; }
+
+    .song-item {
+      background: rgba(155, 110, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .song-item-info { flex: 1; }
+    .song-item-id { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .song-item-date { font-size: 13px; color: var(--muted); }
+
+    .song-item-remove {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--error);
+      background: white;
+      color: var(--error);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .song-item-remove:hover { background: rgba(239, 68, 68, 0.1); }
+
+    .loading { text-align: center; padding: 60px 20px; color: var(--muted); }
+
+    .spinner {
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header { margin-bottom: 24px; }
+    .modal-title { font-size: 28px; font-weight: 700; margin: 0 0 8px; color: var(--error); }
+    .modal-subtitle { color: var(--muted); font-size: 15px; margin: 0; }
+
+    .warning-box {
+      background: rgba(239, 68, 68, 0.08);
+      border: 2px solid var(--error);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+
+    .warning-box h3 { color: var(--error); font-size: 18px; margin: 0 0 12px; }
+    .warning-box ul { margin: 0; padding-left: 20px; color: var(--text); }
+    .warning-box li { margin: 8px 0; line-height: 1.5; }
+
+    .confirmation-text { font-size: 16px; line-height: 1.6; margin: 20px 0; }
+
+    .confirmation-step {
+      background: rgba(155, 110, 255, 0.05);
+      border-left: 3px solid var(--primary);
+      padding: 16px 20px;
+      margin: 16px 0;
+      border-radius: 8px;
+    }
+
+    .step-number { font-weight: 700; color: var(--primary); font-size: 18px; }
+
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 650;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel { background: white; border: 1px solid var(--border); color: var(--text); }
+    .btn-cancel:hover { background: rgba(155, 110, 255, 0.05); }
+    .btn-danger { background: var(--error); color: white; }
+    .btn-danger:hover { background: #dc2626; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .search-box {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .search-box:focus { outline: none; border-color: var(--primary); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-state-icon { font-size: 64px; margin-bottom: 16px; }
+
+    .code-display {
+      font-family: 'Courier New', monospace;
+      background: rgba(155, 110, 255, 0.05);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      color: var(--error);
+    }
+
+    .user-info { display: flex; flex-direction: column; gap: 2px; }
+    .user-info .user-name { font-weight: 600; font-size: 14px; }
+    .user-info .user-email { font-size: 12px; color: var(--muted); }
+
+    .song-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .song-tag {
+      background: rgba(155, 110, 255, 0.08);
+      color: #5b2d8e;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .photo-thumb {
+      width: 48px; height: 48px;
+      border-radius: 8px; object-fit: cover;
+      border: 1px solid var(--border);
+      cursor: pointer; transition: transform 0.2s;
+      background: #eee;
+    }
+    .photo-thumb:hover { transform: scale(1.08); }
+
+    .video-play-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(155, 110, 255, 0.1);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 6px 12px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .video-play-btn:hover { background: rgba(155, 110, 255, 0.2); transform: translateY(-1px); }
+
+    .media-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 20000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; cursor: pointer;
+    }
+    .media-modal-overlay img { max-width: 90vw; max-height: 85vh; border-radius: 12px; object-fit: contain; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+    .media-modal-overlay video { max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); background: #000; }
+
+    th[data-sortable] { cursor: pointer; }
+    th[data-sortable]:hover { background: rgba(155, 110, 255, 0.14); }
+    .sort-arrow { display: inline-block; margin-left: 6px; font-size: 11px; opacity: 0.35; transition: opacity 0.2s, transform 0.2s; }
+    th[data-sortable].sort-asc .sort-arrow, th[data-sortable].sort-desc .sort-arrow { opacity: 1; color: var(--primary); }
+    th[data-sortable].sort-desc .sort-arrow { transform: rotate(180deg); }
+
+    .date-filter { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .date-filter select, .date-filter input { padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; background: white; cursor: pointer; }
+    .date-filter input { cursor: text; }
+
+    .revenue-card { background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1)); border: 2px solid var(--success); }
+
+    .rates-panel { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .rates-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .rates-panel-header h3 { margin: 0; color: var(--primary); }
+    .rates-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .rate-chip { background: rgba(155, 110, 255, 0.06); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; text-align: center; }
+    .rate-chip .rate-code { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+    .rate-chip .rate-val { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 4px; }
+    .rate-chip .rate-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .rates-status { font-size: 12px; color: var(--muted); margin-top: 12px; }
+    .rates-status .live-dot { display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* ─── SUBSCRIPTION PRICING PANEL ─── */
+    .sub-pricing-card {
+      background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(155,110,255,0.06));
+      border: 2px solid rgba(59,130,246,0.3);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .sub-pricing-card h3 { margin: 0 0 20px; font-size: 20px; }
+    .sub-plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .sub-plan-box {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .sub-plan-box h4 { margin: 0 0 16px; font-size: 16px; color: var(--primary); }
+    .sub-price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .sub-price-field label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .price-input-wrap { position: relative; }
+    .price-input-wrap span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--muted); pointer-events: none; }
+    .price-input-wrap input { width: 100%; padding: 10px 10px 10px 26px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; }
+    .price-input-wrap input:focus { outline: none; border-color: var(--primary); }
+
+    /* plan badge with live dot */
+    .plan-live-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(16,185,129,0.1); color: var(--success);
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    }
+
+    /* info box */
+    .info-box {
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .info-box strong { color: #1d4ed8; }
+
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      background: rgba(155, 110, 255, 0.02);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 24px;
+    }
+    .upload-area:hover { border-color: var(--primary); background: rgba(155, 110, 255, 0.05); }
+    .upload-area input[type="file"] { display: none; }
+
+    .pdf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 24px; }
+    .pdf-item { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: all 0.2s; }
+    .pdf-item:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(155, 110, 255, 0.15); }
+    .pdf-icon { font-size: 48px; margin-bottom: 12px; }
+    .pdf-name { font-weight: 600; font-size: 14px; margin-bottom: 8px; word-break: break-word; }
+    .pdf-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+    .pdf-actions button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    .pdf-actions button:hover { transform: translateY(-1px); }
+    .btn-view { border-color: var(--primary) !important; color: var(--primary); }
+    .btn-view:hover { background: rgba(155, 110, 255, 0.1); }
+    .btn-delete { border-color: var(--error) !important; color: var(--error); }
+    .btn-delete:hover { background: rgba(239, 68, 68, 0.1); }
+
+    #grantSongModal .modal-title { color: var(--success) !important; }
+    #grantSongModal .warning-box { background: rgba(16, 185, 129, 0.08); border-color: var(--success); }
+    #grantSongModal .warning-box h3 { color: var(--success); }
+
+    /* Grant sub modal colors */
+    #grantSubModal .modal-title { color: var(--success) !important; }
+    #grantSubModal .warning-box { background: rgba(16, 185, 129, 0.08) !important; border-color: var(--success) !important; }
+    #grantSubModal .warning-box h3 { color: var(--success) !important; }
+    #grantSubModal .confirmation-step { border-color: var(--success); }
+
+    /* Revoke sub modal */
+    #revokeSubModal .confirmation-step { border-color: var(--error); }
+
+    @media (max-width: 768px) {
+      .banner { flex-direction: column; height: auto; padding: 12px 16px; gap: 8px; }
+      main { padding: 20px 16px; }
+      .card { padding: 20px; }
+      .card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      table { font-size: 13px; }
+      th, td { padding: 12px 8px; }
+      .date-filter { flex-direction: column; align-items: stretch; }
+      .sub-plan-grid { grid-template-columns: 1fr; }
+      .sub-price-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <div class="banner-left">
+      <a class="banner-link" href="https://riashandilya-svg.github.io/riaomshandilya/">Ria Om Shandilya</a>
+      <span class="admin-badge">⚡ ADMIN</span>
+    </div>
+    <button class="refresh-btn" onclick="location.reload()">↻ Refresh All</button>
+  </header>
+
+  <main>
+    <div class="header">
+      <h1>🎛️ Admin Dashboard</h1>
+      <p class="subtitle">Manage users, track codes, and monitor purchases</p>
+    </div>
+
+    <div id="authCheck" class="loading">
+      <div class="spinner"></div>
+      <p>Verifying admin access...</p>
+    </div>
+
+    <div id="adminContent" class="hidden">
+      <!-- Statistics Overview -->
+      <div class="card">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-box">
+            <div class="stat-value" id="totalUsers">-</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="bookOwners">-</div>
+            <div class="stat-label">Book Owners</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="codesUsed">-</div>
+            <div class="stat-label">Codes Used</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="codesLeft" style="color: var(--warning);">-</div>
+            <div class="stat-label">Codes Left</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="totalPurchases">-</div>
+            <div class="stat-label">Total Purchases</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="bundlesPurchased" style="color: var(--success);">-</div>
+            <div class="stat-label">Bundles Sold</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Card -->
+      <div class="card revenue-card" id="revenueCard">
+        <div class="card-header">
+          <h2 class="card-title">💰 Revenue Analytics</h2>
+        </div>
+        <div class="date-filter">
+          <select id="revenuePeriod" onchange="updateRevenueDisplay()">
+            <option value="today">Today</option>
+            <option value="month" selected>This Month</option>
+            <option value="90days">Last 90 Days</option>
+            <option value="year">This Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+          <div id="customDateRange" class="hidden" style="display: flex; gap: 12px; align-items: center;">
+            <input type="date" id="startDate" onchange="updateRevenueDisplay()">
+            <span>to</span>
+            <input type="date" id="endDate" onchange="updateRevenueDisplay()">
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="revenueINR" style="color: var(--success);">₹0</div>
+            <div class="stat-label">Revenue (INR)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="revenueTransactions">0</div>
+            <div class="stat-label">Transactions</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('users', this)">👥 All Users</button>
+        <button class="tab" onclick="switchTab('codes', this)">🎫 Book Codes</button>
+        <button class="tab" onclick="switchTab('purchases', this)">💳 Purchases</button>
+        <button class="tab" onclick="switchTab('bundles', this)">📦 Bundles</button>
+        <button class="tab" onclick="switchTab('requests', this)">💬 Song Requests</button>
+        <button class="tab" onclick="switchTab('sheetmusic', this)">📄 Sheet Music</button>
+        <button class="tab" onclick="switchTab('pricing', this)">💰 Pricing</button>
+        <button class="tab" onclick="switchTab('courseprogress', this)">🎹 Course Progress</button>
+        <button class="tab" onclick="switchTab('subscriptions', this)">💳 Subscriptions</button>
+      </div>
+
+      <!-- Users Tab -->
+      <div id="usersTab" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">👥 All Users</h2>
+            <button class="refresh-btn" onclick="loadUsers()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="userSearch" placeholder="Search by name, email, or user ID..." onkeyup="filterUsers()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-sortable data-col="name" data-table="users">Name & Email <span class="sort-arrow">▲</span></th>
+                  <th>Gender</th>
+                  <th>Level</th>
+                  <th>Opt-in</th>
+                  <th>Book Owner</th>
+                  <th>Books Owned</th>
+                  <th>Songs Purchased</th>
+                  <th>Bundles</th>
+                  <th>Photo</th>
+                  <th>Video</th>
+                  <th data-sortable data-col="joined" data-table="users" class="sort-desc">Joined <span class="sort-arrow">▲</span></th>
+                  <th>Subscription</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="13" class="loading"><div class="spinner"></div>Loading users...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Codes Tab -->
+      <div id="codesTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🎫 Book Verification Codes</h2>
+            <button class="refresh-btn" onclick="loadCodes()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="codeSearch" placeholder="Search by code or book name..." onkeyup="filterCodes()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th data-sortable data-col="book" data-table="codes">Book <span class="sort-arrow">▲</span></th>
+                  <th>Status</th>
+                  <th>Used By</th>
+                  <th data-sortable data-col="generated" data-table="codes" class="sort-desc">Generated At <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="used" data-table="codes">Used At <span class="sort-arrow">▲</span></th>
+                </tr>
+              </thead>
+              <tbody id="codesTableBody">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading codes...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Song Requests Tab -->
+      <div id="requestsTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💬 Song Requests / Feedback</h2>
+            <button class="refresh-btn" onclick="loadFeedbackRequests()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="feedbackSearch" placeholder="Search by message, request type, or user..." onkeyup="filterFeedbackRequests()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Message</th>
+                  <th>User</th>
+                  <th>Song Suggestion</th>
+                  <th class="sort-desc">Created</th>
+                </tr>
+              </thead>
+              <tbody id="feedbackTableBody">
+                <tr><td colspan="5" class="loading"><div class="spinner"></div>Loading requests...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="feedbackError" class="error-message hidden"></div>
+        </div>
+      </div>
+
+      <!-- Purchases Tab -->
+      <div id="purchasesTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💳 All Purchases</h2>
+            <button class="refresh-btn" onclick="loadPurchases()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="purchaseSearch" placeholder="Search by name, email, or song ID..." onkeyup="filterPurchases()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-sortable data-col="name" data-table="purchases">Name & Email <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="song" data-table="purchases">Song ID <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="amount" data-table="purchases">Amount <span class="sort-arrow">▲</span></th>
+                  <th>Credits Remaining</th>
+                  <th data-sortable data-col="date" data-table="purchases" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="purchasesTableBody">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div>Loading purchases...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bundles Tab -->
+      <div id="bundlesTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📦 Bundle Credits Usage</h2>
+            <button class="refresh-btn" onclick="loadBundles()">↻ Refresh</button>
+          </div>
+          <input type="text" class="search-box" id="bundleSearch" placeholder="Search by name or email..." onkeyup="filterBundles()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-sortable data-col="name" data-table="bundles">Name & Email <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="bundlecount" data-table="bundles">Bundles Purchased <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="credits" data-table="bundles">Credits Remaining <span class="sort-arrow">▲</span></th>
+                  <th data-sortable data-col="date" data-table="bundles" class="sort-desc">Purchase Date <span class="sort-arrow">▲</span></th>
+                </tr>
+              </thead>
+              <tbody id="bundlesTableBody">
+                <tr><td colspan="4" class="loading"><div class="spinner"></div>Loading bundles...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sheet Music Tab -->
+      <div id="sheetmusicTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📄 Sheet Music PDFs</h2>
+            <button class="refresh-btn" onclick="loadSheetMusic()">↻ Refresh</button>
+          </div>
+          <div class="upload-area" onclick="document.getElementById('pdfUpload').click()">
+            <input type="file" id="pdfUpload" accept=".pdf" multiple onchange="uploadPDFs(event)">
+            <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+            <h3 style="margin: 0 0 8px;">Upload Sheet Music PDFs</h3>
+            <p style="color: var(--muted); font-size: 14px; margin: 0;">
+              Click to browse or drag PDFs here<br>
+              <strong>Important:</strong> File name must match song slug (e.g., "kalho.pdf" for song:kalho)
+            </p>
+          </div>
+          <div id="uploadProgress" class="hidden" style="background: rgba(155, 110, 255, 0.1); border: 1px solid var(--primary); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+            <div style="font-weight: 600; margin-bottom: 8px;" id="uploadStatus">Uploading...</div>
+            <div style="background: white; height: 8px; border-radius: 4px; overflow: hidden;">
+              <div id="uploadBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+          </div>
+          <input type="text" class="search-box" id="pdfSearch" placeholder="Search PDFs..." onkeyup="filterPDFs()">
+          <div id="pdfGrid" class="pdf-grid">
+            <div class="loading"><div class="spinner"></div>Loading PDFs...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Course Progress Tab -->
+      <div id="courseprogressTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🎹 Course Progress</h2>
+            <button class="refresh-btn" onclick="loadCourseProgress()">↻ Refresh</button>
+          </div>
+          <div class="stats-grid" style="margin-bottom:24px">
+            <div class="stat-box"><div class="stat-value" id="cp-total">-</div><div class="stat-label">Started Course</div></div>
+            <div class="stat-box"><div class="stat-value" id="cp-l1a" style="color:var(--primary)">-</div><div class="stat-label">In Level 1A</div></div>
+            <div class="stat-box"><div class="stat-value" id="cp-l1b" style="color:var(--warning)">-</div><div class="stat-label">In Level 1B</div></div>
+            <div class="stat-box"><div class="stat-value" id="cp-mastery" style="color:#a855f7">-</div><div class="stat-label">In Mastery</div></div>
+            <div class="stat-box"><div class="stat-value" id="cp-l2" style="color:var(--success)">-</div><div class="stat-label">In Level 2</div></div>
+            <div class="stat-box"><div class="stat-value" id="cp-done" style="color:var(--success)">-</div><div class="stat-label">Finished Course</div></div>
+          </div>
+          <input type="text" class="search-box" id="cpSearch" placeholder="Search by name or email..." onkeyup="filterCourseProgress()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th><th>Last Position</th><th>Level 1A</th><th>Level 1B</th>
+                  <th>Mastery</th><th>Level 2</th><th>Overall</th><th>Last Updated</th>
+                </tr>
+              </thead>
+              <tbody id="cpTableBody">
+                <tr><td colspan="8" class="loading"><div class="spinner"></div>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════
+           SUBSCRIPTIONS TAB  (fully enhanced)
+           ════════════════════════════════════════════════════ -->
+      <div id="subscriptionsTab" class="tab-content hidden">
+
+        <!-- ── Pricing Management ── -->
+        <div class="sub-pricing-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h3 style="margin:0 0 6px;font-size:22px;">💎 Subscription Pricing</h3>
+              <p style="margin:0;color:var(--muted);font-size:14px;">Changes save to your database and take effect immediately for new subscribers.</p>
+            </div>
+            <span class="plan-live-badge"><span style="width:7px;height:7px;background:var(--success);border-radius:50%;display:inline-block;animation:pulse 2s infinite"></span> Live Config</span>
+          </div>
+
+          <div class="info-box">
+            <strong>ℹ️ How it works:</strong> Enter prices in normal amounts (e.g. ₹199 or $3). They're stored as paise/cents internally.
+            Razorpay plan IDs are optional — if your Razorpay plans have fixed amounts, enter those IDs so the checkout can reference them directly.
+            The <strong>display prices</strong> are what users see on the pricing page.
+          </div>
+
+          <div class="sub-plan-grid">
+            <!-- Monthly Plan -->
+            <div class="sub-plan-box">
+              <h4>📅 Monthly Plan</h4>
+              <div class="sub-price-row">
+                <div class="sub-price-field">
+                  <label>Price (INR ₹)</label>
+                  <div class="price-input-wrap">
+                    <span>₹</span>
+                    <input type="number" step="1" id="sub_monthly_inr" placeholder="199">
+                  </div>
+                </div>
+                <div class="sub-price-field">
+                  <label>Price (USD $)</label>
+                  <div class="price-input-wrap">
+                    <span>$</span>
+                    <input type="number" step="0.01" id="sub_monthly_usd" placeholder="3.99">
+                  </div>
+                </div>
+              </div>
+              <div class="sub-price-field" style="margin-bottom:12px;">
+                <label>Razorpay Plan ID (Monthly)</label>
+                <input type="text" id="sub_monthly_razorpay_id" placeholder="plan_XXXXXXXXXXXXXXXX" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:monospace;">
+              </div>
+              <div class="sub-price-field">
+                <label>Display Label (shown to users)</label>
+                <input type="text" id="sub_monthly_label" placeholder="e.g. Monthly Access" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;">
+              </div>
+            </div>
+
+            <!-- Annual Plan -->
+            <div class="sub-plan-box">
+              <h4>📆 Annual Plan</h4>
+              <div class="sub-price-row">
+                <div class="sub-price-field">
+                  <label>Price (INR ₹)</label>
+                  <div class="price-input-wrap">
+                    <span>₹</span>
+                    <input type="number" step="1" id="sub_annual_inr" placeholder="1499">
+                  </div>
+                </div>
+                <div class="sub-price-field">
+                  <label>Price (USD $)</label>
+                  <div class="price-input-wrap">
+                    <span>$</span>
+                    <input type="number" step="0.01" id="sub_annual_usd" placeholder="29.99">
+                  </div>
+                </div>
+              </div>
+              <div class="sub-price-field" style="margin-bottom:12px;">
+                <label>Razorpay Plan ID (Annual)</label>
+                <input type="text" id="sub_annual_razorpay_id" placeholder="plan_XXXXXXXXXXXXXXXX" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:monospace;">
+              </div>
+              <div class="sub-price-field">
+                <label>Display Label (shown to users)</label>
+                <input type="text" id="sub_annual_label" placeholder="e.g. Annual Access (Save 37%)" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;">
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:20px;">
+            <button class="btn btn-cancel" style="flex:0 0 auto;padding:14px 28px;" onclick="loadSubscriptionPricing()">↻ Reset</button>
+            <button class="btn" style="flex:1;background:var(--success);color:white;" onclick="saveSubscriptionPricing()">
+              💾 Save Subscription Pricing
+            </button>
+          </div>
+          <div id="subPricingStatus" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- ── Stats + Table ── -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💳 All Subscriptions</h2>
+            <button class="refresh-btn" onclick="loadSubscriptions()">↻ Refresh</button>
+          </div>
+          <div class="stats-grid" style="margin-bottom:24px">
+            <div class="stat-box"><div class="stat-value" id="sub-total" style="color:var(--primary)">-</div><div class="stat-label">Active Subscriptions</div></div>
+            <div class="stat-box"><div class="stat-value" id="sub-monthly" style="color:var(--success)">-</div><div class="stat-label">Monthly</div></div>
+            <div class="stat-box"><div class="stat-value" id="sub-annual" style="color:#1d4ed8">-</div><div class="stat-label">Annual</div></div>
+            <div class="stat-box"><div class="stat-value" id="sub-cancelled" style="color:var(--error)">-</div><div class="stat-label">Cancelled / Expired</div></div>
+          </div>
+
+          <!-- Grant subscription to any user -->
+          <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.3);border-radius:14px;padding:20px;margin-bottom:20px;">
+            <h4 style="margin:0 0 14px;color:var(--success);">➕ Grant Subscription to User</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">User Email</label>
+                <input type="email" id="grantSubEmail" class="search-box" style="margin:0;" placeholder="user@example.com">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">Plan</label>
+                <select id="grantSubPlan" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;background:white;">
+                  <option value="monthly">Monthly</option>
+                  <option value="annual">Annual</option>
+                </select>
+              </div>
+              <div>
+                <button onclick="openGrantSubModalQuick()" style="padding:12px 20px;background:var(--success);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;">
+                  ✅ Grant Access
+                </button>
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label style="display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;">
+                Access Expires (leave blank = 30 days for monthly / 365 days for annual)
+              </label>
+              <input type="date" id="grantSubExpiry" style="padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:white;">
+            </div>
+          </div>
+
+          <input type="text" class="search-box" id="subSearch" placeholder="Search by name, email or plan..." onkeyup="filterSubscriptions()">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Plan</th>
+                  <th>Status</th>
+                  <th>Razorpay Subscription ID</th>
+                  <th>Renews / Expires</th>
+                  <th>Started</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="subTableBody">
+                <tr><td colspan="7" class="loading"><div class="spinner"></div>Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Tab -->
+      <div id="pricingTab" class="tab-content hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">💰 Global Pricing Management</h2>
+            <button class="refresh-btn" onclick="loadPricingData()">↻ Refresh</button>
+          </div>
+
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+            <h3 style="margin: 0 0 12px 0; color: var(--warning);">⚠️ Important Notes:</h3>
+            <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+              <li>Enter prices in <strong>normal amounts</strong> — e.g. <strong>$8</strong> or <strong>₹150</strong></li>
+              <li>Decimals are fine: $8.50, ₹149.99, etc.</li>
+              <li>Changes apply immediately to all new purchases</li>
+              <li>Existing purchases are not affected</li>
+            </ul>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- USD Pricing -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇺🇸 USD Pricing ($)</h3>
+              <h4 style="margin: 16px 0 12px 0; font-size: 15px; color: var(--muted);">With Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_books_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="8.00"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_books_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="7.00"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_books_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="7.00"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_books_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="34.00"></div></div>
+              </div>
+              <h4 style="margin: 24px 0 12px 0; font-size: 15px; color: var(--muted);">Without Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_nobooks_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="10.00"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_nobooks_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="9.00"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_nobooks_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="8.00"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">$</span><input type="number" step="0.01" id="usd_nobooks_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="40.00"></div></div>
+              </div>
+            </div>
+
+            <!-- INR Pricing -->
+            <div style="background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+              <h3 style="margin: 0 0 20px 0; color: var(--primary);">🇮🇳 INR Pricing (₹)</h3>
+              <h4 style="margin: 16px 0 12px 0; font-size: 15px; color: var(--muted);">With Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_books_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="150"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_books_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="129"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_books_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="100"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_books_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="550"></div></div>
+              </div>
+              <h4 style="margin: 24px 0 12px 0; font-size: 15px; color: var(--muted);">Without Books:</h4>
+              <div style="display: grid; gap: 12px;">
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">1st Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_nobooks_first" class="search-box" style="margin: 0; padding-left:28px;" placeholder="200"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">2nd Song</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_nobooks_second" class="search-box" style="margin: 0; padding-left:28px;" placeholder="180"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">3rd+ Songs</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_nobooks_third" class="search-box" style="margin: 0; padding-left:28px;" placeholder="150"></div></div>
+                <div><label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">Bundle (5 songs)</label><div style="position:relative;"><span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);pointer-events:none;">₹</span><input type="number" step="0.01" id="inr_nobooks_bundle" class="search-box" style="margin: 0; padding-left:28px;" placeholder="850"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rates-panel" id="ratesPanel">
+            <div class="rates-panel-header">
+              <h3>💱 Live Exchange Rates (INR base)</h3>
+              <button class="refresh-btn" onclick="fetchLiveRates()" style="font-size:13px; padding:8px 14px;">↻ Refresh Rates</button>
+            </div>
+            <p style="margin: 0 0 16px; font-size: 13px; color: var(--muted);">
+              Auto-fetched from <strong>frankfurter.dev</strong> — how much 1 INR is worth in each currency.
+            </p>
+            <div id="ratesLoading" style="padding:20px; text-align:center; color:var(--muted);">
+              <div class="spinner" style="width:28px;height:28px;border-width:2px;"></div>Fetching live rates...
+            </div>
+            <div id="ratesGridContainer" class="hidden">
+              <div class="rates-grid" id="ratesGridEl"></div>
+              <div class="rates-status" id="ratesStatus"></div>
+            </div>
+            <div id="ratesError" class="hidden" style="color:var(--error); font-size:13px; margin-top:8px;"></div>
+          </div>
+
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-cancel" style="flex: 0 0 auto; padding: 14px 32px;" onclick="loadPricingData()">↻ Reset Changes</button>
+            <button class="btn btn-danger" style="flex: 1; background: var(--success);" onclick="savePricing()">💾 Save All Pricing Changes</button>
+          </div>
+          <div id="pricingStatus" style="margin-top: 20px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ════════ DELETE USER MODAL ════════ -->
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">⚠️ Delete User Account</h2>
+        <p class="modal-subtitle">This action cannot be undone</p>
+      </div>
+      <div id="confirmStep1" class="confirmation-step">
+        <p class="step-number">Step 1 of 3</p>
+        <p class="confirmation-text">You are about to permanently delete: <strong id="deleteUserName"></strong><br>Email: <span class="code-display" id="deleteUserEmail"></span></p>
+        <div class="warning-box"><h3>⚠️ This will permanently delete:</h3><ul><li>User profile data</li><li>All purchase history</li><li>All song downloads</li><li>Book verification status</li><li>Credit balances</li></ul></div>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button><button class="btn btn-danger" onclick="confirmStep2()">Continue to Step 2</button></div>
+      </div>
+      <div id="confirmStep2" class="confirmation-step hidden">
+        <p class="step-number">Step 2 of 3</p>
+        <p class="confirmation-text">Are you absolutely sure?<br><strong>This will erase all their data permanently.</strong></p>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button><button class="btn btn-danger" onclick="confirmStep3()">Yes, Continue to Step 3</button></div>
+      </div>
+      <div id="confirmStep3" class="confirmation-step hidden">
+        <p class="step-number">Step 3 of 3 - FINAL CONFIRMATION</p>
+        <p class="confirmation-text"><strong style="color: var(--error); font-size: 18px;">LAST CHANCE TO CANCEL!</strong></p>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button><button class="btn btn-danger" onclick="deleteUserForever()">DELETE FOREVER</button></div>
+      </div>
+      <div id="deletingStep" class="confirmation-step hidden"><div class="loading"><div class="spinner"></div><p>Deleting user...</p></div></div>
+    </div>
+  </div>
+
+  <!-- ════════ MANAGE SONGS MODAL ════════ -->
+  <div id="manageSongsModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" style="color: var(--primary);">🎵 Manage Song Access</h2>
+        <p class="modal-subtitle" id="manageSongsUserName"></p>
+      </div>
+      <div id="songsList" class="song-list"><div class="loading"><div class="spinner"></div><p>Loading songs...</p></div></div>
+      <div class="modal-actions"><button class="btn btn-cancel" onclick="closeManageSongsModal()">Close</button></div>
+    </div>
+  </div>
+
+  <!-- ════════ REMOVE SONG MODAL ════════ -->
+  <div id="removeSongModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header"><h2 class="modal-title">⚠️ Remove Song Access</h2><p class="modal-subtitle">This action cannot be undone</p></div>
+      <div id="removeSongStep1" class="confirmation-step">
+        <p class="step-number">Step 1 of 3</p>
+        <p class="confirmation-text">Remove song access for: <strong id="removeSongUserDisplay"></strong><br>Song ID: <span class="code-display" id="removeSongId"></span></p>
+        <div class="warning-box"><h3>⚠️ This will:</h3><ul><li>Remove song from purchased list</li><li>Revoke download access</li><li><strong>NOT refund any payment</strong></li></ul></div>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeRemoveSongModal()">Cancel</button><button class="btn btn-danger" onclick="confirmRemoveSongStep2()">Continue</button></div>
+      </div>
+      <div id="removeSongStep2" class="confirmation-step hidden">
+        <p class="step-number">Step 2 of 3</p>
+        <p class="confirmation-text">Are you absolutely sure?</p>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeRemoveSongModal()">Cancel</button><button class="btn btn-danger" onclick="confirmRemoveSongStep3()">Yes, Continue</button></div>
+      </div>
+      <div id="removeSongStep3" class="confirmation-step hidden">
+        <p class="step-number">Step 3 of 3 - FINAL</p>
+        <p class="confirmation-text"><strong style="color: var(--error); font-size: 18px;">LAST CHANCE!</strong></p>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeRemoveSongModal()">Cancel</button><button class="btn btn-danger" onclick="removeSongAccessForever()">REMOVE ACCESS</button></div>
+      </div>
+      <div id="removingSongStep" class="confirmation-step hidden"><div class="loading"><div class="spinner"></div><p>Removing...</p></div></div>
+    </div>
+  </div>
+
+  <!-- ════════ GRANT SONG MODAL ════════ -->
+  <div id="grantSongModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header"><h2 class="modal-title" style="color:var(--success)">✅ Grant Song Access</h2><p class="modal-subtitle">Add a song to this user's library</p></div>
+      <div id="grantSongStep1" class="confirmation-step">
+        <p class="step-number">Step 1 of 3</p>
+        <p class="confirmation-text">Granting access for: <strong id="grantSongUserDisplay"></strong></p>
+        <div style="margin: 20px 0;"><label style="display: block; font-weight: 600; margin-bottom: 8px;">Enter Song ID:</label><input type="text" id="grantSongIdInput" class="search-box" placeholder="e.g., kalho, tujhemeri, etc." style="margin: 0;"><p style="font-size: 13px; color: var(--muted); margin-top: 8px;">Enter the exact song slug/ID</p></div>
+        <div class="warning-box" style="background: rgba(16, 185, 129, 0.08); border-color: var(--success);"><h3 style="color: var(--success);">ℹ️ This will:</h3><ul><li>Add song to purchased list</li><li>Grant immediate download access</li><li><strong>NOT charge any payment</strong></li></ul></div>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeGrantSongModal()">Cancel</button><button class="btn" style="background:var(--success);color:white;" onclick="confirmGrantSongStep2()">Continue</button></div>
+      </div>
+      <div id="grantSongStep2" class="confirmation-step hidden">
+        <p class="step-number">Step 2 of 3</p>
+        <p class="confirmation-text">Grant access to Song: <span class="code-display" id="grantSongIdConfirm"></span><br>For: <strong id="grantSongUserConfirm"></strong><br><br>Correct?</p>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeGrantSongModal()">Cancel</button><button class="btn" style="background:var(--success);color:white;" onclick="confirmGrantSongStep3()">Yes, Continue</button></div>
+      </div>
+      <div id="grantSongStep3" class="confirmation-step hidden">
+        <p class="step-number">Step 3 of 3 - FINAL</p>
+        <p class="confirmation-text"><strong style="color:var(--success);font-size:18px;">FINAL STEP!</strong></p>
+        <div class="modal-actions"><button class="btn btn-cancel" onclick="closeGrantSongModal()">Cancel</button><button class="btn" style="background:var(--success);color:white;" onclick="grantSongAccessForever()">GRANT ACCESS</button></div>
+      </div>
+      <div id="grantingSongStep" class="confirmation-step hidden"><div class="loading"><div class="spinner"></div><p>Granting access...</p></div></div>
+    </div>
+  </div>
+
+  <!-- ════════ GRANT SUBSCRIPTION MODAL ════════ -->
+  <div id="grantSubModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" style="color:var(--success);">✅ Grant Subscription</h2>
+        <p class="modal-subtitle">Manually give a user subscription access</p>
+      </div>
+      <div id="grantSubStep1" class="confirmation-step" style="border-color:var(--success);">
+        <p class="step-number" style="color:var(--success);">Step 1 of 2</p>
+        <p class="confirmation-text">
+          You're granting a <strong id="grantSubPlanDisplay"></strong> subscription to:<br>
+          <strong id="grantSubUserDisplay"></strong><br><br>
+          Expires: <strong id="grantSubExpiryDisplay"></strong>
+        </p>
+        <div class="warning-box" style="background:rgba(16,185,129,0.08);border-color:var(--success);">
+          <h3 style="color:var(--success);">ℹ️ This will:</h3>
+          <ul>
+            <li>Create an active subscription record</li>
+            <li>Give the user full subscription features immediately</li>
+            <li><strong>NOT charge Razorpay — this is a manual grant</strong></li>
+            <li>Sets <code>source: 'admin_grant'</code> in the database</li>
+          </ul>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="closeGrantSubModal()">Cancel</button>
+          <button class="btn" style="background:var(--success);color:white;" onclick="grantSubAccess()">✅ GRANT SUBSCRIPTION</button>
+        </div>
+      </div>
+      <div id="grantingSubStep" class="confirmation-step hidden" style="border-color:var(--success);">
+        <div class="loading"><div class="spinner"></div><p>Granting subscription...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ REVOKE SUBSCRIPTION MODAL ════════ -->
+  <div id="revokeSubModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">⚠️ Revoke Subscription</h2>
+        <p class="modal-subtitle">This will immediately end the user's access</p>
+      </div>
+      <div id="revokeSubStep1" class="confirmation-step">
+        <p class="step-number">Step 1 of 2</p>
+        <p class="confirmation-text">
+          Revoke subscription for:<br>
+          <strong id="revokeSubUserDisplay"></strong><br>
+          Plan: <strong id="revokeSubPlanDisplay"></strong>
+        </p>
+        <div class="warning-box">
+          <h3>⚠️ This will:</h3>
+          <ul>
+            <li>Set subscription status to <strong>cancelled</strong></li>
+            <li>Remove user's subscription features immediately</li>
+            <li><strong>NOT issue any refund</strong></li>
+            <li>Note: If they have a Razorpay subscription, cancel it there too</li>
+          </ul>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="closeRevokeSubModal()">Cancel</button>
+          <button class="btn btn-danger" onclick="revokeSubAccess()">⛔ REVOKE SUBSCRIPTION</button>
+        </div>
+      </div>
+      <div id="revokingSubStep" class="confirmation-step hidden">
+        <div class="loading"><div class="spinner"></div><p>Revoking subscription...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ MEDIA LIGHTBOX ════════ -->
+  <div id="mediaModal" class="media-modal-overlay hidden" onclick="closeMediaModal()">
+    <img id="mediaModalImg" src="" alt="Book verification photo" style="display:none;">
+    <video id="mediaModalVideo" controls autoplay style="display:none;" onclick="event.stopPropagation()"></video>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const ADMIN_EMAILS = ["riaomshandilya@gmail.com", "riashandilya@gmail.com"];
+
+    let allUsers = [];
+    let allCodes = [];
+    let allPurchases = [];
+    let allBundles = [];
+    let allSubscriptions = [];
+    let allFeedback = [];
+    let allPDFs = [];
+    let allCourseProgress = [];
+    let userToDelete = null;
+    let currentManageUser = null;
+    let songToRemove = null;
+    let songToGrant = null;
+    let subToRevoke = null;
+    let subGrantTarget = null;
+
+    // ────────────────────────────────────────────────────
+    // ADMIN EDGE (Sheet Music)
+    // ────────────────────────────────────────────────────
+    const ADMIN_EDGE_URL = `${SUPABASE_URL}/functions/v1/admin-list-pdfs`;
+
+    async function edgeRequest(action, body = null) {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      const url = `${ADMIN_EDGE_URL}?action=${action}`;
+      const options = { method: body ? "POST" : "GET", headers: { "Authorization": `Bearer ${session.access_token}` } };
+      if (body instanceof FormData) { options.body = body; }
+      else if (body) { options.headers["Content-Type"] = "application/json"; options.body = JSON.stringify(body); }
+      const res = await fetch(url, options);
+      if (!res.ok) { const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` })); throw new Error(err.error || `HTTP ${res.status}`); }
+      return res.json();
+    }
+
+    // ────────────────────────────────────────────────────
+    // HELPERS
+    // ────────────────────────────────────────────────────
+    const CURRENCY_SYMBOLS = { 'INR': '₹', 'USD': '$', 'GBP': '£', 'EUR': '€', 'CAD': 'CA$', 'AUD': 'A$', 'JPY': '¥' };
+    const RATE_CURRENCIES = ['USD','GBP','EUR','CAD','AUD','JPY'];
+
+    let liveExchangeRates = null;
+    let savedExchangeRates = null;
+
+    function convertToINR(amount, currency) {
+      if (!amount) return 0;
+      if (!currency || currency === 'INR') return amount;
+      if (!savedExchangeRates || !savedExchangeRates.INR) {
+        const fallback = { USD: 1, INR: 84, GBP: 0.79, EUR: 0.92, CAD: 1.35, AUD: 1.52, JPY: 148 };
+        const rateC = fallback[currency]; if (!rateC) return amount;
+        return Math.round(amount * (fallback.INR / rateC));
+      }
+      const rateC = savedExchangeRates[currency]; if (!rateC) return amount;
+      return Math.round(amount * (savedExchangeRates.INR / rateC));
+    }
+
+    function formatAmount(amount, currency = 'INR') {
+      if (!amount) return 'N/A';
+      const symbol = CURRENCY_SYMBOLS[currency] || currency;
+      return `${symbol}${(amount / 100).toFixed(2)}`;
+    }
+
+    function userInfoHTML(name, email) {
+      return `<div class="user-info"><span class="user-name">${name || 'N/A'}</span><span class="user-email">${email || 'N/A'}</span></div>`;
+    }
+
+    function getProfile(userId) { return allUsers.find(u => u.id === userId); }
+
+    function escHTML(s) {
+      return String(s ?? '').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+    }
+
+    function getSongsForUser(userId) {
+      return allPurchases.filter(p => p.user_id === userId && p.song_id !== 'pack:5').map(p => p.song_id);
+    }
+
+    function getBundleCountForUser(userId) { return allBundles.filter(b => b.user_id === userId).length; }
+
+    async function getPhotoUrl(userId) {
+      try {
+        const { data: files, error } = await window.supabase.storage.from('book-verifications').list(userId);
+        if (error || !files || files.length === 0) return null;
+        const { data } = await window.supabase.storage.from('book-verifications').createSignedUrl(`${userId}/${files[0].name}`, 3600);
+        return data?.signedUrl || null;
+      } catch { return null; }
+    }
+
+    async function getVideoUrl(userId) {
+      try {
+        const { data: files, error } = await window.supabase.storage.from('book-videos').list(userId);
+        if (error || !files || files.length === 0) return null;
+        const { data } = await window.supabase.storage.from('book-videos').createSignedUrl(`${userId}/${files[0].name}`, 3600);
+        return data?.signedUrl || null;
+      } catch { return null; }
+    }
+
+    let photoCache = {}, videoCache = {};
+
+    async function fetchMediaForUser(userId) {
+      if (!(userId in photoCache)) photoCache[userId] = await getPhotoUrl(userId);
+      if (!(userId in videoCache)) videoCache[userId] = await getVideoUrl(userId);
+    }
+
+    // ════════════════════════════════════════════════════
+    // SUBSCRIPTION PRICING  ← NEW
+    // ════════════════════════════════════════════════════
+
+    async function loadSubscriptionPricing() {
+      try {
+        const { data, error } = await window.supabase
+          .from('pricing_config').select('config').eq('id', 1).single();
+
+        if (error || !data?.config?.subscriptions) {
+          // Defaults
+          document.getElementById('sub_monthly_inr').value = 199;
+          document.getElementById('sub_monthly_usd').value = 3.99;
+          document.getElementById('sub_monthly_razorpay_id').value = '';
+          document.getElementById('sub_monthly_label').value = 'Monthly Access';
+          document.getElementById('sub_annual_inr').value = 1499;
+          document.getElementById('sub_annual_usd').value = 29.99;
+          document.getElementById('sub_annual_razorpay_id').value = '';
+          document.getElementById('sub_annual_label').value = 'Annual Access';
+          return;
+        }
+
+        const subs = data.config.subscriptions;
+
+        // Monthly (stored in paise/cents → show in rupees/dollars)
+        if (subs.monthly) {
+          document.getElementById('sub_monthly_inr').value = (subs.monthly.inr || 0) / 100;
+          document.getElementById('sub_monthly_usd').value = ((subs.monthly.usd || 0) / 100).toFixed(2);
+          document.getElementById('sub_monthly_razorpay_id').value = subs.monthly.razorpay_plan_id || '';
+          document.getElementById('sub_monthly_label').value = subs.monthly.label || 'Monthly Access';
+        }
+        // Annual
+        if (subs.annual) {
+          document.getElementById('sub_annual_inr').value = (subs.annual.inr || 0) / 100;
+          document.getElementById('sub_annual_usd').value = ((subs.annual.usd || 0) / 100).toFixed(2);
+          document.getElementById('sub_annual_razorpay_id').value = subs.annual.razorpay_plan_id || '';
+          document.getElementById('sub_annual_label').value = subs.annual.label || 'Annual Access';
+        }
+      } catch (e) {
+        console.error('Error loading subscription pricing:', e);
+      }
+    }
+
+    async function saveSubscriptionPricing() {
+      const statusDiv = document.getElementById('subPricingStatus');
+      statusDiv.innerHTML = '<div class="loading" style="padding:16px 0;"><div class="spinner" style="width:28px;height:28px;border-width:2px;"></div>Saving...</div>';
+
+      try {
+        // Build subscription block (multiply by 100 for storage)
+        const monthlyINR  = Math.round((parseFloat(document.getElementById('sub_monthly_inr').value) || 0) * 100);
+        const monthlyUSD  = Math.round((parseFloat(document.getElementById('sub_monthly_usd').value) || 0) * 100);
+        const annualINR   = Math.round((parseFloat(document.getElementById('sub_annual_inr').value) || 0) * 100);
+        const annualUSD   = Math.round((parseFloat(document.getElementById('sub_annual_usd').value) || 0) * 100);
+
+        const subConfig = {
+          monthly: {
+            inr: monthlyINR,
+            usd: monthlyUSD,
+            razorpay_plan_id: document.getElementById('sub_monthly_razorpay_id').value.trim(),
+            label: document.getElementById('sub_monthly_label').value.trim() || 'Monthly Access',
+          },
+          annual: {
+            inr: annualINR,
+            usd: annualUSD,
+            razorpay_plan_id: document.getElementById('sub_annual_razorpay_id').value.trim(),
+            label: document.getElementById('sub_annual_label').value.trim() || 'Annual Access',
+          },
+        };
+
+        // Load current config, merge subscriptions in, upsert
+        const { data: existing } = await window.supabase
+          .from('pricing_config').select('config').eq('id', 1).single();
+
+        const merged = { ...(existing?.config || {}), subscriptions: subConfig, lastUpdated: new Date().toISOString() };
+
+        const { error } = await window.supabase.from('pricing_config').upsert({ id: 1, config: merged, updated_at: new Date().toISOString() });
+        if (error) throw error;
+
+        statusDiv.innerHTML = `<div style="background:rgba(16,185,129,0.1);border:1px solid var(--success);border-radius:12px;padding:16px;color:var(--success);">
+          <strong>✅ Subscription pricing saved!</strong><br>
+          <span style="font-size:13px;">Monthly: ₹${monthlyINR/100} / $${(monthlyUSD/100).toFixed(2)} — Annual: ₹${annualINR/100} / $${(annualUSD/100).toFixed(2)}</span>
+        </div>`;
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 5000);
+      } catch (e) {
+        console.error('Save sub pricing error:', e);
+        statusDiv.innerHTML = `<div class="error-message"><strong>❌ Failed:</strong> ${e.message}</div>`;
+      }
+    }
+
+    // ════════════════════════════════════════════════════
+    // GRANT SUBSCRIPTION  ← NEW
+    // ════════════════════════════════════════════════════
+
+    function openGrantSubModalQuick() {
+      const email = document.getElementById('grantSubEmail').value.trim();
+      const plan  = document.getElementById('grantSubPlan').value;
+      const expiry = document.getElementById('grantSubExpiry').value;
+
+      if (!email) { alert('⚠️ Please enter a user email'); return; }
+
+      // Find profile
+      const profile = allUsers.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      if (!profile) { alert(`⚠️ No user found with email: ${email}\n\nMake sure the email matches exactly.`); return; }
+
+      // Calculate expiry
+      let expiryDate;
+      if (expiry) {
+        expiryDate = new Date(expiry);
+        expiryDate.setHours(23, 59, 59, 999);
+      } else {
+        expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + (plan === 'annual' ? 365 : 30));
+      }
+
+      subGrantTarget = { profile, plan, expiryDate };
+
+      document.getElementById('grantSubPlanDisplay').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+      document.getElementById('grantSubUserDisplay').textContent = `${profile.display_name || 'User'} (${profile.email})`;
+      document.getElementById('grantSubExpiryDisplay').textContent = expiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      document.getElementById('grantSubStep1').classList.remove('hidden');
+      document.getElementById('grantingSubStep').classList.add('hidden');
+      document.getElementById('grantSubModal').classList.remove('hidden');
+    }
+
+    // Also callable from user row "Grant Sub" button
+    function openGrantSubModalForUser(user) {
+      document.getElementById('grantSubEmail').value = user.email || '';
+      document.getElementById('grantSubPlan').value = 'monthly';
+      document.getElementById('grantSubExpiry').value = '';
+      openGrantSubModalQuick();
+    }
+
+    function closeGrantSubModal() {
+      document.getElementById('grantSubModal').classList.add('hidden');
+      subGrantTarget = null;
+    }
+
+    async function grantSubAccess() {
+      if (!subGrantTarget) return;
+      document.getElementById('grantSubStep1').classList.add('hidden');
+      document.getElementById('grantingSubStep').classList.remove('hidden');
+
+      try {
+        const { profile, plan, expiryDate } = subGrantTarget;
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+
+        // Upsert into subscriptions table
+        const { error } = await window.supabase.from('subscriptions').upsert({
+          user_id: profile.id,
+          plan_type: plan,
+          status: 'active',
+          current_period_end: expiryDate.toISOString(),
+          created_at: new Date().toISOString(),
+          razorpay_subscription_id: `admin_grant_${Date.now()}`,
+          source: 'admin_grant',
+          granted_by: session.user.email,
+        }, { onConflict: 'user_id' });
+
+        if (error) throw error;
+
+        alert(`✅ Subscription granted!\n\n${profile.display_name || profile.email}\nPlan: ${plan}\nExpires: ${expiryDate.toLocaleDateString()}`);
+        closeGrantSubModal();
+        await loadSubscriptionsData();
+        renderSubscriptions(allSubscriptions);
+        // Reset form
+        document.getElementById('grantSubEmail').value = '';
+        document.getElementById('grantSubExpiry').value = '';
+        // Reload users to update subscription badge
+        renderUsers(sortArray(allUsers, 'users'));
+      } catch (e) {
+        console.error('Grant sub error:', e);
+        alert('❌ Error: ' + e.message);
+        document.getElementById('grantingSubStep').classList.add('hidden');
+        document.getElementById('grantSubStep1').classList.remove('hidden');
+      }
+    }
+
+    // ════════════════════════════════════════════════════
+    // REVOKE SUBSCRIPTION  ← NEW
+    // ════════════════════════════════════════════════════
+
+    function openRevokeSubModal(sub) {
+      subToRevoke = sub;
+      const profile = getProfile(sub.user_id);
+      document.getElementById('revokeSubUserDisplay').textContent = `${profile?.display_name || 'User'} (${profile?.email || sub.user_id})`;
+      document.getElementById('revokeSubPlanDisplay').textContent = sub.plan_type;
+      document.getElementById('revokeSubStep1').classList.remove('hidden');
+      document.getElementById('revokingSubStep').classList.add('hidden');
+      document.getElementById('revokeSubModal').classList.remove('hidden');
+    }
+
+    function closeRevokeSubModal() {
+      document.getElementById('revokeSubModal').classList.add('hidden');
+      subToRevoke = null;
+    }
+
+    async function revokeSubAccess() {
+      if (!subToRevoke) return;
+      document.getElementById('revokeSubStep1').classList.add('hidden');
+      document.getElementById('revokingSubStep').classList.remove('hidden');
+
+      try {
+        const { error } = await window.supabase.from('subscriptions')
+          .update({ status: 'cancelled', current_period_end: new Date().toISOString() })
+          .eq('user_id', subToRevoke.user_id);
+
+        if (error) throw error;
+
+        const profile = getProfile(subToRevoke.user_id);
+        alert(`✅ Subscription revoked for ${profile?.email || subToRevoke.user_id}`);
+        closeRevokeSubModal();
+        await loadSubscriptionsData();
+        renderSubscriptions(allSubscriptions);
+        renderUsers(sortArray(allUsers, 'users'));
+      } catch (e) {
+        console.error('Revoke sub error:', e);
+        alert('❌ Error: ' + e.message);
+        document.getElementById('revokingSubStep').classList.add('hidden');
+        document.getElementById('revokeSubStep1').classList.remove('hidden');
+      }
+    }
+
+    // ════════════════════════════════════════════════════
+    // SUBSCRIPTIONS DATA + RENDER
+    // ════════════════════════════════════════════════════
+
+    async function loadSubscriptionsData() {
+      const { data, error } = await window.supabase
+        .from('subscriptions').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      allSubscriptions = data || [];
+    }
+
+    async function loadSubscriptions() {
+      const tbody = document.getElementById('subTableBody');
+      tbody.innerHTML = '<tr><td colspan="7" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+      try {
+        await loadSubscriptionsData();
+        renderSubscriptions(allSubscriptions);
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+      }
+      // Also load pricing
+      await loadSubscriptionPricing();
+    }
+
+    function renderSubscriptions(list) {
+      const tbody = document.getElementById('subTableBody');
+      const active = list.filter(s => s.status === 'active');
+      document.getElementById('sub-total').textContent = active.length;
+      document.getElementById('sub-monthly').textContent = active.filter(s => s.plan_type === 'monthly').length;
+      document.getElementById('sub-annual').textContent = active.filter(s => s.plan_type === 'annual').length;
+      document.getElementById('sub-cancelled').textContent = list.filter(s => s.status !== 'active').length;
+
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">💳</div><p>No subscriptions yet</p></td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(s => {
+        const profile = getProfile(s.user_id);
+        const planBadge = s.plan_type === 'monthly'
+          ? `<span class="badge badge-success">Monthly</span>`
+          : s.plan_type === 'annual'
+          ? `<span class="badge badge-blue">Annual</span>`
+          : `<span class="badge badge-warning">${escHTML(s.plan_type)}</span>`;
+
+        const statusBadge = s.status === 'active'
+          ? `<span class="badge badge-success">Active</span>`
+          : `<span class="badge badge-error">${escHTML(s.status)}</span>`;
+
+        const expiry = s.current_period_end ? new Date(s.current_period_end).toLocaleDateString() : '-';
+        const isAdminGrant = (s.razorpay_subscription_id || '').startsWith('admin_grant');
+        const subIdDisplay = isAdminGrant
+          ? `<span class="badge badge-warning" style="font-size:11px;">Admin Grant</span>`
+          : `<span class="code-display" style="font-size:12px">${escHTML(s.razorpay_subscription_id || '-')}</span>`;
+
+        const actionButtons = s.status === 'active'
+          ? `<button class="revoke-sub-btn" onclick='openRevokeSubModal(${JSON.stringify(s).replace(/'/g,"&#39;")})'>⛔ Revoke</button>`
+          : `<button class="grant-sub-btn" onclick='openGrantSubModalForUser(${JSON.stringify(profile || {email: s.user_id}).replace(/'/g,"&#39;")})'>✅ Re-Grant</button>`;
+
+        return `<tr>
+          <td>${userInfoHTML(profile?.display_name, profile?.email)}</td>
+          <td>${planBadge}</td>
+          <td>${statusBadge}</td>
+          <td>${subIdDisplay}</td>
+          <td>${expiry}</td>
+          <td>${new Date(s.created_at).toLocaleDateString()}</td>
+          <td>${actionButtons}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterSubscriptions() {
+      const q = document.getElementById('subSearch').value.toLowerCase();
+      const filtered = allSubscriptions.filter(s => {
+        const p = getProfile(s.user_id);
+        return (p?.display_name || '').toLowerCase().includes(q) ||
+               (p?.email || '').toLowerCase().includes(q) ||
+               (s.plan_type || '').toLowerCase().includes(q) ||
+               (s.status || '').toLowerCase().includes(q);
+      });
+      renderSubscriptions(filtered);
+    }
+
+    // ════════════════════════════════════════════════════
+    // FRANKFURTER RATES
+    // ════════════════════════════════════════════════════
+
+    async function fetchLiveRates() {
+      const loading = document.getElementById('ratesLoading');
+      const container = document.getElementById('ratesGridContainer');
+      const errEl = document.getElementById('ratesError');
+      const gridEl = document.getElementById('ratesGridEl');
+      const statusEl = document.getElementById('ratesStatus');
+      loading.style.display = 'block'; container.classList.add('hidden'); errEl.classList.add('hidden');
+      try {
+        const symbols = RATE_CURRENCIES.join(',');
+        const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=INR&symbols=${symbols}`);
+        if (!res.ok) throw new Error(`Frankfurter returned ${res.status}`);
+        const json = await res.json();
+        liveExchangeRates = json.rates;
+        gridEl.innerHTML = RATE_CURRENCIES.map(code => {
+          const val = json.rates[code]; if (val == null) return '';
+          const decimals = val < 0.01 ? 6 : val < 1 ? 4 : val >= 100 ? 1 : 3;
+          const display = val.toFixed(decimals);
+          const inverse = (1 / val).toFixed(2);
+          return `<div class="rate-chip"><div class="rate-code">${code}</div><div class="rate-val">${display}</div><div class="rate-label">1 INR = ${display} ${code}<br>1 ${code} = ₹${inverse}</div></div>`;
+        }).join('');
+        loading.style.display = 'none'; container.classList.remove('hidden');
+        statusEl.innerHTML = `<span class="live-dot"></span>Live rates as of <strong>${json.date}</strong>`;
+      } catch (e) {
+        loading.style.display = 'none'; errEl.classList.remove('hidden');
+        errEl.textContent = '❌ Failed to fetch rates: ' + e.message;
+        liveExchangeRates = null;
+      }
+    }
+
+    // ════════════════════════════════════════════════════
+    // MANAGE SONGS
+    // ════════════════════════════════════════════════════
+
+    function openManageSongsModal(user) {
+      currentManageUser = user;
+      document.getElementById('manageSongsUserName').textContent = `${user.display_name || 'User'} (${user.email})`;
+      document.getElementById('manageSongsModal').classList.remove('hidden');
+      loadUserSongs(user.id);
+    }
+
+    function loadUserSongs(userId) {
+      const songsList = document.getElementById('songsList');
+      const userSongs = allPurchases.filter(p => p.user_id === userId && p.song_id !== 'pack:5');
+      let html = `<div style="margin-bottom:20px;"><button class="btn" style="width:100%;background:var(--success);color:white;padding:14px;" onclick="openGrantSongModal()">➕ Grant New Song Access</button></div>`;
+      if (!userSongs.length) {
+        html += `<div class="empty-state"><div class="empty-state-icon">🎵</div><p>No songs purchased yet</p></div>`;
+      } else {
+        html += userSongs.map(p => `<div class="song-item"><div class="song-item-info"><div class="song-item-id">${p.song_id}</div><div class="song-item-date">Purchased: ${new Date(p.created_at).toLocaleDateString()}</div></div><button class="song-item-remove" onclick="openRemoveSongModal('${p.song_id}')">🗑️ Remove</button></div>`).join('');
+      }
+      songsList.innerHTML = html;
+    }
+
+    function closeManageSongsModal() { document.getElementById('manageSongsModal').classList.add('hidden'); currentManageUser = null; }
+
+    function openRemoveSongModal(songId) {
+      if (!currentManageUser) return;
+      songToRemove = { userId: currentManageUser.id, songId };
+      document.getElementById('removeSongUserDisplay').textContent = `${currentManageUser.display_name || 'User'} (${currentManageUser.email})`;
+      document.getElementById('removeSongId').textContent = songId;
+      ['removeSongStep1','removeSongStep2','removeSongStep3','removingSongStep'].forEach((id,i) => document.getElementById(id).classList[i===0?'remove':'add']('hidden'));
+      document.getElementById('removeSongModal').classList.remove('hidden');
+    }
+
+    function confirmRemoveSongStep2() { document.getElementById('removeSongStep1').classList.add('hidden'); document.getElementById('removeSongStep2').classList.remove('hidden'); }
+    function confirmRemoveSongStep3() { document.getElementById('removeSongStep2').classList.add('hidden'); document.getElementById('removeSongStep3').classList.remove('hidden'); }
+    function closeRemoveSongModal() { document.getElementById('removeSongModal').classList.add('hidden'); songToRemove = null; }
+
+    async function removeSongAccessForever() {
+      if (!songToRemove) return;
+      document.getElementById('removeSongStep3').classList.add('hidden'); document.getElementById('removingSongStep').classList.remove('hidden');
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+        const { error } = await window.supabase.rpc('remove_song_access', { p_user_id: songToRemove.userId, p_song_id: songToRemove.songId, p_admin_email: session.user.email });
+        if (error) throw error;
+        alert(`✅ Song access removed!\nSong: ${songToRemove.songId}\nUser: ${currentManageUser.email}`);
+        closeRemoveSongModal();
+        await Promise.all([loadPurchasesData(), loadBundlesData()]);
+        loadUserSongs(currentManageUser.id); calculateRevenue();
+      } catch (e) {
+        alert('❌ Error: ' + e.message);
+        document.getElementById('removingSongStep').classList.add('hidden'); document.getElementById('removeSongStep3').classList.remove('hidden');
+      }
+    }
+
+    function openGrantSongModal() {
+      if (!currentManageUser) return;
+      document.getElementById('grantSongUserDisplay').textContent = `${currentManageUser.display_name || 'User'} (${currentManageUser.email})`;
+      document.getElementById('grantSongIdInput').value = '';
+      ['grantSongStep1','grantSongStep2','grantSongStep3','grantingSongStep'].forEach((id,i) => document.getElementById(id).classList[i===0?'remove':'add']('hidden'));
+      document.getElementById('grantSongModal').classList.remove('hidden');
+    }
+
+    function confirmGrantSongStep2() {
+      const songId = document.getElementById('grantSongIdInput').value.trim();
+      if (!songId) { alert('⚠️ Please enter a song ID'); return; }
+      if (allPurchases.some(p => p.user_id === currentManageUser.id && p.song_id === songId)) { alert('⚠️ User already has this song!'); return; }
+      songToGrant = { userId: currentManageUser.id, songId };
+      document.getElementById('grantSongIdConfirm').textContent = songId;
+      document.getElementById('grantSongUserConfirm').textContent = `${currentManageUser.display_name || 'User'} (${currentManageUser.email})`;
+      document.getElementById('grantSongStep1').classList.add('hidden'); document.getElementById('grantSongStep2').classList.remove('hidden');
+    }
+
+    function confirmGrantSongStep3() { document.getElementById('grantSongStep2').classList.add('hidden'); document.getElementById('grantSongStep3').classList.remove('hidden'); }
+    function closeGrantSongModal() { document.getElementById('grantSongModal').classList.add('hidden'); songToGrant = null; }
+
+    async function grantSongAccessForever() {
+      if (!songToGrant) return;
+      document.getElementById('grantSongStep3').classList.add('hidden'); document.getElementById('grantingSongStep').classList.remove('hidden');
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/grant_song_access`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ userEmail: currentManageUser.email, songSlug: songToGrant.songId })
+        });
+        const data = await response.json();
+        if (!response.ok || data.error) throw new Error(data.error || data.details || 'Failed to grant access');
+        alert(`✅ Song access granted!\nSong: ${songToGrant.songId}\nUser: ${currentManageUser.email}`);
+        closeGrantSongModal();
+        await Promise.all([loadPurchasesData(), loadBundlesData()]);
+        loadUserSongs(currentManageUser.id); calculateRevenue();
+      } catch (e) {
+        alert('❌ Error: ' + e.message);
+        document.getElementById('grantingSongStep').classList.add('hidden'); document.getElementById('grantSongStep3').classList.remove('hidden');
+      }
+    }
+
+    // ════════════════════════════════════════════════════
+    // AUTH + INIT
+    // ════════════════════════════════════════════════════
+
+    async function checkAdminAccess() {
+      try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        const authCheck = document.getElementById('authCheck');
+        const adminContent = document.getElementById('adminContent');
+        if (error || !session) { authCheck.innerHTML = '<p style="color:var(--error);font-size:18px;">Access Denied: Not logged in</p>'; return; }
+        if (!ADMIN_EMAILS.includes(session.user.email)) { authCheck.innerHTML = '<p style="color:var(--error);font-size:18px;">⛔ Access Denied: Not an admin</p>'; return; }
+        authCheck.classList.add('hidden'); adminContent.classList.remove('hidden');
+        await Promise.all([loadPurchasesData(), loadBundlesData(), loadSavedRates(), loadSubscriptionsData()]);
+        loadStats(); loadUsers(); loadCodes(); updateRevenueDisplay();
+        updateSortHeaders('purchases'); renderPurchases(sortArray(allPurchases, 'purchases'));
+        updateSortHeaders('bundles'); renderBundles(sortArray(allBundles, 'bundles'));
+        initSortHeaders();
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('authCheck').innerHTML = '<p style="color:var(--error);">An error occurred</p>';
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const { data: allProfiles } = await window.supabase.from('profiles').select('id, email, is_book_owner');
+        const nonAdmin = allProfiles?.filter(p => !ADMIN_EMAILS.includes(p.email)) || [];
+        document.getElementById('totalUsers').textContent = nonAdmin.length;
+        document.getElementById('bookOwners').textContent = nonAdmin.filter(p => p.is_book_owner).length;
+        const { count: totalCodes } = await window.supabase.from('book_verification_codes').select('*', { count: 'exact', head: true });
+        const { count: codesUsed } = await window.supabase.from('book_verification_codes').select('*', { count: 'exact', head: true }).eq('is_used', true);
+        const usedCount = codesUsed || 0; const leftCount = (totalCodes || 0) - usedCount;
+        document.getElementById('codesUsed').textContent = usedCount;
+        document.getElementById('codesLeft').textContent = leftCount;
+        document.getElementById('codesLeft').style.color = leftCount <= 2 ? 'var(--error)' : 'var(--warning)';
+        const adminIds = allProfiles?.filter(p => ADMIN_EMAILS.includes(p.email)).map(p => p.id) || [];
+        document.getElementById('totalPurchases').textContent = allPurchases.filter(p => !adminIds.includes(p.user_id)).length;
+        document.getElementById('bundlesPurchased').textContent = allBundles.filter(b => !adminIds.includes(b.user_id)).length;
+      } catch (e) { console.error('Stats error:', e); }
+    }
+
+    // ════════════════════════════════════════════════════
+    // REVENUE
+    // ════════════════════════════════════════════════════
+
+    function updateRevenueDisplay() {
+      const period = document.getElementById('revenuePeriod').value;
+      document.getElementById('customDateRange').classList[period === 'custom' ? 'remove' : 'add']('hidden');
+      calculateRevenue();
+    }
+
+    function calculateRevenue() {
+      const period = document.getElementById('revenuePeriod').value;
+      const now = new Date();
+      let startDate, endDate;
+      if (period === 'today') { startDate = new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0); endDate = new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59,999); }
+      else if (period === 'month') { startDate = new Date(now.getFullYear(),now.getMonth(),1); endDate = now; }
+      else if (period === '90days') { startDate = new Date(now); startDate.setDate(startDate.getDate()-90); endDate = now; }
+      else if (period === 'year') { startDate = new Date(now.getFullYear(),0,1); endDate = now; }
+      else if (period === 'custom') {
+        const start = document.getElementById('startDate').value; const end = document.getElementById('endDate').value;
+        if (!start || !end) return; startDate = new Date(start); endDate = new Date(end); endDate.setHours(23,59,59,999);
+      }
+      const filtered = allPurchases.filter(p => { const d = new Date(p.created_at); return d >= startDate && d <= endDate; });
+      let totalINR = 0; filtered.forEach(p => { totalINR += convertToINR(p.amount || 0, p.currency || 'INR'); });
+      document.getElementById('revenueINR').textContent = formatAmount(totalINR, 'INR');
+      document.getElementById('revenueTransactions').textContent = filtered.length;
+    }
+
+    async function loadSavedRates() {
+      try {
+        const { data } = await window.supabase.from('pricing_config').select('config').eq('id', 1).single();
+        if (data?.config?.exchangeRates) savedExchangeRates = data.config.exchangeRates;
+      } catch(e) { console.warn('Could not load rates:', e); }
+    }
+
+    // ════════════════════════════════════════════════════
+    // USERS
+    // ════════════════════════════════════════════════════
+
+    async function loadUsers() {
+      try {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '<tr><td colspan="13" class="loading"><div class="spinner"></div>Loading users...</td></tr>';
+        const { data: profiles, error } = await window.supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        allUsers = profiles || [];
+        await Promise.all(allUsers.map(u => fetchMediaForUser(u.id)));
+        updateSortHeaders('users'); renderUsers(sortArray(allUsers, 'users'));
+      } catch (e) {
+        document.getElementById('usersTableBody').innerHTML = `<tr><td colspan="13"><div class="error-message">Error: ${e.message}</div></td></tr>`;
+      }
+    }
+
+    function renderUsers(list) {
+      const tbody = document.getElementById('usersTableBody');
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">📭</div><p>No users found</p></td></tr>'; return; }
+      tbody.innerHTML = list.map(user => {
+        const isAdmin = ADMIN_EMAILS.includes(user.email);
+        const songs = getSongsForUser(user.id);
+        const bundleCount = getBundleCountForUser(user.id);
+        const photoUrl = photoCache[user.id] || null;
+        const videoUrl = videoCache[user.id] || null;
+        const songsHTML = songs.length ? `<div class="song-tags">${songs.map(s => `<span class="song-tag">${s}</span>`).join('')}</div>` : '<span style="color:var(--muted);font-size:13px;">None</span>';
+        const photoHTML = photoUrl ? `<img class="photo-thumb" src="${photoUrl}" alt="Book photo" onclick="openMediaModal('photo','${photoUrl}')">` : '<span style="color:var(--muted);font-size:13px;">None</span>';
+        const videoHTML = videoUrl ? `<button class="video-play-btn" onclick="openMediaModal('video','${videoUrl}')">▶ Play</button>` : '<span style="color:var(--muted);font-size:13px;">None</span>';
+        const sub = allSubscriptions.find(s => s.user_id === user.id && s.status === 'active');
+        const subBadge = sub ? (sub.plan_type === 'monthly' ? `<span class="badge badge-success">Monthly</span>` : sub.plan_type === 'annual' ? `<span class="badge badge-blue">Annual</span>` : `<span class="badge badge-warning">${sub.plan_type}</span>`) : `<span class="badge badge-error">No</span>`;
+        const actionButtons = isAdmin ? '<span class="badge badge-warning">ADMIN</span>'
+          : `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(user).replace(/'/g,"&#39;")})'>🎵 Songs</button>
+             <button class="grant-sub-btn" onclick='openGrantSubModalForUser(${JSON.stringify({email:user.email,display_name:user.display_name}).replace(/'/g,"&#39;")})'>💳 Sub</button>
+             <button class="delete-btn" onclick='openDeleteModal(${JSON.stringify(user).replace(/'/g,"&#39;")})'>🗑️</button>`;
+        const booksOwnedHTML = user.books_owned?.length ? user.books_owned.join(', ') : '<span style="color:var(--muted);font-size:13px;">None</span>';
+        return `<tr>
+          <td>${userInfoHTML(user.display_name, user.email)}</td>
+          <td>${user.gender || '-'}</td>
+          <td>${user.difficulty_level || '-'}</td>
+          <td>${user.marketing_opt_in ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${user.is_book_owner ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-error">No</span>'}</td>
+          <td>${booksOwnedHTML}</td>
+          <td>${songsHTML}</td>
+          <td>${bundleCount > 0 ? `<span class="badge badge-success">${bundleCount}</span>` : '<span class="badge badge-error">0</span>'}</td>
+          <td>${photoHTML}</td>
+          <td>${videoHTML}</td>
+          <td>${new Date(user.created_at).toLocaleDateString()}</td>
+          <td>${subBadge}</td>
+          <td>${actionButtons}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function filterUsers() {
+      const q = document.getElementById('userSearch').value.toLowerCase();
+      const filtered = allUsers.filter(u => (u.display_name?.toLowerCase().includes(q)) || (u.email?.toLowerCase().includes(q)) || (u.id?.toLowerCase().includes(q)));
+      if (!filtered.length) { document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="13" class="empty-state"><div class="empty-state-icon">🔍</div><p>No users match</p></td></tr>'; return; }
+      renderUsers(filtered);
+    }
+
+    // ════════════════════════════════════════════════════
+    // CODES
+    // ════════════════════════════════════════════════════
+
+    async function loadCodes() {
+      try {
+        const tbody = document.getElementById('codesTableBody');
+        tbody.innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+        const { data, error } = await window.supabase.from('book_verification_codes').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        allCodes = data || [];
+        updateSortHeaders('codes'); renderCodes(sortArray(allCodes, 'codes'));
+      } catch (e) { document.getElementById('codesTableBody').innerHTML = `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`; }
+    }
+
+    function renderCodes(list) {
+      const tbody = document.getElementById('codesTableBody');
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🎫</div><p>No codes found</p></td></tr>'; return; }
+      const bookNames = { soulful:'Soulful', peppy:'Peppy', romantic:'Romantic', classic:'Classic' };
+      tbody.innerHTML = list.map(code => {
+        const profile = code.used_by_user_id ? getProfile(code.used_by_user_id) : null;
+        const usedByHTML = profile ? userInfoHTML(profile.display_name, profile.email) : (code.used_by_user_id ? `<span class="code-display">${code.used_by_user_id.substring(0,8)}...</span>` : '-');
+        return `<tr><td><span class="code-display">${code.code}</span></td><td>${bookNames[code.book_name] || code.book_name}</td><td>${code.is_used ? '<span class="badge badge-success">Used</span>' : '<span class="badge badge-warning">Unused</span>'}</td><td>${usedByHTML}</td><td>${new Date(code.created_at).toLocaleString()}</td><td>${code.used_at ? new Date(code.used_at).toLocaleString() : '-'}</td></tr>`;
+      }).join('');
+    }
+
+    function filterCodes() {
+      const q = document.getElementById('codeSearch').value.toLowerCase();
+      const filtered = allCodes.filter(c => c.code.toLowerCase().includes(q) || c.book_name.toLowerCase().includes(q));
+      if (!filtered.length) { document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🔍</div><p>No codes match</p></td></tr>'; return; }
+      renderCodes(filtered);
+    }
+
+    // ════════════════════════════════════════════════════
+    // PURCHASES
+    // ════════════════════════════════════════════════════
+
+    async function loadPurchasesData() {
+      const { data, error } = await window.supabase.from('purchases').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      allPurchases = data || [];
+    }
+
+    async function loadPurchases() {
+      try {
+        document.getElementById('purchasesTableBody').innerHTML = '<tr><td colspan="6" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+        await loadPurchasesData(); updateSortHeaders('purchases'); renderPurchases(sortArray(allPurchases, 'purchases')); calculateRevenue();
+      } catch (e) { document.getElementById('purchasesTableBody').innerHTML = `<tr><td colspan="6"><div class="error-message">Error: ${e.message}</div></td></tr>`; }
+    }
+
+    function renderPurchases(list) {
+      const tbody = document.getElementById('purchasesTableBody');
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">💳</div><p>No purchases found</p></td></tr>'; return; }
+      tbody.innerHTML = list.map(p => {
+        const profile = getProfile(p.user_id);
+        const amountINR = convertToINR(p.amount || 0, p.currency || 'INR');
+        const origCurrency = p.currency || 'INR';
+        const convertedLabel = origCurrency !== 'INR' ? ` <span style="font-size:11px;color:var(--muted);">(was ${CURRENCY_SYMBOLS[origCurrency]||origCurrency}${(p.amount/100).toFixed(2)})</span>` : '';
+        const userSongs = getSongsForUser(p.user_id);
+        const isAdmin = ADMIN_EMAILS.includes(profile?.email);
+        let manageButton = '';
+        if (profile && !isAdmin && userSongs.length > 0) {
+          manageButton = `<button class="manage-btn" onclick='openManageSongsModal(${JSON.stringify(profile).replace(/'/g,"&#39;")})' style="padding:6px 12px;font-size:12px;">🎵 Manage</button>`;
+        }
+        return `<tr><td>${userInfoHTML(profile?.display_name, profile?.email)}</td><td><span class="code-display">${p.song_id}</span></td><td>${formatAmount(amountINR,'INR')}${convertedLabel}</td><td>${p.credits_remaining !== null && p.credits_remaining !== undefined ? p.credits_remaining : 'N/A'}</td><td>${new Date(p.created_at).toLocaleString()}</td><td>${manageButton}</td></tr>`;
+      }).join('');
+    }
+
+    function filterPurchases() {
+      const q = document.getElementById('purchaseSearch').value.toLowerCase();
+      const filtered = allPurchases.filter(p => { const profile = getProfile(p.user_id); return p.user_id.toLowerCase().includes(q) || p.song_id.toLowerCase().includes(q) || (profile?.display_name?.toLowerCase().includes(q)) || (profile?.email?.toLowerCase().includes(q)); });
+      if (!filtered.length) { document.getElementById('purchasesTableBody').innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🔍</div><p>No purchases match</p></td></tr>'; return; }
+      renderPurchases(filtered);
+    }
+
+    // ════════════════════════════════════════════════════
+    // BUNDLES
+    // ════════════════════════════════════════════════════
+
+    async function loadBundlesData() {
+      const { data, error } = await window.supabase.from('purchases').select('*').eq('song_id','pack:5').order('created_at',{ascending:false});
+      if (error) throw error;
+      allBundles = data || [];
+    }
+
+    async function loadBundles() {
+      try {
+        document.getElementById('bundlesTableBody').innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+        await loadBundlesData(); updateSortHeaders('bundles'); renderBundles(sortArray(allBundles,'bundles'));
+      } catch (e) { document.getElementById('bundlesTableBody').innerHTML = `<tr><td colspan="4"><div class="error-message">Error: ${e.message}</div></td></tr>`; }
+    }
+
+    function renderBundles(list) {
+      const tbody = document.getElementById('bundlesTableBody');
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">📦</div><p>No bundles found</p></td></tr>'; return; }
+      tbody.innerHTML = list.map(b => { const profile = getProfile(b.user_id); const totalBundles = getBundleCountForUser(b.user_id); return `<tr><td>${userInfoHTML(profile?.display_name,profile?.email)}</td><td><span class="badge badge-success">${totalBundles}</span></td><td><span class="badge badge-success">${b.credits_remaining||0}</span></td><td>${new Date(b.created_at).toLocaleString()}</td></tr>`; }).join('');
+    }
+
+    function filterBundles() {
+      const q = document.getElementById('bundleSearch').value.toLowerCase();
+      const filtered = allBundles.filter(b => { const p = getProfile(b.user_id); return b.user_id.toLowerCase().includes(q) || (p?.display_name?.toLowerCase().includes(q)) || (p?.email?.toLowerCase().includes(q)); });
+      if (!filtered.length) { document.getElementById('bundlesTableBody').innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">🔍</div><p>No bundles match</p></td></tr>'; return; }
+      renderBundles(filtered);
+    }
+
+    // ════════════════════════════════════════════════════
+    // FEEDBACK / SONG REQUESTS
+    // ════════════════════════════════════════════════════
+
+    function escHTML2(s) { return String(s ?? '').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+
+    async function loadFeedbackRequests() {
+      const tbody = document.getElementById('feedbackTableBody');
+      const errEl = document.getElementById('feedbackError');
+      if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+      if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+      try {
+        const { data: feedbackRows, error: fbErr } = await window.supabase.from('feedback_requests').select('id,user_id,type,message,created_at').order('created_at',{ascending:false}).limit(500);
+        if (fbErr) throw fbErr;
+        const { data: suggestionProfiles, error: profErr } = await window.supabase.from('profiles').select('id,song_suggestion,created_at').not('song_suggestion','is',null).order('created_at',{ascending:false}).limit(2000);
+        if (profErr) throw profErr;
+        const setupSuggestionRows = (suggestionProfiles||[]).filter(p => String(p.song_suggestion||'').trim().length>0).map(p => ({ id:`setup-${p.id}`, user_id:p.id, type:'setup_suggestion', message:p.song_suggestion, created_at:p.created_at }));
+        allFeedback = [...(feedbackRows||[]),...setupSuggestionRows].sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
+        renderFeedbackRequests(allFeedback);
+      } catch (e) {
+        if (errEl) { errEl.textContent = `Error: ${e.message}`; errEl.classList.remove('hidden'); }
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5">Failed to load</td></tr>';
+      }
+    }
+
+    function renderFeedbackRequests(list) {
+      const tbody = document.getElementById('feedbackTableBody');
+      if (!tbody) return;
+      if (!list||!list.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">💬</div><p>No requests yet</p></td></tr>'; return; }
+      tbody.innerHTML = list.map(r => {
+        const typeBadge = r.type==='song_request' ? '<span class="badge badge-success">Song Request</span>' : r.type==='setup_suggestion' ? '<span class="badge badge-warning">Setup Suggestion</span>' : `<span class="badge badge-warning">${escHTML2(r.type)}</span>`;
+        const p = getProfile(r.user_id);
+        const userCell = p ? userInfoHTML(escHTML2(p.display_name||'Unknown'),escHTML2(p.email||'')) : `<span class="code-display">${escHTML2(r.user_id||'')}</span>`;
+        const suggestionCell = p?.song_suggestion ? `<span style="white-space:pre-wrap;">${escHTML2(p.song_suggestion)}</span>` : '<span style="color:var(--muted);font-size:13px;">-</span>';
+        return `<tr><td>${typeBadge}</td><td style="white-space:pre-wrap;">${escHTML2(r.message)}</td><td>${userCell}</td><td>${suggestionCell}</td><td>${new Date(r.created_at).toLocaleString()}</td></tr>`;
+      }).join('');
+    }
+
+    function filterFeedbackRequests() {
+      const q = (document.getElementById('feedbackSearch')?.value||'').toLowerCase().trim();
+      if (!q) { renderFeedbackRequests(allFeedback); return; }
+      renderFeedbackRequests(allFeedback.filter(r => (r.type||'').toLowerCase().includes(q)||(r.user_id||'').toLowerCase().includes(q)||(r.message||'').toLowerCase().includes(q)));
+    }
+
+    // ════════════════════════════════════════════════════
+    // PRICING MANAGEMENT
+    // ════════════════════════════════════════════════════
+
+    async function loadPricingData() {
+      try {
+        const { data, error } = await window.supabase.from('pricing_config').select('*').eq('id',1).single();
+        if (error) { setInputDollars('usd_books_first',800);setInputDollars('usd_books_second',700);setInputDollars('usd_books_third',700);setInputDollars('usd_books_bundle',3400);setInputDollars('usd_nobooks_first',1000);setInputDollars('usd_nobooks_second',900);setInputDollars('usd_nobooks_third',800);setInputDollars('usd_nobooks_bundle',4000);setInputDollars('inr_books_first',15000);setInputDollars('inr_books_second',12900);setInputDollars('inr_books_third',10000);setInputDollars('inr_books_bundle',55000);setInputDollars('inr_nobooks_first',20000);setInputDollars('inr_nobooks_second',18000);setInputDollars('inr_nobooks_third',15000);setInputDollars('inr_nobooks_bundle',85000); return; }
+        const config = data.config;
+        setInputDollars('usd_books_first',config.USD.withBooks.first);setInputDollars('usd_books_second',config.USD.withBooks.second);setInputDollars('usd_books_third',config.USD.withBooks.third);setInputDollars('usd_books_bundle',config.USD.withBooks.bundle);setInputDollars('usd_nobooks_first',config.USD.withoutBooks.first);setInputDollars('usd_nobooks_second',config.USD.withoutBooks.second);setInputDollars('usd_nobooks_third',config.USD.withoutBooks.third);setInputDollars('usd_nobooks_bundle',config.USD.withoutBooks.bundle);
+        setInputDollars('inr_books_first',config.INR.withBooks.first);setInputDollars('inr_books_second',config.INR.withBooks.second);setInputDollars('inr_books_third',config.INR.withBooks.third);setInputDollars('inr_books_bundle',config.INR.withBooks.bundle);setInputDollars('inr_nobooks_first',config.INR.withoutBooks.first);setInputDollars('inr_nobooks_second',config.INR.withoutBooks.second);setInputDollars('inr_nobooks_third',config.INR.withoutBooks.third);setInputDollars('inr_nobooks_bundle',config.INR.withoutBooks.bundle);
+        await fetchLiveRates();
+      } catch (e) { console.error('Error loading pricing:', e); }
+    }
+
+    function setInputDollars(inputId, centsValue) {
+      const el = document.getElementById(inputId);
+      if (el) el.value = parseFloat(((centsValue||0)/100).toFixed(2));
+    }
+
+    function getInputCents(inputId) { return Math.round((parseFloat(document.getElementById(inputId)?.value)||0)*100); }
+
+    async function savePricing() {
+      const statusDiv = document.getElementById('pricingStatus');
+      statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Saving...</div>';
+      try {
+        const config = {
+          USD: { withBooks: { first:getInputCents('usd_books_first'), second:getInputCents('usd_books_second'), third:getInputCents('usd_books_third'), bundle:getInputCents('usd_books_bundle') }, withoutBooks: { first:getInputCents('usd_nobooks_first'), second:getInputCents('usd_nobooks_second'), third:getInputCents('usd_nobooks_third'), bundle:getInputCents('usd_nobooks_bundle') } },
+          INR: { withBooks: { first:getInputCents('inr_books_first'), second:getInputCents('inr_books_second'), third:getInputCents('inr_books_third'), bundle:getInputCents('inr_books_bundle') }, withoutBooks: { first:getInputCents('inr_nobooks_first'), second:getInputCents('inr_nobooks_second'), third:getInputCents('inr_nobooks_third'), bundle:getInputCents('inr_nobooks_bundle') } },
+          lastUpdated: new Date().toISOString(),
+        };
+        if (liveExchangeRates && liveExchangeRates.USD) {
+          const inrPerUsd = 1 / liveExchangeRates.USD;
+          const exchangeRates = { USD: 1, INR: parseFloat(inrPerUsd.toFixed(2)) };
+          RATE_CURRENCIES.forEach(code => { if (code!=='USD'&&liveExchangeRates[code]!=null) exchangeRates[code]=parseFloat((liveExchangeRates[code]/liveExchangeRates.USD).toFixed(4)); });
+          config.exchangeRates = exchangeRates;
+        } else {
+          try { const { data: existing } = await window.supabase.from('pricing_config').select('config').eq('id',1).single(); if (existing?.config?.exchangeRates) config.exchangeRates = existing.config.exchangeRates; } catch(_) {}
+          if (!config.exchangeRates) { statusDiv.innerHTML = '<div class="error-message">⚠️ No exchange rates available. Click "Refresh Rates" first.</div>'; return; }
+        }
+        // Preserve subscriptions block
+        const { data: existing2 } = await window.supabase.from('pricing_config').select('config').eq('id',1).single().catch(()=>({data:null}));
+        if (existing2?.config?.subscriptions) config.subscriptions = existing2.config.subscriptions;
+
+        const { error } = await window.supabase.from('pricing_config').upsert({ id:1, config, updated_at: new Date().toISOString() });
+        if (error) throw error;
+        statusDiv.innerHTML = '<div style="background:rgba(16,185,129,0.1);border:1px solid var(--success);border-radius:12px;padding:20px;color:var(--success);"><strong>✅ Pricing updated successfully!</strong></div>';
+        setTimeout(()=>{statusDiv.innerHTML='';},5000);
+      } catch (e) { statusDiv.innerHTML = `<div class="error-message"><strong>❌ Failed:</strong> ${e.message}</div>`; }
+    }
+
+    // ════════════════════════════════════════════════════
+    // SHEET MUSIC
+    // ════════════════════════════════════════════════════
+
+    async function loadSheetMusic() {
+      const grid = document.getElementById('pdfGrid');
+      grid.innerHTML = '<div class="loading"><div class="spinner"></div>Loading PDFs...</div>';
+      try {
+        const result = await edgeRequest("list");
+        allPDFs = result.files || [];
+        if (!allPDFs.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📄</div><p>No PDF files found</p></div>'; return; }
+        renderPDFs(allPDFs);
+      } catch (e) { grid.innerHTML = `<div class="error-message">Error loading PDFs: ${e.message}</div>`; }
+    }
+
+    function renderPDFs(pdfs) {
+      const grid = document.getElementById('pdfGrid');
+      if (!pdfs.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📄</div><p>No PDFs uploaded yet</p></div>'; return; }
+      grid.innerHTML = pdfs.map(pdf => `<div class="pdf-item"><div class="pdf-icon">📄</div><div class="pdf-name">${pdf.name}</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px;">${pdf.metadata?.size?(pdf.metadata.size/1024).toFixed(1)+' KB':'Unknown size'}</div><div class="pdf-actions"><button class="btn-view" onclick="viewPDF('${pdf.name}')">👁️ View</button><button class="btn-delete" onclick="deletePDF('${pdf.name}')">🗑️ Delete</button></div></div>`).join('');
+    }
+
+    function filterPDFs() { const search = document.getElementById('pdfSearch').value.toLowerCase(); renderPDFs(allPDFs.filter(pdf => pdf.name.toLowerCase().includes(search))); }
+
+    async function viewPDF(filename) { try { const result = await edgeRequest("view",{filename}); window.open(result.url,'_blank'); } catch(e) { alert('❌ Error: '+e.message); } }
+
+    async function deletePDF(filename) {
+      if (!confirm(`Delete "${filename}"?\n\nUsers who purchased this song will no longer be able to download it.`)) return;
+      try { await edgeRequest("delete",{filename}); alert('✅ PDF deleted!'); await loadSheetMusic(); } catch(e) { alert('❌ Error: '+e.message); }
+    }
+
+    async function uploadPDFs(event) {
+      const files = Array.from(event.target.files); if (!files.length) return;
+      const progress = document.getElementById('uploadProgress'); const status = document.getElementById('uploadStatus'); const bar = document.getElementById('uploadBar');
+      progress.classList.remove('hidden');
+      let uploaded = 0;
+      for (const file of files) {
+        if (!file.name.endsWith('.pdf')) { alert(`⚠️ Skipping "${file.name}" - not a PDF`); continue; }
+        try {
+          status.textContent = `Uploading ${uploaded+1}/${files.length}: ${file.name}`; bar.style.width=`${(uploaded/files.length)*100}%`;
+          const formData = new FormData(); formData.append("file",file); formData.append("filename",file.name);
+          await edgeRequest("upload",formData); uploaded++;
+        } catch(e) { alert(`❌ Error uploading "${file.name}": ${e.message}`); }
+      }
+      bar.style.width='100%'; status.textContent=`✅ Uploaded ${uploaded}/${files.length} files!`;
+      setTimeout(()=>{ progress.classList.add('hidden'); bar.style.width='0%'; event.target.value=''; },2000);
+      await loadSheetMusic();
+    }
+
+    // ════════════════════════════════════════════════════
+    // COURSE PROGRESS
+    // ════════════════════════════════════════════════════
+
+    function parseCourseProgress(row) {
+      const completed = row.completed_lessons||[];
+      const l1 = completed.filter(k=>k.startsWith('l1:')).map(k=>parseInt(k.slice(3))).filter(n=>!isNaN(n));
+      const l2 = completed.filter(k=>k.startsWith('l2:')).map(k=>parseInt(k.slice(3))).filter(n=>!isNaN(n));
+      const mastery = completed.filter(k=>k.startsWith('mastery:')).map(k=>k.slice(8));
+      const l1aDone=l1.filter(i=>i<12).length, l1bDone=l1.filter(i=>i>=12).length;
+      const l1SightDone=l1.includes(22), l2Done=l2.length, masteryDone=mastery.length;
+      const last=row.last_lesson||'welcome';
+      let stage='Not started';
+      if(last==='welcome') stage='Not started';
+      else if(last==='mastery_hub') stage='⭐ Mastery Hub';
+      else if(last.startsWith('l1:')) { const idx=parseInt(last.slice(3)); stage=idx>=12?`Level 1B — Ex ${idx+1}`:`Level 1A — Ex ${idx+1}`; }
+      else if(last.startsWith('l2:')) { const idx=parseInt(last.slice(3)); stage=idx>=3?'Level 2 Sight':`Level 2 — Ex ${idx+1}`; }
+      const totalDone=l1.length+l2.length+masteryDone+(l1SightDone?1:0);
+      const pct=Math.round((totalDone/37)*100);
+      return {l1aDone,l1bDone,masteryDone,l2Done,l1SightDone,stage,pct,last};
+    }
+
+    function progressBar(pct,color) { return `<div style="background:rgba(0,0,0,0.07);border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:${pct}%;height:100%;background:${color};border-radius:4px"></div></div> <span style="font-size:12px;color:var(--muted)">${pct}%</span>`; }
+
+    async function loadCourseProgress() {
+      const tbody = document.getElementById('cpTableBody');
+      tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+      try {
+        const { data, error } = await window.supabase.from('course_progress').select('user_id,last_lesson,completed_lessons,updated_at').order('updated_at',{ascending:false});
+        if (error) throw error;
+        allCourseProgress = data||[];
+        renderCourseProgress(allCourseProgress);
+      } catch(e) { tbody.innerHTML = `<tr><td colspan="8"><div class="error-message">Error: ${e.message}</div></td></tr>`; }
+    }
+
+    function renderCourseProgress(list) {
+      const tbody = document.getElementById('cpTableBody');
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🎹</div><p>No progress yet</p></td></tr>'; updateCourseStats([]); return; }
+      updateCourseStats(list);
+      tbody.innerHTML = list.map(row => {
+        const p = parseCourseProgress(row); const profile = getProfile(row.user_id);
+        const userCell = profile ? userInfoHTML(escHTML(profile.display_name||'Unknown'),escHTML(profile.email||'')) : `<span class="code-display">${row.user_id.substring(0,8)}…</span>`;
+        const stageBadge = p.last==='welcome' ? '<span class="badge badge-warning">Not started</span>' : p.pct>=100 ? '<span class="badge badge-success">✓ Finished</span>' : `<span style="font-size:13px">${p.stage}</span>`;
+        return `<tr><td>${userCell}</td><td>${stageBadge}</td><td>${progressBar(Math.round((p.l1aDone/12)*100),'rgba(155,110,255,0.7)')}<br><span style="font-size:11px;color:var(--muted)">${p.l1aDone}/12</span></td><td>${progressBar(Math.round(((p.l1bDone+(p.l1SightDone?1:0))/11)*100),'rgba(245,158,11,0.8)')}<br><span style="font-size:11px;color:var(--muted)">${p.l1bDone+(p.l1SightDone?1:0)}/11</span></td><td>${progressBar(Math.round((p.masteryDone/10)*100),'rgba(168,85,247,0.75)')}<br><span style="font-size:11px;color:var(--muted)">${p.masteryDone}/10</span></td><td>${progressBar(Math.round((p.l2Done/4)*100),'rgba(16,185,129,0.75)')}<br><span style="font-size:11px;color:var(--muted)">${p.l2Done}/4</span></td><td>${progressBar(p.pct,p.pct>=100?'var(--success)':'rgba(155,110,255,0.6)')}</td><td style="font-size:12px;color:var(--muted)">${new Date(row.updated_at).toLocaleDateString()}</td></tr>`;
+      }).join('');
+    }
+
+    function updateCourseStats(list) {
+      const parsed = list.map(parseCourseProgress);
+      document.getElementById('cp-total').textContent = list.length;
+      document.getElementById('cp-l1a').textContent = parsed.filter(p=>p.last.startsWith('l1:')&&parseInt(p.last.slice(3))<12).length;
+      document.getElementById('cp-l1b').textContent = parsed.filter(p=>p.last.startsWith('l1:')&&parseInt(p.last.slice(3))>=12).length;
+      document.getElementById('cp-mastery').textContent = parsed.filter(p=>p.last==='mastery_hub').length;
+      document.getElementById('cp-l2').textContent = parsed.filter(p=>p.last.startsWith('l2:')).length;
+      document.getElementById('cp-done').textContent = parsed.filter(p=>p.pct>=100).length;
+    }
+
+    function filterCourseProgress() {
+      const q = document.getElementById('cpSearch').value.toLowerCase();
+      if (!q) { renderCourseProgress(allCourseProgress); return; }
+      renderCourseProgress(allCourseProgress.filter(row => { const p = getProfile(row.user_id); return (p?.display_name||'').toLowerCase().includes(q)||(p?.email||'').toLowerCase().includes(q); }));
+    }
+
+    // ════════════════════════════════════════════════════
+    // TABS
+    // ════════════════════════════════════════════════════
+
+    async function switchTab(tabName, btn) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById(tabName+'Tab').classList.remove('hidden');
+      if (tabName==='pricing') loadPricingData();
+      if (tabName==='sheetmusic') loadSheetMusic();
+      if (tabName==='courseprogress') { if (!allUsers||allUsers.length===0) await loadUsers(); loadCourseProgress(); }
+      if (tabName==='subscriptions') { if (!allUsers||allUsers.length===0) await loadUsers(); loadSubscriptions(); }
+      if (tabName==='requests') { if (!allUsers||allUsers.length===0) await loadUsers(); loadFeedbackRequests(); }
+    }
+
+    // ════════════════════════════════════════════════════
+    // MEDIA LIGHTBOX
+    // ════════════════════════════════════════════════════
+
+    function openMediaModal(type, url) {
+      const overlay = document.getElementById('mediaModal'); const img = document.getElementById('mediaModalImg'); const vid = document.getElementById('mediaModalVideo');
+      if (type==='photo') { img.src=url; img.style.display='block'; vid.style.display='none'; vid.pause(); vid.src=''; }
+      else { vid.src=url; vid.style.display='block'; img.style.display='none'; img.src=''; }
+      overlay.classList.remove('hidden');
+    }
+    function closeMediaModal() { document.getElementById('mediaModal').classList.add('hidden'); const vid=document.getElementById('mediaModalVideo'); vid.pause(); vid.src=''; }
+
+    // ════════════════════════════════════════════════════
+    // SORTING
+    // ════════════════════════════════════════════════════
+
+    let sortState = { users:{col:'joined',dir:'desc'}, codes:{col:'generated',dir:'desc'}, purchases:{col:'date',dir:'desc'}, bundles:{col:'date',dir:'desc'} };
+
+    function getSortValue(item, table, col) {
+      const p = getProfile(item.user_id||item.id);
+      switch(table) {
+        case 'users': if(col==='name') return (item.display_name||'').toLowerCase(); if(col==='joined') return item.created_at||''; break;
+        case 'codes': if(col==='book') return (item.book_name||'').toLowerCase(); if(col==='generated') return item.created_at||''; if(col==='used') return item.used_at||''; break;
+        case 'purchases': if(col==='name') return (p?.display_name||'').toLowerCase(); if(col==='song') return (item.song_id||'').toLowerCase(); if(col==='amount') return item.amount||0; if(col==='date') return item.created_at||''; break;
+        case 'bundles': if(col==='name') return (p?.display_name||'').toLowerCase(); if(col==='bundlecount') return getBundleCountForUser(item.user_id)||0; if(col==='credits') return item.credits_remaining||0; if(col==='date') return item.created_at||''; break;
+      }
+      return '';
+    }
+
+    function sortArray(arr, table) {
+      const {col,dir} = sortState[table];
+      return [...arr].sort((a,b) => {
+        let va=getSortValue(a,table,col), vb=getSortValue(b,table,col);
+        let cmp = typeof va==='number'&&typeof vb==='number' ? va-vb : String(va)<String(vb)?-1:String(va)>String(vb)?1:0;
+        return dir==='asc'?cmp:-cmp;
+      });
+    }
+
+    function updateSortHeaders(table) {
+      document.querySelectorAll(`th[data-table="${table}"]`).forEach(th => { th.classList.remove('sort-asc','sort-desc'); if(th.dataset.col===sortState[table].col) th.classList.add('sort-'+sortState[table].dir); });
+    }
+
+    function initSortHeaders() {
+      document.querySelectorAll('th[data-sortable]').forEach(th => {
+        th.addEventListener('click', () => {
+          const table=th.dataset.table, col=th.dataset.col;
+          sortState[table] = sortState[table].col===col ? {col,dir:sortState[table].dir==='asc'?'desc':'asc'} : {col,dir:'asc'};
+          updateSortHeaders(table);
+          switch(table) { case 'users': renderUsers(sortArray(allUsers,'users')); break; case 'codes': renderCodes(sortArray(allCodes,'codes')); break; case 'purchases': renderPurchases(sortArray(allPurchases,'purchases')); break; case 'bundles': renderBundles(sortArray(allBundles,'bundles')); break; }
+        });
+      });
+    }
+
+    // ════════════════════════════════════════════════════
+    // DELETE USER
+    // ════════════════════════════════════════════════════
+
+    function openDeleteModal(user) {
+      if (ADMIN_EMAILS.includes(user.email)) { alert('⛔ Cannot delete admin accounts!'); return; }
+      userToDelete = user;
+      document.getElementById('deleteUserName').textContent = user.display_name||'Unknown';
+      document.getElementById('deleteUserEmail').textContent = user.email||'N/A';
+      ['confirmStep1','confirmStep2','confirmStep3','deletingStep'].forEach((id,i) => document.getElementById(id).classList[i===0?'remove':'add']('hidden'));
+      document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() { document.getElementById('deleteModal').classList.add('hidden'); userToDelete=null; }
+    function confirmStep2() { document.getElementById('confirmStep1').classList.add('hidden'); document.getElementById('confirmStep2').classList.remove('hidden'); }
+    function confirmStep3() { document.getElementById('confirmStep2').classList.add('hidden'); document.getElementById('confirmStep3').classList.remove('hidden'); }
+
+    async function deleteUserForever() {
+      if (!userToDelete) return;
+      document.getElementById('confirmStep3').classList.add('hidden'); document.getElementById('deletingStep').classList.remove('hidden');
+      try {
+        const userId = userToDelete.id;
+        await window.supabase.from('purchases').delete().eq('user_id',userId);
+        await window.supabase.from('user_credits').delete().eq('user_id',userId);
+        await window.supabase.from('entitlements').delete().eq('user_id',userId);
+        await window.supabase.from('payment_orders').delete().eq('user_id',userId);
+        await window.supabase.from('progress').delete().eq('user_id',userId);
+        await window.supabase.from('song_progress').delete().eq('user_id',userId);
+        await window.supabase.from('subscriptions').delete().eq('user_id',userId);
+        await window.supabase.from('book_verification_codes').update({used_by_user_id:null,is_used:false,used_at:null}).eq('used_by_user_id',userId);
+        await window.supabase.from('profiles').delete().eq('id',userId);
+        const { data:{session} } = await window.supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, { method:'POST', headers:{'Authorization':`Bearer ${session.access_token}`,'Content-Type':'application/json'}, body:JSON.stringify({userId}) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error||'Failed to delete auth user');
+        alert('✅ User completely deleted!');
+        closeDeleteModal();
+        delete photoCache[userId]; delete videoCache[userId];
+        await Promise.all([loadPurchasesData(),loadBundlesData(),loadSubscriptionsData()]);
+        loadStats(); loadUsers(); loadCodes();
+        renderPurchases(sortArray(allPurchases,'purchases'));
+        renderBundles(sortArray(allBundles,'bundles'));
+      } catch(e) { alert('❌ Error: '+e.message); document.getElementById('deletingStep').classList.add('hidden'); document.getElementById('confirmStep3').classList.remove('hidden'); }
+    }
+
+    // ════════════════════════════════════════════════════
+    // INIT
+    // ════════════════════════════════════════════════════
+
+    document.getElementById('endDate').valueAsDate = new Date();
+    const _startDate = new Date(); _startDate.setDate(_startDate.getDate()-30);
+    document.getElementById('startDate').valueAsDate = _startDate;
+
+    checkAdminAccess();
+  </script>
+</body>
+</html>
