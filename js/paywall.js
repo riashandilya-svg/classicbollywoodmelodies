@@ -204,6 +204,8 @@ const { data: sub, error: subError } = await window.supabase
 .eq('user_id', session.user.id)
 .eq('status', 'active')
 .gte('current_period_end', new Date().toISOString())
+.order('current_period_end', { ascending: false })
+.limit(1)
 .maybeSingle();
 
 console.log('[PAYWALL] 🔍 Sub query result:', JSON.stringify(sub), 'Error:', JSON.stringify(subError));
