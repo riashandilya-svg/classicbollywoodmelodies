@@ -1357,8 +1357,13 @@ async function handleCancelSubscription(btn) {
 }
  
 function handleReactivate(btn) {
-  // Subscription is cancelled — redirect user to subscribe again
-  window.location.href = 'dashboard.html#subscribe';
+  // Subscription is cancelled — show the subscribe modal
+  const overlay = document.getElementById('subscribeModalOverlay');
+  const modal   = document.getElementById('subscribeModal');
+  if (overlay && modal) {
+    overlay.classList.add('open');
+    modal.classList.add('open');
+  }
 }
  
 // ── Load ─────────────────────────────────────────────────
@@ -1395,6 +1400,11 @@ async function loadSubscription() {
   }
 }
  
+function closeSubscribeModal() {
+  document.getElementById('subscribeModalOverlay')?.classList.remove('open');
+  document.getElementById('subscribeModal')?.classList.remove('open');
+}
+
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadSubscription();
@@ -1406,5 +1416,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // Confirm cancel
   document.getElementById('confirmCancelBtn')?.addEventListener('click', function () {
     handleCancelSubscription(this);
+  });
+
+  // Subscribe modal close
+  document.getElementById('subscribeModalOverlay')?.addEventListener('click', closeSubscribeModal);
+  document.getElementById('subscribeModalCloseBtn')?.addEventListener('click', closeSubscribeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSubscribeModal();
+  });
+
+  // Subscribe modal buttons
+  document.getElementById('subscribeMonthlyBtn')?.addEventListener('click', () => {
+    closeSubscribeModal();
+    if (typeof window.startSubscription === 'function') {
+      window.startSubscription('monthly');
+    } else {
+      alert('Payment system not loaded. Please refresh and try again.');
+    }
   });
 });
