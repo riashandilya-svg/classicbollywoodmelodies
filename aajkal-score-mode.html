@@ -514,7 +514,9 @@ canvas {
 
 /* Add bottom padding to scoreView so keyboard doesn't cover score content */
 #scoreView.active {
-    padding-bottom: 280px;
+    padding-bottom: 320px;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Hide only the falling-note portion of the canvas by clipping
@@ -657,7 +659,7 @@ canvas {
 #scorePageWrapper {
     position: relative;
     width: 100%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #scoreObj svg {
@@ -3443,14 +3445,28 @@ scoreModeToggle.addEventListener('change', async () => {
 // Treble top line Y = staff group top → E5 (MIDI 76)
 // Bass top line Y = staff group top → A3 (MIDI 57)
 
-  const SVG_STEP = 12.06;
+const SVG_STEP = 12.06;
 const TREBLE_FROM_TOP = [76,74,72,71,69,67,65,64,62,60,59,57,55,53,52,50,48,47,45,43,41,40,38,36];
 const BASS_FROM_TOP   = [57,55,53,52,50,48,47,45,43,41,40,38,36,35,33,31,29,28,26,24];
 
-// Barline X positions per page (from SVG analysis) — used to find the right occurrence of a note
-const SVG_BARLINE_XS = [214.8,335.4,407.4,425.2,681.9,758.7,790.5,843.5,946.7,955.4,1056.4,1083.8,1091.9,1117.0,1333.4,1354.0,1367.6,1491.9,1498.9,1651.7,1660.5,1722.0,1740.3,1790.1,1961.3,2012.5,2042.4,2124.0,2184.4,2343.9,2372.4,2374.2,2402.4,2490.3,2762.4];
+// Exact measure→X midpoint lookup built from SVG barline analysis
+// Each entry: [logicalMeasure, svgX_midpoint, system_treble_Y]
+const MEASURE_SVG_MAP = [
+    {m:1,  x:645,  sy:677.453}, {m:2,  x:1036, sy:677.453}, {m:3,  x:1308, sy:677.453},
+    {m:4,  x:1580, sy:677.453}, {m:5,  x:1851, sy:677.453}, {m:6,  x:2222, sy:677.453},
+    {m:7,  x:2582, sy:677.453},
+    {m:8,  x:487,  sy:1366.34}, {m:9,  x:908,  sy:1366.34}, {m:10, x:1205, sy:1366.34},
+    {m:11, x:1503, sy:1366.34}, {m:12, x:1806, sy:1366.34}, {m:13, x:2168, sy:1366.34},
+    {m:14, x:2568, sy:1366.34},
+    {m:15, x:448,  sy:2101.65}, {m:16, x:814,  sy:2101.65}, {m:17, x:1140, sy:2101.65},
+    {m:18, x:1528, sy:2101.65}, {m:19, x:1867, sy:2101.65}, {m:20, x:2178, sy:2101.65},
+    {m:21, x:2553, sy:2101.65},
+    {m:22, x:500,  sy:2796.98}, {m:23, x:900,  sy:2796.98}, {m:24, x:1200, sy:2796.98},
+    {m:25, x:1550, sy:2796.98}, {m:26, x:1950, sy:2796.98}, {m:27, x:2300, sy:2796.98},
+    {m:28, x:2600, sy:2796.98},
+];
 
-let _svgMidiMap = new Map();   // midi -> [{el, tx, ty}]
+let _svgMidiMap = new Map();
 let _currentHighlightEl = null;
 let _svgStaffGroups = [];
 
@@ -3460,14 +3476,12 @@ function _buildSvgMidiMap() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // 1. Collect staff line Y positions and build groups
     const allY = [];
     svgEl.querySelectorAll('.StaffLines').forEach(el => {
         const pts = el.getAttribute('points');
         if (pts) allY.push(parseFloat(pts.split(',')[1]));
     });
-    const uniqueY = [...new Set(allY.map(y => Math.round(y * 10) / 10))].sort((a,b) => a-b);
-
+    const uniqueY = [...new Set(allY.map(y => Math.round(y*10)/10))].sort((a,b)=>a-b);
     const groups = [];
     let cur = [uniqueY[0]];
     for (let i = 1; i < uniqueY.length; i++) {
@@ -3475,59 +3489,49 @@ function _buildSvgMidiMap() {
         cur.push(uniqueY[i]);
     }
     groups.push(cur);
-
-    _svgStaffGroups = groups.map((g, i) => ({
+    _svgStaffGroups = groups.map((g,i) => ({
         top: g[0], bottom: g[g.length-1],
-        clef: i % 2 === 0 ? 'treble' : 'bass'
+        clef: i%2===0 ? 'treble' : 'bass'
     }));
 
-    // 2. Map each .Note element to a MIDI number
     _svgMidiMap = new Map();
     svgEl.querySelectorAll('.Note').forEach(el => {
         const t = el.getAttribute('transform') || '';
-        const m = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
-        if (!m) return;
-        const tx = parseFloat(m[1]);
-        const ty = parseFloat(m[2]);
-
+        const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+        if (!mm) return;
+        const tx = parseFloat(mm[1]), ty = parseFloat(mm[2]);
         let bestGroup = null, bestDist = Infinity;
         _svgStaffGroups.forEach(g => {
             const d = Math.abs(ty - g.top);
             if (d < bestDist) { bestDist = d; bestGroup = g; }
         });
         if (!bestGroup) return;
-
         const steps = Math.round((ty - bestGroup.top) / SVG_STEP);
         const scale = bestGroup.clef === 'treble' ? TREBLE_FROM_TOP : BASS_FROM_TOP;
         if (steps < 0 || steps >= scale.length) return;
         const midi = scale[steps];
-
         if (!_svgMidiMap.has(midi)) _svgMidiMap.set(midi, []);
         _svgMidiMap.get(midi).push({ el, tx, ty });
     });
+    console.log('✅ SVG map:', _svgMidiMap.size, 'pitches');
 
-    console.log('✅ SVG MIDI map:', _svgMidiMap.size, 'pitches,', 
-        [..._svgMidiMap.values()].flat().length, 'total notes');
-}
-
-function _getMeasureX(logicalMeasure) {
-    // Map logical measure number to approximate SVG X using barline positions
-    // Page 1 has measures 1..N, barlines divide them
-    // Use barline index = logicalMeasure - 1 (0-based)
-    const idx = Math.max(0, Math.min(logicalMeasure - 1, SVG_BARLINE_XS.length - 1));
-    const nextIdx = Math.min(idx + 1, SVG_BARLINE_XS.length - 1);
-    // midpoint of the measure
-    return (SVG_BARLINE_XS[idx] + SVG_BARLINE_XS[nextIdx]) / 2;
+    // Add glow filter to SVG
+    if (!svgEl.querySelector('#hlGlow')) {
+        const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+        defs.innerHTML = `<filter id="hlGlow" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>`;
+        svgEl.insertBefore(defs, svgEl.firstChild);
+    }
 }
 
 function _doSvgHighlight(midiNote, logicalMeasure) {
-    // Clear previous highlight using setAttribute (not style.fill — innerHTML SVGs need this)
     if (_currentHighlightEl) {
         _currentHighlightEl.removeAttribute('fill');
         _currentHighlightEl.removeAttribute('filter');
         _currentHighlightEl = null;
     }
-
     if (!_svgMidiMap.size) _buildSvgMidiMap();
 
     const candidates = _svgMidiMap.get(midiNote);
@@ -3536,62 +3540,49 @@ function _doSvgHighlight(midiNote, logicalMeasure) {
         return;
     }
 
-    // Find candidate closest to the expected X position for this measure
-    const targetX = logicalMeasure ? _getMeasureX(logicalMeasure) : candidates[0].tx;
-    let best = candidates[0], bestDist = Infinity;
-    candidates.forEach(c => {
-        const d = Math.abs(c.tx - targetX);
-        if (d < bestDist) { bestDist = d; best = c; }
-    });
+    // Get the exact target X from our measure map
+    const entry = MEASURE_SVG_MAP.find(e => e.m === logicalMeasure);
+    const targetX = entry ? entry.x : candidates[0].tx;
+    const targetSY = entry ? entry.sy : null;
 
-    // Use setAttribute — works reliably on innerHTML-injected SVG paths
+    // Pick candidate with matching system Y AND closest X
+    let best = null, bestScore = Infinity;
+    candidates.forEach(c => {
+        // Prefer notes in the correct system (within 400px of staff top)
+        const systemMatch = targetSY ? Math.abs(c.ty - targetSY) < 400 : true;
+        const xDist = Math.abs(c.tx - targetX);
+        const score = (systemMatch ? 0 : 100000) + xDist;
+        if (score < bestScore) { bestScore = score; best = c; }
+    });
+    if (!best) best = candidates[0];
+
     best.el.setAttribute('fill', '#E57373');
-    best.el.setAttribute('filter', 'url(#highlightGlow)');
+    best.el.setAttribute('filter', 'url(#hlGlow)');
     _currentHighlightEl = best.el;
 
-    // Ensure the glow filter exists in the SVG
-    const svgEl = document.querySelector('#scoreObj svg');
-    if (svgEl && !svgEl.querySelector('#highlightGlow')) {
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = `<filter id="highlightGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="8" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>`;
-        svgEl.insertBefore(defs, svgEl.firstChild);
-    }
-
-    // Auto-scroll so the highlighted note's system is visible
-    _scrollToSvgNote(best.ty);
+    // Scroll so this system row is visible
+    if (entry) _scrollToSystemY(entry.sy);
 }
 
-function _scrollToSvgNote(noteY) {
+function _scrollToSystemY(staffTopY) {
     const container = document.getElementById('scoreObj');
-    const svgEl = container.querySelector('svg');
-    if (!svgEl) return;
-
-    // Find the staff group this note belongs to
-    let group = _svgStaffGroups.reduce((best, g) => {
-        return Math.abs(noteY - g.top) < Math.abs(noteY - best.top) ? g : best;
-    }, _svgStaffGroups[0]);
-    if (!group) return;
-
-    // SVG viewBox: 0 0 2977.2 4208.4
-    const svgNativeH = 4208.4;
+    if (!container) return;
     const svgNativeW = 2977.2;
     const renderedW = container.clientWidth || 900;
     const scale = renderedW / svgNativeW;
-    const noteRenderedY = group.top * scale;
-
-    // Scroll the page so this note row is near the top (under the brand bar)
-    const scoreViewTop = document.getElementById('scoreView').getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({ top: scoreViewTop + noteRenderedY - 120, behavior: 'smooth' });
+    const pixelY = staffTopY * scale;
+    // Scroll so the staff row appears near top of viewport (below brand bar ~60px + some padding)
+    const containerTop = container.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: containerTop + pixelY - 80, behavior: 'smooth' });
 }
 
 function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
     if (!midiNote && trainingNoteObj) midiNote = trainingNoteObj.midi;
     if (!midiNote) return;
-    const logicalMeasure = trainingNoteObj ? (trainingNoteObj.logicalMeasure || getLogicalSheetMeasureFromTime(trainingNoteObj.time)) : null;
+    const logicalMeasure = trainingNoteObj
+        ? (trainingNoteObj.logicalMeasure || getLogicalSheetMeasureFromTime(trainingNoteObj.time))
+        : null;
     _doSvgHighlight(midiNote, logicalMeasure);
 }
 
