@@ -3196,12 +3196,41 @@ function _buildSvgNoteIndex() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
+    // Collect all TieSegment x-starts (the x where a tie begins = tied-INTO note)
+    const tieDestinationXs = new Set();
+    svgEl.querySelectorAll('path.TieSegment').forEach(tie => {
+        const t = tie.getAttribute('transform') || '';
+        const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+        if (!mm) return;
+        // Get the path's bounding box to find where the tie ends (destination note)
+        const bbox = tie.getBBox();
+        // The right end of the tie arc is where the tied-into note sits
+        const tieEndX = parseFloat(mm[1]) + bbox.width;
+        tieDestinationXs.add(Math.round(tieEndX));
+    });
+
+    console.log('🎵 Tie destinations (x):', [...tieDestinationXs].sort((a,b)=>a-b));
+
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
         const t = el.getAttribute('transform') || '';
         const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
         if (!mm) return;
-        raw.push({ el, tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
+        const tx = parseFloat(mm[1]);
+        const ty = parseFloat(mm[2]);
+
+        // Skip if this note's x matches a tie destination (it's a tied-into note, not played)
+        const rounded = Math.round(tx);
+        let isTiedInto = false;
+        for (const tieX of tieDestinationXs) {
+            if (Math.abs(rounded - tieX) < 8) { // 8px tolerance
+                isTiedInto = true;
+                break;
+            }
+        }
+        if (isTiedInto) return;
+
+        raw.push({ el, tx, ty });
     });
 
     const ys = raw.map(n => n.ty).sort((a, b) => a - b);
@@ -3236,7 +3265,7 @@ function _buildSvgNoteIndex() {
         svgEl.insertBefore(defs, svgEl.firstChild);
     }
 
-    console.log(`✅ SVG index: ${_svgNoteElements.length} notes (${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass)`);
+    console.log(`✅ SVG index: ${_svgNoteElements.length} notes after filtering tied-into notes (${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass)`);
 }
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
