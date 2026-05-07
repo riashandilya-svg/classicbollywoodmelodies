@@ -2435,41 +2435,80 @@ placeholder="Search by message, request type, or user..."
         return;
       }
 
-      container.innerHTML = list.map(s => {
-        const profile = getProfile(s.user_id);
+      // Group by user_id so each person appears only once
+      const grouped = {};
+      list.forEach(s => {
+        if (!grouped[s.user_id]) grouped[s.user_id] = [];
+        grouped[s.user_id].push(s);
+      });
+
+      container.innerHTML = Object.entries(grouped).map(([userId, subs]) => {
+        const profile = getProfile(userId);
         const name = profile?.display_name || 'Unknown';
-        const email = profile?.email || s.user_id?.substring(0, 12) + '...';
+        const email = profile?.email || userId?.substring(0, 12) + '...';
         const initials = name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
 
-        const planBadge = s.plan_type === 'annual'
+        // Show the most recent active sub's status as the "headline"
+        const activeSub = subs.find(s => s.status === 'active');
+        const displaySub = activeSub || subs[0];
+
+        const planBadge = displaySub.plan_type === 'annual'
           ? `<span class="badge" style="background:rgba(99,102,241,0.12);color:#4338ca">Annual</span>`
           : `<span class="badge badge-success">Monthly</span>`;
-        const statusBadge = s.status === 'active'
+        const statusBadge = activeSub
           ? `<span class="badge badge-success">Active</span>`
-          : `<span class="badge badge-error">${s.status}</span>`;
+          : `<span class="badge badge-error">${displaySub.status}</span>`;
 
-        const renewsLabel = s.status === 'active' ? 'Next renewal' : 'Expired';
-        const renewsVal = s.current_period_end
-          ? new Date(s.current_period_end).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})
+        const renewsLabel = activeSub ? 'Next renewal' : 'Expired';
+        const renewsVal = displaySub.current_period_end
+          ? new Date(displaySub.current_period_end).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})
           : '—';
-        const startVal = new Date(s.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
 
-        const timelineItems = buildSubTimeline(s);
-        const timelineHTML = timelineItems.map((t, i) => `
-          <div style="display:flex;gap:12px;position:relative;${i < timelineItems.length-1 ? 'padding-bottom:14px' : ''}">
-            ${i < timelineItems.length-1 ? `<div style="position:absolute;left:15px;top:28px;bottom:0;width:1px;background:rgba(140,120,160,0.18)"></div>` : ''}
-            <div style="width:30px;height:30px;border-radius:50%;background:${t.bg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${t.icon}</div>
-            <div style="flex:1;padding-top:4px">
-              <div style="font-size:13px;font-weight:600">${t.label}</div>
-              <div style="font-size:12px;color:var(--muted)">${t.meta}</div>
-              ${t.subtext ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">${t.subtext}</div>` : ''}
-            </div>
-          </div>`).join('');
+        const subCount = subs.length;
+        const isExpanded = window._subExpanded && window._subExpanded[userId];
 
-        const isExpanded = window._subExpanded && window._subExpanded[s.id];
+        // Build timeline for ALL subs of this user, stacked cleanly
+        const timelineHTML = subs.map((s, idx) => {
+          const timelineItems = buildSubTimeline(s);
+          return `
+            <div style="margin-bottom:${idx < subs.length - 1 ? '20px' : '0'};padding-bottom:${idx < subs.length - 1 ? '20px' : '0'};border-bottom:${idx < subs.length - 1 ? '1px dashed var(--border)' : 'none'}">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <span style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">
+                  Subscription ${subs.length - idx}
+                </span>
+                ${s.status === 'active'
+                  ? `<span class="badge badge-success">Active</span>`
+                  : `<span class="badge badge-error">${s.status}</span>`}
+                ${s.plan_type === 'annual'
+                  ? `<span class="badge" style="background:rgba(99,102,241,0.12);color:#4338ca">Annual</span>`
+                  : `<span class="badge badge-success">Monthly</span>`}
+                <span style="font-size:11px;font-family:monospace;color:var(--muted);margin-left:auto">${s.razorpay_subscription_id || '—'}</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
+                <div style="background:rgba(155,110,255,0.05);border-radius:10px;padding:12px">
+                  <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Started</div>
+                  <div style="font-weight:600;font-size:14px">${new Date(s.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+                </div>
+                <div style="background:rgba(155,110,255,0.05);border-radius:10px;padding:12px">
+                  <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${s.status === 'active' ? 'Next renewal' : 'Expired'}</div>
+                  <div style="font-weight:600;font-size:14px">${s.current_period_end ? new Date(s.current_period_end).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—'}</div>
+                </div>
+              </div>
+              ${timelineItems.map((t, i) => `
+                <div style="display:flex;gap:12px;position:relative;${i < timelineItems.length-1 ? 'padding-bottom:12px' : ''}">
+                  ${i < timelineItems.length-1 ? `<div style="position:absolute;left:15px;top:28px;bottom:0;width:1px;background:rgba(140,120,160,0.18)"></div>` : ''}
+                  <div style="width:30px;height:30px;border-radius:50%;background:${t.bg};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${t.icon}</div>
+                  <div style="flex:1;padding-top:4px">
+                    <div style="font-size:13px;font-weight:600">${t.label}</div>
+                    <div style="font-size:12px;color:var(--muted)">${t.meta}</div>
+                    ${t.subtext ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">${t.subtext}</div>` : ''}
+                  </div>
+                </div>`).join('')}
+            </div>`;
+        }).join('');
 
-        return `<div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden" id="subcard-${s.id}">
-          <div style="padding:20px 24px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="toggleSubCard('${s.id}')">
+        return `<div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden" id="subcard-${userId}">
+          <div style="padding:20px 24px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="toggleSubCard('${userId}')">
             <div style="width:40px;height:40px;border-radius:50%;background:rgba(155,110,255,0.12);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#7c3aed;flex-shrink:0">${initials}</div>
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
@@ -2479,27 +2518,16 @@ placeholder="Search by message, request type, or user..."
               ${planBadge}
               ${statusBadge}
               <span style="font-size:12px;color:var(--muted)">${renewsLabel}: <strong>${renewsVal}</strong></span>
-              <span style="font-size:18px;color:var(--muted);transition:transform 0.2s;display:inline-block;transform:rotate(${isExpanded?'180':'0'}deg)" id="chevron-${s.id}">⌄</span>
+              ${subCount > 1 ? `<span style="font-size:12px;background:rgba(155,110,255,0.1);color:var(--primary);padding:3px 8px;border-radius:6px;font-weight:600">${subCount} subs</span>` : ''}
+              <span style="font-size:18px;color:var(--muted);transition:transform 0.2s;display:inline-block;transform:rotate(${isExpanded?'180':'0'}deg)" id="chevron-${userId}">⌄</span>
             </div>
           </div>
 
-          <div id="subhistory-${s.id}" style="display:${isExpanded?'block':'none'};border-top:1px solid var(--border)">
+          <div id="subhistory-${userId}" style="display:${isExpanded?'block':'none'};border-top:1px solid var(--border)">
             <div style="padding:20px 24px">
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-                <div style="background:rgba(155,110,255,0.05);border-radius:12px;padding:14px">
-                  <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Started</div>
-                  <div style="font-weight:600;font-size:15px">${startVal}</div>
-                </div>
-                <div style="background:rgba(155,110,255,0.05);border-radius:12px;padding:14px">
-                  <div style="font-size:12px;color:var(--muted);margin-bottom:4px">${renewsLabel}</div>
-                  <div style="font-weight:600;font-size:15px">${renewsVal}</div>
-                </div>
-                <div style="background:rgba(155,110,255,0.05);border-radius:12px;padding:14px">
-                  <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Razorpay ID</div>
-                  <div style="font-weight:600;font-size:12px;font-family:monospace;word-break:break-all">${s.razorpay_subscription_id || '—'}</div>
-                </div>
+              <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:16px">
+                Subscription history (${subCount} total)
               </div>
-              <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:14px">Subscription timeline</div>
               ${timelineHTML}
             </div>
           </div>
