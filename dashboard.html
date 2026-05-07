@@ -657,42 +657,6 @@
     .bonus-modal .btn-upload:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
     @media (max-width: 580px) { .bonus-modal { width: 94%; padding: 26px 20px 22px; } }
 
-    /* ── Subscription song picker ───────────────────── */
-    .sub-song-picker {
-      margin: 10px 0 14px;
-    }
-    .sub-song-picker-label {
-      display: block; font-size: 13.5px; font-weight: 700;
-      color: var(--maroon-soft); margin-bottom: 8px; letter-spacing: 0.01em;
-    }
-    .sub-song-select {
-      width: 100%; padding: 12px 16px;
-      border-radius: var(--radiusSm);
-      border: 1.5px solid var(--border-gold-strong);
-      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,244,224,0.88));
-      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
-      color: var(--maroon); cursor: pointer;
-      box-shadow: var(--shadow-sm);
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233A0F2A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      background-size: 16px;
-      padding-right: 40px;
-      transition: border-color .18s ease, box-shadow .18s ease;
-    }
-    .sub-song-select:focus {
-      outline: none; border-color: var(--gold-1);
-      box-shadow: var(--shadow-sm), 0 0 0 3px rgba(184,134,44,0.15);
-    }
-    .sub-song-detail {
-      animation: fadeSlideIn 0.22s ease;
-    }
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
     /* ── Mobile tweaks ──────────────────────────────── */
     @media (max-width: 820px) {
       .song-item { flex-direction: column; align-items: stretch; }
@@ -1518,64 +1482,39 @@
               </div>`;
           }
 
-          // Build dropdown + detail card for subscription songs
-          const subSongData = subscriptionSongs.map(songId => ({
-            songId,
-            songSlug: songId,
-            songName: SONG_NAMES[songId] || songId,
-            bookName: SONG_CATEGORIES[songId] ? BOOK_NAMES[SONG_CATEGORIES[songId]] : 'Individual song',
-            currentStatus: progressMap[songId] || 'not_started',
-          }));
+          html += subscriptionSongs.map(songId => {
+            const songSlug      = songId;
+            const songName      = SONG_NAMES[songId] || songSlug;
+            const category      = SONG_CATEGORIES[songId];
+            const bookName      = category ? BOOK_NAMES[category] : 'Individual song';
+            const currentStatus = progressMap[songId] || 'not_started';
 
-          const subDropdownId = 'subSongDropdown';
-          const subDetailId   = 'subSongDetail';
-
-          html += `
-            <div class="sub-song-picker">
-              <label for="${subDropdownId}" class="sub-song-picker-label">🎵 Choose a song to view its sheet music:</label>
-              <select id="${subDropdownId}" class="sub-song-select" onchange="handleSubSongSelect(this.value)">
-                <option value="">— Select a song —</option>
-                ${subSongData.map(s => `<option value="${s.songId}">${s.songName}</option>`).join('')}
-              </select>
-            </div>
-            <div id="${subDetailId}" class="sub-song-detail" style="display:none;"></div>`;
-
-          // Store song data for the picker handler
-          html += `<script>
-            window.__subSongData = ${JSON.stringify(subSongData)};
-            function handleSubSongSelect(songId) {
-              const detail = document.getElementById('${subDetailId}');
-              if (!songId) { detail.style.display = 'none'; return; }
-              const s = window.__subSongData.find(x => x.songId === songId);
-              if (!s) return;
-              detail.style.display = 'block';
-              detail.innerHTML = \`
-                <div class="song-item" data-song-id="\${s.songId}" data-song-slug="\${s.songSlug}">
-                  <div class="song-info">
-                    <div class="song-title">
-                      \${s.songName}
-                      <span class="sub-song-badge" style="margin-left:8px;">✨ Subscription</span>
-                    </div>
-                    <div class="song-meta">From: \${s.bookName} • Included in your plan</div>
+            return `
+              <div class="song-item" data-song-id="${songId}" data-song-slug="${songSlug}">
+                <div class="song-info">
+                  <div class="song-title">
+                    ${songName}
+                    <span class="sub-song-badge" style="margin-left:8px;">✨ Subscription</span>
                   </div>
-                  <div class="song-actions">
-                    <button class="download-pdf-btn"
-                      onclick="openSheetMusic('\${s.songSlug}', '\${s.songName.replace(/'/g, \\"\\\\'\\")}') "
-                      title="View sheet music">
-                      🎼 View PDF
-                    </button>
-                    <div class="progress-selector">
-                      <button class="progress-btn not_started \${s.currentStatus === 'not_started' ? 'active' : ''}"
-                        onclick="updateProgress('\${s.songId}', 'not_started')">Not Started</button>
-                      <button class="progress-btn in_progress \${s.currentStatus === 'in_progress' ? 'active' : ''}"
-                        onclick="updateProgress('\${s.songId}', 'in_progress')">In Progress</button>
-                      <button class="progress-btn completed \${s.currentStatus === 'completed' ? 'active' : ''}"
-                        onclick="updateProgress('\${s.songId}', 'completed')">Completed</button>
-                    </div>
+                  <div class="song-meta">From: ${bookName} • Included in your plan</div>
+                </div>
+                <div class="song-actions">
+                  <button class="download-pdf-btn"
+                    onclick="openSheetMusic('${songSlug}', '${songName.replace(/'/g, "\\'")}')"
+                    title="View sheet music">
+                    🎼 View PDF
+                  </button>
+                  <div class="progress-selector">
+                    <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}"
+                      onclick="updateProgress('${songId}', 'not_started')">Not Started</button>
+                    <button class="progress-btn in_progress ${currentStatus === 'in_progress' ? 'active' : ''}"
+                      onclick="updateProgress('${songId}', 'in_progress')">In Progress</button>
+                    <button class="progress-btn completed ${currentStatus === 'completed' ? 'active' : ''}"
+                      onclick="updateProgress('${songId}', 'completed')">Completed</button>
                   </div>
-                </div>\`;
-            }
-          <\/script>`;
+                </div>
+              </div>`;
+          }).join('');
 
           html += `</div>`;
         }
