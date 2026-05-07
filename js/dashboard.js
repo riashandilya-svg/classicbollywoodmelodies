@@ -1179,10 +1179,6 @@ function renderSubscription(sub) {
     </div>
   `;
  
-  const rzpId = sub.razorpay_subscription_id
-    ? `<div class="sub-info-sub">ID: ${sub.razorpay_subscription_id}</div>`
-    : '';
- 
   const actionsHtml = isCancelled
     ? `<button class="sub-action-btn reactivate-btn" id="reactivateSubBtn" type="button">
          🔄 Reactivate Subscription
@@ -1267,16 +1263,19 @@ function closeCancelModal() {
 }
  
 async function handleCancelSubscription(btn) {
-  const fb = document.getElementById('cancelModalFeedback');
-  btn.disabled = true;
+  const fb         = document.getElementById('cancelModalFeedback');
+  const keepBtn    = document.getElementById('keepSubBtn');
+  const confirmBtn = document.getElementById('confirmCancelBtn'); // same as btn
+
+  btn.disabled    = true;
   btn.textContent = 'Cancelling...';
-  fb.className = 'cancel-modal-feedback';
-  fb.textContent = '';
- 
+  fb.className    = 'cancel-modal-feedback';
+  fb.textContent  = '';
+
   try {
     const { data: { session } } = await window.supabase.auth.getSession();
     if (!session) throw new Error('Not logged in');
- 
+
     const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/cancel-subscription`, {
       method: 'POST',
       headers: {
@@ -1288,14 +1287,71 @@ async function handleCancelSubscription(btn) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || 'Cancellation failed');
- 
-    fb.className = 'cancel-modal-feedback success';
-    fb.textContent = '✅ Cancelled. Access continues until your billing period ends.';
-    setTimeout(() => { closeCancelModal(); loadSubscription(); }, 2200);
+
+    // ── Swap buttons: hide Yes + Keep, show only OK ───────────
+    if (keepBtn)    keepBtn.style.display    = 'none';
+    if (confirmBtn) confirmBtn.style.display = 'none';
+
+    let okBtn = document.getElementById('cancelModalOkBtn');
+    if (!okBtn) {
+      okBtn = document.createElement('button');
+      okBtn.id          = 'cancelModalOkBtn';
+      okBtn.className   = 'sub-action-btn';
+      okBtn.textContent = 'OK';
+      fb.parentNode.insertBefore(okBtn, fb.nextSibling);
+    }
+    okBtn.style.display = 'inline-flex';
+    okBtn.onclick = async () => {
+      closeCancelModal();
+      // Reset modal buttons for next open
+      okBtn.style.display = 'none';
+      if (keepBtn)    keepBtn.style.display    = '';
+      if (confirmBtn) {
+        confirmBtn.style.display = '';
+        confirmBtn.disabled      = false;
+        confirmBtn.textContent   = 'Yes, cancel';
+      }
+      // Fresh DB fetch now that the modal is closed
+      await loadSubscription();
+    };
+
+    // ── Optimistic UI patch: update card immediately ──────────
+    // Status badge
+    const statusBadge = document.querySelector('.sub-status-badge');
+    if (statusBadge) {
+      statusBadge.className   = 'sub-status-badge cancelled';
+      statusBadge.textContent = '⏸ Cancelling';
+    }
+    // Info cells
+    document.querySelectorAll('.sub-info-cell').forEach(cell => {
+      const label = cell.querySelector('.sub-info-label')?.textContent?.trim();
+      if (label === 'Status') {
+        const val = cell.querySelector('.sub-info-value');
+        const sub = cell.querySelector('.sub-info-sub');
+        if (val) val.textContent = 'Cancelling at period end';
+        if (sub) sub.textContent = 'Access continues till expiry';
+      }
+      if (label === 'Next renewal') {
+        const labelEl = cell.querySelector('.sub-info-label');
+        if (labelEl) labelEl.textContent = 'Access ends';
+      }
+    });
+    // Swap Cancel → Reactivate button in the card
+    const cancelCardBtn = document.getElementById('openCancelModalBtn');
+    if (cancelCardBtn) {
+      cancelCardBtn.id          = 'reactivateSubBtn';
+      cancelCardBtn.className   = 'sub-action-btn reactivate-btn';
+      cancelCardBtn.textContent = '🔄 Reactivate Subscription';
+      cancelCardBtn.onclick     = () => handleReactivate(cancelCardBtn, null);
+    }
+
+    fb.className   = 'cancel-modal-feedback success';
+    fb.textContent = '✅ Cancelled. You keep access until your billing period ends.';
+
   } catch (e) {
-    fb.className = 'cancel-modal-feedback error';
-    fb.textContent = e.message || 'Something went wrong. Please try again.';
-    btn.disabled = false;
+    fb.className    = 'cancel-modal-feedback error';
+    fb.textContent  = e.message || 'Something went wrong. Please try again.';
+    btn.disabled    = false;
     btn.textContent = 'Yes, cancel';
   }
 }
@@ -1329,20 +1385,29 @@ async function handleReactivate(btn, rzpSubId) {
 async function loadSubscription() {
   const el = document.getElementById('subscriptionContent');
   if (!el) return;
- 
+
   try {
     const { data: { session } } = await window.supabase.auth.getSession();
     if (!session) { renderSubscription(null); return; }
- 
+
     const { data: sub, error } = await window.supabase
       .from('subscriptions')
       .select('*')
       .eq('user_id', session.user.id)
+      .neq('status', 'expired')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
- 
+
     if (error) throw error;
+
+    // Treat hard-expired/completed rows with no cancel flag as no subscription
+    const deadStatuses = ['expired', 'completed'];
+    if (sub && deadStatuses.includes((sub.status || '').toLowerCase()) && !sub.cancel_at_period_end) {
+      renderSubscription(null);
+      return;
+    }
+
     renderSubscription(sub || null);
   } catch (e) {
     console.error('[SUBSCRIPTION]', e);
