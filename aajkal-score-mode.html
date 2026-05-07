@@ -489,17 +489,47 @@ canvas {
    SCORE MODE — KEYBOARD STRIP
    ============================ */
 
-/* When score mode is active, collapse the falling-note area
-   but keep the keyboard canvas and controls visible */
+/* When score mode is active, pin the keyboard dock to the bottom of the
+   viewport so it's always visible regardless of score height */
 #bottomDock.score-mode {
-    padding-top: 10px;  /* no big push-down needed */
-    padding-bottom: 10px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+
+    padding-top: 8px;
+    padding-bottom: 8px;
+
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(235, 50, 70, 0.18);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+
+    /* Keep children centered */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Add bottom padding to scoreView so keyboard doesn't cover score content */
+#scoreView.active {
+    padding-bottom: 180px;
 }
 
 /* Hide only the falling-note portion of the canvas by clipping
    to just the keyboard height — done via JS resize */
 #bottomDock.score-mode #canvas {
     /* canvas height is set to KEYBOARD_HEIGHT in JS */
+    max-width: 100%;
+}
+
+/* Hide bulky controls from the pinned dock in score mode */
+#bottomDock.score-mode #playbackControls,
+#bottomDock.score-mode #holdInfo,
+#bottomDock.score-mode #feedback,
+#bottomDock.score-mode #sideNoteFeedback {
+    display: none !important;
 }
 
 /* Keyboard strip label */
