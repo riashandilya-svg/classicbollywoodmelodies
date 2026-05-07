@@ -1465,6 +1465,15 @@ const KEYBOARD_HEIGHT = 130;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+// ---- Score mode state (declared early to avoid TDZ errors) ----
+let scoreModeActive = false;
+let scoreCurrentPage = 1;
+const SCORE_TOTAL_PAGES = 3;
+const scoreCanvases = {};
+let pdfjsLib = null;
+let pdfDoc = null;
+// ---------------------------------------------------------------
+
 function resizeCanvas() {
     const maxWidth = Math.min(window.innerWidth - 20, 1400);
     canvas.width = maxWidth;
@@ -3284,18 +3293,8 @@ addMidiFallingRectangle(
 // ============================================================
 // SCORE VIEW MODE
 // ============================================================
-let scoreModeActive = false;
-let scoreCurrentPage = 1;
-const SCORE_TOTAL_PAGES = 3;
-
-// PDF page images — served from same directory as the HTML
-// The app will try to render the PDF using PDF.js if available,
-// or fall back to using the .pdf file path with object tag.
-// We use a canvas-per-page approach with PDF.js CDN.
-
-const scoreCanvases = {}; // page -> rendered canvas dataURL (lazy)
-let pdfjsLib = null;
-let pdfDoc = null;
+// (scoreModeActive, scoreCurrentPage, SCORE_TOTAL_PAGES, scoreCanvases,
+//  pdfjsLib, pdfDoc are declared early above resizeCanvas to avoid TDZ errors)
 
 async function initScoreMode() {
     // Load PDF.js from CDN
