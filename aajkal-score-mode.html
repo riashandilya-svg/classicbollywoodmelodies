@@ -489,77 +489,17 @@ canvas {
    SCORE MODE — KEYBOARD STRIP
    ============================ */
 
-/* When score mode is active, pin the keyboard dock to the bottom of the
-   viewport so it's always visible regardless of score height */
+/* When score mode is active, collapse the falling-note area
+   but keep the keyboard canvas and controls visible */
 #bottomDock.score-mode {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 900;
-
-    padding-top: 8px;
-    padding-bottom: 8px;
-
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(8px);
-    border-top: 1px solid rgba(235, 50, 70, 0.18);
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-
-    /* Keep children centered */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Add bottom padding to scoreView so keyboard doesn't cover score content */
-#scoreView.active {
-    padding-bottom: 280px;
+    padding-top: 10px;  /* no big push-down needed */
+    padding-bottom: 10px;
 }
 
 /* Hide only the falling-note portion of the canvas by clipping
    to just the keyboard height — done via JS resize */
 #bottomDock.score-mode #canvas {
     /* canvas height is set to KEYBOARD_HEIGHT in JS */
-    max-width: 100%;
-}
-
-/* Hide bulky controls from the pinned dock in score mode */
-#bottomDock.score-mode #holdInfo,
-#bottomDock.score-mode #feedback,
-#bottomDock.score-mode #sideNoteFeedback {
-    display: none !important;
-}
-
-/* In score mode, show controls compactly above the keyboard */
-#bottomDock.score-mode #playbackControls {
-    display: flex !important;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    padding: 4px 8px 2px 8px;
-    max-width: 100%;
-    overflow-x: auto;
-    font-size: 13px;
-}
-
-#bottomDock.score-mode #playbackControls button {
-    padding: 5px 10px;
-    font-size: 12px;
-    border-radius: 7px;
-}
-
-#bottomDock.score-mode #practiceControls {
-    gap: 6px;
-}
-
-#bottomDock.score-mode #practiceControls label {
-    font-size: 12px;
-}
-
-#bottomDock.score-mode #practiceControls input,
-#bottomDock.score-mode #practiceControls select {
-    font-size: 12px;
 }
 
 /* Keyboard strip label */
@@ -673,21 +613,14 @@ canvas {
     pointer-events: none;
     border: 3px solid #E57373;
     border-radius: 6px;
-    background: rgba(229,115,115,0.28);
-    box-shadow: 0 0 0 4px rgba(229,115,115,0.18), 0 0 16px rgba(229,115,115,0.35);
-    transition: left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease, opacity 0.2s;
+    background: rgba(229,115,115,0.22);
+    box-shadow: 0 0 0 3px rgba(229,115,115,0.15);
+    transition: left 0.15s, top 0.15s, width 0.15s, height 0.15s, opacity 0.2s;
     opacity: 0;
-    animation: none;
 }
 
 #scoreHighlight.visible {
     opacity: 1;
-    animation: scorePulse 1.1s ease-in-out infinite;
-}
-
-@keyframes scorePulse {
-    0%, 100% { box-shadow: 0 0 0 4px rgba(229,115,115,0.18), 0 0 16px rgba(229,115,115,0.35); }
-    50%       { box-shadow: 0 0 0 8px rgba(229,115,115,0.10), 0 0 28px rgba(229,115,115,0.55); }
 }
 
 /* Score page nav */
@@ -1501,15 +1434,6 @@ const TOTAL_NOTES = END_NOTE - START_NOTE + 1;
 const KEYBOARD_HEIGHT = 130;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-
-// ---- Score mode state (declared early to avoid TDZ errors) ----
-let scoreModeActive = false;
-let scoreCurrentPage = 1;
-const SCORE_TOTAL_PAGES = 3;
-const scoreCanvases = {};
-let pdfjsLib = null;
-let pdfDoc = null;
-// ---------------------------------------------------------------
 
 function resizeCanvas() {
     const maxWidth = Math.min(window.innerWidth - 20, 1400);
@@ -3330,8 +3254,18 @@ addMidiFallingRectangle(
 // ============================================================
 // SCORE VIEW MODE
 // ============================================================
-// (scoreModeActive, scoreCurrentPage, SCORE_TOTAL_PAGES, scoreCanvases,
-//  pdfjsLib, pdfDoc are declared early above resizeCanvas to avoid TDZ errors)
+let scoreModeActive = false;
+let scoreCurrentPage = 1;
+const SCORE_TOTAL_PAGES = 3;
+
+// PDF page images — served from same directory as the HTML
+// The app will try to render the PDF using PDF.js if available,
+// or fall back to using the .pdf file path with object tag.
+// We use a canvas-per-page approach with PDF.js CDN.
+
+const scoreCanvases = {}; // page -> rendered canvas dataURL (lazy)
+let pdfjsLib = null;
+let pdfDoc = null;
 
 async function initScoreMode() {
     // Load PDF.js from CDN
@@ -3538,38 +3472,29 @@ function getScorePosition(trainingNote, midiNote, trackType) {
     return { page, xFrac, yFrac };
 }
 
-function _applyScoreHighlight(pos) {
-    const img = document.getElementById('scoreImg');
-    const hl  = document.getElementById('scoreHighlight');
-    const imgW = img.clientWidth  || img.naturalWidth  || 900;
-    const imgH = img.clientHeight || img.naturalHeight || 600;
-    const hlW = 80, hlH = 38;
-    hl.style.left   = (pos.xFrac * imgW - hlW / 2) + 'px';
-    hl.style.top    = (pos.yFrac * imgH - hlH / 2) + 'px';
-    hl.style.width  = hlW + 'px';
-    hl.style.height = hlH + 'px';
-    hl.classList.add('visible');
-}
-
 function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
 
     const pos = getScorePosition(trainingNoteObj, midiNote, trackType || TREBLE);
 
+    // If it's on a different page, switch pages
     if (pos.page !== scoreCurrentPage) {
         scoreCurrentPage = pos.page;
-        const img = document.getElementById('scoreImg');
-        img.onload = () => { img.onload = null; _applyScoreHighlight(pos); };
         renderScorePage(scoreCurrentPage);
-        return;
     }
 
     const img = document.getElementById('scoreImg');
-    if (!img.clientWidth) {
-        requestAnimationFrame(() => _applyScoreHighlight(pos));
-    } else {
-        _applyScoreHighlight(pos);
-    }
+    const imgW = img.clientWidth  || img.naturalWidth  || 800;
+    const imgH = img.clientHeight || img.naturalHeight || 600;
+
+    const hl = document.getElementById('scoreHighlight');
+    const hlW = 60, hlH = 32;
+
+    hl.style.left   = (pos.xFrac * imgW - hlW / 2) + 'px';
+    hl.style.top    = (pos.yFrac * imgH - hlH / 2) + 'px';
+    hl.style.width  = hlW + 'px';
+    hl.style.height = hlH + 'px';
+    hl.classList.add('visible');
 }
 
 function clearScoreHighlight() {
