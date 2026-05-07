@@ -3494,21 +3494,6 @@ function hideScoreNoteDisplay() {
     document.getElementById('scoreNoteDisplay').classList.remove('active');
 }
 
-// Patch spawnTrainingNote to also update score view
-const _origSpawnTrainingNote = spawnTrainingNote;
-// We'll hook into the note spawning via a wrapper called after spawn
-function onTrainingNoteSpawned(noteObj) {
-    if (!scoreModeActive) return;
-    const noteName = getNoteName(noteObj.midi);
-    const beats = noteObj.duration / secondsPerBeat;
-    const beatLabel = beatsToNoteName(beats);
-    showScoreNoteDisplay(noteName, beatLabel);
-    highlightScoreNote(noteName, noteObj.midi, noteObj.track, noteObj);
-}
-
-// Also hook spawnNextValidNote to call our callback
-const _origSpawnNextValidNote = spawnNextValidNote;
-
 function handleMIDIMessage(event) {
     if (previewMode) return;
     
