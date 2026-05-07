@@ -881,9 +881,8 @@
           </div>
 
           <div class="info-box">
-            <strong>ℹ️ How it works:</strong> Enter prices in normal amounts (e.g. ₹199 or $3). They're stored as paise/cents internally.
-            Razorpay plan IDs are optional — if your Razorpay plans have fixed amounts, enter those IDs so the checkout can reference them directly.
-            The <strong>display prices</strong> are what users see on the pricing page.
+            <strong>ℹ️ How it works:</strong> Enter your prices in normal amounts (e.g. ₹199 or $3.99). They're stored internally in paise/cents.
+            The <strong>display label</strong> is what users see on the pricing page. Hit <strong>Save</strong> and prices update immediately for new subscribers.
           </div>
 
           <div class="sub-plan-grid">
@@ -905,10 +904,6 @@
                     <input type="number" step="0.01" id="sub_monthly_usd" placeholder="3.99">
                   </div>
                 </div>
-              </div>
-              <div class="sub-price-field" style="margin-bottom:12px;">
-                <label>Razorpay Plan ID (Monthly)</label>
-                <input type="text" id="sub_monthly_razorpay_id" placeholder="plan_XXXXXXXXXXXXXXXX" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:monospace;">
               </div>
               <div class="sub-price-field">
                 <label>Display Label (shown to users)</label>
@@ -934,10 +929,6 @@
                     <input type="number" step="0.01" id="sub_annual_usd" placeholder="29.99">
                   </div>
                 </div>
-              </div>
-              <div class="sub-price-field" style="margin-bottom:12px;">
-                <label>Razorpay Plan ID (Annual)</label>
-                <input type="text" id="sub_annual_razorpay_id" placeholder="plan_XXXXXXXXXXXXXXXX" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13px;font-family:monospace;">
               </div>
               <div class="sub-price-field">
                 <label>Display Label (shown to users)</label>
@@ -1389,11 +1380,9 @@
           // Defaults
           document.getElementById('sub_monthly_inr').value = 199;
           document.getElementById('sub_monthly_usd').value = 3.99;
-          document.getElementById('sub_monthly_razorpay_id').value = '';
           document.getElementById('sub_monthly_label').value = 'Monthly Access';
           document.getElementById('sub_annual_inr').value = 1499;
           document.getElementById('sub_annual_usd').value = 29.99;
-          document.getElementById('sub_annual_razorpay_id').value = '';
           document.getElementById('sub_annual_label').value = 'Annual Access';
           return;
         }
@@ -1404,14 +1393,12 @@
         if (subs.monthly) {
           document.getElementById('sub_monthly_inr').value = (subs.monthly.inr || 0) / 100;
           document.getElementById('sub_monthly_usd').value = ((subs.monthly.usd || 0) / 100).toFixed(2);
-          document.getElementById('sub_monthly_razorpay_id').value = subs.monthly.razorpay_plan_id || '';
           document.getElementById('sub_monthly_label').value = subs.monthly.label || 'Monthly Access';
         }
         // Annual
         if (subs.annual) {
           document.getElementById('sub_annual_inr').value = (subs.annual.inr || 0) / 100;
           document.getElementById('sub_annual_usd').value = ((subs.annual.usd || 0) / 100).toFixed(2);
-          document.getElementById('sub_annual_razorpay_id').value = subs.annual.razorpay_plan_id || '';
           document.getElementById('sub_annual_label').value = subs.annual.label || 'Annual Access';
         }
       } catch (e) {
@@ -1434,13 +1421,11 @@
           monthly: {
             inr: monthlyINR,
             usd: monthlyUSD,
-            razorpay_plan_id: document.getElementById('sub_monthly_razorpay_id').value.trim(),
             label: document.getElementById('sub_monthly_label').value.trim() || 'Monthly Access',
           },
           annual: {
             inr: annualINR,
             usd: annualUSD,
-            razorpay_plan_id: document.getElementById('sub_annual_razorpay_id').value.trim(),
             label: document.getElementById('sub_annual_label').value.trim() || 'Annual Access',
           },
         };
@@ -1829,7 +1814,7 @@
         if (!ADMIN_EMAILS.includes(session.user.email)) { authCheck.innerHTML = '<p style="color:var(--error);font-size:18px;">⛔ Access Denied: Not an admin</p>'; return; }
         authCheck.classList.add('hidden'); adminContent.classList.remove('hidden');
         await Promise.all([loadPurchasesData(), loadBundlesData(), loadSavedRates(), loadSubscriptionsData()]);
-        loadStats(); loadUsers(); loadCodes(); updateRevenueDisplay();
+        loadStats(); await loadUsers(); loadCodes(); updateRevenueDisplay();
         updateSortHeaders('purchases'); renderPurchases(sortArray(allPurchases, 'purchases'));
         updateSortHeaders('bundles'); renderBundles(sortArray(allBundles, 'bundles'));
         initSortHeaders();
@@ -1903,6 +1888,8 @@
         const { data: profiles, error } = await window.supabase.from('profiles').select('*').order('created_at', { ascending: false });
         if (error) throw error;
         allUsers = profiles || [];
+        // Ensure subscriptions are loaded so the subscription badge is accurate
+        if (allSubscriptions.length === 0) await loadSubscriptionsData();
         await Promise.all(allUsers.map(u => fetchMediaForUser(u.id)));
         updateSortHeaders('users'); renderUsers(sortArray(allUsers, 'users'));
       } catch (e) {
