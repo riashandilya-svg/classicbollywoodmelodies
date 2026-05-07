@@ -1181,7 +1181,7 @@ function renderSubscription(sub) {
  
   const actionsHtml = isCancelled
     ? `<button class="sub-action-btn reactivate-btn" id="reactivateSubBtn" type="button">
-         🔄 Reactivate Subscription
+         🎵 Start New Subscription
        </button>`
     : `<button class="sub-action-btn cancel-btn" id="openCancelModalBtn" type="button">
          Cancel Subscription
@@ -1250,7 +1250,7 @@ function renderSubscription(sub) {
   // Wire up reactivate button
   const reactivateBtn = document.getElementById('reactivateSubBtn');
   if (reactivateBtn) {
-    reactivateBtn.onclick = () => handleReactivate(reactivateBtn, sub.razorpay_subscription_id);
+    reactivateBtn.onclick = () => handleReactivate(reactivateBtn);
   }
 }
  
@@ -1336,15 +1336,14 @@ async function handleCancelSubscription(btn) {
         if (labelEl) labelEl.textContent = 'Access ends';
       }
     });
-    // Swap Cancel → Reactivate button in the card
-const cancelCardBtn = document.getElementById('openCancelModalBtn');
-if (cancelCardBtn) {
-  cancelCardBtn.id          = 'reactivateSubBtn';
-  cancelCardBtn.className   = 'sub-action-btn reactivate-btn';
-  cancelCardBtn.textContent = '🔄 Reactivate Subscription';
-  // ✅ use the id returned from the cancel API response
-  cancelCardBtn.onclick     = () => handleReactivate(cancelCardBtn, data.razorpay_subscription_id);
-}
+    // Swap Cancel → Start New Subscription button in the card
+    const cancelCardBtn = document.getElementById('openCancelModalBtn');
+    if (cancelCardBtn) {
+      cancelCardBtn.id          = 'reactivateSubBtn';
+      cancelCardBtn.className   = 'sub-action-btn reactivate-btn';
+      cancelCardBtn.textContent = '🎵 Start New Subscription';
+      cancelCardBtn.onclick     = () => handleReactivate(cancelCardBtn);
+    }
 
     fb.className   = 'cancel-modal-feedback success';
     fb.textContent = '✅ Cancelled. You keep access until your billing period ends.';
@@ -1357,29 +1356,9 @@ if (cancelCardBtn) {
   }
 }
  
-async function handleReactivate(btn, rzpSubId) {
-  btn.disabled = true;
-  btn.textContent = 'Reactivating...';
-  try {
-    const { data: { session } } = await window.supabase.auth.getSession();
-    const res = await fetch(`${SUPABASE_FUNCTIONS_BASE}/reactivate-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': SUB_ANON_KEY,
-      },
-      body: JSON.stringify({ razorpay_subscription_id: rzpSubId }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || 'Reactivation failed');
-    alert('🎉 Subscription reactivated! Welcome back.');
-    loadSubscription();
-  } catch (e) {
-    alert(e.message || 'Could not reactivate. Please contact support.');
-    btn.disabled = false;
-    btn.textContent = '🔄 Reactivate Subscription';
-  }
+function handleReactivate(btn) {
+  // Subscription is cancelled — redirect user to subscribe again
+  window.location.href = 'dashboard.html#subscribe';
 }
  
 // ── Load ─────────────────────────────────────────────────
@@ -1402,8 +1381,8 @@ async function loadSubscription() {
 
     if (error) throw error;
 
-    // Treat hard-expired/completed rows with no cancel flag as no subscription
-    const deadStatuses = ['expired', 'completed'];
+    // Treat hard-expired/completed/cancelled rows as no subscription
+    const deadStatuses = ['expired', 'completed', 'cancelled'];
     if (sub && deadStatuses.includes((sub.status || '').toLowerCase()) && !sub.cancel_at_period_end) {
       renderSubscription(null);
       return;
