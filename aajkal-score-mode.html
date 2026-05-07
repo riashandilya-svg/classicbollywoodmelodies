@@ -87,14 +87,14 @@
 }
 
    :root{
-  --bg-main: #ffffff;          /* ✅ keep WHITE background */
+  --bg-main: #ffffff;
   --bg-surface: rgba(255,255,255,0.86);
 
   --red1: rgba(235, 50, 70, 0.22);
   --red2: rgba(255, 120, 130, 0.16);
   --softBlack: rgba(0, 0, 0, 0.10);
 
---accent-primary: #E57373;   /* light red */
+--accent-primary: #E57373;
   --accent-success: #22C55E;
   --accent-error: #EF4444;
 
@@ -104,8 +104,7 @@
 
 body {
     margin: 0;
-    padding: 80px 0 40px 0; /* room for brand bar + heading */
-    /* 🔼 nudges everything up */
+    padding: 80px 0 40px 0;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -127,8 +126,8 @@ h1 {
     color: var(--text-main);
     text-align: center;
 
-    margin-top: 12px;      /* 🔽 kills the huge gap */
-    margin-bottom: 13px;  /* slightly tighter */
+    margin-top: 12px;
+    margin-bottom: 13px;
 }
 button {
     padding: clamp(8px, 2vw, 15px) clamp(14px, 4vw, 30px);
@@ -157,7 +156,7 @@ button:disabled {
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
     .button-group {
     display: flex;
-    flex-wrap: wrap;        /* ✅ ADD THIS */
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 20px;
     justify-content: center;
@@ -171,7 +170,6 @@ button:disabled {
     background-color: #DC2626;
 }
     #feedback {
-    /* animation */
     opacity: 0;
     transform: scale(0.96);
     transition:
@@ -179,18 +177,14 @@ button:disabled {
         transform 0.25s ease,
         background-color 0.25s ease;
 
-    /* visual */
     border-radius: 14px;
     padding: 12px 18px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 
-    /* FIX 1 — prevent full-width banner */
     max-width: 520px;
     width: fit-content;
     margin: 6px auto 0 auto;
     text-align: center;
-
-    /* ✅ FIX 2 — reserve vertical space (THIS IS THE ANSWER) */
 }
 #feedback.show {
     opacity: 1;
@@ -215,13 +209,12 @@ button:disabled {
     flex-wrap: wrap;
 }
 
-/* 🎨 Circle color rules */
 .note-circle {
     width: 42px;
     height: 42px;
     border-radius: 50%;
 
-    background: #e5e7eb; /* neutral gray */
+    background: #e5e7eb;
     color: #111;
 
     font-weight: 700;
@@ -235,12 +228,12 @@ button:disabled {
 }
 
 .note-circle.correct {
-    background: #E57373; /* LIGHT RED */
+    background: #E57373;
     color: white;
 }
 
 .note-circle.wrong {
-    background: #EF4444; /* RED */
+    background: #EF4444;
     color: white;
 }
 
@@ -266,7 +259,7 @@ button:disabled {
     text-align: center;
 }
 #notesDisplay {
-    display: none !important;  /* 🔒 hard lock */
+    display: none !important;
 }
 
     #notesDisplay h2 { margin-top: 0; color: #333; font-size: 24px; }
@@ -287,7 +280,6 @@ button:disabled {
     display: none;
     pointer-events: none;
 }
-/* Notes Pressed section — compact */
 #notesDisplay,
 #notesList {
     font-size: 14px;
@@ -303,7 +295,7 @@ button:disabled {
     line-height: 1.3;
 }
 #midiDisplay {
-    margin-top: 4px;   /* 🔽 tighter */
+    margin-top: 4px;
     font-size: 18px;
 }
 
@@ -326,11 +318,10 @@ button:disabled {
 
     z-index: 1000;
 }
-/* 🟦 Free Mode button — fixed above side note circles */
 #freeModeButton.side-floating {
     position: fixed;
     right: 20px;
-    top: calc(50% - 260px); /* ABOVE the circles */
+    top: calc(50% - 260px);
 
     width: 64px;
     height: 64px;
@@ -360,7 +351,6 @@ button:disabled {
     align-items: stretch;
 }
     
-/* Mobile: stack YouTube button below brand name */
 #brandBar {
   height: auto;
   min-height: 56px;
@@ -396,8 +386,8 @@ canvas {
 }
 canvas {
     display: block;
-    touch-action: none; /* Prevents default touch behaviors like scrolling */
-    -webkit-user-select: none; /* Prevents text selection on iOS */
+    touch-action: none;
+    -webkit-user-select: none;
     user-select: none;
 }
 /* 🎯 Training Progress Bar */
@@ -430,35 +420,32 @@ canvas {
     font-weight: 600;
     color: var(--text-main);
 }
-/* ⬇️ Push canvas + keyboard + controls to bottom */
 #bottomDock {
     margin-top: auto;
-    padding-top: 100px;   /* 👈 PUSHES KEYBOARD + BUTTONS DOWN */
+    padding-top: 100px;
     padding-bottom: 80px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-/* 🎵 Falling note visual style */
 .falling-note {
     border-radius: 10px;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
 }
-/* 🔒 Paywall card - smaller + centered text */
+/* 🔒 Paywall card */
 #paywall{
-  display: none;                 /* keep hidden until you show it in JS */
-  width: min(420px, 92%);        /* ✅ smaller box */
+  display: none;
+  width: min(420px, 92%);
   padding: 16px 18px;
   margin: 14px auto;
   border: 1px solid rgba(235,50,70,0.22);
   border-radius: 16px;
   background: rgba(255,255,255,0.88);
   box-shadow: 0 10px 26px rgba(0,0,0,0.08);
-  text-align: center;            /* ✅ center text */
+  text-align: center;
 }
 
-/* Title */
 #paywall h3{
   margin: 0 0 8px 0;
   font-size: 22px;
@@ -466,7 +453,6 @@ canvas {
   letter-spacing: 0.3px;
 }
 
-/* Description */
 #paywall p{
   margin: 0 0 14px 0;
   font-size: 15px;
@@ -474,7 +460,6 @@ canvas {
   line-height: 1.45;
 }
 
-/* Button - centered, not huge */
 #buyBtn{
   display: inline-block;
   width: auto;
@@ -482,15 +467,12 @@ canvas {
   padding: 10px 18px;
   border-radius: 12px;
 }
-/* 🔒 Default: hide the app until unlocked */
 #app { display: none; }
 
 /* ============================
    SCORE MODE — KEYBOARD STRIP
    ============================ */
 
-/* When score mode is active, pin the keyboard dock to the bottom of the
-   viewport so it's always visible regardless of score height */
 #bottomDock.score-mode {
     position: fixed;
     bottom: 0;
@@ -506,34 +488,27 @@ canvas {
     border-top: 1px solid rgba(235, 50, 70, 0.18);
     box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
 
-    /* Keep children centered */
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-/* Add bottom padding to scoreView so keyboard doesn't cover score content */
 #scoreView.active {
     padding-bottom: 320px;
     width: 100%;
     max-width: 100%;
 }
 
-/* Hide only the falling-note portion of the canvas by clipping
-   to just the keyboard height — done via JS resize */
 #bottomDock.score-mode #canvas {
-    /* canvas height is set to KEYBOARD_HEIGHT in JS */
     max-width: 100%;
 }
 
-/* Hide bulky controls from the pinned dock in score mode */
 #bottomDock.score-mode #holdInfo,
 #bottomDock.score-mode #feedback,
 #bottomDock.score-mode #sideNoteFeedback {
     display: none !important;
 }
 
-/* In score mode, show controls compactly above the keyboard */
 #bottomDock.score-mode #playbackControls {
     display: flex !important;
     flex-wrap: wrap;
@@ -564,7 +539,6 @@ canvas {
     font-size: 12px;
 }
 
-/* Keyboard strip label */
 #scoreKeyboardLabel {
     display: none;
     font-size: 13px;
@@ -597,7 +571,6 @@ canvas {
     color: var(--text-main);
 }
 
-/* Toggle switch */
 .toggle-switch {
     position: relative;
     width: 56px;
@@ -656,23 +629,24 @@ canvas {
     display: flex;
 }
 
+/* ── FIX 1: no rogue <style> tag here ── */
+/* ── FIX 4: only ONE #scoreObj rule (cubic-bezier, no duplicate 0.4s ease) ── */
 #scorePageWrapper {
     position: relative;
     width: 100%;
-  overflow-x: auto;             
-    -webkit-overflow-scrolling: touch; 
-    overflow: visible;
+    overflow: hidden;          /* clips the wide SVG — no manual scrolling */
+}
+
+#scoreObj {
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    transform-origin: left top;
 }
 
 #scoreObj svg {
     width: 100%;
     height: auto;
     display: block;
-}
-
-/* One-system strip: clips to show only the active row */
-#scoreObj {
-    transition: transform 0.4s ease;
 }
 
 #scoreImg {
@@ -927,43 +901,31 @@ const SONG_CONFIG = {
     title: "aajkal",
 
     timeSignature: [2, 2], // 2/2 (cut time)
-    measures: 81,  // Update this to your actual total physical measures
+    measures: 81,
 
-    // MIDI is linear — sheet logic comes later
     repeats: [],
 
-    // optional future hooks
     pickupBeats: 0
 };
 // ================================
-// ================================
-// REPEAT MODEL (MIDI IS EXPANDED)
-// Physical measures are MIDI timeline (1..SONG_CONFIG.measures)
-// Logical measures are sheet numbers (what user types in)
-// Repeat section: 7..14 is duplicated once in the MIDI timeline
-// ================================
 const REPEAT_START = 29;
-const REPEAT_END = 36;  // Measures 29-36 repeat
-const REPEAT_LEN = 8;  // 8 measures are repeated (29, 30, 31, 32, 33, 34, 35, 36)
+const REPEAT_END = 36;
+const REPEAT_LEN = 8;
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
   for (let p = 1; p <= config.measures; p++) {
     let logical;
 
-    // 1..28 -> 1..28 (before repeat)
     if (p <= 28) {
       logical = p;
     }
-    // 29..36 -> 29..36 (first occurrence)
     else if (p <= 36) {
       logical = p;
     }
-    // 37..44 -> 29..36 (repeated copy)
     else if (p <= 36 + REPEAT_LEN) {
       logical = REPEAT_START + (p - 37);
     }
-    // 45+ -> 37+ (after repeat)
     else {
       logical = p - REPEAT_LEN;
     }
@@ -990,7 +952,6 @@ async function loadSongMidi() {
     allMidiNotes = [];
 
 currentMidi.tracks.forEach((track, trackIndex) => {
-        // Track 0 = TREBLE (right hand), Track 1 = BASS (left hand)
         const clef = trackIndex === 0 ? TREBLE : BASS;
 
         track.notes.forEach(note => {
@@ -1006,13 +967,8 @@ currentMidi.tracks.forEach((track, trackIndex) => {
     allMidiNotes.sort((a, b) => a.time - b.time);
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
-// For 2/2 time (cut time): half note = 100 BPM
-    // This means each quarter note = 200 BPM
-    // But we count in half notes (minims), so use 100 BPM directly
-    
     let bpm;
     if (SONG_CONFIG.timeSignature[0] === 2 && SONG_CONFIG.timeSignature[1] === 2) {
-        // 2/2 time: half note (minim) = 100, so half note BPM = 100
         bpm = 100;
     } else {
         bpm = currentMidi.header.tempos.length
@@ -1075,24 +1031,16 @@ function getLogicalSheetMeasureFromTime(timeSeconds) {
 // PRACTICE SEQUENCE BUILDER (PHYSICAL MEASURES)
 // ================================
 
-// first physical occurrence of a logical bar
 function logicalToPhysicalFirst(logical) {
-  // 1..36 exist as-is in their first occurrence
   if (logical <= 36) return logical;
-
-  // After the repeated chunk (measures 37-44 are the repeat of 29-36),
-  // everything shifts forward by REPEAT_LEN
   return logical + REPEAT_LEN;
 }
 
 function logicalToPhysicalSecond(logical) {
-  // Only bars 29-36 have a second occurrence
   if (logical < REPEAT_START || logical > REPEAT_END) return null;
-  // 29->37, 30->38, 31->39, 32->40, 33->41, 34->42, 35->43, 36->44
-  return logical + 8; // Shift by 8 (37 - 29)
+  return logical + 8;
 }
-// Builds the list of PHYSICAL measures we will include in practice playback
-// ✅ FIXED VERSION
+
 function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats) {
   if (startLogical > endLogical) return null;
 
@@ -1104,7 +1052,6 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
   const seq = [];
   const logicalSeq = [];
 
-  // Skip repeats mode: straight line
   if (skipRepeats) {
     for (let l = startLogical; l <= endLogical; l++) {
       const p = logicalToPhysicalFirst(l);
@@ -1115,36 +1062,29 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
     return { seq, logicalSeq };
   }
 
-// Build the sequence manually for repeat mode
-  // Case 1: Selection is entirely before measure 29 (measures 1-28)
   if (endLogical <= 28) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 2: Selection is entirely after measure 36 (measures 37+)
   else if (startLogical > 36) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 3: Selection spans across the repeat boundary
   else {
-    // Play from start to 36 (first time through)
     for (let l = startLogical; l <= Math.min(36, endLogical); l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
     
-    // Play repeat: 29 to 36 (second time)
     for (let l = 29; l <= 36; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalSecond(l));
     }
 
-    // Continue from 37 onwards (if selection extends past 36)
     if (endLogical > 36) {
       for (let l = 37; l <= endLogical; l++) {
         logicalSeq.push(l);
@@ -1160,9 +1100,6 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
 // CLEF DEFINITIONS (TRACK-BASED)
 // ================================
 
-// By convention:
-// Track 0 → Treble clef (Right hand)
-// Track 1 → Bass clef (Left hand)
 const TREBLE = "treble";
 const BASS = "bass";
 const notesDisplay = document.getElementById('notesDisplay');
@@ -1176,9 +1113,7 @@ function setControlsEnabled(enabled) {
     );
 
     controls.forEach(el => {
-        // ✅ Free Mode is ALWAYS clickable
         if (el.id === 'freeModeButton') return;
-
         el.disabled = !enabled;
     });
 }
@@ -1188,7 +1123,7 @@ const endMeasureInput = document.getElementById('endMeasureInput');
 const startPracticeButton = document.getElementById('startPracticeButton');
 const stopButton = document.getElementById('stopButton');
 stopButton.addEventListener('click', () => {
-    stopPlayback(true); // ✅ USER initiated
+    stopPlayback(true);
 });
 
 const toggleNamesButton = document.getElementById('toggleNamesButton');
@@ -1204,8 +1139,7 @@ const playSongButton = document.getElementById('playSongButton');
 const loopCheckbox = document.getElementById('loopCheckbox');
 const freeModeButton = document.getElementById('freeModeButton');
 freeModeButton.classList.add('side-floating');
-setControlsEnabled(true); // ✅ buttons enabled immediately
-// 🎵 Auto-load built-in song
+setControlsEnabled(true);
 (async () => {
     await loadSongMidi();
 })();
@@ -1230,7 +1164,6 @@ function updateSpeed(delta) {
 speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
 
-// enabled by default (before play)
 speedDownButton.disabled = false;
 speedUpButton.disabled = false;
 
@@ -1238,7 +1171,7 @@ speedUpButton.disabled = false;
 
 let showNoteNames = true;
 
-let repeatEnabled = true;   // retry same note on mistake
+let repeatEnabled = true;
 let loopEnabled = false; 
 let skipSheetRepeats = false;
 let freeMode = false;
@@ -1255,17 +1188,12 @@ let metronomeRunning = false;
 let transportStartTime = null;
 let countdownActive = false;
 
-// 🔊 SPEECH SYNTH (REQUIRED FOR CHROME)
 const speechSynth = window.speechSynthesis;
 
-// ---- Metronome options ----
 let countMode = "normal"; 
 let subdivisionEnabled = false;
-// "normal" = one two three four
-// "accent" = ONE two three four
-// "subdivision" = 1 & 2 & 3 & 4 &
 
-let countLanguage = "en"; // future-proof
+let countLanguage = "en";
 
 function stopMetronome() {
     if (metroInterval) {
@@ -1295,7 +1223,6 @@ beatToggle.addEventListener('click', () => {
     beatEnabled = !beatEnabled;
     beatToggle.textContent = beatEnabled ? "Beat ✓" : "Beat";
 
-    // 🔥 AUTO-START METRONOME IF NEEDED
     if (beatEnabled && !metronomeRunning) {
         startMetronome();
     }
@@ -1303,7 +1230,6 @@ beatToggle.addEventListener('click', () => {
 
 countToggle.addEventListener('click', () => {
 
-// 🔓 CHROME HARD UNLOCK (REAL SPEECH, REAL WORD)
 if (!window.__chromeSpeechUnlocked) {
     const u = new SpeechSynthesisUtterance("one");
     u.volume = 1;
@@ -1341,7 +1267,6 @@ subdivisionToggle.addEventListener('click', () => {
 skipRepeatsCheckbox.addEventListener('change', () => {
     skipSheetRepeats = skipRepeatsCheckbox.checked;
 });
-   // loop selected section
 
 toggleNamesButton.addEventListener('click', () => {
     showNoteNames = !showNoteNames;
@@ -1356,7 +1281,6 @@ loopCheckbox.addEventListener('change', () => {
 freeModeButton.addEventListener('click', async () => {
     await Tone.start();
     
-    // ✅ Request MIDI on first user interaction
     if (midiInputs.length === 0) {
         await initMIDI();
     }
@@ -1366,7 +1290,6 @@ freeModeButton.addEventListener('click', async () => {
     freeModeButton.textContent =
         freeMode ? "Exit Free Mode" : "Free Mode";
 
-    // 🔥 stop everything else
     stopPlayback();
 
     trainingActive = false;
@@ -1427,7 +1350,7 @@ function ensureSynth() {
     freeModeSynth = synth;
 }
 
-let secondsPerBeat = 0.5; // will be set from MIDI BPM
+let secondsPerBeat = 0.5;
 let MEASURE_TIME_MAP = {};
 
 let playbackTimeouts = [];
@@ -1465,26 +1388,25 @@ let waitingForInput = false;
 let previewMode = false;
 let previewTimeouts = [];
 let retryTimeout = null; 
-let fullSongPlaying = false; // 🔒 controls Play Full Song audio
-  // ⬅ prevents stacked retries
+let fullSongPlaying = false;
 
 let currentTrainingNote = null;
 let noteHoldStartTime = null;
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
-let expectedMidiNote = null; // legacy (keep for safety)
+let expectedMidiNote = null;
 
-let expectedMidiTreble = new Set(); // RIGHT hand (can hold chords)
-let expectedMidiBass   = new Set(); // LEFT hand (can hold chords)
-let currentChordNotes = new Set(); // All notes in current chord being trained
-let midiPressedNotes = new Set(); // Currently held MIDI notes
-let chordNotesCompleted = new Set(); // Completed notes for mouse mode
+let expectedMidiTreble = new Set();
+let expectedMidiBass   = new Set();
+let currentChordNotes = new Set();
+let midiPressedNotes = new Set();
+let chordNotesCompleted = new Set();
 let freeModeActiveNote = null;
 let mouseDown = false;
 let freeModeReleaseTimer = null;
 let lastMouseMidi = null;
-let touchActive = false; // Track if touch is active
-let activeTouches = new Map(); // Track multiple touches by touch identifier
+let touchActive = false;
+let activeTouches = new Map();
     
 function hardStopUserNote() {
     if (!synth) return;
@@ -1501,26 +1423,25 @@ function hardStopUserNote() {
 let failureCount = 0;
 let autoSlowed = false;
 let showBlackKeyArrow = false;
-let arrowTargetGroup = null; // "2" or "3"
-let explanationLocked = false; // keeps explanation visible until success
+let arrowTargetGroup = null;
+let explanationLocked = false;
 
-let clefMode = 'treble'; // 'treble' or 'bass'
+let clefMode = 'treble';
 let sectionStartTime = 0;
 let sectionEndTime = 0;
-let secondsPerMeasure = 2; // default for 4/4 at 120bpm
+let secondsPerMeasure = 2;
 
 // Canvas setup
 const START_NOTE = 36; // C2
 const END_NOTE = 96;   // C7
 const TOTAL_NOTES = END_NOTE - START_NOTE + 1;
-/* ✅ MOVE IT HERE */
 const KEYBOARD_HEIGHT = 130;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// ---- Score mode state (declared early to avoid TDZ errors) ----
+// ---- Score mode state ----
 let scoreModeActive = false;
-let scoreNoteOffset = 0; // ← FIX: offset so highlighting starts at correct SVG note
+let scoreNoteOffset = 0;
 let scoreCurrentPage = 1;
 const SCORE_TOTAL_PAGES = 3;
 const scoreCanvases = {};
@@ -1533,11 +1454,10 @@ function resizeCanvas() {
     canvas.width = maxWidth;
 
     if (scoreModeActive) {
-        // Keyboard-only height in score mode
         canvas.height = KEYBOARD_HEIGHT;
         drawKeyboard();
     } else {
-        const NOTE_AREA_HEIGHT = 260;   // ⬅️ INCREASED
+        const NOTE_AREA_HEIGHT = 260;
         canvas.height = NOTE_AREA_HEIGHT + KEYBOARD_HEIGHT;
     }
 }
@@ -1552,15 +1472,15 @@ let visualClockStart = null;
 let allMidiNotes = [];
 let practiceNotes = [];
 let visualsPlaying = false;
-let speedMultiplier = 1.0; // 0.25 → 2.0
-let speedLocked = false; // 🔒 prevents preview skipping
+let speedMultiplier = 1.0;
+let speedLocked = false;
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
 }
 const BLACK_KEYS = [1, 3, 6, 8, 10];
-const NOTE_GAP_PX = 4; // visual gap between consecutive notes
-const NOTE_GAP_TIME = 0.02; // seconds (visual-only spacing)
+const NOTE_GAP_PX = 4;
+const NOTE_GAP_TIME = 0.02;
 
 function isBlackMidi(midi) {
     return BLACK_KEYS.includes(midi % 12);
@@ -1602,8 +1522,6 @@ function noteToX(midi) {
 
     let x = whiteIndex * getWhiteKeyWidth();
 
-
-    // Black keys sit between white keys
     if (isBlackMidi(midi)) {
         x -= getWhiteKeyWidth() * 0.35;
     }
@@ -1640,7 +1558,6 @@ function beatsToNoteName(beats) {
     return closest.name;
 }
 
-// Convert MIDI note number to note name
 function getNoteName(midiNote) {
 
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -1666,15 +1583,12 @@ but it should be ${Math.abs(octaveDiff)} octave lower.`;
             return `You played the correct note (${playedName[0]}),
 but it should be ${Math.abs(octaveDiff)} octave higher.`;
         }
-        // If octaveDiff === 0, fall through to generic message
     }
 
     return `Almost There! Let's try again 😊`;
 }
 function drawKeyboard() {
     const keyHeight = KEYBOARD_HEIGHT;
-    // In score mode the canvas is only KEYBOARD_HEIGHT tall, so top = 0
-    // In normal mode, keyboard sits at the bottom of the canvas
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
 
     // ---- WHITE KEYS ----
@@ -1687,9 +1601,9 @@ function drawKeyboard() {
         const isTreble = expectedMidiTreble.has(midi);
 const isBass   = expectedMidiBass.has(midi);
 if (isTreble) {
-    ctx.fillStyle = "#FFCDD2"; // ❤️ light red
+    ctx.fillStyle = "#FFCDD2";
 } else if (isBass) {
-    ctx.fillStyle = "#757575"; // 🖤 gray
+    ctx.fillStyle = "#757575";
 } else {
     ctx.fillStyle = "#ffffff";
 }
@@ -1697,7 +1611,7 @@ if (isTreble) {
 
         ctx.strokeStyle = "#000";
         ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
-// White key note name
+
 if (showNoteNames) {
     ctx.fillStyle = "#000";
     ctx.font = "12px Arial";
@@ -1733,16 +1647,15 @@ for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
 const isBass   = expectedMidiBass.has(midi);
 
 if (isTreble) {
-    ctx.fillStyle = "#E57373"; // ❤️ medium red
+    ctx.fillStyle = "#E57373";
 } else if (isBass) {
-    ctx.fillStyle = "#424242"; // 🖤 dark gray
+    ctx.fillStyle = "#424242";
 } else {
     ctx.fillStyle = "#000";
 }
 
     ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
 
-    // ✅ NOTE NAME — NOW IN SCOPE
     if (showNoteNames) {
         ctx.fillStyle = "#fff";
         ctx.font = "10px Arial";
@@ -1781,10 +1694,8 @@ function describeNoteByBlackKeys(midiNote) {
 function blackKeyGroupForMidi(midi) {
     const pitch = midi % 12;
 
-    // Group of 2 black keys: C#, D#
     if (pitch === 1 || pitch === 3) return "2";
 
-    // Group of 3 black keys: F#, G#, A#
     if (pitch === 6 || pitch === 8 || pitch === 10) return "3";
 
     return null;
@@ -1795,7 +1706,6 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 function processUserNoteOn(midiNote) {
 
-// ❌ DO NOT hard-stop in Free Mode (allows glide)
 if (!freeMode) {
     hardStopUserNote();
 }
@@ -1803,14 +1713,11 @@ if (!freeMode) {
 if (previewMode) return;
 
 
-// 🎹 FREE MODE — LEGATO / GLIDE WITH AUTO-RELEASE
 if (freeMode) {
     ensureSynth();
 
-    // 🎵 Attack new note (do NOT release previous = glide)
     freeModeSynth.triggerAttack(getNoteName(midiNote));
     freeModeActiveNote = midiNote;
-        // 🔑 KEYBOARD HIGHLIGHT (FREE MODE)
         expectedMidiTreble.clear();
     expectedMidiBass.clear();
     expectedMidiTreble.add(midiNote);
@@ -1827,7 +1734,6 @@ if (freeMode) {
     }
 });
 
-    // 🟡 UI
     document.getElementById('pressedNoteCircle').textContent =
         getNoteName(midiNote);
 
@@ -1840,14 +1746,12 @@ if (freeMode) {
     return;
 }
 
-// 🎯 TRAINING MODE ONLY
 if (!trainingActive) return;
 
 const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
 
 // ---------- WRONG NOTE ----------
-// ✅ Check if this note is part of the expected chord
 if (!currentChordNotes.has(midiNote)) {
 
 const expectedMidi = allMidiNotes[trainingIndex].midi;
@@ -1860,7 +1764,6 @@ feedback.classList.add('wrong', 'show');
 
 failureCount++;
 expectedMidiNote = expectedMidi;
-// 🔴 Update side circles (WRONG)
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
 
@@ -1873,7 +1776,6 @@ return;
 }
 
 // ---------- CORRECT NOTE ----------
-// 🟢 Update side circles (CORRECT)
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
 
@@ -1887,20 +1789,16 @@ showBlackKeyArrow = false;
 arrowTargetGroup = null;
 failureCount = 0;
 
-// ✅ Track which notes in the chord have been pressed
 midiPressedNotes.add(midiNote);
 
-// 🎹 Check if ALL chord notes are now pressed
 const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
 
 if (allPressed && noteHoldStartTime === null) {
-    // ALL notes pressed - start the hold timer
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
     
 } else if (!allPressed) {
-    // Still waiting for more notes
     const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
     feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
 }
@@ -1924,27 +1822,24 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
-    // 🌈 Vibrant glossy gradient
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
 if (track === TREBLE) {
-    // ❤️ LIGHT RED
-    gradient.addColorStop(0.00, "#FFEBEE"); // very light red
-    gradient.addColorStop(0.25, "#EF9A9A"); // light red
-    gradient.addColorStop(0.55, "#E57373"); // medium red
-    gradient.addColorStop(1.00, "#EF5350"); // base red
+    gradient.addColorStop(0.00, "#FFEBEE");
+    gradient.addColorStop(0.25, "#EF9A9A");
+    gradient.addColorStop(0.55, "#E57373");
+    gradient.addColorStop(1.00, "#EF5350");
 } else if (track === BASS) {
-    // 🖤 BLACK
-    gradient.addColorStop(0.00, "#616161"); // light gray
-    gradient.addColorStop(0.25, "#424242"); // medium gray
-    gradient.addColorStop(0.55, "#212121"); // dark gray
-    gradient.addColorStop(1.00, "#000000"); // pure black
+    gradient.addColorStop(0.00, "#616161");
+    gradient.addColorStop(0.25, "#424242");
+    gradient.addColorStop(0.55, "#212121");
+    gradient.addColorStop(1.00, "#000000");
 }
 
 fallingRectangles.push({
     midi: midiNumber,
     noteName: getNoteName(midiNumber),
-    track,                 // ✅ ← THIS WAS MISSING
+    track,
     isMidi: true,
 
     x,
@@ -1981,21 +1876,17 @@ function spawnTrainingNote(noteObj) {
 
     expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
 
-// 🎹 CHECK IF THIS IS A CHORD (multiple notes at same time)
     currentChordNotes.clear();
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
     currentChordNotes.add(noteObj.midi);
     
-// Look ahead for simultaneous notes (within 10ms) FROM THE SAME TRACK
-    // ✅ USE playTime (compressed timeline) instead of original time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
         
-        // ✅ ONLY add notes from the SAME track (same hand)
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01 && nextNote.track === noteObj.track) {
             currentChordNotes.add(nextNote.midi);
         } else if (Math.abs(nextPlayTime - currentPlayTime) >= 0.01) {
@@ -2014,7 +1905,6 @@ function spawnTrainingNote(noteObj) {
     noteHoldStartTime = null;
     setTargetNote(noteName);
     
-    // In score mode: highlight keyboard immediately (no falling notes)
     if (scoreModeActive) {
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
@@ -2025,13 +1915,11 @@ function spawnTrainingNote(noteObj) {
                 expectedMidiBass.add(midi);
             }
         });
-        // Score mode label update
         document.getElementById('scoreKeyboardLabel').textContent =
             isChord
                 ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                 : `🎹 Play: ${noteName}`;
     } else {
-        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (normal mode only)
         currentChordNotes.forEach(midi => {
             addMidiFallingRectangle(
                 midi,
@@ -2041,7 +1929,6 @@ function spawnTrainingNote(noteObj) {
             );
         });
 
-        // 🎹 HIGHLIGHT KEYBOARD for chord notes (persistent until played)
         if (isChord) {
             expectedMidiTreble.clear();
             expectedMidiBass.clear();
@@ -2056,14 +1943,13 @@ function spawnTrainingNote(noteObj) {
         }
     }
 
-    // 📄 Score mode: highlight the note on the score
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
 }
 
 function playMeasurePreview(startTime, clef) {
-    speedLocked = true; // 🔒 lock speed ONLY during preview
+    speedLocked = true;
     ensureSynth();
     hardStopUserNote();
 
@@ -2092,7 +1978,7 @@ const sectionNotes = practiceNotes.filter(note => {
 
 
 const previewStart = performance.now();
-const visualPreroll = getFallTimeMs(); // 👈 ADD THIS
+const visualPreroll = getFallTimeMs();
 
 visualClockStart = previewStart + visualPreroll;
 
@@ -2122,7 +2008,6 @@ const visualStart =
     previewTimeouts.push(t);
 });
 
-// If no notes, end quickly
 if (!sectionNotes.length) {
     speedLocked = false;
     previewMode = false;
@@ -2132,15 +2017,10 @@ if (!sectionNotes.length) {
 
 const lastNoteEnd = Math.max(...sectionNotes.map(n => (n.playTime ?? n.time) + n.duration));
 
-// ✅ Let sustain finish (do NOT clamp to sectionEndTime)
 const previewLength =
     ((lastNoteEnd - startTime) * 1000) / speedMultiplier;
 
-// ✅ IMPORTANT: include visualPreroll, because audio starts after it
 const endTimeout = setTimeout(() => {
-    // don't hard cut the audio right at the boundary
-    // hardStopUserNote();
-
     previewMode = false;
     speedLocked = false;
 
@@ -2149,7 +2029,7 @@ const endTimeout = setTimeout(() => {
     feedback.classList.remove('correct', 'wrong', 'show');
 
     spawnNextValidNote();
-}, visualPreroll + previewLength + 400); // 400 = extra tail room
+}, visualPreroll + previewLength + 400);
 
 
 previewTimeouts.push(endTimeout);
@@ -2229,7 +2109,6 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
-    // Only draw falling notes when NOT in score mode
     if (visualsPlaying && !scoreModeActive) {
         fallingRectangles = fallingRectangles.filter(rect => {
             const elapsed =
@@ -2239,7 +2118,7 @@ function animate() {
     const progress = elapsed / getFallTimeMs();
 
     rect.y = rect.startY + progress * (rect.endY - rect.startY);
-// 🎯 NOTE HAS LANDED ON KEYBOARD (ALWAYS HIGHLIGHT)
+
 if (
     rect.isMidi &&
     !rect.landed &&
@@ -2247,14 +2126,12 @@ if (
 ) {
     rect.landed = true;
 
-    // 🔔 highlight the piano key (but don't remove if it's part of current chord)
     if (rect.track === TREBLE) {
         expectedMidiTreble.add(rect.midi);
     } else if (rect.track === BASS) {
         expectedMidiBass.add(rect.midi);
     }
 
-    // ⏱ REMOVE HIGHLIGHT ONLY IF NOT PART OF CURRENT CHORD
     const isPartOfCurrentChord = currentChordNotes.has(rect.midi);
     
     if (!isPartOfCurrentChord) {
@@ -2268,7 +2145,6 @@ if (rect.y > canvas.height) {
     return false;
 }
 
-// 🎨 Base glossy fill
 ctx.fillStyle = rect.gradient;
 
 const r = 9;
@@ -2284,7 +2160,7 @@ ctx.lineTo(rect.x, rect.y + r);
 ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
 ctx.closePath();
 ctx.fill();
-/* ✨ FULL-BODY GLOSS (soft vertical sheen) */
+
 ctx.save();
 ctx.globalCompositeOperation = "screen";
 ctx.globalAlpha = 0.22;
@@ -2306,7 +2182,6 @@ ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
 
 ctx.restore();
 
-/* 🌊 SUBTLE SHIMMER (animated light pass) */
 const shimmerSpeed = 0.0015 * speedMultiplier;
 const shimmerPhase =
     (performance.now() * shimmerSpeed) % 1;
@@ -2314,7 +2189,6 @@ const shimmerPhase =
 const shimmerY =
     rect.y + shimmerPhase * rect.height;
 
-// 🟢 DOWNBEAT ACCENT (beat 1)
 const isDownbeat = metronomeRunning && (metroBeat % 4 === 0);
 
 ctx.save();
@@ -2337,12 +2211,7 @@ ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
 
 ctx.restore();
 
-if (!rect.landed) {
-    // shimmer code
-}
-
 if (showNoteNames && rect.isMidi && rect.noteName) {
-        // White text for bass (black notes), Black text for treble (red notes)
         if (rect.track === BASS) {
             ctx.fillStyle = "rgba(255,255,255,0.95)";
             ctx.shadowColor = "rgba(0,0,0,0.5)";
@@ -2377,13 +2246,11 @@ function drawBlackKeyArrow() {
     const keyHeight = KEYBOARD_HEIGHT;
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
 
-    // Representative black key
     const targetMidi = arrowTargetGroup === "2" ? 61 : 66;
 
     const x = noteToX(targetMidi) + getWhiteKeyWidth()    / 2;
     const y = keyboardTop - 140;
 
-    // Arrow
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
 
@@ -2392,7 +2259,6 @@ function drawBlackKeyArrow() {
     ctx.lineTo(x, keyboardTop - 20);
     ctx.stroke();
 
-    // Arrow head
     ctx.fillStyle = "red";
     ctx.beginPath();
     ctx.moveTo(x - 10, keyboardTop - 30);
@@ -2400,7 +2266,6 @@ function drawBlackKeyArrow() {
     ctx.lineTo(x + 10, keyboardTop - 30);
     ctx.fill();
 
-    // Label box
     const text = `Group of ${arrowTargetGroup} black keys`;
     ctx.font = "16px Arial";
     const textWidth = ctx.measureText(text).width;
@@ -2464,7 +2329,6 @@ function startMetronome(startTimeOverride = null) {
 
     const bpm = (60 / secondsPerBeat) * speedMultiplier;
 
-    // 🔒 ALWAYS run at subdivision resolution (half-beat)
     const stepMs = (60000 / bpm) / 2;
 
     let lastStep = -1;
@@ -2481,12 +2345,10 @@ function startMetronome(startTimeOverride = null) {
             const isMainBeat = step % 2 === 0;
             const beatIndex = Math.floor(step / 2);
 
-            // 🔊 BEAT CLICK (quarters only)
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
 
-            // 🗣️ COUNTING
             if (countEnabled && speechSynth) {
                 let word = null;
 
@@ -2523,7 +2385,6 @@ function getMidiFromMouse(x, y) {
     x = x * scaleX;
     y = y * scaleY;
     
-    // In score mode, canvas is only KEYBOARD_HEIGHT tall, so keyboard starts at 0
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     if (y < keyboardTop) return null;
 
@@ -2599,7 +2460,6 @@ canvas.addEventListener('mouseup', () => {
 }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
-// ❌ Ignore releases of wrong notes
 if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     activeMidiNote = null;
     noteHoldStartTime = null;
@@ -2622,11 +2482,9 @@ explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
         
-        // 🔓 Clear chord highlights on success
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         
-        // ✅ Skip ALL notes in the chord
         trainingIndex += currentChordNotes.size;
 updateTrainingProgress();
 
@@ -2665,7 +2523,7 @@ retryTimeout = setTimeout(() => {
     activeMidiNote = null;
 });
 // ================================
-// TOUCH EVENTS (for mobile with multi-touch support)
+// TOUCH EVENTS
 // ================================
 canvas.addEventListener('touchstart', async (e) => {
     if (previewMode) return;
@@ -2677,7 +2535,6 @@ canvas.addEventListener('touchstart', async (e) => {
 
     const rect = canvas.getBoundingClientRect();
 
-    // Process all new touches
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const x = touch.clientX - rect.left;
@@ -2689,10 +2546,8 @@ canvas.addEventListener('touchstart', async (e) => {
         const midiNote = getMidiFromMouse(x, y);
         if (midiNote === null) continue;
 
-        // Store this touch
         activeTouches.set(touch.identifier, midiNote);
 
-        // Trigger the note
         processUserNoteOn(midiNote);
     }
 }, { passive: false });
@@ -2703,7 +2558,6 @@ canvas.addEventListener('touchmove', (e) => {
 
     const rect = canvas.getBoundingClientRect();
 
-    // Update each moving touch
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const x = touch.clientX - rect.left;
@@ -2717,7 +2571,6 @@ canvas.addEventListener('touchmove', (e) => {
 
         const oldNote = activeTouches.get(touch.identifier);
 
-        // Only trigger if the note changed
         if (oldNote !== midiNote) {
             activeTouches.set(touch.identifier, midiNote);
             processUserNoteOn(midiNote);
@@ -2729,13 +2582,11 @@ canvas.addEventListener('touchend', (e) => {
     if (!touchActive) return;
     e.preventDefault();
 
-    // Process each released touch
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const midiNote = activeTouches.get(touch.identifier);
 
         if (midiNote !== undefined) {
-            // Release this specific note
             if (freeMode && midiNote === freeModeActiveNote) {
                 freeModeSynth.triggerRelease(getNoteName(midiNote));
                 freeModeActiveNote = null;
@@ -2745,21 +2596,17 @@ canvas.addEventListener('touchend', (e) => {
                 synth.triggerRelease(getNoteName(midiNote));
             }
 
-            // Remove from pressed notes in training mode
             midiPressedNotes.delete(midiNote);
 
-            // Remove this touch
             activeTouches.delete(touch.identifier);
         }
     }
 
-    // If all touches are released, check hold duration
     if (e.touches.length === 0) {
         touchActive = false;
         mouseDown = false;
         activeTouches.clear();
 
-        // Check hold duration if in training mode
         if (!freeMode && noteHoldStartTime !== null) {
             const heldTime = performance.now() - noteHoldStartTime;
 
@@ -2817,7 +2664,6 @@ canvas.addEventListener('touchcancel', (e) => {
     if (!touchActive) return;
     e.preventDefault();
 
-    // Release all cancelled touches
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const midiNote = activeTouches.get(touch.identifier);
@@ -2874,13 +2720,11 @@ function splitRepeatedNotes(notes, gapSeconds = NOTE_GAP_TIME) {
             prev.track === current.track &&
             Math.abs((prev.time + prev.duration) - current.time) < 0.001
         ) {
-            // shorten previous note slightly
             prev.duration = Math.max(
                 0,
                 prev.duration - gapSeconds
             );
 
-            // push current note slightly later
             result.push({
                 ...current,
                 time: current.time + gapSeconds
@@ -2955,7 +2799,6 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
     
-    // ✅ Initialize MIDI on first click
     if (midiInputs.length === 0) {
         try {
             const midiAccess = await navigator.requestMIDIAccess();
@@ -3003,13 +2846,12 @@ if (!built) {
     return;
 }
 
-const physicalSeq = built.seq; // list of physical measures to include (in playback order)
+const physicalSeq = built.seq;
 const allowedPhysical = new Set(physicalSeq);
 
 const physicalIndex = new Map();
 physicalSeq.forEach((p, idx) => physicalIndex.set(p, idx));
 
-// Helpful debug: what bars will the user *think* they are playing?
 const logicalSeq =
     skipSheetRepeats
         ? Array.from({ length: endLogical - startLogical + 1 }, (_, i) => startLogical + i)
@@ -3021,7 +2863,6 @@ console.log("Physical measures used:", physicalSeq.join(","));
 
 
 
-// Practice timeline will start at 0 for preview scheduling
 sectionStartTime = 0;
 sectionEndTime   = physicalSeq.length * secondsPerMeasure;
 
@@ -3030,23 +2871,18 @@ practiceNotes = allMidiNotes
         const p = getMeasureFromTime(note.time);
         if (p === null) return null;
         
-        // ONLY include notes from measures we explicitly selected
         if (!allowedPhysical.has(p)) return null;
-// ONLY include notes from measures we explicitly selected
 if (!allowedPhysical.has(p)) {
             if (note.time >= 48 && note.time <= 54) {
                 console.log("❌ REJECTED note at time", note.time.toFixed(2), "in physical measure", p, "- not in allowed set");
             }
             return null;
         }
-// Then verify the note actually belongs to this measure
 const measureStart = MEASURE_TIME_MAP[p]?.start ?? ((p - 1) * secondsPerMeasure);
 const measureEnd = MEASURE_TIME_MAP[p]?.end ?? (p * secondsPerMeasure);
 
-// Include notes that start in this measure (with tiny tolerance for floating point)
 const TOLERANCE = 0.001;
 if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null;
-// hand filter
         const isTreble = note.track === TREBLE;
         const isBass   = note.track === BASS;
         if (selectedHand !== "both") {
@@ -3054,7 +2890,6 @@ if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null
             if (!want) return null;
         }
 
-        // Compress time so there are no silent gaps when skipping repeats
         const idx = physicalIndex.get(p);
         const offsetInMeasure = Math.max(0, note.time - MEASURE_TIME_MAP[p].start);
 
@@ -3075,15 +2910,12 @@ if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null
     })
     .filter(Boolean);
 
-// Order notes by practice playback time (not original MIDI time)
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
-// ── FIX: compute SVG note offset so score highlighting starts at correct element ──
 scoreNoteOffset = (scoreModeActive && practiceNotes.length > 0)
     ? _computeScoreNoteOffset(practiceNotes[0], selectedHand)
     : 0;
 
-// ✅ ADD THIS BLOCK RIGHT HERE
 const emptyBars = reportEmptyLogicalMeasures(startMeasure, endMeasure, practiceNotes);
 
 if (emptyBars.length) {
@@ -3100,12 +2932,10 @@ if (emptyBars.length) {
         return;
     }
 
-    // 🔄 RESET TRAINING STATE
     trainingIndex = 0;
     showTrainingProgress();
 updateTrainingProgress();
     clefMode = selectedHand === 'both' ? 'both' : selectedHand;
-// sectionStartTime already set correctly above — REMOVE THIS LINE
 
     trainingActive = true;
     waitingForInput = false;
@@ -3132,13 +2962,12 @@ playMeasurePreview(sectionStartTime, clefMode);
 playSongButton.addEventListener('click', async () => {
     await Tone.start();
 
-    fullSongPlaying = true;      // ✅ ADD THIS (LINE 1)
+    fullSongPlaying = true;
 
-    stopPlayback(false); // ✅ INTERNAL cleanup only
+    stopPlayback(false);
     ensureSynth();
     transportStartTime = performance.now();
 
-    // 🔇 Silence counting during full song
     countEnabled = false;
     countToggle.textContent = "Counting";
     speechSynth.cancel();
@@ -3155,14 +2984,13 @@ stopButton.addEventListener('click', () => {
 });
 function stopPlayback(userInitiated = false) {
 
-// 🛑 Always stop audio & visuals
 isPlaying = false;
 trainingActive = false;
 previewMode = false;
 visualsPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
-speedLocked = false; // 🔓 emergency unlock
+speedLocked = false;
 
 stopMetronome();
 
@@ -3180,13 +3008,10 @@ fallingRectangles = [];
 expectedMidiNote = null;
 activeMidiNote = null;
 
-// ❌ DO NOT touch UI unless USER pressed stop
 if (!userInitiated) return;
 
-// ✅ USER pressed Stop — now update UI
 hideTrainingProgress();
 
-// 📄 Clear score mode note display
 if (typeof hideScoreNoteDisplay === 'function') {
     hideScoreNoteDisplay();
     clearScoreHighlight();
@@ -3204,49 +3029,42 @@ stopButton.disabled = true;
 
 function resetAll() {
     hideTrainingProgress();
-    // 🛑 Stop everything first
     stopPlayback();
 
-    // 🎵 Reset all states
     trainingActive = false;
     fullSongPlaying = false;
     previewMode = false;
     waitingForInput = false;
     visualsPlaying = false;
 
-    // 🔄 Reset indices and arrays
     trainingIndex = 0;
     scoreNoteOffset = 0;
+    _lastPannedMeasure = -1;
     playbackTimeouts = [];
     previewTimeouts = [];
     fallingRectangles = [];
 
-    // 🧹 Clear piano state
     expectedMidiNote = null;
     activeMidiNote = null;
     currentTrainingNote = null;
     noteHoldStartTime = null;
     pressedNotes = [];
     
-    // 🎹 Clear keyboard highlights
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
 
-    // 🖼️ Clear visuals
     const feedback = document.getElementById('feedback');
     feedback.textContent = '';
 
 feedback.classList.remove('correct', 'wrong', 'show');
     document.getElementById('holdInfo').textContent = '';
 
-    // ⚙️ Reset speed and UI
     speedMultiplier = 1.0;
     speedDisplay.textContent = '1.0×';
 
-    // 🔕 Reset metronome
     beatEnabled = false;
     countEnabled = false;
     metronomeRunning = false;
@@ -3255,7 +3073,6 @@ feedback.classList.remove('correct', 'wrong', 'show');
     subdivisionToggle.textContent = '1 & 2 &';
     stopMetronome();
 
-    // 🧭 Reset training inputs
     handSelect.value = 'treble';
     startMeasureInput.value = 1;
     endMeasureInput.value = 4;
@@ -3263,7 +3080,6 @@ feedback.classList.remove('correct', 'wrong', 'show');
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
 
-// 💬 Confirm reset
     feedback.textContent = 'All reset — ready!';
     console.log('✅ All reset');
     document.getElementById('pressedNoteCircle').textContent = '';
@@ -3271,7 +3087,6 @@ document.getElementById('pressedNoteCircle').className = 'note-circle';
 
 document.getElementById('correctNoteCircle').textContent = '';
 
-    // ✅ Re-enable Stop button
     stopButton.disabled = true;
 }
     
@@ -3296,7 +3111,6 @@ function startFullSongPlayback() {
 
     allMidiNotes.forEach(note => {
 
-        // 🎹 Falling notes
         const visualStartTime =
     visualBaseline +
     ((note.time * 1000) / speedMultiplier) -
@@ -3313,7 +3127,6 @@ addMidiFallingRectangle(
 
 
 
-        // 🔊 Audio
         const t = setTimeout(() => {
     if (!fullSongPlaying) return;
 
@@ -3328,7 +3141,6 @@ addMidiFallingRectangle(
         playbackTimeouts.push(t);
     });
 
-    // ⏹ auto-stop at end
     const lastNote = allMidiNotes[allMidiNotes.length - 1];
     const endTime =
         ((lastNote.time + lastNote.duration) * 1000) / speedMultiplier;
@@ -3342,9 +3154,6 @@ addMidiFallingRectangle(
 // ============================================================
 // SCORE VIEW — LINEAR NOTE HIGHLIGHTING (FIXED)
 // ============================================================
-// Notes are <path class="Note"> elements sorted by (row, X).
-// Rows alternate: even = TREBLE, odd = BASS.
-// Page offsets (cumulative note counts):
 const PAGE_OFFSETS = {
     all:    { 1: 0,   2: 343, 3: 693 },
     treble: { 1: 0,   2: 187, 3: 339 },
@@ -3353,6 +3162,30 @@ const PAGE_OFFSETS = {
 
 let _svgNoteElements = [];   // sorted <path class="Note"> elements for current page
 let _currentHighlightEl = null;
+// ── FIX 2: _lastPannedMeasure and _panScoreToEntry live here,
+//           clean inside the module — NO wrapper <script> tags ──
+let _lastPannedMeasure = -1;
+
+function _panScoreToEntry(entry) {
+    requestAnimationFrame(() => {
+        const wrapper  = document.getElementById('scorePageWrapper');
+        const scoreObj = document.getElementById('scoreObj');
+        if (!wrapper || !scoreObj || !entry) return;
+
+        const noteRect    = entry.el.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+
+        const matrix   = new DOMMatrix(getComputedStyle(scoreObj).transform);
+        const currentX = matrix.m41;
+
+        const PADDING = 20;
+        const delta   = (wrapperRect.left + PADDING) - noteRect.left;
+        const newX    = currentX + delta;
+
+        // Never scroll past the start of the SVG
+        scoreObj.style.transform = `translateX(${Math.min(0, newX)}px)`;
+    });
+}
 
 function _buildSvgNoteIndex() {
     _svgNoteElements = [];
@@ -3363,7 +3196,6 @@ function _buildSvgNoteIndex() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // Collect all Note paths with their transform coordinates
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
         const t = el.getAttribute('transform') || '';
@@ -3372,7 +3204,6 @@ function _buildSvgNoteIndex() {
         raw.push({ el, tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
     });
 
-    // Cluster Y values into rows (gap > 100px = new row)
     const ys = raw.map(n => n.ty).sort((a, b) => a - b);
     const rowRanges = [];
     let cur = [ys[0]];
@@ -3387,18 +3218,15 @@ function _buildSvgNoteIndex() {
 
     const getRow = ty => rowRanges.findIndex(([lo, hi]) => ty >= lo - 5 && ty <= hi + 5);
 
-    // Sort by row index then X (left-to-right reading order)
     raw.sort((a, b) => {
         const ra = getRow(a.ty), rb = getRow(b.ty);
         return ra !== rb ? ra - rb : a.tx - b.tx;
     });
 
-    // Tag each element with its clef (even row = treble, odd row = bass)
     raw.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
 
     _svgNoteElements = raw;
 
-    // Add glow filter if not present
     if (!svgEl.querySelector('#hlGlow')) {
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
         defs.innerHTML = `<filter id="hlGlow" x="-60%" y="-60%" width="220%" height="220%">
@@ -3411,7 +3239,6 @@ function _buildSvgNoteIndex() {
     console.log(`✅ SVG index: ${_svgNoteElements.length} notes (${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass)`);
 }
 
-// ── FIX: compute how many SVG note elements precede the first practice note ──
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const firstTime = firstPracticeNote.time;
     let count = 0;
@@ -3421,7 +3248,6 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
         const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
         if (isMatch) count++;
     }
-    // Subtract the current page's base offset so the index is page-relative
     const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble
                       : hand === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
@@ -3438,12 +3264,10 @@ function _highlightSvgNote(globalTrainingIndex, clefMode) {
     }
     if (!_svgNoteElements.length) return;
 
-    // Filter elements by clef mode
     const filtered = clefMode === 'both'
         ? _svgNoteElements
         : _svgNoteElements.filter(n => n.clef === clefMode);
 
-    // Determine page-local index using the right offset table
     const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
                       : clefMode === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
@@ -3452,7 +3276,6 @@ function _highlightSvgNote(globalTrainingIndex, clefMode) {
     const localIdx = globalTrainingIndex - pageOffset;
 
     if (localIdx < 0 || localIdx >= filtered.length) {
-        // Wrong page — auto-navigate to correct page
         _autoNavigateToPage(globalTrainingIndex, clefMode, offsetTable);
         return;
     }
@@ -3462,12 +3285,18 @@ function _highlightSvgNote(globalTrainingIndex, clefMode) {
     entry.el.setAttribute('filter', 'url(#hlGlow)');
     _currentHighlightEl = entry.el;
 
-    // Scroll the highlighted note into view
-    entry.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // ── Pan only when the measure changes ──
+    const _thisMeasure = (practiceNotes && practiceNotes[trainingIndex])
+        ? (practiceNotes[trainingIndex].logicalMeasure ?? trainingIndex)
+        : trainingIndex;
+
+    if (_thisMeasure !== _lastPannedMeasure) {
+        _lastPannedMeasure = _thisMeasure;
+        _panScoreToEntry(entry);
+    }
 }
 
 async function _autoNavigateToPage(globalIdx, clefMode, offsetTable) {
-    // Find which page contains this index
     for (const p of [1, 2, 3]) {
         const start = offsetTable[p] || 0;
         const next  = offsetTable[p + 1] ?? Infinity;
@@ -3490,7 +3319,6 @@ function clearScoreHighlight() {
     }
 }
 
-// Called after SVG loads — replaces old _buildSvgMidiMap
 function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
 }
@@ -3509,7 +3337,6 @@ function onTrainingNoteSpawned(noteObj) {
     _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
 }
 
-// Keep these as-is (they're used elsewhere)
 function showScoreNoteDisplay(noteName, hint) {
     const el = document.getElementById('scoreNoteDisplay');
     document.getElementById('scoreNoteName').textContent = noteName || '—';
@@ -3539,10 +3366,15 @@ async function renderScorePage(pageNum) {
     container.innerHTML = svgText;
     const svgEl = container.querySelector('svg');
     if (svgEl) {
-svgEl.style.width = '90vw';
+        // ── FIX 3: 300vw = maximum horizontal zoom ──
+        svgEl.style.width  = '300vw';
         svgEl.style.height = 'auto';
         svgEl.removeAttribute('width');
         svgEl.removeAttribute('height');
+
+        // Reset pan when page changes
+        document.getElementById('scoreObj').style.transform = 'translateX(0px)';
+        _lastPannedMeasure = -1;
     }
     _buildSvgNoteIndex();
     updateScorePageLabel();
@@ -3602,7 +3434,6 @@ scoreModeToggle.addEventListener('change', async () => {
 function handleMIDIMessage(event) {
     if (previewMode) return;
     
-    // ✅ ADD THIS LINE:
     Tone.start();
     
     const [status, note, velocity] = event.data;
@@ -3614,36 +3445,27 @@ function handleMIDIMessage(event) {
     const noteName = getNoteName(note);
     const feedback = document.getElementById('feedback');
 
-  // -------- NOTE ON --------
 if (isNoteOn) {
     pressedNotes = [noteName];
-
     processUserNoteOn(note);
 }
-// -------- NOTE OFF --------
     if (isNoteOff) {
-// 🎹 FREE MODE — release immediately
 if (freeMode && note === freeModeActiveNote) {
-    freeModeSynth.triggerRelease(getNoteName(note));  // ← Use freeModeSynth
+    freeModeSynth.triggerRelease(getNoteName(note));
     freeModeActiveNote = null;
     expectedMidiNote = null;
-    expectedMidiTreble.clear();  // ← Clear keyboard highlight
+    expectedMidiTreble.clear();
     return;
 }
 
-        // ✅ For chords: only process release if this note is part of the chord
         if (!currentChordNotes.has(note)) return;
         
-        // Remove from pressed notes
         midiPressedNotes.delete(note);
         
-        // Release the audio
         synth.triggerRelease(getNoteName(note));
         
-        // ✅ Only check hold duration when ALL notes have been released
-        if (midiPressedNotes.size > 0) return; // Still holding some notes
+        if (midiPressedNotes.size > 0) return;
         
-        // All notes released - check if held long enough
         if (noteHoldStartTime === null) return;
 
         const heldTime = performance.now() - noteHoldStartTime;
@@ -3658,14 +3480,11 @@ explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
     
-    // 🔓 Clear chord highlights on success
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     
-    // ✅ Skip ALL notes in the chord
     trainingIndex += currentChordNotes.size;
 updateTrainingProgress();
-    // clear only AFTER success
     document.getElementById('holdInfo').textContent = '';
 
     setTimeout(() => spawnNextValidNote(), 300);
