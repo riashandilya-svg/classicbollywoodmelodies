@@ -3378,16 +3378,40 @@ function _buildSvgNoteIndex() {
 
     const getRow = ty => rowRanges.findIndex(([lo, hi]) => ty >= lo - 5 && ty <= hi + 5);
 
+    // Find the minimum X of actual noteheads per row (to exclude key sig glyphs)
+    // Key sig sharps/flats are exported as class="Note" but sit left of the first barline.
+    // We find the leftmost barline X per system row and exclude notes before it.
+    const barlineXPerRow = new Map(); // rowIndex -> min barline X
+    svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
+        const pts = bl.getAttribute('points') || '';
+        const first = pts.trim().split(/\s+/)[0];
+        if (!first) return;
+        const [bx, by] = first.split(',').map(parseFloat);
+        const rowIdx = getRow(by);
+        if (rowIdx < 0) return;
+        const prev = barlineXPerRow.get(rowIdx);
+        if (prev === undefined || bx < prev) barlineXPerRow.set(rowIdx, bx);
+    });
+
+    // Filter out key-sig glyphs: exclude notes whose tx is left of the first barline in their row
+    const filtered = raw.filter(n => {
+        const rowIdx = getRow(n.ty);
+        const firstBl = barlineXPerRow.get(rowIdx);
+        // If no barline found for this row, keep the note (safe fallback)
+        if (firstBl === undefined) return true;
+        return n.tx >= firstBl;
+    });
+
     // Sort by row index then X (left-to-right reading order)
-    raw.sort((a, b) => {
+    filtered.sort((a, b) => {
         const ra = getRow(a.ty), rb = getRow(b.ty);
         return ra !== rb ? ra - rb : a.tx - b.tx;
     });
 
     // Tag each element with its clef (even row = treble, odd row = bass)
-    raw.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
+    filtered.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
 
-    _svgNoteElements = raw;
+    _svgNoteElements = filtered;
 
     // Add glow filter if not present
     if (!svgEl.querySelector('#hlGlow')) {
