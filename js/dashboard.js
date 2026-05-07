@@ -1337,13 +1337,14 @@ async function handleCancelSubscription(btn) {
       }
     });
     // Swap Cancel → Reactivate button in the card
-    const cancelCardBtn = document.getElementById('openCancelModalBtn');
-    if (cancelCardBtn) {
-      cancelCardBtn.id          = 'reactivateSubBtn';
-      cancelCardBtn.className   = 'sub-action-btn reactivate-btn';
-      cancelCardBtn.textContent = '🔄 Reactivate Subscription';
-      cancelCardBtn.onclick     = () => handleReactivate(cancelCardBtn, null);
-    }
+const cancelCardBtn = document.getElementById('openCancelModalBtn');
+if (cancelCardBtn) {
+  cancelCardBtn.id          = 'reactivateSubBtn';
+  cancelCardBtn.className   = 'sub-action-btn reactivate-btn';
+  cancelCardBtn.textContent = '🔄 Reactivate Subscription';
+  // ✅ use the id returned from the cancel API response
+  cancelCardBtn.onclick     = () => handleReactivate(cancelCardBtn, data.razorpay_subscription_id);
+}
 
     fb.className   = 'cancel-modal-feedback success';
     fb.textContent = '✅ Cancelled. You keep access until your billing period ends.';
