@@ -137,13 +137,18 @@ async function initDashboard() {
     if (userEmailEl) userEmailEl.textContent = '';
 
     // Load all dashboard data
-  await Promise.all([
+await Promise.all([
       loadStats(user.id),
       loadBookStatus(user.id),
       loadSongs(user.id),
-      loadPurchaseHistory(user.id),
-      loadSubscription()
+      loadPurchaseHistory(user.id)
     ]);
+
+    if (typeof loadSubscription === 'function') {
+      await loadSubscription();
+    } else {
+      console.error('[SUBSCRIPTION] loadSubscription not found!');
+    }
 
   } catch (error) {
     console.error('Dashboard init error:', error);
