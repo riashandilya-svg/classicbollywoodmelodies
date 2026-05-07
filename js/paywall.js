@@ -197,7 +197,21 @@ async function detectCurrency() {
       console.log("[PAYWALL] ✅ User is owner - granting access");
       return true;
     }
-  
+  // Replace your existing subscription block with this:
+const { data: sub, error: subError } = await window.supabase
+.from('subscriptions')
+.select('status, current_period_end')
+.eq('user_id', session.user.id)
+.eq('status', 'active')
+.gte('current_period_end', new Date().toISOString())
+.maybeSingle();
+
+console.log('[PAYWALL] 🔍 Sub query result:', JSON.stringify(sub), 'Error:', JSON.stringify(subError));
+
+if (sub) {
+console.log("[PAYWALL] ✅ User has active subscription - granting access");
+return true;
+}
     // ── SUBSCRIPTION CHECK ──
     const { data: sub } = await window.supabase
       .from('subscriptions')
