@@ -3493,7 +3493,83 @@ function showScoreNoteDisplay(noteName, hint) {
 function hideScoreNoteDisplay() {
     document.getElementById('scoreNoteDisplay').classList.remove('active');
 }
+// ============================================================
+// SCORE VIEW — SVG LOADING & PAGE NAVIGATION
+// ============================================================
+async function initScoreMode() {
+    try {
+        await renderScorePage(scoreCurrentPage);
+    } catch(e) {
+        console.warn('SVG score load failed:', e);
+    }
+}
 
+async function renderScorePage(pageNum) {
+    const container = document.getElementById('scoreObj');
+    const response = await fetch(`aajkal-${pageNum}.svg`);
+    const svgText = await response.text();
+    container.innerHTML = svgText;
+    const svgEl = container.querySelector('svg');
+    if (svgEl) {
+        svgEl.style.width = '100%';
+        svgEl.style.height = 'auto';
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
+    }
+    _buildSvgNoteIndex();
+    updateScorePageLabel();
+    if (scoreModeActive && currentTrainingNote) {
+        _highlightSvgNote(trainingIndex, clefMode);
+    }
+}
+
+function updateScorePageLabel() {
+    document.getElementById('scorePageLabel').textContent =
+        `Page ${scoreCurrentPage} / ${SCORE_TOTAL_PAGES}`;
+    document.getElementById('scorePrevBtn').disabled = scoreCurrentPage <= 1;
+    document.getElementById('scoreNextBtn').disabled = scoreCurrentPage >= SCORE_TOTAL_PAGES;
+}
+
+document.getElementById('scorePrevBtn').addEventListener('click', async () => {
+    if (scoreCurrentPage > 1) {
+        scoreCurrentPage--;
+        await renderScorePage(scoreCurrentPage);
+    }
+});
+
+document.getElementById('scoreNextBtn').addEventListener('click', async () => {
+    if (scoreCurrentPage < SCORE_TOTAL_PAGES) {
+        scoreCurrentPage++;
+        await renderScorePage(scoreCurrentPage);
+    }
+});
+
+const scoreModeToggle = document.getElementById('scoreModeToggle');
+scoreModeToggle.addEventListener('change', async () => {
+    scoreModeActive = scoreModeToggle.checked;
+
+    const bottomDock       = document.getElementById('bottomDock');
+    const scoreView        = document.getElementById('scoreView');
+    const scoreNoteDisplay = document.getElementById('scoreNoteDisplay');
+
+    if (scoreModeActive) {
+        bottomDock.classList.add('score-mode');
+        scoreView.classList.add('active');
+        canvas.height = KEYBOARD_HEIGHT;
+        drawKeyboard();
+        await initScoreMode();
+        if (trainingActive && currentTrainingNote) {
+            showScoreNoteDisplay(currentTrainingNote);
+            _highlightSvgNote(trainingIndex, clefMode);
+        }
+    } else {
+        bottomDock.classList.remove('score-mode');
+        scoreView.classList.remove('active');
+        scoreNoteDisplay.classList.remove('active');
+        clearScoreHighlight();
+        resizeCanvas();
+    }
+});
 function handleMIDIMessage(event) {
     if (previewMode) return;
     
