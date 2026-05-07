@@ -645,7 +645,7 @@ canvas {
     align-items: center;
     gap: 0;
     width: 100%;
-    max-width: 900px;
+    max-width: 100%;
     margin: 0 auto;
     position: relative;
 }
@@ -3442,14 +3442,17 @@ scoreModeToggle.addEventListener('change', async () => {
 // Staff line spacing = 24.12px, one diatonic step = 12.06px
 // Treble top line Y = staff group top → E5 (MIDI 76)
 // Bass top line Y = staff group top → A3 (MIDI 57)
-const SVG_STEP = 12.06;
+
+  const SVG_STEP = 12.06;
 const TREBLE_FROM_TOP = [76,74,72,71,69,67,65,64,62,60,59,57,55,53,52,50,48,47,45,43,41,40,38,36];
 const BASS_FROM_TOP   = [57,55,53,52,50,48,47,45,43,41,40,38,36,35,33,31,29,28,26,24];
 
-// Will be populated after SVG loads: Map<midiNote, SVGElement[]>
-let _svgMidiMap = new Map();
+// Barline X positions per page (from SVG analysis) — used to find the right occurrence of a note
+const SVG_BARLINE_XS = [214.8,335.4,407.4,425.2,681.9,758.7,790.5,843.5,946.7,955.4,1056.4,1083.8,1091.9,1117.0,1333.4,1354.0,1367.6,1491.9,1498.9,1651.7,1660.5,1722.0,1740.3,1790.1,1961.3,2012.5,2042.4,2124.0,2184.4,2343.9,2372.4,2374.2,2402.4,2490.3,2762.4];
+
+let _svgMidiMap = new Map();   // midi -> [{el, tx, ty}]
 let _currentHighlightEl = null;
-let _svgStaffGroups = []; // [{top, clef}]
+let _svgStaffGroups = [];
 
 function _buildSvgMidiMap() {
     const container = document.getElementById('scoreObj');
@@ -3457,19 +3460,14 @@ function _buildSvgMidiMap() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // 1. Collect staff line Y positions and group them
-    const staffLineEls = svgEl.querySelectorAll('.StaffLines');
+    // 1. Collect staff line Y positions and build groups
     const allY = [];
-    staffLineEls.forEach(el => {
+    svgEl.querySelectorAll('.StaffLines').forEach(el => {
         const pts = el.getAttribute('points');
-        if (pts) {
-            const y = parseFloat(pts.split(',')[1]);
-            allY.push(y);
-        }
+        if (pts) allY.push(parseFloat(pts.split(',')[1]));
     });
     const uniqueY = [...new Set(allY.map(y => Math.round(y * 10) / 10))].sort((a,b) => a-b);
 
-    // Group into systems (gap > 50 = new group)
     const groups = [];
     let cur = [uniqueY[0]];
     for (let i = 1; i < uniqueY.length; i++) {
@@ -3478,129 +3476,129 @@ function _buildSvgMidiMap() {
     }
     groups.push(cur);
 
-    // Groups pair as treble/bass alternating
     _svgStaffGroups = groups.map((g, i) => ({
-        top: g[0],
-        bottom: g[g.length-1],
+        top: g[0], bottom: g[g.length-1],
         clef: i % 2 === 0 ? 'treble' : 'bass'
     }));
 
-    // 2. For each .Note path, compute its MIDI from Y position
+    // 2. Map each .Note element to a MIDI number
     _svgMidiMap = new Map();
-    const noteEls = svgEl.querySelectorAll('.Note');
-    noteEls.forEach(el => {
-        const transform = el.getAttribute('transform') || '';
-        const m = transform.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+    svgEl.querySelectorAll('.Note').forEach(el => {
+        const t = el.getAttribute('transform') || '';
+        const m = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
         if (!m) return;
+        const tx = parseFloat(m[1]);
         const ty = parseFloat(m[2]);
 
-        // Find closest staff group
         let bestGroup = null, bestDist = Infinity;
         _svgStaffGroups.forEach(g => {
-            const dist = Math.abs(ty - g.top);
-            if (dist < bestDist) { bestDist = dist; bestGroup = g; }
+            const d = Math.abs(ty - g.top);
+            if (d < bestDist) { bestDist = d; bestGroup = g; }
         });
         if (!bestGroup) return;
 
-        const stepsDown = Math.round((ty - bestGroup.top) / SVG_STEP);
+        const steps = Math.round((ty - bestGroup.top) / SVG_STEP);
         const scale = bestGroup.clef === 'treble' ? TREBLE_FROM_TOP : BASS_FROM_TOP;
-        const midi = (stepsDown >= 0 && stepsDown < scale.length) ? scale[stepsDown] : null;
-        if (midi === null) return;
+        if (steps < 0 || steps >= scale.length) return;
+        const midi = scale[steps];
 
         if (!_svgMidiMap.has(midi)) _svgMidiMap.set(midi, []);
-        _svgMidiMap.get(midi).push({ el, tx: parseFloat(m[1]), ty });
+        _svgMidiMap.get(midi).push({ el, tx, ty });
     });
 
-    console.log('SVG MIDI map built:', _svgMidiMap.size, 'unique pitches');
+    console.log('✅ SVG MIDI map:', _svgMidiMap.size, 'pitches,', 
+        [..._svgMidiMap.values()].flat().length, 'total notes');
 }
 
-function _doSvgHighlight(midiNote, noteX) {
-    // Unhighlight previous
+function _getMeasureX(logicalMeasure) {
+    // Map logical measure number to approximate SVG X using barline positions
+    // Page 1 has measures 1..N, barlines divide them
+    // Use barline index = logicalMeasure - 1 (0-based)
+    const idx = Math.max(0, Math.min(logicalMeasure - 1, SVG_BARLINE_XS.length - 1));
+    const nextIdx = Math.min(idx + 1, SVG_BARLINE_XS.length - 1);
+    // midpoint of the measure
+    return (SVG_BARLINE_XS[idx] + SVG_BARLINE_XS[nextIdx]) / 2;
+}
+
+function _doSvgHighlight(midiNote, logicalMeasure) {
+    // Clear previous highlight using setAttribute (not style.fill — innerHTML SVGs need this)
     if (_currentHighlightEl) {
-        _currentHighlightEl.style.fill = '';
-        _currentHighlightEl.style.filter = '';
+        _currentHighlightEl.removeAttribute('fill');
+        _currentHighlightEl.removeAttribute('filter');
         _currentHighlightEl = null;
     }
+
     if (!_svgMidiMap.size) _buildSvgMidiMap();
 
     const candidates = _svgMidiMap.get(midiNote);
     if (!candidates || !candidates.length) {
-        console.warn('No SVG note found for MIDI', midiNote);
+        console.warn('No SVG note for MIDI', midiNote, getNoteName(midiNote));
         return;
     }
 
-    // Pick the candidate whose X is closest to noteX (measure position)
-    // noteX comes from the SVG coordinate space — we pass trainingIndex-based X
-    // If no X hint, just pick first
-    let best = candidates[0];
-    if (noteX !== undefined) {
-        let bestDist = Infinity;
-        candidates.forEach(c => {
-            const d = Math.abs(c.tx - noteX);
-            if (d < bestDist) { bestDist = d; best = c; }
-        });
-    }
+    // Find candidate closest to the expected X position for this measure
+    const targetX = logicalMeasure ? _getMeasureX(logicalMeasure) : candidates[0].tx;
+    let best = candidates[0], bestDist = Infinity;
+    candidates.forEach(c => {
+        const d = Math.abs(c.tx - targetX);
+        if (d < bestDist) { bestDist = d; best = c; }
+    });
 
-    best.el.style.fill = '#E57373';
-    best.el.style.filter = 'drop-shadow(0 0 8px rgba(229,115,115,1))';
+    // Use setAttribute — works reliably on innerHTML-injected SVG paths
+    best.el.setAttribute('fill', '#E57373');
+    best.el.setAttribute('filter', 'url(#highlightGlow)');
     _currentHighlightEl = best.el;
 
-    // Scroll the system containing this note into view
-    _scrollToNote(best.ty);
+    // Ensure the glow filter exists in the SVG
+    const svgEl = document.querySelector('#scoreObj svg');
+    if (svgEl && !svgEl.querySelector('#highlightGlow')) {
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `<filter id="highlightGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>`;
+        svgEl.insertBefore(defs, svgEl.firstChild);
+    }
+
+    // Auto-scroll so the highlighted note's system is visible
+    _scrollToSvgNote(best.ty);
 }
 
-function _scrollToNote(noteY) {
-    // Find which staff group this Y belongs to
-    let group = null;
-    _svgStaffGroups.forEach(g => {
-        if (Math.abs(noteY - g.top) < 200) group = g;
-    });
-    if (!group) return;
-
-    // Scroll scorePageWrapper so this system is visible
-    const wrapper = document.getElementById('scorePageWrapper');
+function _scrollToSvgNote(noteY) {
     const container = document.getElementById('scoreObj');
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // The SVG has viewBox height 4208.4, rendered at container width
-    const svgHeight = 4208.4;
-    const svgWidth = 2977.2;
-    const renderedWidth = container.clientWidth;
-    const scale = renderedWidth / svgWidth;
-    const renderedY = group.top * scale;
+    // Find the staff group this note belongs to
+    let group = _svgStaffGroups.reduce((best, g) => {
+        return Math.abs(noteY - g.top) < Math.abs(noteY - best.top) ? g : best;
+    }, _svgStaffGroups[0]);
+    if (!group) return;
 
-    // Scroll the scoreView so this system is centered
-    const scoreView = document.getElementById('scoreView');
-    const targetScroll = renderedY - window.innerHeight * 0.25;
-    scoreView.scrollTo ? scoreView.scrollTo({ top: targetScroll, behavior: 'smooth' }) : null;
-    window.scrollTo({ top: document.getElementById('scoreView').offsetTop + targetScroll, behavior: 'smooth' });
-}
+    // SVG viewBox: 0 0 2977.2 4208.4
+    const svgNativeH = 4208.4;
+    const svgNativeW = 2977.2;
+    const renderedW = container.clientWidth || 900;
+    const scale = renderedW / svgNativeW;
+    const noteRenderedY = group.top * scale;
 
-// Build an X-position map from practiceNotes to SVG coordinates
-// SVG viewBox width=2977.2, measures distributed across X
-// We'll use the note's time to estimate X position in SVG space
-function _getMidiSvgX(trainingNoteObj) {
-    // Use the note's playTime to estimate X within the SVG
-    // The SVG X range is roughly 333 to 2765 across all measures
-    // Total duration of the piece ~secondsPerMeasure * SONG_CONFIG.measures
-    const totalTime = secondsPerMeasure * SONG_CONFIG.measures;
-    const t = trainingNoteObj.time || 0;
-    const xFrac = t / totalTime;
-    return 333 + xFrac * (2765 - 333);
+    // Scroll the page so this note row is near the top (under the brand bar)
+    const scoreViewTop = document.getElementById('scoreView').getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: scoreViewTop + noteRenderedY - 120, behavior: 'smooth' });
 }
 
 function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
     if (!midiNote && trainingNoteObj) midiNote = trainingNoteObj.midi;
-    const svgX = trainingNoteObj ? _getMidiSvgX(trainingNoteObj) : undefined;
-    _doSvgHighlight(midiNote, svgX);
+    if (!midiNote) return;
+    const logicalMeasure = trainingNoteObj ? (trainingNoteObj.logicalMeasure || getLogicalSheetMeasureFromTime(trainingNoteObj.time)) : null;
+    _doSvgHighlight(midiNote, logicalMeasure);
 }
 
 function clearScoreHighlight() {
     if (_currentHighlightEl) {
-        _currentHighlightEl.style.fill = '';
-        _currentHighlightEl.style.filter = '';
+        _currentHighlightEl.removeAttribute('fill');
+        _currentHighlightEl.removeAttribute('filter');
         _currentHighlightEl = null;
     }
 }
