@@ -659,6 +659,8 @@ canvas {
 #scorePageWrapper {
     position: relative;
     width: 100%;
+  overflow-x: auto;             
+    -webkit-overflow-scrolling: touch; 
     overflow: visible;
 }
 
@@ -823,7 +825,7 @@ canvas {
         <button id="scoreNextBtn">Next ▶</button>
     </div>
 <div id="scorePageWrapper">
-        <div id="scoreObj" style="width:100%;display:block;border:1px solid rgba(235,50,70,0.15);border-radius:8px;background:white;overflow:hidden;"></div>
+<div id="scoreObj" style="display:block;width:max-content;min-width:100%;overflow:visible;"></div>
         <div id="scoreHighlight" style="display:none;"></div>
     </div>
 </div>
@@ -3537,7 +3539,7 @@ async function renderScorePage(pageNum) {
     container.innerHTML = svgText;
     const svgEl = container.querySelector('svg');
     if (svgEl) {
-        svgEl.style.width = '100%';
+svgEl.style.width = '300vw';
         svgEl.style.height = 'auto';
         svgEl.removeAttribute('width');
         svgEl.removeAttribute('height');
