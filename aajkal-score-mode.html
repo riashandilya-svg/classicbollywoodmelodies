@@ -3162,6 +3162,9 @@ const PAGE_OFFSETS = {
 
 let _svgNoteElements = [];   // sorted <path class="Note"> elements for current page
 let _currentHighlightEl = null;
+  let _currentTieDestEl = null;
+let _svgTieDestElements = [];
+let _tieDestinations = [];
 // ── FIX 2: _lastPannedMeasure and _panScoreToEntry live here,
 //           clean inside the module — NO wrapper <script> tags ──
 let _lastPannedMeasure = -1;
@@ -3196,19 +3199,18 @@ function _buildSvgNoteIndex() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // Collect tie destinations: {x, y} of the tied-INTO notehead
-    const tieDestinations = [];
+    // Build a set of tie destinations so we can highlight them too
+    // but do NOT exclude them from the index
+    _tieDestinations = [];
     svgEl.querySelectorAll('path.TieSegment').forEach(tie => {
         const nums = tie.getAttribute('d').match(/[-\d.]+/g);
         if (nums && nums.length >= 7) {
-            tieDestinations.push({
+            _tieDestinations.push({
                 x: parseFloat(nums[6]),
                 y: parseFloat(nums[7])
             });
         }
     });
-
-    console.log('🎵 Tie destinations:', tieDestinations);
 
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
@@ -3218,15 +3220,15 @@ function _buildSvgNoteIndex() {
         const tx = parseFloat(mm[1]);
         const ty = parseFloat(mm[2]);
 
-        // Skip if this note matches a tie destination (x within 15px AND y within 50px)
-        const isTiedInto = tieDestinations.some(td =>
+        // Mark whether this notehead is a tie destination
+        const isTieDest = _tieDestinations.some(td =>
             Math.abs(tx - td.x) < 15 && Math.abs(ty - td.y) < 50
         );
-        if (isTiedInto) return;
 
-        raw.push({ el, tx, ty });
+        raw.push({ el, tx, ty, isTieDest });
     });
 
+    // Sort by staff row, then left-to-right
     const ys = raw.map(n => n.ty).sort((a, b) => a - b);
     const rowRanges = [];
     let cur = [ys[0]];
@@ -3248,7 +3250,11 @@ function _buildSvgNoteIndex() {
 
     raw.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
 
-    _svgNoteElements = raw;
+    // IMPORTANT: include ALL noteheads — tied destinations too
+    // But skip tie destinations from the indexed list (they have no MIDI event)
+    // Instead, store them separately so _highlightSvgNote can highlight them as a bonus
+    _svgNoteElements = raw.filter(n => !n.isTieDest);
+    _svgTieDestElements = raw.filter(n => n.isTieDest);
 
     if (!svgEl.querySelector('#hlGlow')) {
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -3259,8 +3265,7 @@ function _buildSvgNoteIndex() {
         svgEl.insertBefore(defs, svgEl.firstChild);
     }
 
-    const filtered = 343 - _svgNoteElements.length;
-    console.log(`✅ SVG index: ${_svgNoteElements.length} notes (filtered ${filtered} tied noteheads) — ${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass`);
+    console.log(`✅ SVG index: ${_svgNoteElements.length} playable notes, ${_svgTieDestElements.length} tie destinations`);
 }
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
@@ -3272,18 +3277,72 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
         const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
         if (isMatch) count++;
     }
-
-    // ── NEW: add ties that resolve BEFORE the start measure ──
-    const tieBonus = _countTiesBeforeTime(firstTime, hand);
-    count += tieBonus;
-
     const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble
                       : hand === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
     const pageOffset = offsetTable[scoreCurrentPage] || 0;
     return Math.max(0, count - pageOffset);
 }
+function _highlightSvgNote(globalTrainingIndex, clefMode) {
+    // Clear previous highlights
+    if (_currentHighlightEl) {
+        _currentHighlightEl.removeAttribute('fill');
+        _currentHighlightEl.removeAttribute('filter');
+        _currentHighlightEl = null;
+    }
+    if (_currentTieDestEl) {
+        _currentTieDestEl.removeAttribute('fill');
+        _currentTieDestEl.removeAttribute('filter');
+        _currentTieDestEl = null;
+    }
+    if (!_svgNoteElements.length) return;
 
+    const filtered = clefMode === 'both'
+        ? _svgNoteElements
+        : _svgNoteElements.filter(n => n.clef === clefMode);
+
+    const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
+                      : clefMode === 'bass'   ? PAGE_OFFSETS.bass
+                      : PAGE_OFFSETS.all;
+
+    const pageOffset = offsetTable[scoreCurrentPage] || 0;
+    const localIdx   = globalTrainingIndex - pageOffset;
+
+    if (localIdx < 0 || localIdx >= filtered.length) {
+        _autoNavigateToPage(globalTrainingIndex, clefMode, offsetTable);
+        return;
+    }
+
+    // Highlight the main (source) notehead
+    const entry = filtered[localIdx];
+    entry.el.setAttribute('fill', '#E57373');
+    entry.el.setAttribute('filter', 'url(#hlGlow)');
+    _currentHighlightEl = entry.el;
+
+    // Also highlight the tie destination for this note, if one exists.
+    // The tie destination is to the RIGHT of the source note, on the same clef.
+    const filteredTieDests = clefMode === 'both'
+        ? _svgTieDestElements
+        : _svgTieDestElements.filter(n => n.clef === clefMode);
+
+    const tieDest = filteredTieDests.find(td => td.tx > entry.tx);
+    if (tieDest) {
+        tieDest.el.setAttribute('fill', '#E57373');
+        tieDest.el.setAttribute('filter', 'url(#hlGlow)');
+        _currentTieDestEl = tieDest;
+    }
+
+    // Pan the score when the measure changes
+    const _thisMeasure = (practiceNotes && practiceNotes[trainingIndex])
+        ? (practiceNotes[trainingIndex].logicalMeasure ?? trainingIndex)
+        : trainingIndex;
+
+    if (_thisMeasure !== _lastPannedMeasure) {
+        _lastPannedMeasure = _thisMeasure;
+        _panScoreToEntry(entry);
+    }
+}
+  
 function _countTiesBeforeTime(cutoffTime, hand) {
     const container = document.getElementById('scoreObj');
     if (!container) return 0;
@@ -3359,6 +3418,11 @@ function clearScoreHighlight() {
         _currentHighlightEl.removeAttribute('fill');
         _currentHighlightEl.removeAttribute('filter');
         _currentHighlightEl = null;
+    }
+    if (_currentTieDestEl) {
+        _currentTieDestEl.removeAttribute('fill');
+        _currentTieDestEl.removeAttribute('filter');
+        _currentTieDestEl = null;
     }
 }
 
