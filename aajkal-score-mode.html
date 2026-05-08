@@ -3267,29 +3267,21 @@ function _buildSvgNoteIndex() {
 
     console.log(`✅ SVG index: ${_svgNoteElements.length} playable notes (treble: ${raw.filter(n=>!n.isTieDest&&n.clef==='treble').length}, bass: ${raw.filter(n=>!n.isTieDest&&n.clef==='bass').length})`);
 }
-
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
-    // Use .time (original MIDI time), NOT .playTime (remapped section time)
-const targetTime = firstPracticeNote.time;
+    const targetTime = firstPracticeNote.time;
 
     const filtered = allMidiNotes.filter(n => {
         if (hand === 'both') return true;
         return hand === 'treble' ? n.track === TREBLE : n.track === BASS;
     });
 
-    // Find how many notes of this hand come before the first practice note
-    let midiIdx = 0;
     for (let i = 0; i < filtered.length; i++) {
         if (filtered[i].time >= targetTime - 0.005) {
-            midiIdx = i;
-            break;
+            console.log(`🎯 scoreNoteOffset=${i} (hand=${hand}, targetTime=${targetTime.toFixed(3)}, found=${filtered[i].time.toFixed(3)})`);
+            return i;
         }
-        midiIdx = i + 1;
     }
-
-    console.log(`🎯 scoreNoteOffset=${midiIdx} (hand=${hand}, targetTime=${targetTime.toFixed(3)})`);
-    // Return RAW global index — _highlightSvgNote will subtract pageOffset
-    return midiIdx;
+    return 0;
 }
   
 function _highlightSvgNote(globalIdx, clefMode) {
