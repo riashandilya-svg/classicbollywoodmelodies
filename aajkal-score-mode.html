@@ -3272,6 +3272,11 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
         const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
         if (isMatch) count++;
     }
+
+    // ── NEW: add ties that resolve BEFORE the start measure ──
+    const tieBonus = _countTiesBeforeTime(firstTime, hand);
+    count += tieBonus;
+
     const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble
                       : hand === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
@@ -3279,46 +3284,61 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
     return Math.max(0, count - pageOffset);
 }
 
-function _highlightSvgNote(globalTrainingIndex, clefMode) {
-    // Clear previous highlight
-    if (_currentHighlightEl) {
-        _currentHighlightEl.removeAttribute('fill');
-        _currentHighlightEl.removeAttribute('filter');
-        _currentHighlightEl = null;
+function _countTiesBeforeTime(cutoffTime, hand) {
+    const container = document.getElementById('scoreObj');
+    if (!container) return 0;
+    const svgEl = container.querySelector('svg');
+    if (!svgEl) return 0;
+
+    // Build tie destination coords (same logic as _buildSvgNoteIndex)
+    const tieDestinations = [];
+    svgEl.querySelectorAll('path.TieSegment').forEach(tie => {
+        const nums = tie.getAttribute('d').match(/[-\d.]+/g);
+        if (nums && nums.length >= 7) {
+            tieDestinations.push({ x: parseFloat(nums[6]), y: parseFloat(nums[7]) });
+        }
+    });
+
+    if (!tieDestinations.length) return 0;
+
+    // Find the x-coordinate of the first note at cutoffTime
+    // (i.e. what tx does measure 12 start at in the SVG?)
+    const raw = [];
+    svgEl.querySelectorAll('path.Note').forEach(el => {
+        const t = el.getAttribute('transform') || '';
+        const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+        if (!mm) return;
+        raw.push({ tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
+    });
+
+    if (!raw.length) return 0;
+
+    // The first note in practiceNotes corresponds to SVG index = scoreNoteOffset + PAGE_OFFSETS
+    // But we don't have that yet — instead, use the temporal cutoff mapped to x-space:
+    // Find the SVG x that corresponds to the MIDI index `count` (before tieBonus)
+    // Simpler: count ties whose destination x < the x of the note at MIDI index `count`
+    
+    // Sort all notes left-to-right to find cutoff x
+    raw.sort((a, b) => a.tx - b.tx);
+    
+    // MIDI count before cutoffTime (recompute inline — we need it for the x lookup)
+    let midiCount = 0;
+    for (const n of allMidiNotes) {
+        if (n.time >= cutoffTime - 0.001) break;
+        if (hand === 'both') { midiCount++; continue; }
+        const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
+        if (isMatch) midiCount++;
     }
-    if (!_svgNoteElements.length) return;
 
-    const filtered = clefMode === 'both'
-        ? _svgNoteElements
-        : _svgNoteElements.filter(n => n.clef === clefMode);
+    const cutoffNote = raw[midiCount];
+    if (!cutoffNote) return 0;
+    const cutoffX = cutoffNote.tx;
 
-    const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
-                      : clefMode === 'bass'   ? PAGE_OFFSETS.bass
-                      : PAGE_OFFSETS.all;
-
-    const pageOffset = offsetTable[scoreCurrentPage] || 0;
-    const localIdx = globalTrainingIndex - pageOffset;
-
-    if (localIdx < 0 || localIdx >= filtered.length) {
-        _autoNavigateToPage(globalTrainingIndex, clefMode, offsetTable);
-        return;
-    }
-
-    const entry = filtered[localIdx];
-    entry.el.setAttribute('fill', '#E57373');
-    entry.el.setAttribute('filter', 'url(#hlGlow)');
-    _currentHighlightEl = entry.el;
-
-    // ── Pan only when the measure changes ──
-    const _thisMeasure = (practiceNotes && practiceNotes[trainingIndex])
-        ? (practiceNotes[trainingIndex].logicalMeasure ?? trainingIndex)
-        : trainingIndex;
-
-    if (_thisMeasure !== _lastPannedMeasure) {
-        _lastPannedMeasure = _thisMeasure;
-    }
+    // Count tie destinations that land before the cutoff x
+    const count = tieDestinations.filter(td => td.x < cutoffX - 5).length;
+    console.log(`🎵 Ties before x=${cutoffX.toFixed(1)} (measure start): ${count}`);
+    return count;
 }
-
 async function _autoNavigateToPage(globalIdx, clefMode, offsetTable) {
     for (const p of [1, 2, 3]) {
         const start = offsetTable[p] || 0;
