@@ -3218,22 +3218,35 @@ function _buildSvgNoteIndex() {
 
     console.log(`🎼 Clef split Y = ${splitY.toFixed(1)} (gap = ${maxGap.toFixed(1)}px)`);
 
-    // Sort: treble first (lower Y = higher on page), then bass; within each, left-to-right
-    raw.sort((a, b) => {
-        const aIsBass = a.ty > splitY;
-        const bIsBass = b.ty > splitY;
-        if (aIsBass !== bIsBass) return aIsBass ? 1 : -1;
-        // Same clef — sort left to right, with row (Y) as primary
-        if (Math.abs(a.ty - b.ty) > 40) return a.ty - b.ty;
-        return a.tx - b.tx;
+  // Sort by reading order: group into rows first, then top-to-bottom, left-to-right within each row
+    const ROW_TOLERANCE = 40;
+    const rows = [];
+    raw.forEach(n => {
+        const existingRow = rows.find(r => Math.abs(r.ty - n.ty) < ROW_TOLERANCE);
+        if (existingRow) {
+            existingRow.notes.push(n);
+        } else {
+            rows.push({ ty: n.ty, notes: [n] });
+        }
     });
 
-    raw.forEach(n => {
+    rows.sort((a, b) => a.ty - b.ty);
+    rows.forEach(row => row.notes.sort((a, b) => a.tx - b.tx));
+
+    const trebleRows = rows.filter(r => r.ty <= splitY);
+    const bassRows   = rows.filter(r => r.ty > splitY);
+
+    const sorted = [
+        ...trebleRows.flatMap(r => r.notes),
+        ...bassRows.flatMap(r => r.notes)
+    ];
+
+    sorted.forEach(n => {
         n.clef = n.ty > splitY ? 'bass' : 'treble';
     });
 
-    _svgNoteElements = raw.filter(n => !n.isTieDest);
-    _svgTieDestElements = raw.filter(n => n.isTieDest);
+    _svgNoteElements = sorted.filter(n => !n.isTieDest);
+    _svgTieDestElements = sorted.filter(n => n.isTieDest);
 
     if (!svgEl.querySelector('#hlGlow')) {
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -3250,29 +3263,23 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const targetTime = firstPracticeNote.time;
     const targetMidi = firstPracticeNote.midi;
 
-    // Build treble/bass filtered list, skipping tied continuations
     const filtered = allMidiNotes.filter(n => {
         if (hand === 'treble') return n.track === TREBLE;
         if (hand === 'bass')   return n.track === BASS;
         return true;
     });
 
-    // Mark tied notes: same pitch, same track, previous note ends exactly where this begins
-    const GAP = 0.05; // seconds tolerance for tie detection
+    const GAP = 0.05;
     const isTied = new Array(filtered.length).fill(false);
     for (let i = 1; i < filtered.length; i++) {
         const prev = filtered[i - 1];
         const cur  = filtered[i];
-        if (
-            prev.midi === cur.midi &&
-            prev.track === cur.track &&
-            Math.abs((prev.time + prev.duration) - cur.time) < GAP
-        ) {
+        if (prev.midi === cur.midi && prev.track === cur.track &&
+            Math.abs((prev.time + prev.duration) - cur.time) < GAP) {
             isTied[i] = true;
         }
     }
 
-    // Count non-tied notes before our target
     let count = 0;
     for (let i = 0; i < filtered.length; i++) {
         const n = filtered[i];
@@ -3280,10 +3287,10 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
         if (!isTied[i]) count++;
     }
 
-    console.log(`🎯 scoreNoteOffset=${count} hand=${hand} targetTime=${targetTime.toFixed(3)} targetMidi=${getNoteName(targetMidi)}`);
+    console.log(`🎯 scoreNoteOffset=${count} (tie-aware)`);
     return count;
 }
-function _highlightSvgNote(globalIdx, clefMode) {
+  function _highlightSvgNote(globalIdx, clefMode) {
     try {
         if (_currentHighlightEl) {
             _currentHighlightEl.removeAttribute('fill');
