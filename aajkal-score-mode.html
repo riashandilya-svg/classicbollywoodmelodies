@@ -693,7 +693,7 @@ canvas {
     display: none;
     position: fixed;
     right: 20px;
-    top: calc(50% - 260px - 80px);
+    top: max(70px, calc(50% - 334px));
 
     width: 64px;
     height: 64px;
@@ -3462,21 +3462,20 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    // Collect SVG indices for ALL chord notes (not just the first)
+    // Collect SVG indices for ALL chord notes using their actual practiceNotes objects
     const allIndices = [];
 
-    // Always include the primary note
-    const primaryIndices = _svgIndicesForMidiNote(noteObj, clefMode);
-    allIndices.push(...primaryIndices);
+    for (const chordMidi of currentChordNotes) {
+        // Find the actual note object in practiceNotes so we use the correct .time key
+        const chordNoteObj = practiceNotes.find(n =>
+            n.midi === chordMidi &&
+            n.track === noteObj.track &&
+            Math.abs((n.playTime ?? n.time) - (noteObj.playTime ?? noteObj.time)) < 0.01
+        ) || (chordMidi === noteObj.midi ? noteObj : null);
 
-    // Also highlight every other note in the chord
-    if (currentChordNotes.size > 1) {
-        for (const chordMidi of currentChordNotes) {
-            if (chordMidi === noteObj.midi) continue;
-            const siblingObj = { ...noteObj, midi: chordMidi };
-            const siblingIndices = _svgIndicesForMidiNote(siblingObj, clefMode);
-            allIndices.push(...siblingIndices);
-        }
+        if (!chordNoteObj) continue;
+        const indices = _svgIndicesForMidiNote(chordNoteObj, clefMode);
+        allIndices.push(...indices);
     }
 
     if (allIndices.length > 0) {
