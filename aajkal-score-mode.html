@@ -968,6 +968,20 @@ for (const note of allMidiNotes) {
     lastSeenRaw.set(k, note);
 }
 console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
+_tiedNoteKeys = new Set();
+const lastSeenRaw = new Map();
+for (const note of allMidiNotes) {
+    const k = `${note.track}|${note.midi}`;
+    const prev = lastSeenRaw.get(k);
+    if (prev) {
+        const gap = note.time - (prev.time + prev.duration);
+        if (Math.abs(gap) < 0.005) {
+            _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+        }
+    }
+    lastSeenRaw.set(k, note);
+}
+console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
 
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
@@ -1470,6 +1484,7 @@ window.addEventListener('resize', resizeCanvas);
 setTimeout(resizeCanvas, 800);
 setTimeout(animate, 900);
 let fallingRectangles = [];
+  let _tiedNoteKeys = new Set();
 let midiFallingNotes = [];
 let songStartTime = null;
 let visualClockStart = null;
@@ -2891,8 +2906,10 @@ if (!allowedPhysical.has(p)) {
             }
             return null;
         }
-const measureStart = MEASURE_TIME_MAP[p]?.start ?? ((p - 1) * secondsPerMeasure);
-const measureEnd = MEASURE_TIME_MAP[p]?.end ?? (p * secondsPerMeasure);
+const mapEntry = MEASURE_TIME_MAP[p];
+if (!mapEntry) return null;   // skip note — MIDI hasn't loaded yet or measure out of range
+const measureStart = mapEntry.start;
+const measureEnd   = mapEntry.end;
 
 const TOLERANCE = 0.001;
 if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null;
