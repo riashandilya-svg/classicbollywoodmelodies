@@ -3684,6 +3684,26 @@ window.location.replace("/login.html");
       document.getElementById('app').style.display = 'block';
     }
   });
+  // TEMPORARY DEBUG — add before closing </script>
+window._debug = function() {
+    const svgTreble = _svgNoteElements.filter(n => n.clef === 'treble');
+    console.log('Total SVG treble noteheads:', svgTreble.length);
+    svgTreble.forEach((n,i) => {
+        if(i >= 55 && i <= 75) console.log(`svg[${i}]: tx=${n.tx.toFixed(0)}`);
+    });
+
+    const treble = allMidiNotes.filter(n => n.track === TREBLE);
+    let count = 0;
+    for(let i = 0; i < treble.length; i++){
+        const prev = treble[i-1];
+        const cur = treble[i];
+        const tied = prev && prev.midi === cur.midi && Math.abs((prev.time + prev.duration) - cur.time) < 0.05;
+        if(cur.time >= 13.195) break;
+        if(!tied) count++;
+        console.log(`[${i}] ${getNoteName(cur.midi)} t=${cur.time.toFixed(2)} tied=${tied} runningCount=${count}`);
+    }
+    console.log('Final non-tied count before t=13.2:', count);
+};
 </script>
 
 </body>
