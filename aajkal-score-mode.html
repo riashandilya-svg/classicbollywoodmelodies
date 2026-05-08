@@ -934,6 +934,21 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
   MAX_LOGICAL_MEASURE = Math.max(MAX_LOGICAL_MEASURE, PHYSICAL_TO_LOGICAL[p] || 0);
 }
 
+  let _tiedNoteKeys = new Set();
+  const lastSeenRaw = new Map();
+    for (const note of allMidiNotes) {
+        const k = `${note.track}|${note.midi}`;
+        const prev = lastSeenRaw.get(k);
+        if (prev) {
+            const gap = note.time - (prev.time + prev.duration);
+            if (Math.abs(gap) < 0.005) {
+                // This note is a tied continuation — key it by its ORIGINAL time
+                _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+            }
+        }
+        lastSeenRaw.set(k, note);
+    }
+    console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
 
 async function loadSongMidi() {
     const response = await fetch("aajkal.mid");
@@ -943,9 +958,8 @@ async function loadSongMidi() {
 
     allMidiNotes = [];
 
-currentMidi.tracks.forEach((track, trackIndex) => {
+    currentMidi.tracks.forEach((track, trackIndex) => {
         const clef = trackIndex === 0 ? TREBLE : BASS;
-
         track.notes.forEach(note => {
             allMidiNotes.push({
                 midi: note.midi,
@@ -955,11 +969,10 @@ currentMidi.tracks.forEach((track, trackIndex) => {
             });
         });
     });
-
     allMidiNotes.sort((a, b) => a.time - b.time);
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
-    let bpm;
+  let bpm;
     if (SONG_CONFIG.timeSignature[0] === 2 && SONG_CONFIG.timeSignature[1] === 2) {
         bpm = 100;
     } else {
@@ -969,12 +982,13 @@ currentMidi.tracks.forEach((track, trackIndex) => {
     }
 
     secondsPerBeat = 60 / bpm;
-    secondsPerMeasure =
-        secondsPerBeat * SONG_CONFIG.timeSignature[0];
-        MEASURE_TIME_MAP = buildMeasureTimeMap(
-    SONG_CONFIG,
-    secondsPerBeat
-);
+    secondsPerMeasure = secondsPerBeat * SONG_CONFIG.timeSignature[0];
+    MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
+
+    setControlsEnabled(true);
+    showTrainingProgress();
+
+    console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 
     setControlsEnabled(true);
     showTrainingProgress();
@@ -3297,85 +3311,80 @@ function _buildSvgNoteIndex() {
         `${Math.max(...Object.keys(_svgBuckets).map(Number))}`);
 }
 
-// ============================================================
-// STEP 2 — assign MIDI ranks within each (sheet_measure, clef) bucket
-// ============================================================
 function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // Identify tied notes: same pitch+track, most-recent prior same-midi note ends
-    // exactly where this one starts.  We must scan back past chords (same-time
-    // notes of other pitches), so we look for the last occurrence of the same midi,
-    // not just i-1.
-    function markTies(notes) {
-        const tiedTo = new Array(notes.length).fill(-1);
-        // lastSeen[midi] = index of the most recent note with that midi value
-        const lastSeen = new Map();
-        for (let i = 0; i < notes.length; i++) {
-            const c = notes[i];
-            const prev = lastSeen.has(c.midi) ? notes[lastSeen.get(c.midi)] : null;
-            if (prev &&
-                prev.midi === c.midi && prev.track === c.track &&
-                Math.abs((prev.time + prev.duration) - c.time) < TIE_GAP_THRESHOLD) {
-                tiedTo[i] = lastSeen.get(c.midi);
-            }
-            lastSeen.set(c.midi, i);
-        }
-        return tiedTo;
-    }
-
-    const trebleMidi = allMidiNotes.filter(n => n.track === TREBLE)
-        .sort((a, b) => a.time - b.time || a.midi - b.midi);
-    const bassMidi   = allMidiNotes.filter(n => n.track === BASS)
-        .sort((a, b) => a.time - b.time || a.midi - b.midi);
-
-    const trebleTied = markTies(trebleMidi);
-    const bassTied   = markTies(bassMidi);
-
-    // For each note: resolve its sheet measure and assign a rank within (sheet_measure, clef).
-    // Tied notes also get a rank (they have their own notehead on the score).
-    // We additionally record which parent midiKey each tie belongs to.
     const rankCounters = {};
 
     function midiKeyFor(note) {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
-    function assignRanks(notes, tiedTo, clef) {
-        for (let i = 0; i < notes.length; i++) {
-            const note = notes[i];
+    // Sort treble and bass separately by time, then assign ranks.
+    // isTie comes from _tiedNoteKeys (pre-split detection).
+    function assignRanks(notes, clef) {
+        // We need to link parent → child for tieKeys.
+        // Walk in time order; track the most recent note of each midi pitch.
+        const lastEntry = new Map(); // midi → { mk, entry }
+
+        for (const note of notes) {
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
             const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
-            const key = `${sheetMeasure}|${clef}`;
-            if (rankCounters[key] === undefined) rankCounters[key] = 0;
-            const rank = rankCounters[key]++;
+            const bucketKey = `${sheetMeasure}|${clef}`;
+            if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
+            const rank = rankCounters[bucketKey]++;
 
             const mk = midiKeyFor(note);
-            const parentIdx = tiedTo[i];
-            const parentKey = parentIdx >= 0 ? midiKeyFor(notes[parentIdx]) : null;
 
-            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank, isTie: parentIdx >= 0, parentKey });
+            // Is this note a tied continuation?
+            // Check _tiedNoteKeys using the note's ORIGINAL time.
+            // splitRepeatedNotes may have shifted .time by +NOTE_GAP_TIME (0.02).
+            // So we check both the current time AND current-time-0.02 as the original.
+            const originalTime1 = note.time;
+            const originalTime2 = note.time - NOTE_GAP_TIME;
+            const isTie =
+                _tiedNoteKeys.has(`${originalTime1.toFixed(4)}|${note.midi}|${note.track}`) ||
+                _tiedNoteKeys.has(`${originalTime2.toFixed(4)}|${note.midi}|${note.track}`);
 
-            // Register this note as a tie-target on its parent (chain: parent → this tie → next tie…)
-            if (parentKey) {
-                const parentEntry = _midiRankMap.get(parentKey);
-                if (parentEntry) {
+            const entry = { sheet_measure: sheetMeasure, clef, rank, isTie, tieKeys: null, parentKey: null };
+            _midiRankMap.set(mk, entry);
+
+            // Link to parent if this is a tie
+            if (isTie) {
+                const parentInfo = lastEntry.get(note.midi);
+                if (parentInfo) {
+                    entry.parentKey = parentInfo.mk;
+                    const parentEntry = parentInfo.entry;
                     if (!parentEntry.tieKeys) parentEntry.tieKeys = [];
                     parentEntry.tieKeys.push(mk);
                 }
             }
+
+            // Always update lastEntry so chains work (A tied to B tied to C)
+            lastEntry.set(note.midi, { mk, entry });
         }
     }
 
-    assignRanks(trebleMidi, trebleTied, 'treble');
-    assignRanks(bassMidi,   bassTied,   'bass');
+    const trebleMidi = allMidiNotes.filter(n => n.track === TREBLE)
+        .sort((a, b) => a.time - b.time || a.midi - b.midi);
+    const bassMidi = allMidiNotes.filter(n => n.track === BASS)
+        .sort((a, b) => a.time - b.time || a.midi - b.midi);
 
-    console.log(`🗺  Rank map built: ${_midiRankMap.size} MIDI notes mapped across ` +
-        `${Object.keys(rankCounters).length} (measure, clef) buckets`);
+    assignRanks(trebleMidi, 'treble');
+    assignRanks(bassMidi, 'bass');
+
+    // Log tie summary
+    let tieCount = 0, tieKeyCount = 0;
+    _midiRankMap.forEach(v => {
+        if (v.isTie) tieCount++;
+        if (v.tieKeys?.length) tieKeyCount++;
+    });
+    console.log(`🗺  Rank map built: ${_midiRankMap.size} notes, ${tieCount} tied continuations, ${tieKeyCount} parents with tieKeys`);
 }
+
 
 function _svgIndicesForMidiNote(noteObj, hand) {
     // Always key by original .time, not .playTime
