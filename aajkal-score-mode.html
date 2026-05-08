@@ -3439,7 +3439,7 @@ function clearScoreHighlight() {
 }
 
 // ============================================================
-// PUBLIC: called whenever a training note is spawned
+// Replace the existing onTrainingNoteSpawned function with this
 // ============================================================
 function onTrainingNoteSpawned(noteObj) {
     if (!scoreModeActive) return;
@@ -3448,9 +3448,28 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    const indices = _svgIndicesForMidiNote(noteObj, clefMode);
-    if (indices.length > 0) {
-        _applyHighlight(indices.map(i => _svgNoteElements[i].el));
+    // Collect SVG indices for this note + all tied continuations
+    const allIndices = [];
+
+    // Helper: recursively follow tie chains in allMidiNotes
+    function collectTiedIndices(sourceNote) {
+        const idxs = _svgIndicesForMidiNote(sourceNote, clefMode);
+        allIndices.push(...idxs);
+
+        // Find a continuation note: same midi+track, starts where sourceNote ends
+        const expectedStart = sourceNote.time + sourceNote.duration;
+        const tied = allMidiNotes.find(n =>
+            n.midi  === sourceNote.midi  &&
+            n.track === sourceNote.track &&
+            Math.abs(n.time - expectedStart) < TIE_GAP_THRESHOLD
+        );
+        if (tied) collectTiedIndices(tied);
+    }
+
+    collectTiedIndices(noteObj);
+
+    if (allIndices.length > 0) {
+        _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
