@@ -3248,35 +3248,25 @@ function _buildSvgNoteIndex() {
 }
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const targetTime = firstPracticeNote.time;
+    const targetMidi = firstPracticeNote.midi;
 
     let count = 0;
     for (let i = 0; i < allMidiNotes.length; i++) {
         const n = allMidiNotes[i];
-        if (n.time >= targetTime - 0.005) break;
+
+        // Stop when we reach the exact note we want to start on
+        if (
+            Math.abs(n.time - targetTime) < 0.005 &&
+            n.midi === targetMidi &&
+            (hand === 'both' || (hand === 'treble' && n.track === TREBLE) || (hand === 'bass' && n.track === BASS))
+        ) break;
+
         if (hand === 'both') { count++; continue; }
         if (hand === 'treble' && n.track === TREBLE) count++;
         if (hand === 'bass'   && n.track === BASS)   count++;
     }
 
-    console.log(`🎯 scoreNoteOffset=${count} hand=${hand} targetTime=${targetTime.toFixed(3)}`);
-  console.log(`=== OFFSET DIAGNOSIS ===`);
-console.log(`targetTime: ${targetTime.toFixed(3)}`);
-console.log(`hand: ${hand}`);
-console.log(`count (scoreNoteOffset): ${count}`);
-console.log(`firstPracticeNote.time: ${firstPracticeNote.time.toFixed(3)}`);
-console.log(`firstPracticeNote.midi: ${getNoteName(firstPracticeNote.midi)}`);
-console.log(`allMidiNotes[count] note: ${allMidiNotes[count] ? getNoteName(allMidiNotes[count].midi) + ' at t=' + allMidiNotes[count].time.toFixed(3) : 'undefined'}`);
-
-const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble : hand === 'bass' ? PAGE_OFFSETS.bass : PAGE_OFFSETS.all;
-const pageOffset = offsetTable[scoreCurrentPage] || 0;
-const localIdx = count - pageOffset;
-const filtered = _svgNoteElements.filter(n => hand === 'both' || n.clef === hand);
-console.log(`pageOffset: ${pageOffset}`);
-console.log(`localIdx (SVG index): ${localIdx}`);
-console.log(`SVG element at localIdx: tx=${filtered[localIdx]?.tx?.toFixed(0)} clef=${filtered[localIdx]?.clef}`);
-console.log(`SVG element at localIdx-1: tx=${filtered[localIdx-1]?.tx?.toFixed(0)}`);
-console.log(`SVG element at localIdx+1: tx=${filtered[localIdx+1]?.tx?.toFixed(0)}`);
-console.log(`========================`);
+    console.log(`🎯 scoreNoteOffset=${count} hand=${hand} targetTime=${targetTime.toFixed(3)} targetMidi=${getNoteName(targetMidi)}`);
     return count;
 }
   
