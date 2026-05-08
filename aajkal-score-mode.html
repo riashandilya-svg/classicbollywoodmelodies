@@ -693,7 +693,7 @@ canvas {
     display: none;
     position: fixed;
     right: 20px;
-    top: calc(50% - 340px);
+    top: calc(50% - 260px - 80px);
 
     width: 64px;
     height: 64px;
@@ -3462,8 +3462,22 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    // Collect indices for THIS note + ALL its tied continuations
-    const allIndices = _svgIndicesForMidiNote(noteObj, clefMode);
+    // Collect SVG indices for ALL chord notes (not just the first)
+    const allIndices = [];
+
+    // Always include the primary note
+    const primaryIndices = _svgIndicesForMidiNote(noteObj, clefMode);
+    allIndices.push(...primaryIndices);
+
+    // Also highlight every other note in the chord
+    if (currentChordNotes.size > 1) {
+        for (const chordMidi of currentChordNotes) {
+            if (chordMidi === noteObj.midi) continue;
+            const siblingObj = { ...noteObj, midi: chordMidi };
+            const siblingIndices = _svgIndicesForMidiNote(siblingObj, clefMode);
+            allIndices.push(...siblingIndices);
+        }
+    }
 
     if (allIndices.length > 0) {
         _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
