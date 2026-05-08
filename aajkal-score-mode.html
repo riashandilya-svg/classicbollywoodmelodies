@@ -688,37 +688,54 @@ canvas {
     font-weight: 600;
 }
 
-/* Current note badge on score view */
+/* Current note badge — circle above Free Mode button */
 #scoreNoteDisplay {
     display: none;
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255,255,255,0.95);
-    border: 2px solid var(--accent-primary);
-    border-radius: 16px;
-    padding: 10px 22px;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-main);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.13);
-    z-index: 5000;
+    right: 20px;
+    top: calc(50% - 340px);
+
+    width: 64px;
+    height: 64px;
+    padding: 0;
+
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(229,115,115,0.45);
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    gap: 10px;
+    gap: 0;
+
+    z-index: 1002;
 }
 
 #scoreNoteDisplay.active {
     display: flex;
-    align-items: center;
+}
+
+/* Hide the "Play:" label — not needed in compact circle */
+#scoreNoteDisplay > span:first-child {
+    display: none;
 }
 
 #scoreNoteName {
-    font-size: 28px;
+    font-size: 16px;
     font-weight: 800;
-    color: var(--accent-primary);
-    min-width: 60px;
+    color: white;
+    line-height: 1;
     text-align: center;
+    min-width: unset;
+}
+
+#scoreNoteHint {
+    font-size: 18px;
+    opacity: 0.9;
+    color: white;
+    line-height: 1;
 }
 
 </style>
@@ -3421,10 +3438,7 @@ function _applyHighlight(els) {
         el.setAttribute('fill', '#E57373');
         el.setAttribute('filter', 'url(#hlGlow)');
     }
-    // Scroll to the first (main) notehead
-    if (_currentHighlightEls[0]) {
-        try { _currentHighlightEls[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
-    }
+
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
