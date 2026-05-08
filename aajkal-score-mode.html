@@ -629,12 +629,10 @@ canvas {
     display: flex;
 }
 
-/* ── FIX 1: no rogue <style> tag here ── */
-/* ── FIX 4: only ONE #scoreObj rule (cubic-bezier, no duplicate 0.4s ease) ── */
 #scorePageWrapper {
     position: relative;
     width: 100%;
-    overflow: hidden;          /* clips the wide SVG — no manual scrolling */
+    overflow: hidden;
 }
 
 #scoreObj {
@@ -680,17 +678,9 @@ canvas {
     50%       { box-shadow: 0 0 0 8px rgba(229,115,115,0.10), 0 0 28px rgba(229,115,115,0.55); }
 }
 
-/* Score page nav */
+/* FIX 1: Page nav hidden — single tall SVG, no pagination needed */
 #scorePageNav {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin: 8px 0 4px 0;
-}
-
-#scorePageNav button {
-    padding: 6px 16px;
-    font-size: 14px;
+    display: none;
 }
 
 #scorePageLabel {
@@ -796,6 +786,13 @@ canvas {
 <div id="scorePageWrapper">
 <div id="scoreObj" style="display:block;width:max-content;min-width:100%;overflow:visible;"></div>
         <div id="scoreHighlight" style="display:none;"></div>
+    </div>
+
+    <!-- FIX 1: Page nav kept in DOM so JS doesn't crash, but hidden via CSS above -->
+    <div id="scorePageNav">
+        <button id="scorePrevBtn" disabled>‹ Prev</button>
+        <span id="scorePageLabel">Page 1 / 3</span>
+        <button id="scoreNextBtn">Next ›</button>
     </div>
 </div>
 
@@ -3146,21 +3143,19 @@ addMidiFallingRectangle(
 }
 
 // ============================================================
-// SCORE VIEW — LINEAR NOTE HIGHLIGHTING (FIXED)
+// SCORE VIEW — LINEAR NOTE HIGHLIGHTING
 // ============================================================
-const PAGE_OFFSETS = {
-    all:    { 1: 0, 2: 9999, 3: 9999 },
-    treble: { 1: 0, 2: 9999, 3: 9999 },
-    bass:   { 1: 0, 2: 9999, 3: 9999 },
-};
 
-let _svgNoteElements = [];   // sorted <path class="Note"> elements for current page
+// FIX 2: PAGE_OFFSETS removed — single flat SVG, no page offsets needed.
+// FIX 3: _buildAllPageOffsets removed — it was injecting all 3 SVGs into
+//         the DOM simultaneously, inflating _svgNoteElements to 798 and
+//         completely breaking the index mapping.
+
+let _svgNoteElements = [];   // sorted <path class="Note"> elements
 let _currentHighlightEl = null;
-  let _currentTieDestEl = null;
+let _currentTieDestEl = null;
 let _svgTieDestElements = [];
 let _tieDestinations = [];
-// ── FIX 2: _lastPannedMeasure and _panScoreToEntry live here,
-//           clean inside the module — NO wrapper <script> tags ──
 let _lastPannedMeasure = -1;
 
 function _buildSvgNoteIndex() {
@@ -3198,10 +3193,9 @@ function _buildSvgNoteIndex() {
         raw.push({ el, tx, ty, isTieDest });
     });
 
-    // ── FIX: determine clef by actual Y midpoint, not row-parity ──
+    // Determine clef by actual Y midpoint
     const allTys = raw.map(n => n.ty).sort((a, b) => a - b);
 
-    // Find the largest Y gap — that's the gap between treble and bass staves
     let maxGap = 0, splitY = 0;
     for (let i = 1; i < allTys.length; i++) {
         const gap = allTys[i] - allTys[i - 1];
@@ -3213,7 +3207,7 @@ function _buildSvgNoteIndex() {
 
     console.log(`🎼 Clef split Y = ${splitY.toFixed(1)} (gap = ${maxGap.toFixed(1)}px)`);
 
-  // Sort by reading order: group into rows first, then top-to-bottom, left-to-right within each row
+    // Sort into rows, then treble rows first, bass rows after
     const ROW_TOLERANCE = 40;
     const rows = [];
     raw.forEach(n => {
@@ -3252,8 +3246,9 @@ function _buildSvgNoteIndex() {
         svgEl.insertBefore(defs, svgEl.firstChild);
     }
 
-    console.log(`✅ SVG index: ${_svgNoteElements.length} playable notes (treble: ${raw.filter(n=>!n.isTieDest&&n.clef==='treble').length}, bass: ${raw.filter(n=>!n.isTieDest&&n.clef==='bass').length})`);
+    console.log(`✅ SVG index: ${_svgNoteElements.length} playable notes (treble: ${_svgNoteElements.filter(n=>n.clef==='treble').length}, bass: ${_svgNoteElements.filter(n=>n.clef==='bass').length})`);
 }
+
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const targetTime = firstPracticeNote.time;
     const targetMidi = firstPracticeNote.midi;
@@ -3285,10 +3280,9 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
     console.log(`🎯 scoreNoteOffset=${count} (tie-aware)`);
     return count;
 }
-  // Per-page notehead counts (populated by renderScorePage calls)
-const _pageNoteCounts = { treble: {}, bass: {}, all: {} };
 
-  
+// FIX 4: _highlightSvgNote simplified — flat index only, no page offsets,
+//         uses scrollIntoView to keep the highlighted note visible.
 function _highlightSvgNote(globalIdx, clefMode) {
     try {
         if (_currentHighlightEl) {
@@ -3307,7 +3301,8 @@ function _highlightSvgNote(globalIdx, clefMode) {
             ? _svgNoteElements
             : _svgNoteElements.filter(n => n.clef === clefMode);
 
-        const localIdx = globalIdx; // single SVG = no page offset needed
+        // Flat index — no page offset arithmetic needed
+        const localIdx = globalIdx;
 
         console.log(`🔦 globalIdx=${globalIdx} localIdx=${localIdx} filtered.len=${filtered.length}`);
 
@@ -3322,7 +3317,7 @@ function _highlightSvgNote(globalIdx, clefMode) {
         entry.el.setAttribute('filter', 'url(#hlGlow)');
         _currentHighlightEl = entry.el;
 
-        // Scroll the highlighted note into view
+        // Scroll highlighted note into view smoothly
         try {
             entry.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch(e) {}
@@ -3342,76 +3337,6 @@ function _highlightSvgNote(globalIdx, clefMode) {
         }
     } catch(e) {
         console.warn('_highlightSvgNote error:', e);
-    }
-}
-  
-function _countTiesBeforeTime(cutoffTime, hand) {
-    const container = document.getElementById('scoreObj');
-    if (!container) return 0;
-    const svgEl = container.querySelector('svg');
-    if (!svgEl) return 0;
-
-    // Build tie destination coords (same logic as _buildSvgNoteIndex)
-    const tieDestinations = [];
-    svgEl.querySelectorAll('path.TieSegment').forEach(tie => {
-        const nums = tie.getAttribute('d').match(/[-\d.]+/g);
-        if (nums && nums.length >= 7) {
-            tieDestinations.push({ x: parseFloat(nums[6]), y: parseFloat(nums[7]) });
-        }
-    });
-
-    if (!tieDestinations.length) return 0;
-
-    // Find the x-coordinate of the first note at cutoffTime
-    // (i.e. what tx does measure 12 start at in the SVG?)
-    const raw = [];
-    svgEl.querySelectorAll('path.Note').forEach(el => {
-        const t = el.getAttribute('transform') || '';
-        const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
-        if (!mm) return;
-        raw.push({ tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
-    });
-
-    if (!raw.length) return 0;
-
-    // The first note in practiceNotes corresponds to SVG index = scoreNoteOffset + PAGE_OFFSETS
-    // But we don't have that yet — instead, use the temporal cutoff mapped to x-space:
-    // Find the SVG x that corresponds to the MIDI index `count` (before tieBonus)
-    // Simpler: count ties whose destination x < the x of the note at MIDI index `count`
-    
-    // Sort all notes left-to-right to find cutoff x
-    raw.sort((a, b) => a.tx - b.tx);
-    
-    // MIDI count before cutoffTime (recompute inline — we need it for the x lookup)
-    let midiCount = 0;
-    for (const n of allMidiNotes) {
-        if (n.time >= cutoffTime - 0.001) break;
-        if (hand === 'both') { midiCount++; continue; }
-        const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
-        if (isMatch) midiCount++;
-    }
-
-    const cutoffNote = raw[midiCount];
-    if (!cutoffNote) return 0;
-    const cutoffX = cutoffNote.tx;
-
-    // Count tie destinations that land before the cutoff x
-    const count = tieDestinations.filter(td => td.x < cutoffX - 5).length;
-    console.log(`🎵 Ties before x=${cutoffX.toFixed(1)} (measure start): ${count}`);
-    return count;
-}
-async function _autoNavigateToPage(globalIdx, clefMode, offsetTable) {
-    for (const p of [1, 2, 3]) {
-        const start = offsetTable[p] || 0;
-        const next  = offsetTable[p + 1] ?? Infinity;
-        if (globalIdx >= start && globalIdx < next) {
-            if (scoreCurrentPage !== p) {
-                scoreCurrentPage = p;
-                await renderScorePage(p);
-            }
-            _highlightSvgNote(globalIdx, clefMode);
-            return;
-        }
     }
 }
 
@@ -3436,8 +3361,8 @@ function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
     _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
 }
+
 function _midiIndexToSvgIndex(midiPracticeIdx, hand) {
-    // Count how many non-tied notes are in practiceNotes[0..midiPracticeIdx-1]
     const filtered = allMidiNotes.filter(n => {
         if (hand === 'treble') return n.track === TREBLE;
         if (hand === 'bass')   return n.track === BASS;
@@ -3458,7 +3383,6 @@ function _midiIndexToSvgIndex(midiPracticeIdx, hand) {
         }
     }
 
-    // Find where practiceNotes[midiPracticeIdx] sits in filtered[]
     const target = practiceNotes[midiPracticeIdx];
     if (!target) return scoreNoteOffset;
 
@@ -3470,6 +3394,7 @@ function _midiIndexToSvgIndex(midiPracticeIdx, hand) {
     }
     return svgCount;
 }
+
 function onTrainingNoteSpawned(noteObj) {
     if (!scoreModeActive) return;
     const noteName = getNoteName(noteObj.midi);
@@ -3477,7 +3402,7 @@ function onTrainingNoteSpawned(noteObj) {
     const beatLabel = beatsToNoteName(beats);
     showScoreNoteDisplay(noteName, beatLabel);
 
-    // Use tie-aware SVG index instead of raw trainingIndex
+    // Use tie-aware SVG index
     const svgIdx = _midiIndexToSvgIndex(trainingIndex, clefMode);
     _highlightSvgNote(svgIdx, clefMode);
 }
@@ -3504,6 +3429,7 @@ async function initScoreMode() {
     }
 }
 
+// FIX 5: renderScorePage loads ONE SVG at a time — no multi-SVG injection.
 async function renderScorePage(pageNum) {
     const container = document.getElementById('scoreObj');
     const response = await fetch(`aajkal-${pageNum}.svg`);
@@ -3511,27 +3437,24 @@ async function renderScorePage(pageNum) {
     container.innerHTML = svgText;
     const svgEl = container.querySelector('svg');
     if (svgEl) {
-        // ── FIX 3: 100vw = maximum horizontal zoom ──
         svgEl.style.width  = '100vw';
         svgEl.style.height = 'auto';
         svgEl.removeAttribute('width');
         svgEl.removeAttribute('height');
     }
     _buildSvgNoteIndex();
-    updateScorePageLabel();
-    if (scoreModeActive && currentTrainingNote) {
-_highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
+    // Page label update (nav is hidden but keep it functional for future use)
+    document.getElementById('scorePageLabel').textContent =
+        `Page ${pageNum} / ${SCORE_TOTAL_PAGES}`;
+    document.getElementById('scorePrevBtn').disabled = pageNum <= 1;
+    document.getElementById('scoreNextBtn').disabled = pageNum >= SCORE_TOTAL_PAGES;
 
+    if (scoreModeActive && currentTrainingNote) {
+        _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
     }
 }
 
-function updateScorePageLabel() {
-    document.getElementById('scorePageLabel').textContent =
-        `Page ${scoreCurrentPage} / ${SCORE_TOTAL_PAGES}`;
-    document.getElementById('scorePrevBtn').disabled = scoreCurrentPage <= 1;
-    document.getElementById('scoreNextBtn').disabled = scoreCurrentPage >= SCORE_TOTAL_PAGES;
-}
-
+// Page nav buttons exist in DOM (prevents crash) but nav is hidden via CSS
 document.getElementById('scorePrevBtn').addEventListener('click', async () => {
     if (scoreCurrentPage > 1) {
         scoreCurrentPage--;
@@ -3562,7 +3485,7 @@ scoreModeToggle.addEventListener('change', async () => {
         await initScoreMode();
         if (trainingActive && currentTrainingNote) {
             showScoreNoteDisplay(currentTrainingNote);
-_highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
+            _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
         }
     } else {
         bottomDock.classList.remove('score-mode');
@@ -3572,6 +3495,7 @@ _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
         resizeCanvas();
     }
 });
+
 window._debug = function() {
     const svgTreble = _svgNoteElements.filter(n => n.clef === 'treble');
     console.log('Total SVG treble noteheads:', svgTreble.length);
@@ -3591,6 +3515,7 @@ window._debug = function() {
     }
     console.log('Final non-tied count before t=13.2:', count);
 };
+
 function handleMIDIMessage(event) {
     if (previewMode) return;
     
