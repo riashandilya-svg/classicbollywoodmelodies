@@ -3279,27 +3279,30 @@ function _buildSvgNoteIndex() {
 }
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
-    const targetTime = firstPracticeNote.time; // use .time, not .playTime
+    // Use .time (original MIDI time), NOT .playTime (remapped section time)
+    const targetTime = firstPracticeNote.time;
 
     const filtered = allMidiNotes.filter(n => {
         if (hand === 'both') return true;
         return hand === 'treble' ? n.track === TREBLE : n.track === BASS;
     });
 
-    let midiIdx = filtered.length; // default: past the end
+    // Find how many notes of this hand come before the first practice note
+    let midiIdx = 0;
     for (let i = 0; i < filtered.length; i++) {
         if (filtered[i].time >= targetTime - 0.005) {
             midiIdx = i;
             break;
         }
+        midiIdx = i + 1;
     }
 
-    console.log(`🎯 _computeScoreNoteOffset: hand=${hand}, targetTime=${targetTime.toFixed(3)}, midiIdx=${midiIdx}`);
-    return midiIdx; // RAW — do NOT subtract pageOffset here
+    console.log(`🎯 scoreNoteOffset=${midiIdx} (hand=${hand}, targetTime=${targetTime.toFixed(3)})`);
+    // Return RAW global index — _highlightSvgNote will subtract pageOffset
+    return midiIdx;
 }
   
 function _highlightSvgNote(globalIdx, clefMode) {
-    // Clear previous
     if (_currentHighlightEl) {
         _currentHighlightEl.removeAttribute('fill');
         _currentHighlightEl.removeAttribute('filter');
@@ -3319,11 +3322,12 @@ function _highlightSvgNote(globalIdx, clefMode) {
     const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
                       : clefMode === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
-
     const pageOffset = offsetTable[scoreCurrentPage] || 0;
-    const localIdx   = globalIdx - pageOffset; // subtract ONCE here
 
-    console.log(`🔦 highlight: globalIdx=${globalIdx}, pageOffset=${pageOffset}, localIdx=${localIdx}, filtered.length=${filtered.length}`);
+    // globalIdx is raw MIDI index; subtract pageOffset exactly once here
+    const localIdx = globalIdx - pageOffset;
+
+    console.log(`🔦 globalIdx=${globalIdx} pageOffset=${pageOffset} localIdx=${localIdx} filtered.len=${filtered.length}`);
 
     if (localIdx < 0 || localIdx >= filtered.length) {
         _autoNavigateToPage(globalIdx, clefMode, offsetTable);
@@ -3334,11 +3338,8 @@ function _highlightSvgNote(globalIdx, clefMode) {
     entry.el.setAttribute('fill', '#E57373');
     entry.el.setAttribute('filter', 'url(#hlGlow)');
     _currentHighlightEl = entry.el;
-
-    // Pan score so highlight is visible
     _panScoreToEntry(entry);
 
-    // Highlight tie destination if one follows immediately to the right
     const filteredTieDests = clefMode === 'both'
         ? _svgTieDestElements
         : _svgTieDestElements.filter(n => n.clef === clefMode);
@@ -3346,13 +3347,13 @@ function _highlightSvgNote(globalIdx, clefMode) {
     const tieDest = filteredTieDests
         .filter(td => td.tx > entry.tx && Math.abs(td.ty - entry.ty) < 80)
         .sort((a, b) => a.tx - b.tx)[0];
-
     if (tieDest) {
         tieDest.el.setAttribute('fill', '#E57373');
         tieDest.el.setAttribute('filter', 'url(#hlGlow)');
         _currentTieDestEl = tieDest;
     }
-}  
+}
+  
 function _countTiesBeforeTime(cutoffTime, hand) {
     const container = document.getElementById('scoreObj');
     if (!container) return 0;
@@ -3442,7 +3443,7 @@ function _buildSvgMidiMap() {
 
 function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
-    _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
+    _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
 }
 
 function onTrainingNoteSpawned(noteObj) {
@@ -3451,7 +3452,10 @@ function onTrainingNoteSpawned(noteObj) {
     const beats = noteObj.duration / secondsPerBeat;
     const beatLabel = beatsToNoteName(beats);
     showScoreNoteDisplay(noteName, beatLabel);
-    _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
+    // scoreNoteOffset = raw global midi idx of first practice note
+    // trainingIndex   = how many notes into practiceNotes we are
+    // together they give the current note's global midi index
+    _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
 }
 
 function showScoreNoteDisplay(noteName, hint) {
@@ -3492,7 +3496,8 @@ async function renderScorePage(pageNum) {
     _buildSvgNoteIndex();
     updateScorePageLabel();
     if (scoreModeActive && currentTrainingNote) {
-        _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
+_highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
+
     }
 }
 
