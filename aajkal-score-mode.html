@@ -801,7 +801,11 @@ canvas {
 <!-- 📄 Score View (hidden by default) -->
 <div id="scoreView">
 <div id="scorePageWrapper">
-<div id="scoreObj" style="display:block;width:max-content;min-width:100%;overflow:visible;"></div>
+<div id="scoreObj" style="display:block;width:100%;overflow:visible;">
+  <div id="scorePage1" style="width:100%;"></div>
+  <div id="scorePage2" style="width:100%;"></div>
+  <div id="scorePage3" style="width:100%;"></div>
+</div>
         <div id="scoreHighlight" style="display:none;"></div>
     </div>
 
@@ -3307,100 +3311,90 @@ function _buildSvgNoteIndex() {
     _midiRankMap        = new Map();
     _currentHighlightEl = null;
 
-    const container = document.getElementById('scoreObj');
-    if (!container) return;
-    const svgEl = container.querySelector('svg');
-    if (!svgEl) return;
+    let totalTied = 0;
 
-    // Inject glow filter once
-    if (!svgEl.querySelector('#hlGlow')) {
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = `<filter id="hlGlow" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>`;
-        svgEl.insertBefore(defs, svgEl.firstChild);
-    }
+    // Process all 3 pages
+    for (let pageNum = 1; pageNum <= SCORE_TOTAL_PAGES; pageNum++) {
+        const container = document.getElementById(`scorePage${pageNum}`);
+        if (!container) continue;
+        const svgEl = container.querySelector('svg');
+        if (!svgEl) continue;
 
-    const pageIdx = (scoreCurrentPage || 1) - 1;
-    const pageSystems = SVG_PAGE_SYSTEMS[pageIdx] || [];
-
-    // ── Step 1: collect all noteheads ────────────────────────────────────
-    const raw = [];
-    svgEl.querySelectorAll('path.Note').forEach(el => {
-        const t  = el.getAttribute('transform') || '';
-        const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
-        if (!mm) return;
-        raw.push({ el, tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
-    });
-
-    if (!raw.length) {
-        console.warn('_buildSvgNoteIndex: no path.Note elements found');
-        return;
-    }
-
-    // ── Step 2: find tied-continuation noteheads via TieSegment arcs ─────
-    // Each path.TieSegment has a path "M x1,y1 C ... xN,yN".
-    // The arc's END point (last coordinate pair) is closest to the
-    // tied-continuation notehead (the one the user does NOT play).
-    const tiedNoteheadSet = new Set(); // indices into raw[]
-
-    svgEl.querySelectorAll('path.TieSegment').forEach(el => {
-        const d = el.getAttribute('d') || '';
-        const coords = [...d.matchAll(/([\d.]+),([\d.]+)/g)].map(m => [parseFloat(m[1]), parseFloat(m[2])]);
-        if (coords.length < 2) return;
-        const [ex, ey] = coords[coords.length - 1];
-
-        // Find closest notehead to this arc endpoint
-        let bestIdx = -1, bestDist = Infinity;
-        for (let i = 0; i < raw.length; i++) {
-            const dist = Math.abs(raw[i].tx - ex) + Math.abs(raw[i].ty - ey) * 0.3;
-            if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+        // Inject glow filter once per SVG
+        if (!svgEl.querySelector('#hlGlow')) {
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            defs.innerHTML = `<filter id="hlGlow" x="-60%" y="-60%" width="220%" height="220%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>`;
+            svgEl.insertBefore(defs, svgEl.firstChild);
         }
-        if (bestIdx >= 0 && bestDist < 60) {
-            tiedNoteheadSet.add(bestIdx);
-        }
-    });
 
-    console.log(`🔗 SVG tied-continuation noteheads detected: ${tiedNoteheadSet.size}`);
+        const pageSystems = SVG_PAGE_SYSTEMS[pageNum - 1] || [];
 
-    // ── Step 3: annotate each notehead, skipping tied continuations ───────
-    for (let ri = 0; ri < raw.length; ri++) {
-        if (tiedNoteheadSet.has(ri)) continue;
+        // ── Step 1: collect all noteheads for this page ──────────────────
+        const raw = [];
+        svgEl.querySelectorAll('path.Note').forEach(el => {
+            const t  = el.getAttribute('transform') || '';
+            const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+            if (!mm) return;
+            raw.push({ el, tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
+        });
 
-        const n = raw[ri];
-        for (const sys of pageSystems) {
-            const inTreble = n.ty >= sys.treble_top - 50 && n.ty <= sys.treble_bot + 50;
-            const inBass   = n.ty >= sys.bass_top   - 50 && n.ty <= sys.bass_bot   + 50;
-            if (!inTreble && !inBass) continue;
+        if (!raw.length) continue;
 
-            const clef = inTreble ? 'treble' : 'bass';
-            const bls  = sys.barline_xs;
-            for (let i = 0; i < bls.length - 1; i++) {
-                const leftBound  = (i === 0) ? (bls[i] - 20) : bls[i];
-                const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
-                if (n.tx >= leftBound && n.tx < rightBound) {
-                    const sheet_measure = sys.start_measure + i;
-                    const idx = _svgNoteElements.length;
-                    _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
-
-                    if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
-                    _svgBuckets[sheet_measure][clef].push(idx);
-                    break;
-                }
+        // ── Step 2: find tied-continuation noteheads ─────────────────────
+        const tiedNoteheadSet = new Set();
+        svgEl.querySelectorAll('path.TieSegment').forEach(el => {
+            const d = el.getAttribute('d') || '';
+            const coords = [...d.matchAll(/([\d.]+),([\d.]+)/g)].map(m => [parseFloat(m[1]), parseFloat(m[2])]);
+            if (coords.length < 2) return;
+            const [ex, ey] = coords[coords.length - 1];
+            let bestIdx = -1, bestDist = Infinity;
+            for (let i = 0; i < raw.length; i++) {
+                const dist = Math.abs(raw[i].tx - ex) + Math.abs(raw[i].ty - ey) * 0.3;
+                if (dist < bestDist) { bestDist = dist; bestIdx = i; }
             }
-            break;
+            if (bestIdx >= 0 && bestDist < 60) tiedNoteheadSet.add(bestIdx);
+        });
+        totalTied += tiedNoteheadSet.size;
+
+        // ── Step 3: annotate each notehead ───────────────────────────────
+        for (let ri = 0; ri < raw.length; ri++) {
+            if (tiedNoteheadSet.has(ri)) continue;
+            const n = raw[ri];
+            for (const sys of pageSystems) {
+                const inTreble = n.ty >= sys.treble_top - 50 && n.ty <= sys.treble_bot + 50;
+                const inBass   = n.ty >= sys.bass_top   - 50 && n.ty <= sys.bass_bot   + 50;
+                if (!inTreble && !inBass) continue;
+                const clef = inTreble ? 'treble' : 'bass';
+                const bls  = sys.barline_xs;
+                for (let i = 0; i < bls.length - 1; i++) {
+                    const leftBound  = (i === 0) ? (bls[i] - 20) : bls[i];
+                    const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
+                    if (n.tx >= leftBound && n.tx < rightBound) {
+                        const sheet_measure = sys.start_measure + i;
+                        const idx = _svgNoteElements.length;
+                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
+                        if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
+                        _svgBuckets[sheet_measure][clef].push(idx);
+                        break;
+                    }
+                }
+                break;
+            }
         }
     }
 
-    // Sort each bucket by X position (left → right = ascending time order)
+    // Sort each bucket by X position
     for (const m of Object.keys(_svgBuckets)) {
         for (const clef of ['treble', 'bass']) {
             _svgBuckets[m][clef].sort((a, b) => _svgNoteElements[a].tx - _svgNoteElements[b].tx);
         }
     }
 
-    console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${tiedNoteheadSet.size} tied continuations excluded) across measures ` +
+    console.log(`🔗 SVG tied-continuation noteheads detected: ${totalTied}`);
+    console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${totalTied} tied continuations excluded) across measures ` +
         `${Math.min(...Object.keys(_svgBuckets).map(Number))}–` +
         `${Math.max(...Object.keys(_svgBuckets).map(Number))}`);
 }
@@ -3571,59 +3565,43 @@ window._debug = function() {
 };
 
 // ============================================================
-// SCORE VIEW — SVG LOADING & PAGE NAVIGATION
+// SCORE VIEW — ALL 3 PAGES LOADED & STACKED
 // ============================================================
 async function initScoreMode() {
     try {
-        await renderScorePage(scoreCurrentPage);
+        await renderAllScorePages();
     } catch(e) {
         console.warn('SVG score load failed:', e);
     }
 }
 
-async function renderScorePage(pageNum) {
-    const container = document.getElementById('scoreObj');
-    const response = await fetch(`aajkal-${pageNum}.svg`);
-    const svgText = await response.text();
-    container.innerHTML = svgText;
-    const svgEl = container.querySelector('svg');
-    if (svgEl) {
-        svgEl.style.width  = '100vw';
-        svgEl.style.height = 'auto';
-        svgEl.removeAttribute('width');
-        svgEl.removeAttribute('height');
-    }
-
-    // Build the full SVG↔MIDI map (replaces old _buildSvgNoteIndex call)
-    _buildSvgMidiMap();
-
-    document.getElementById('scorePageLabel').textContent =
-        `Page ${pageNum} / ${SCORE_TOTAL_PAGES}`;
-    document.getElementById('scorePrevBtn').disabled = pageNum <= 1;
-    document.getElementById('scoreNextBtn').disabled = pageNum >= SCORE_TOTAL_PAGES;
-
-    if (scoreModeActive && currentTrainingNote && practiceNotes.length > 0) {
-        const noteObj = practiceNotes[trainingIndex];
-        if (noteObj) {
-            const indices = _svgIndicesForMidiNote(noteObj, clefMode);
-            if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
+async function renderAllScorePages() {
+    for (let pageNum = 1; pageNum <= SCORE_TOTAL_PAGES; pageNum++) {
+        const container = document.getElementById(`scorePage${pageNum}`);
+        if (!container) continue;
+        const response = await fetch(`aajkal-${pageNum}.svg`);
+        const svgText = await response.text();
+        container.innerHTML = svgText;
+        const svgEl = container.querySelector('svg');
+        if (svgEl) {
+            svgEl.style.width  = '100%';
+            svgEl.style.height = 'auto';
+            svgEl.style.display = 'block';
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
         }
     }
+    // Build the full SVG↔MIDI map across all pages
+    _buildSvgMidiMap();
 }
 
-document.getElementById('scorePrevBtn').addEventListener('click', async () => {
-    if (scoreCurrentPage > 1) {
-        scoreCurrentPage--;
-        await renderScorePage(scoreCurrentPage);
-    }
-});
+// Legacy single-page render kept so prev/next button listeners don't crash
+async function renderScorePage(pageNum) {
+    await renderAllScorePages();
+}
 
-document.getElementById('scoreNextBtn').addEventListener('click', async () => {
-    if (scoreCurrentPage < SCORE_TOTAL_PAGES) {
-        scoreCurrentPage++;
-        await renderScorePage(scoreCurrentPage);
-    }
-});
+document.getElementById('scorePrevBtn').addEventListener('click', async () => {});
+document.getElementById('scoreNextBtn').addEventListener('click', async () => {});
 
 const scoreModeToggle = document.getElementById('scoreModeToggle');
 scoreModeToggle.addEventListener('change', async () => {
