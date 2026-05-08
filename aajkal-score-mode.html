@@ -3258,7 +3258,7 @@ function _buildSvgNoteIndex() {
     const pageIdx = (scoreCurrentPage || 1) - 1;
     const pageSystems = SVG_PAGE_SYSTEMS[pageIdx] || [];
 
-    // Parse all path.Note transform coordinates
+    // ── Step 1: collect all noteheads ────────────────────────────────────
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
         const t  = el.getAttribute('transform') || '';
@@ -3272,8 +3272,37 @@ function _buildSvgNoteIndex() {
         return;
     }
 
-    // Annotate each notehead: system → clef → sheet_measure
-    for (const n of raw) {
+    // ── Step 2: find tied-continuation noteheads via TieSegment arcs ─────
+    // Each path.TieSegment has a path "M x1,y1 C ... xN,yN".
+    // The arc's END point (last coordinate pair) is closest to the
+    // tied-continuation notehead (the one the user does NOT play).
+    // We find the nearest notehead to that endpoint and flag it.
+    const tiedNoteheadSet = new Set(); // indices into raw[]
+
+    svgEl.querySelectorAll('path.TieSegment').forEach(el => {
+        const d = el.getAttribute('d') || '';
+        const coords = [...d.matchAll(/([\d.]+),([\d.]+)/g)].map(m => [parseFloat(m[1]), parseFloat(m[2])]);
+        if (coords.length < 2) return;
+        const [ex, ey] = coords[coords.length - 1];
+
+        // Find closest notehead to this arc endpoint
+        let bestIdx = -1, bestDist = Infinity;
+        for (let i = 0; i < raw.length; i++) {
+            const dist = Math.abs(raw[i].tx - ex) + Math.abs(raw[i].ty - ey) * 0.3;
+            if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+        }
+        if (bestIdx >= 0 && bestDist < 60) {  // 60px tolerance
+            tiedNoteheadSet.add(bestIdx);
+        }
+    });
+
+    console.log(`🔗 SVG tied-continuation noteheads detected: ${tiedNoteheadSet.size}`);
+
+    // ── Step 3: annotate each notehead, skipping tied continuations ───────
+    for (let ri = 0; ri < raw.length; ri++) {
+        if (tiedNoteheadSet.has(ri)) continue;  // skip tied continuation noteheads
+
+        const n = raw[ri];
         for (const sys of pageSystems) {
             const inTreble = n.ty >= sys.treble_top - 50 && n.ty <= sys.treble_bot + 50;
             const inBass   = n.ty >= sys.bass_top   - 50 && n.ty <= sys.bass_bot   + 50;
@@ -3289,13 +3318,12 @@ function _buildSvgNoteIndex() {
                     const idx = _svgNoteElements.length;
                     _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
 
-                    // Build bucket: _svgBuckets[sheet_measure][clef] = [indices sorted by tx]
                     if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
                     _svgBuckets[sheet_measure][clef].push(idx);
                     break;
                 }
             }
-            break; // each notehead belongs to exactly one system
+            break;
         }
     }
 
@@ -3306,7 +3334,7 @@ function _buildSvgNoteIndex() {
         }
     }
 
-    console.log(`✅ SVG noteheads: ${_svgNoteElements.length} across measures ` +
+    console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${tiedNoteheadSet.size} tied continuations excluded) across measures ` +
         `${Math.min(...Object.keys(_svgBuckets).map(Number))}–` +
         `${Math.max(...Object.keys(_svgBuckets).map(Number))}`);
 }
@@ -3321,13 +3349,7 @@ function _buildSvgMidiMap() {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
-    // Sort treble and bass separately by time, then assign ranks.
-    // isTie comes from _tiedNoteKeys (pre-split detection).
     function assignRanks(notes, clef) {
-        // We need to link parent → child for tieKeys.
-        // Walk in time order; track the most recent note of each midi pitch.
-        const lastEntry = new Map(); // midi → { mk, entry }
-
         for (const note of notes) {
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -3338,33 +3360,7 @@ function _buildSvgMidiMap() {
             const rank = rankCounters[bucketKey]++;
 
             const mk = midiKeyFor(note);
-
-            // Is this note a tied continuation?
-            // Check _tiedNoteKeys using the note's ORIGINAL time.
-            // splitRepeatedNotes may have shifted .time by +NOTE_GAP_TIME (0.02).
-            // So we check both the current time AND current-time-0.02 as the original.
-            const originalTime1 = note.time;
-            const originalTime2 = note.time - NOTE_GAP_TIME;
-            const isTie =
-                _tiedNoteKeys.has(`${originalTime1.toFixed(4)}|${note.midi}|${note.track}`) ||
-                _tiedNoteKeys.has(`${originalTime2.toFixed(4)}|${note.midi}|${note.track}`);
-
-            const entry = { sheet_measure: sheetMeasure, clef, rank, isTie, tieKeys: null, parentKey: null };
-            _midiRankMap.set(mk, entry);
-
-            // Link to parent if this is a tie
-            if (isTie) {
-                const parentInfo = lastEntry.get(note.midi);
-                if (parentInfo) {
-                    entry.parentKey = parentInfo.mk;
-                    const parentEntry = parentInfo.entry;
-                    if (!parentEntry.tieKeys) parentEntry.tieKeys = [];
-                    parentEntry.tieKeys.push(mk);
-                }
-            }
-
-            // Always update lastEntry so chains work (A tied to B tied to C)
-            lastEntry.set(note.midi, { mk, entry });
+            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
         }
     }
 
@@ -3376,18 +3372,11 @@ function _buildSvgMidiMap() {
     assignRanks(trebleMidi, 'treble');
     assignRanks(bassMidi, 'bass');
 
-    // Log tie summary
-    let tieCount = 0, tieKeyCount = 0;
-    _midiRankMap.forEach(v => {
-        if (v.isTie) tieCount++;
-        if (v.tieKeys?.length) tieKeyCount++;
-    });
-    console.log(`🗺  Rank map built: ${_midiRankMap.size} notes, ${tieCount} tied continuations, ${tieKeyCount} parents with tieKeys`);
+    console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
 }
 
 
 function _svgIndicesForMidiNote(noteObj, hand) {
-    // Always key by original .time, not .playTime
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
     if (!entry) {
@@ -3398,17 +3387,12 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // Only highlight the notehead for THIS note (the one the user must play).
-    // Tied continuations are skipped in spawnNextValidNote, so the user never
-    // has to play them — we must NOT highlight the tied noteheads, or the dot
-    // appears to jump forward onto the tied note visually.
-    const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef];
+    const bucket = _svgBuckets[entry.sheet_measure]?.[clef];
     if (bucket && entry.rank < bucket.length) {
         return [bucket[entry.rank]];
-    } else {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${entry.clef}] rank=${entry.rank} missing`);
-        return [];
     }
+    console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
+    return [];
 }
 
 
