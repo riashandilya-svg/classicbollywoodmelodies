@@ -3256,17 +3256,29 @@ function _buildSvgNoteIndex() {
 
             const clef = inTreble ? 'treble' : 'bass';
             const bls  = sys.barline_xs;
-            for (let i = 0; i < bls.length - 1; i++) {
-                if (n.tx >= bls[i] - 5 && n.tx <= bls[i + 1] + 5) {
-                    const sheet_measure = sys.start_measure + i;
-                    const idx = _svgNoteElements.length;
-                    _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
 
-                    // Build bucket: _svgBuckets[sheet_measure][clef] = [indices sorted by tx]
-                    if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
-                    _svgBuckets[sheet_measure][clef].push(idx);
+            // Robust measure assignment: find the last barline that is to the
+            // LEFT of (or at) this notehead. That barline's index = measure offset.
+            // Using a generous left-tolerance (30px) catches first-notes that sit
+            // only a few pixels past the barline, including at system starts where
+            // clef/keysig/timesig symbols push the first notehead to the right.
+            let measureIdx = -1;
+            for (let i = 0; i < bls.length - 1; i++) {
+                if (n.tx >= bls[i] - 30) {
+                    measureIdx = i;
+                } else {
                     break;
                 }
+            }
+            // Also ensure the note doesn't go past the last barline
+            if (measureIdx >= 0 && n.tx <= bls[bls.length - 1] + 30) {
+                const sheet_measure = sys.start_measure + measureIdx;
+                const idx = _svgNoteElements.length;
+                _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
+
+                // Build bucket: _svgBuckets[sheet_measure][clef] = [indices sorted by tx]
+                if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
+                _svgBuckets[sheet_measure][clef].push(idx);
             }
             break; // each notehead belongs to exactly one system
         }
