@@ -2028,46 +2028,53 @@ previewTimeouts.push(endTimeout);
 }
 
 
-function spawnNextValidNote(){
+function spawnNextValidNote() {
 
     while (trainingIndex < practiceNotes.length) {
-    const note = practiceNotes[trainingIndex];
-    const currentMeasure = getLogicalSheetMeasureFromTime(note.time);
+        const note = practiceNotes[trainingIndex];
 
-    const isTreble = note.track === TREBLE;
-const isBass   = note.track === BASS;
+        // Skip tied continuations — they are already highlighted as part of
+        // their parent note and require no additional key press.
+        const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+        const entry   = _midiRankMap.get(midiKey);
+        if (entry?.isTie) {
+            trainingIndex++;
+            updateTrainingProgress();
+            continue;
+        }
 
+        const isTreble = note.track === TREBLE;
+        const isBass   = note.track === BASS;
 
         if (
-    clefMode === 'both' ||
-    (clefMode === 'treble' && isTreble) ||
-    (clefMode === 'bass' && isBass)
-) {
-        spawnTrainingNote(note);
+            clefMode === 'both' ||
+            (clefMode === 'treble' && isTreble) ||
+            (clefMode === 'bass'   && isBass)
+        ) {
+            spawnTrainingNote(note);
+            return;
+        }
+
+        trainingIndex++;
+        updateTrainingProgress();
+    }
+
+    if (loopEnabled) {
+        trainingIndex = 0;
+        document.getElementById('feedback').textContent = 'Looping section…';
+        setTimeout(() => {
+            playMeasurePreview(sectionStartTime, clefMode);
+        }, 600);
         return;
     }
 
-    trainingIndex++;
-    updateTrainingProgress();
-}
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Excellent work! 🌟';
+    feedback.classList.remove('wrong');
+    feedback.classList.add('correct', 'show');
 
-if (loopEnabled) {
-    trainingIndex = 0;
-    document.getElementById('feedback').textContent = 'Looping section…';
-    setTimeout(() => {
-        playMeasurePreview(sectionStartTime, clefMode);
-    }, 600);
-    return;
-}
-
-const feedback = document.getElementById('feedback');
-feedback.textContent = 'Excellent work! 🌟';
-
-feedback.classList.remove('wrong');
-feedback.classList.add('correct', 'show');
-
-trainingActive = false;
-stopButton.disabled = true;
+    trainingActive = false;
+    stopButton.disabled = true;
 }
 
 function startVisualCountdown(onComplete) {
@@ -3368,10 +3375,6 @@ function _buildSvgMidiMap() {
         `${Object.keys(rankCounters).length} (measure, clef) buckets`);
 }
 
-// ============================================================
-// STEP 3 — find all SVG notehead indices for a MIDI note,
-//           including any tied continuations (returns array)
-// ============================================================
 function _svgIndicesForMidiNote(noteObj, hand) {
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
@@ -3385,19 +3388,23 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
     const results = [];
 
-    // Collect this note + all chained tie targets
+    // Walk the full tie chain: this note → tieKeys → their tieKeys → …
     let keys = [midiKey];
     while (keys.length) {
         const nextKeys = [];
         for (const k of keys) {
             const e = _midiRankMap.get(k);
             if (!e) continue;
+
+            // Add SVG notehead for this link in the chain
             const bucket = _svgBuckets[e.sheet_measure]?.[e.clef];
             if (bucket && e.rank < bucket.length) {
                 results.push(bucket[e.rank]);
             } else {
                 console.warn(`_svgIndicesForMidiNote: bucket[${e.sheet_measure}][${e.clef}] rank=${e.rank} missing`);
             }
+
+            // Queue the next link(s) in the tie chain
             if (e.tieKeys) nextKeys.push(...e.tieKeys);
         }
         keys = nextKeys;
@@ -3406,9 +3413,6 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     return results;
 }
 
-// ============================================================
-// STEP 4 — apply / clear highlight (supports multiple elements)
-// ============================================================
 let _currentHighlightEls = [];
 
 function _applyHighlight(els) {
@@ -3438,34 +3442,25 @@ function clearScoreHighlight() {
     _applyHighlight([]);
 }
 
-// ============================================================
 
+// ============================================================
 // PUBLIC: called whenever a training note is spawned
-
 // ============================================================
-
 function onTrainingNoteSpawned(noteObj) {
-
     if (!scoreModeActive) return;
 
     const noteName = getNoteName(noteObj.midi);
-
     const beats    = noteObj.duration / secondsPerBeat;
-
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    const indices = _svgIndicesForMidiNote(noteObj, clefMode);
+    // Collect indices for THIS note + ALL its tied continuations
+    const allIndices = _svgIndicesForMidiNote(noteObj, clefMode);
 
-    if (indices.length > 0) {
-
-        _applyHighlight(indices.map(i => _svgNoteElements[i].el));
-
+    if (allIndices.length > 0) {
+        _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
     } else {
-
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
-
     }
-
 }
 
 // ============================================================
