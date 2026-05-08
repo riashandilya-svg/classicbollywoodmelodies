@@ -2032,8 +2032,20 @@ const visualStart =
         const highlightDelay = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
         const th = setTimeout(() => {
             if (!previewMode) return;
-            const indices = _svgIndicesForMidiNote(note, clefMode);
-            if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
+            // Collect all notes at the same playTime so both clefs highlight together
+            const notePlayTime = note.playTime ?? note.time;
+            const simultaneous = sectionNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            );
+            const seen = new Set();
+            const allIndices = [];
+            for (const sn of simultaneous) {
+                const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
+                if (seen.has(k)) continue;
+                seen.add(k);
+                allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
+            }
+            if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
         }, highlightDelay);
         previewTimeouts.push(th);
     }
@@ -3467,9 +3479,29 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    // _svgIndicesForMidiNote now returns ALL noteheads at the same X position,
-    // so a single lookup highlights the full chord automatically
-    const allIndices = _svgIndicesForMidiNote(noteObj, clefMode);
+    const allIndices = [];
+    const notePlayTime = noteObj.playTime ?? noteObj.time;
+
+    // Collect all practiceNotes at the same playTime (covers both treble + bass in "both" mode)
+    const simultaneousNotes = practiceNotes.filter(n =>
+        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+    );
+
+    // Deduplicate by time+midi+track so we don't double-lookup
+    const seen = new Set();
+    for (const n of simultaneousNotes) {
+        const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const indices = _svgIndicesForMidiNote(n, 'both');
+        allIndices.push(...indices);
+    }
+
+    // Fallback: just use the primary noteObj
+    if (allIndices.length === 0) {
+        const fallback = _svgIndicesForMidiNote(noteObj, clefMode);
+        allIndices.push(...fallback);
+    }
 
     if (allIndices.length > 0) {
         _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
