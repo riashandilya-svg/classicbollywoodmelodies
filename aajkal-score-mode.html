@@ -3417,11 +3417,16 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     if (hand !== 'both' && clef !== hand) return [];
 
     const bucket = _svgBuckets[entry.sheet_measure]?.[clef];
-    if (bucket && entry.rank < bucket.length) {
-        return [bucket[entry.rank]];
+    if (!bucket || entry.rank >= bucket.length) {
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
+        return [];
     }
-    console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
-    return [];
+
+    // Return the matched note AND all chord-mates at the same X position
+    const matchedIdx = bucket[entry.rank];
+    const matchedTx  = _svgNoteElements[matchedIdx].tx;
+    const result = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 4);
+    return result;
 }
 
 
@@ -3462,21 +3467,9 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    // Collect SVG indices for ALL chord notes using their actual practiceNotes objects
-    const allIndices = [];
-
-    for (const chordMidi of currentChordNotes) {
-        // Find the actual note object in practiceNotes so we use the correct .time key
-        const chordNoteObj = practiceNotes.find(n =>
-            n.midi === chordMidi &&
-            n.track === noteObj.track &&
-            Math.abs((n.playTime ?? n.time) - (noteObj.playTime ?? noteObj.time)) < 0.01
-        ) || (chordMidi === noteObj.midi ? noteObj : null);
-
-        if (!chordNoteObj) continue;
-        const indices = _svgIndicesForMidiNote(chordNoteObj, clefMode);
-        allIndices.push(...indices);
-    }
+    // _svgIndicesForMidiNote now returns ALL noteheads at the same X position,
+    // so a single lookup highlights the full chord automatically
+    const allIndices = _svgIndicesForMidiNote(noteObj, clefMode);
 
     if (allIndices.length > 0) {
         _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
