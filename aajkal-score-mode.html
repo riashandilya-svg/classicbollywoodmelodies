@@ -3280,7 +3280,7 @@ function _buildSvgNoteIndex() {
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
     // Use .time (original MIDI time), NOT .playTime (remapped section time)
-    const targetTime = firstPracticeNote.time;
+const targetTime = firstPracticeNote.time;
 
     const filtered = allMidiNotes.filter(n => {
         if (hand === 'both') return true;
@@ -3303,54 +3303,57 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
 }
   
 function _highlightSvgNote(globalIdx, clefMode) {
-    if (_currentHighlightEl) {
-        _currentHighlightEl.removeAttribute('fill');
-        _currentHighlightEl.removeAttribute('filter');
-        _currentHighlightEl = null;
-    }
-    if (_currentTieDestEl) {
-        _currentTieDestEl.removeAttribute('fill');
-        _currentTieDestEl.removeAttribute('filter');
-        _currentTieDestEl = null;
-    }
-    if (!_svgNoteElements.length) return;
+    try {
+        if (_currentHighlightEl) {
+            _currentHighlightEl.removeAttribute('fill');
+            _currentHighlightEl.removeAttribute('filter');
+            _currentHighlightEl = null;
+        }
+        if (_currentTieDestEl) {
+            _currentTieDestEl.removeAttribute('fill');
+            _currentTieDestEl.removeAttribute('filter');
+            _currentTieDestEl = null;
+        }
+        if (!_svgNoteElements.length) return;
 
-    const filtered = clefMode === 'both'
-        ? _svgNoteElements
-        : _svgNoteElements.filter(n => n.clef === clefMode);
+        const filtered = clefMode === 'both'
+            ? _svgNoteElements
+            : _svgNoteElements.filter(n => n.clef === clefMode);
 
-    const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
-                      : clefMode === 'bass'   ? PAGE_OFFSETS.bass
-                      : PAGE_OFFSETS.all;
-    const pageOffset = offsetTable[scoreCurrentPage] || 0;
+        const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
+                          : clefMode === 'bass'   ? PAGE_OFFSETS.bass
+                          : PAGE_OFFSETS.all;
+        const pageOffset = offsetTable[scoreCurrentPage] || 0;
+        const localIdx = globalIdx - pageOffset;
 
-    // globalIdx is raw MIDI index; subtract pageOffset exactly once here
-    const localIdx = globalIdx - pageOffset;
+        console.log(`🔦 globalIdx=${globalIdx} pageOffset=${pageOffset} localIdx=${localIdx} filtered.len=${filtered.length}`);
 
-    console.log(`🔦 globalIdx=${globalIdx} pageOffset=${pageOffset} localIdx=${localIdx} filtered.len=${filtered.length}`);
+        if (localIdx < 0 || localIdx >= filtered.length) {
+            _autoNavigateToPage(globalIdx, clefMode, offsetTable);
+            return;
+        }
 
-    if (localIdx < 0 || localIdx >= filtered.length) {
-        _autoNavigateToPage(globalIdx, clefMode, offsetTable);
-        return;
-    }
+        const entry = filtered[localIdx];
+        if (!entry || !entry.el) return;
+        entry.el.setAttribute('fill', '#E57373');
+        entry.el.setAttribute('filter', 'url(#hlGlow)');
+        _currentHighlightEl = entry.el;
+        _panScoreToEntry(entry);
 
-    const entry = filtered[localIdx];
-    entry.el.setAttribute('fill', '#E57373');
-    entry.el.setAttribute('filter', 'url(#hlGlow)');
-    _currentHighlightEl = entry.el;
-    _panScoreToEntry(entry);
+        const filteredTieDests = clefMode === 'both'
+            ? _svgTieDestElements
+            : _svgTieDestElements.filter(n => n.clef === clefMode);
 
-    const filteredTieDests = clefMode === 'both'
-        ? _svgTieDestElements
-        : _svgTieDestElements.filter(n => n.clef === clefMode);
-
-    const tieDest = filteredTieDests
-        .filter(td => td.tx > entry.tx && Math.abs(td.ty - entry.ty) < 80)
-        .sort((a, b) => a.tx - b.tx)[0];
-    if (tieDest) {
-        tieDest.el.setAttribute('fill', '#E57373');
-        tieDest.el.setAttribute('filter', 'url(#hlGlow)');
-        _currentTieDestEl = tieDest;
+        const tieDest = filteredTieDests
+            .filter(td => td.tx > entry.tx && Math.abs(td.ty - entry.ty) < 80)
+            .sort((a, b) => a.tx - b.tx)[0];
+        if (tieDest && tieDest.el) {
+            tieDest.el.setAttribute('fill', '#E57373');
+            tieDest.el.setAttribute('filter', 'url(#hlGlow)');
+            _currentTieDestEl = tieDest;
+        }
+    } catch(e) {
+        console.warn('_highlightSvgNote error (ignored):', e);
     }
 }
   
@@ -3538,7 +3541,7 @@ scoreModeToggle.addEventListener('change', async () => {
         await initScoreMode();
         if (trainingActive && currentTrainingNote) {
             showScoreNoteDisplay(currentTrainingNote);
-            _highlightSvgNote(trainingIndex + scoreNoteOffset, clefMode);
+_highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
         }
     } else {
         bottomDock.classList.remove('score-mode');
