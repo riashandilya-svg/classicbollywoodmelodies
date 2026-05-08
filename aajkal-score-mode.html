@@ -3295,17 +3295,18 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // Sort MIDI notes by time per track, then filter out tie continuations
+    // Identify tied notes: same pitch+track, previous note ends exactly where this one starts.
+    // Returns array of same length: tied[i] = index of parent note (or -1 if not a tie).
     function markTies(notes) {
-        const tied = new Array(notes.length).fill(false);
+        const tiedTo = new Array(notes.length).fill(-1);
         for (let i = 1; i < notes.length; i++) {
             const p = notes[i - 1], c = notes[i];
             if (p.midi === c.midi && p.track === c.track &&
                 Math.abs((p.time + p.duration) - c.time) < TIE_GAP_THRESHOLD) {
-                tied[i] = true;
+                tiedTo[i] = i - 1;
             }
         }
-        return tied;
+        return tiedTo;
     }
 
     const trebleMidi = allMidiNotes.filter(n => n.track === TREBLE)
@@ -3315,16 +3316,19 @@ function _buildSvgMidiMap() {
 
     const trebleTied = markTies(trebleMidi);
     const bassTied   = markTies(bassMidi);
-    const treblePlayable = trebleMidi.filter((_, i) => !trebleTied[i]);
-    const bassPlayable   = bassMidi  .filter((_, i) => !bassTied[i]);
 
-    // For each playable MIDI note: resolve its sheet measure and assign a rank
-    // within (sheet_measure, clef). Rank = position in time-sorted order,
-    // matching the SVG bucket order (left→right = earlier→later).
-    const rankCounters = {};  // `${sheet_measure}|${clef}` → next rank to assign
+    // For each note: resolve its sheet measure and assign a rank within (sheet_measure, clef).
+    // Tied notes also get a rank (they have their own notehead on the score).
+    // We additionally record which parent midiKey each tie belongs to.
+    const rankCounters = {};
 
-    function assignRanks(notes, clef) {
-        for (const note of notes) {
+    function midiKeyFor(note) {
+        return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+    }
+
+    function assignRanks(notes, tiedTo, clef) {
+        for (let i = 0; i < notes.length; i++) {
+            const note = notes[i];
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
             const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
@@ -3333,62 +3337,98 @@ function _buildSvgMidiMap() {
             if (rankCounters[key] === undefined) rankCounters[key] = 0;
             const rank = rankCounters[key]++;
 
-            const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
-            _midiRankMap.set(midiKey, { sheet_measure: sheetMeasure, clef, rank });
+            const mk = midiKeyFor(note);
+            const parentIdx = tiedTo[i];
+            const parentKey = parentIdx >= 0 ? midiKeyFor(notes[parentIdx]) : null;
+
+            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank, isTie: parentIdx >= 0, parentKey });
+
+            // Register this note as a tie-target on its parent (chain: parent → this tie → next tie…)
+            if (parentKey) {
+                const parentEntry = _midiRankMap.get(parentKey);
+                if (parentEntry) {
+                    if (!parentEntry.tieKeys) parentEntry.tieKeys = [];
+                    parentEntry.tieKeys.push(mk);
+                }
+            }
         }
     }
 
-    assignRanks(treblePlayable, 'treble');
-    assignRanks(bassPlayable,   'bass');
+    assignRanks(trebleMidi, trebleTied, 'treble');
+    assignRanks(bassMidi,   bassTied,   'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} MIDI notes mapped across ` +
         `${Object.keys(rankCounters).length} (measure, clef) buckets`);
 }
 
 // ============================================================
-// STEP 3 — find SVG notehead index for a MIDI note (O(1) lookup)
+// STEP 3 — find all SVG notehead indices for a MIDI note,
+//           including any tied continuations (returns array)
 // ============================================================
-function _svgIndexForMidiNote(noteObj, hand) {
+function _svgIndicesForMidiNote(noteObj, hand) {
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
     if (!entry) {
-        console.warn(`_svgIndexForMidiNote: no rank entry for ${getNoteName(noteObj.midi)} t=${noteObj.time.toFixed(3)}`);
-        return -1;
+        console.warn(`_svgIndicesForMidiNote: no rank entry for ${getNoteName(noteObj.midi)} t=${noteObj.time.toFixed(3)}`);
+        return [];
     }
 
-    const { sheet_measure, clef, rank } = entry;
+    const { clef } = entry;
+    if (hand !== 'both' && clef !== hand) return [];
 
-    // Respect hand filter
-    if (hand !== 'both' && clef !== hand) return -1;
+    const results = [];
 
-    const bucket = _svgBuckets[sheet_measure]?.[clef];
-    if (!bucket || rank >= bucket.length) {
-        console.warn(`_svgIndexForMidiNote: bucket[${sheet_measure}][${clef}] rank=${rank} missing ` +
-            `(bucket size=${bucket?.length ?? 0})`);
-        return -1;
+    // Collect this note + all chained tie targets
+    let keys = [midiKey];
+    while (keys.length) {
+        const nextKeys = [];
+        for (const k of keys) {
+            const e = _midiRankMap.get(k);
+            if (!e) continue;
+            const bucket = _svgBuckets[e.sheet_measure]?.[e.clef];
+            if (bucket && e.rank < bucket.length) {
+                results.push(bucket[e.rank]);
+            } else {
+                console.warn(`_svgIndicesForMidiNote: bucket[${e.sheet_measure}][${e.clef}] rank=${e.rank} missing`);
+            }
+            if (e.tieKeys) nextKeys.push(...e.tieKeys);
+        }
+        keys = nextKeys;
     }
 
-    return bucket[rank];
+    return results;
 }
 
 // ============================================================
-// STEP 4 — apply / clear highlight
+// STEP 4 — apply / clear highlight (supports multiple elements)
 // ============================================================
-function _applyHighlight(el) {
-    if (_currentHighlightEl) {
-        _currentHighlightEl.removeAttribute('fill');
-        _currentHighlightEl.removeAttribute('filter');
+let _currentHighlightEls = [];
+
+function _applyHighlight(els) {
+    // Clear previous highlights
+    for (const el of _currentHighlightEls) {
+        el.removeAttribute('fill');
+        el.removeAttribute('filter');
     }
-    _currentHighlightEl = el;
-    if (el) {
+    _currentHighlightEls = Array.isArray(els) ? els.filter(Boolean) : (els ? [els] : []);
+    for (const el of _currentHighlightEls) {
         el.setAttribute('fill', '#E57373');
         el.setAttribute('filter', 'url(#hlGlow)');
-        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
+    }
+    // Scroll to the first (main) notehead
+    if (_currentHighlightEls[0]) {
+        try { _currentHighlightEls[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(_) {}
     }
 }
 
+// Keep legacy single-element reference for anything that reads _currentHighlightEl
+Object.defineProperty(window, '_currentHighlightEl', {
+    get() { return _currentHighlightEls[0] ?? null; },
+    configurable: true
+});
+
 function clearScoreHighlight() {
-    _applyHighlight(null);
+    _applyHighlight([]);
 }
 
 // ============================================================
@@ -3401,9 +3441,9 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    const idx = _svgIndexForMidiNote(noteObj, clefMode);
-    if (idx >= 0) {
-        _applyHighlight(_svgNoteElements[idx].el);
+    const indices = _svgIndicesForMidiNote(noteObj, clefMode);
+    if (indices.length > 0) {
+        _applyHighlight(indices.map(i => _svgNoteElements[i].el));
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
