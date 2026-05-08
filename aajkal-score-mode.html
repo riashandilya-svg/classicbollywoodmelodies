@@ -793,11 +793,6 @@ canvas {
 
 <!-- 📄 Score View (hidden by default) -->
 <div id="scoreView">
-    <div id="scorePageNav">
-        <button id="scorePrevBtn">◀ Prev</button>
-        <span id="scorePageLabel">Page 1 / 3</span>
-        <button id="scoreNextBtn">Next ▶</button>
-    </div>
 <div id="scorePageWrapper">
 <div id="scoreObj" style="display:block;width:max-content;min-width:100%;overflow:visible;"></div>
         <div id="scoreHighlight" style="display:none;"></div>
@@ -3154,9 +3149,9 @@ addMidiFallingRectangle(
 // SCORE VIEW — LINEAR NOTE HIGHLIGHTING (FIXED)
 // ============================================================
 const PAGE_OFFSETS = {
-    all:    { 1: 0,   2: 343, 3: 693 },
-    treble: { 1: 0,   2: 187, 3: 339 },
-    bass:   { 1: 0,   2: 156, 3: 354 },
+    all:    { 1: 0, 2: 9999, 3: 9999 },
+    treble: { 1: 0, 2: 9999, 3: 9999 },
+    bass:   { 1: 0, 2: 9999, 3: 9999 },
 };
 
 let _svgNoteElements = [];   // sorted <path class="Note"> elements for current page
@@ -3294,7 +3289,7 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
 const _pageNoteCounts = { treble: {}, bass: {}, all: {} };
 
   
-  function _highlightSvgNote(globalIdx, clefMode) {
+function _highlightSvgNote(globalIdx, clefMode) {
     try {
         if (_currentHighlightEl) {
             _currentHighlightEl.removeAttribute('fill');
@@ -3312,16 +3307,12 @@ const _pageNoteCounts = { treble: {}, bass: {}, all: {} };
             ? _svgNoteElements
             : _svgNoteElements.filter(n => n.clef === clefMode);
 
-        const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
-                          : clefMode === 'bass'   ? PAGE_OFFSETS.bass
-                          : PAGE_OFFSETS.all;
-        const pageOffset = offsetTable[scoreCurrentPage] || 0;
-        const localIdx = globalIdx - pageOffset;
+        const localIdx = globalIdx; // single SVG = no page offset needed
 
-        console.log(`🔦 globalIdx=${globalIdx} pageOffset=${pageOffset} localIdx=${localIdx} filtered.len=${filtered.length}`);
+        console.log(`🔦 globalIdx=${globalIdx} localIdx=${localIdx} filtered.len=${filtered.length}`);
 
         if (localIdx < 0 || localIdx >= filtered.length) {
-            _autoNavigateToPage(globalIdx, clefMode, offsetTable);
+            console.warn(`Index ${localIdx} out of range for ${filtered.length} notes`);
             return;
         }
 
@@ -3331,6 +3322,12 @@ const _pageNoteCounts = { treble: {}, bass: {}, all: {} };
         entry.el.setAttribute('filter', 'url(#hlGlow)');
         _currentHighlightEl = entry.el;
 
+        // Scroll the highlighted note into view
+        try {
+            entry.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch(e) {}
+
+        // Highlight tie destination if present
         const filteredTieDests = clefMode === 'both'
             ? _svgTieDestElements
             : _svgTieDestElements.filter(n => n.clef === clefMode);
@@ -3344,7 +3341,7 @@ const _pageNoteCounts = { treble: {}, bass: {}, all: {} };
             _currentTieDestEl = tieDest;
         }
     } catch(e) {
-        console.warn('_highlightSvgNote error (ignored):', e);
+        console.warn('_highlightSvgNote error:', e);
     }
 }
   
