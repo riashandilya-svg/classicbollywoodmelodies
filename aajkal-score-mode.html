@@ -934,22 +934,6 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
   MAX_LOGICAL_MEASURE = Math.max(MAX_LOGICAL_MEASURE, PHYSICAL_TO_LOGICAL[p] || 0);
 }
 
-  let _tiedNoteKeys = new Set();
-  const lastSeenRaw = new Map();
-    for (const note of allMidiNotes) {
-        const k = `${note.track}|${note.midi}`;
-        const prev = lastSeenRaw.get(k);
-        if (prev) {
-            const gap = note.time - (prev.time + prev.duration);
-            if (Math.abs(gap) < 0.005) {
-                // This note is a tied continuation — key it by its ORIGINAL time
-                _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
-            }
-        }
-        lastSeenRaw.set(k, note);
-    }
-    console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
-
 async function loadSongMidi() {
     const response = await fetch("aajkal.mid");
     const arrayBuffer = await response.arrayBuffer();
@@ -970,6 +954,21 @@ async function loadSongMidi() {
         });
     });
     allMidiNotes.sort((a, b) => a.time - b.time);
+  _tiedNoteKeys = new Set();
+const lastSeenRaw = new Map();
+for (const note of allMidiNotes) {
+    const k = `${note.track}|${note.midi}`;
+    const prev = lastSeenRaw.get(k);
+    if (prev) {
+        const gap = note.time - (prev.time + prev.duration);
+        if (Math.abs(gap) < 0.005) {
+            _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+        }
+    }
+    lastSeenRaw.set(k, note);
+}
+console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
+
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
   let bpm;
@@ -1468,8 +1467,8 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-requestAnimationFrame(animate);
+setTimeout(resizeCanvas, 800);
+setTimeout(animate, 900);
 let fallingRectangles = [];
 let midiFallingNotes = [];
 let songStartTime = null;
