@@ -3293,59 +3293,6 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
   // Per-page notehead counts (populated by renderScorePage calls)
 const _pageNoteCounts = { treble: {}, bass: {}, all: {} };
 
-async function _buildAllPageOffsets() {
-    let trebleRunning = 0, bassRunning = 0, allRunning = 0;
-
-    for (let p = 1; p <= SCORE_TOTAL_PAGES; p++) {
-        // Load the SVG temporarily to count
-        const resp = await fetch(`aajkal-${p}.svg`);
-        const text = await resp.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'image/svg+xml');
-
-        // Count noteheads (same tie-detection logic as _buildSvgNoteIndex)
-        const allNotes = [];
-        doc.querySelectorAll('path.Note').forEach(el => {
-            const t = el.getAttribute('transform') || '';
-            const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
-            if (!mm) return;
-            allNotes.push({ tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
-        });
-
-        const tieDests = [];
-        doc.querySelectorAll('path.TieSegment').forEach(tie => {
-            const nums = tie.getAttribute('d').match(/[-\d.]+/g);
-            if (nums && nums.length >= 7)
-                tieDests.push({ x: parseFloat(nums[6]), y: parseFloat(nums[7]) });
-        });
-
-        const playable = allNotes.filter(n =>
-            !tieDests.some(td => Math.abs(n.tx - td.x) < 8 && Math.abs(n.ty - td.y) < 30)
-        );
-
-        // Split treble/bass by Y midpoint
-        const tys = playable.map(n => n.ty).sort((a, b) => a - b);
-        let maxGap = 0, splitY = 0;
-        for (let i = 1; i < tys.length; i++) {
-            const gap = tys[i] - tys[i - 1];
-            if (gap > maxGap) { maxGap = gap; splitY = (tys[i] + tys[i - 1]) / 2; }
-        }
-
-        const trebleCount = playable.filter(n => n.ty <= splitY).length;
-        const bassCount   = playable.filter(n => n.ty >  splitY).length;
-        const allCount    = playable.length;
-
-        PAGE_OFFSETS.treble[p] = trebleRunning;
-        PAGE_OFFSETS.bass[p]   = bassRunning;
-        PAGE_OFFSETS.all[p]    = allRunning;
-
-        trebleRunning += trebleCount;
-        bassRunning   += bassCount;
-        allRunning    += allCount;
-
-        console.log(`📄 Page ${p}: treble=${trebleCount} bass=${bassCount} all=${allCount} | offsets→ T:${PAGE_OFFSETS.treble[p]} B:${PAGE_OFFSETS.bass[p]}`);
-    }
-}
   
   function _highlightSvgNote(globalIdx, clefMode) {
     try {
