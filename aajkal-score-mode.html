@@ -3257,7 +3257,8 @@ function _buildSvgNoteIndex() {
             const clef = inTreble ? 'treble' : 'bass';
             const bls  = sys.barline_xs;
             for (let i = 0; i < bls.length - 1; i++) {
-                if (n.tx >= bls[i] - 5 && n.tx < bls[i + 1]) {
+                const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : (bls[i + 1] - 5);
+                if (n.tx >= bls[i] - 20 && n.tx < rightBound) {
                     const sheet_measure = sys.start_measure + i;
                     const idx = _svgNoteElements.length;
                     _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
