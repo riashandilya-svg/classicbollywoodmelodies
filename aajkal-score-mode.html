@@ -3295,16 +3295,23 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // Identify tied notes: same pitch+track, previous note ends exactly where this one starts.
-    // Returns array of same length: tied[i] = index of parent note (or -1 if not a tie).
+    // Identify tied notes: same pitch+track, most-recent prior same-midi note ends
+    // exactly where this one starts.  We must scan back past chords (same-time
+    // notes of other pitches), so we look for the last occurrence of the same midi,
+    // not just i-1.
     function markTies(notes) {
         const tiedTo = new Array(notes.length).fill(-1);
-        for (let i = 1; i < notes.length; i++) {
-            const p = notes[i - 1], c = notes[i];
-            if (p.midi === c.midi && p.track === c.track &&
-                Math.abs((p.time + p.duration) - c.time) < TIE_GAP_THRESHOLD) {
-                tiedTo[i] = i - 1;
+        // lastSeen[midi] = index of the most recent note with that midi value
+        const lastSeen = new Map();
+        for (let i = 0; i < notes.length; i++) {
+            const c = notes[i];
+            const prev = lastSeen.has(c.midi) ? notes[lastSeen.get(c.midi)] : null;
+            if (prev &&
+                prev.midi === c.midi && prev.track === c.track &&
+                Math.abs((prev.time + prev.duration) - c.time) < TIE_GAP_THRESHOLD) {
+                tiedTo[i] = lastSeen.get(c.midi);
             }
+            lastSeen.set(c.midi, i);
         }
         return tiedTo;
     }
