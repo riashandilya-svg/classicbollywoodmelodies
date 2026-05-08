@@ -2009,6 +2009,17 @@ const visualStart =
 
 
     previewTimeouts.push(t);
+
+    // Score mode: highlight each note as it sounds during preview
+    if (scoreModeActive) {
+        const highlightDelay = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
+        const th = setTimeout(() => {
+            if (!previewMode) return;
+            const indices = _svgIndicesForMidiNote(note, clefMode);
+            if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
+        }, highlightDelay);
+        previewTimeouts.push(th);
+    }
 });
 
 if (!sectionNotes.length) {
@@ -2026,6 +2037,8 @@ const previewLength =
 const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
+
+    if (scoreModeActive) clearScoreHighlight();
 
     const feedback = document.getElementById('feedback');
     feedback.textContent = 'Your turn';
@@ -3276,7 +3289,6 @@ function _buildSvgNoteIndex() {
     // Each path.TieSegment has a path "M x1,y1 C ... xN,yN".
     // The arc's END point (last coordinate pair) is closest to the
     // tied-continuation notehead (the one the user does NOT play).
-    // We find the nearest notehead to that endpoint and flag it.
     const tiedNoteheadSet = new Set(); // indices into raw[]
 
     svgEl.querySelectorAll('path.TieSegment').forEach(el => {
@@ -3291,7 +3303,7 @@ function _buildSvgNoteIndex() {
             const dist = Math.abs(raw[i].tx - ex) + Math.abs(raw[i].ty - ey) * 0.3;
             if (dist < bestDist) { bestDist = dist; bestIdx = i; }
         }
-        if (bestIdx >= 0 && bestDist < 60) {  // 60px tolerance
+        if (bestIdx >= 0 && bestDist < 60) {
             tiedNoteheadSet.add(bestIdx);
         }
     });
@@ -3300,7 +3312,7 @@ function _buildSvgNoteIndex() {
 
     // ── Step 3: annotate each notehead, skipping tied continuations ───────
     for (let ri = 0; ri < raw.length; ri++) {
-        if (tiedNoteheadSet.has(ri)) continue;  // skip tied continuation noteheads
+        if (tiedNoteheadSet.has(ri)) continue;
 
         const n = raw[ri];
         for (const sys of pageSystems) {
