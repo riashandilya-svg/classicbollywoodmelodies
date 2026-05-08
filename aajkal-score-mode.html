@@ -2027,17 +2027,19 @@ previewTimeouts.push(endTimeout);
 
 }
 
-
 function spawnNextValidNote() {
 
     while (trainingIndex < practiceNotes.length) {
         const note = practiceNotes[trainingIndex];
 
-        // Skip tied continuations — they are already highlighted as part of
-        // their parent note and require no additional key press.
+        // Check if this note is a tied continuation using original `time`
+        // (not playTime — _midiRankMap keys are built from note.time)
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
         const entry   = _midiRankMap.get(midiKey);
+
         if (entry?.isTie) {
+            // This is a tied continuation — skip it silently.
+            // It is already highlighted as part of its parent note.
             trainingIndex++;
             updateTrainingProgress();
             continue;
@@ -3376,6 +3378,7 @@ function _buildSvgMidiMap() {
 }
 
 function _svgIndicesForMidiNote(noteObj, hand) {
+    // Always key by original .time, not .playTime
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
     if (!entry) {
@@ -3388,7 +3391,7 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
     const results = [];
 
-    // Walk the full tie chain: this note → tieKeys → their tieKeys → …
+    // Walk the full tie chain: parent → tieKeys → their tieKeys → …
     let keys = [midiKey];
     while (keys.length) {
         const nextKeys = [];
@@ -3396,7 +3399,6 @@ function _svgIndicesForMidiNote(noteObj, hand) {
             const e = _midiRankMap.get(k);
             if (!e) continue;
 
-            // Add SVG notehead for this link in the chain
             const bucket = _svgBuckets[e.sheet_measure]?.[e.clef];
             if (bucket && e.rank < bucket.length) {
                 results.push(bucket[e.rank]);
@@ -3404,7 +3406,6 @@ function _svgIndicesForMidiNote(noteObj, hand) {
                 console.warn(`_svgIndicesForMidiNote: bucket[${e.sheet_measure}][${e.clef}] rank=${e.rank} missing`);
             }
 
-            // Queue the next link(s) in the tie chain
             if (e.tieKeys) nextKeys.push(...e.tieKeys);
         }
         keys = nextKeys;
@@ -3412,6 +3413,7 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
     return results;
 }
+
 
 let _currentHighlightEls = [];
 
