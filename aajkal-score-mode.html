@@ -3199,8 +3199,6 @@ function _buildSvgNoteIndex() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // Build a set of tie destinations so we can highlight them too
-    // but do NOT exclude them from the index
     _tieDestinations = [];
     svgEl.querySelectorAll('path.TieSegment').forEach(tie => {
         const nums = tie.getAttribute('d').match(/[-\d.]+/g);
@@ -3220,39 +3218,42 @@ function _buildSvgNoteIndex() {
         const tx = parseFloat(mm[1]);
         const ty = parseFloat(mm[2]);
 
-        // Mark whether this notehead is a tie destination
-       const isTieDest = _tieDestinations.some(td =>
+        const isTieDest = _tieDestinations.some(td =>
             Math.abs(tx - td.x) < 8 && Math.abs(ty - td.y) < 30
         );
 
         raw.push({ el, tx, ty, isTieDest });
     });
 
-    // Sort by staff row, then left-to-right
-    const ys = raw.map(n => n.ty).sort((a, b) => a - b);
-    const rowRanges = [];
-    let cur = [ys[0]];
-    for (let i = 1; i < ys.length; i++) {
-        if (ys[i] - cur[cur.length - 1] > 100) {
-            rowRanges.push([Math.min(...cur), Math.max(...cur)]);
-            cur = [];
+    // ── FIX: determine clef by actual Y midpoint, not row-parity ──
+    const allTys = raw.map(n => n.ty).sort((a, b) => a - b);
+
+    // Find the largest Y gap — that's the gap between treble and bass staves
+    let maxGap = 0, splitY = 0;
+    for (let i = 1; i < allTys.length; i++) {
+        const gap = allTys[i] - allTys[i - 1];
+        if (gap > maxGap) {
+            maxGap = gap;
+            splitY = (allTys[i] + allTys[i - 1]) / 2;
         }
-        cur.push(ys[i]);
     }
-    rowRanges.push([Math.min(...cur), Math.max(...cur)]);
 
-    const getRow = ty => rowRanges.findIndex(([lo, hi]) => ty >= lo - 5 && ty <= hi + 5);
+    console.log(`🎼 Clef split Y = ${splitY.toFixed(1)} (gap = ${maxGap.toFixed(1)}px)`);
 
+    // Sort: treble first (lower Y = higher on page), then bass; within each, left-to-right
     raw.sort((a, b) => {
-        const ra = getRow(a.ty), rb = getRow(b.ty);
-        return ra !== rb ? ra - rb : a.tx - b.tx;
+        const aIsBass = a.ty > splitY;
+        const bIsBass = b.ty > splitY;
+        if (aIsBass !== bIsBass) return aIsBass ? 1 : -1;
+        // Same clef — sort left to right, with row (Y) as primary
+        if (Math.abs(a.ty - b.ty) > 40) return a.ty - b.ty;
+        return a.tx - b.tx;
     });
 
-    raw.forEach(n => { n.clef = getRow(n.ty) % 2 === 0 ? 'treble' : 'bass'; });
+    raw.forEach(n => {
+        n.clef = n.ty > splitY ? 'bass' : 'treble';
+    });
 
-    // IMPORTANT: include ALL noteheads — tied destinations too
-    // But skip tie destinations from the indexed list (they have no MIDI event)
-    // Instead, store them separately so _highlightSvgNote can highlight them as a bonus
     _svgNoteElements = raw.filter(n => !n.isTieDest);
     _svgTieDestElements = raw.filter(n => n.isTieDest);
 
@@ -3265,7 +3266,7 @@ function _buildSvgNoteIndex() {
         svgEl.insertBefore(defs, svgEl.firstChild);
     }
 
-    console.log(`✅ SVG index: ${_svgNoteElements.length} playable notes, ${_svgTieDestElements.length} tie destinations`);
+    console.log(`✅ SVG index: ${_svgNoteElements.length} playable notes (treble: ${raw.filter(n=>!n.isTieDest&&n.clef==='treble').length}, bass: ${raw.filter(n=>!n.isTieDest&&n.clef==='bass').length})`);
 }
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
@@ -3297,9 +3298,9 @@ function _highlightSvgNote(globalTrainingIndex, clefMode) {
     }
     if (!_svgNoteElements.length) return;
 
-    const filtered = clefMode === 'both'
-        ? _svgNoteElements
-        : _svgNoteElements.filter(n => n.clef === clefMode);
+const filtered = clefMode === 'both'
+    ? _svgNoteElements
+    : _svgNoteElements.filter(n => n.clef === clefMode);
 
     const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
                       : clefMode === 'bass'   ? PAGE_OFFSETS.bass
