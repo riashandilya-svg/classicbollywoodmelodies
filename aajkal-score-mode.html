@@ -1105,18 +1105,8 @@ const BASS = "bass";
 const notesDisplay = document.getElementById('notesDisplay');
 const noteList = document.getElementById('noteList');
 const playbackControls = document.getElementById('playbackControls');
-const hand = document.getElementById('handSelect').value;
-const filtered = allMidiNotes.filter(n =>
-    hand === 'both' ? true : hand === 'treble' ? n.track === 'treble' : n.track === 'bass'
-);
-const pageOffset = (hand === 'treble' ? {1:0,2:187,3:339} : hand === 'bass' ? {1:0,2:156,3:354} : {1:0,2:343,3:693})[scoreCurrentPage] || 0;
-const svgFiltered = _svgNoteElements.filter(n => hand === 'both' || n.clef === hand);
-console.log('scoreNoteOffset (raw midi idx):', scoreNoteOffset);
-console.log('pageOffset:', pageOffset);
-console.log('localIdx:', scoreNoteOffset - pageOffset);
-console.log('MIDI note at that index:', filtered[scoreNoteOffset] ? getNoteName(filtered[scoreNoteOffset].midi) : 'OUT OF RANGE');
-console.log('SVG element at localIdx:', svgFiltered[scoreNoteOffset - pageOffset]?.clef, 'tx:', svgFiltered[scoreNoteOffset - pageOffset]?.tx?.toFixed(0));
-function setControlsEnabled(enabled) {
+
+  function setControlsEnabled(enabled) {
     const controls = playbackControls.querySelectorAll(
         'button, select, input[type="number"], input[type="checkbox"]'
     );
