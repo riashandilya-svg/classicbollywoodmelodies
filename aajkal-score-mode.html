@@ -956,7 +956,7 @@ async function loadSongMidi() {
     });
 
     allMidiNotes.sort((a, b) => a.time - b.time);
-    _tiedNoteKeys = new Set(); // reset each load
+    _tiedNoteKeys = new Set();
     const tieSeenRaw = new Map();
     for (const note of allMidiNotes) {
         const k = `${note.track}|${note.midi}`;
@@ -1468,7 +1468,7 @@ window.addEventListener('resize', resizeCanvas);
 setTimeout(resizeCanvas, 800);
 setTimeout(animate, 900);
 let fallingRectangles = [];
-let _tiedNoteKeys = new Set();  // populated in loadSongMidi, read in _buildSvgMidiMap
+  let _tiedNoteKeys = new Set();
 let midiFallingNotes = [];
 let songStartTime = null;
 let visualClockStart = null;
@@ -2044,14 +2044,14 @@ function spawnNextValidNote() {
     while (trainingIndex < practiceNotes.length) {
         const note = practiceNotes[trainingIndex];
 
-        // Check if this note is a tied continuation using original `time`
-        // (not playTime — _midiRankMap keys are built from note.time)
+        // Check if this note is a tied continuation using _tiedNoteKeys directly
+        // (populated in loadSongMidi — works regardless of score mode)
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
-        const entry   = _midiRankMap.get(midiKey);
+        const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
+        const isTiedContinuation = _tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey);
 
-        if (entry?.isTie) {
-            // This is a tied continuation — skip it silently.
-            // It is already highlighted as part of its parent note.
+        if (isTiedContinuation) {
+            // Tied continuation — skip silently (user already played the parent note)
             trainingIndex++;
             updateTrainingProgress();
             continue;
