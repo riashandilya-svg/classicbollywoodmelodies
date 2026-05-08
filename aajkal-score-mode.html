@@ -3254,7 +3254,6 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
     for (let i = 0; i < allMidiNotes.length; i++) {
         const n = allMidiNotes[i];
 
-        // Stop when we reach the exact note we want to start on
         if (
             Math.abs(n.time - targetTime) < 0.005 &&
             n.midi === targetMidi &&
@@ -3266,10 +3265,23 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
         if (hand === 'bass'   && n.track === BASS)   count++;
     }
 
-    console.log(`🎯 scoreNoteOffset=${count} hand=${hand} targetTime=${targetTime.toFixed(3)} targetMidi=${getNoteName(targetMidi)}`);
+    // === NEW DIAGNOSTIC ===
+    const trebleOnly = allMidiNotes.filter(n => n.track === TREBLE);
+    console.log('=== TREBLE NOTE AUDIT (indices 60-70) ===');
+    for (let i = 60; i <= 70 && i < trebleOnly.length; i++) {
+        const n = trebleOnly[i];
+        console.log(`  midi[${i}]: ${getNoteName(n.midi)} t=${n.time.toFixed(3)}`);
+    }
+    const svgTreble = _svgNoteElements.filter(n => n.clef === 'treble');
+    console.log('=== SVG TREBLE ELEMENTS (indices 60-70) ===');
+    for (let i = 60; i <= 70 && i < svgTreble.length; i++) {
+        console.log(`  svg[${i}]: tx=${svgTreble[i].tx.toFixed(0)} ty=${svgTreble[i].ty.toFixed(0)}`);
+    }
+    console.log(`=== offset=${count}, SVG element at offset: tx=${svgTreble[count]?.tx.toFixed(0)} ===`);
+    // === END DIAGNOSTIC ===
+
     return count;
-}
-  
+}  
 function _highlightSvgNote(globalIdx, clefMode) {
     try {
         if (_currentHighlightEl) {
