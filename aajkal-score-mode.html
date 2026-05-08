@@ -3519,8 +3519,8 @@ async function renderScorePage(pageNum) {
     if (scoreModeActive && currentTrainingNote && practiceNotes.length > 0) {
         const noteObj = practiceNotes[trainingIndex];
         if (noteObj) {
-            const idx = _svgIndexForMidiNote(noteObj, clefMode);
-            if (idx >= 0) _applyHighlight(_svgNoteElements[idx].el);
+            const indices = _svgIndicesForMidiNote(noteObj, clefMode);
+            if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
         }
     }
 }
@@ -3557,8 +3557,8 @@ scoreModeToggle.addEventListener('change', async () => {
             const noteObj = practiceNotes[trainingIndex];
             showScoreNoteDisplay(currentTrainingNote);
             if (noteObj) {
-                const idx = _svgIndexForMidiNote(noteObj, clefMode);
-                if (idx >= 0) _applyHighlight(_svgNoteElements[idx].el);
+                const indices = _svgIndicesForMidiNote(noteObj, clefMode);
+                if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
             }
         }
     } else {
