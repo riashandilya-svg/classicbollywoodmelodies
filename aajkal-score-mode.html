@@ -3369,17 +3369,22 @@ function _buildSvgNoteIndex() {
                 if (!inTreble && !inBass) continue;
                 const clef = inTreble ? 'treble' : 'bass';
                 const bls  = sys.barline_xs;
+                // Skip double-barline gaps (< 30px wide) — they're repeat signs, not real measures
+                let realMeasureOffset = 0;
                 for (let i = 0; i < bls.length - 1; i++) {
+                    const slotWidth = bls[i + 1] - bls[i];
+                    if (slotWidth < 30) continue; // double barline — skip, don't increment measure
                     const leftBound  = (i === 0) ? (bls[i] - 20) : bls[i];
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
-                        const sheet_measure = sys.start_measure + i;
+                        const sheet_measure = sys.start_measure + realMeasureOffset;
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
                         _svgBuckets[sheet_measure][clef].push(idx);
                         break;
                     }
+                    realMeasureOffset++;
                 }
                 break;
             }
