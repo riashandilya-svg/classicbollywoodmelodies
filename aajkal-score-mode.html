@@ -3256,29 +3256,17 @@ function _buildSvgNoteIndex() {
 
             const clef = inTreble ? 'treble' : 'bass';
             const bls  = sys.barline_xs;
-
-            // Robust measure assignment: find the last barline that is to the
-            // LEFT of (or at) this notehead. That barline's index = measure offset.
-            // Using a generous left-tolerance (30px) catches first-notes that sit
-            // only a few pixels past the barline, including at system starts where
-            // clef/keysig/timesig symbols push the first notehead to the right.
-            let measureIdx = -1;
             for (let i = 0; i < bls.length - 1; i++) {
-                if (n.tx >= bls[i] - 30) {
-                    measureIdx = i;
-                } else {
+                if (n.tx >= bls[i] - 5 && n.tx <= bls[i + 1] + 5) {
+                    const sheet_measure = sys.start_measure + i;
+                    const idx = _svgNoteElements.length;
+                    _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
+
+                    // Build bucket: _svgBuckets[sheet_measure][clef] = [indices sorted by tx]
+                    if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
+                    _svgBuckets[sheet_measure][clef].push(idx);
                     break;
                 }
-            }
-            // Also ensure the note doesn't go past the last barline
-            if (measureIdx >= 0 && n.tx <= bls[bls.length - 1] + 30) {
-                const sheet_measure = sys.start_measure + measureIdx;
-                const idx = _svgNoteElements.length;
-                _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
-
-                // Build bucket: _svgBuckets[sheet_measure][clef] = [indices sorted by tx]
-                if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
-                _svgBuckets[sheet_measure][clef].push(idx);
             }
             break; // each notehead belongs to exactly one system
         }
@@ -3303,8 +3291,7 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // Sort MIDI notes by time per track, then detect tie continuations.
-    // A "tie" is a repeated same-pitch note that starts where the previous one ended.
+    // Sort MIDI notes by time per track, then filter out tie continuations
     function markTies(notes) {
         const tied = new Array(notes.length).fill(false);
         for (let i = 1; i < notes.length; i++) {
@@ -3350,29 +3337,6 @@ function _buildSvgMidiMap() {
     assignRanks(treblePlayable, 'treble');
     assignRanks(bassPlayable,   'bass');
 
-    // Tied notes are filtered out of the rank assignment above (they have no
-    // separate notehead in the SVG), but practiceNotes still contains them and
-    // onTrainingNoteSpawned will be called for them. Map each tied note to the
-    // same rank entry as its tie-origin (the first note of the tie chain) so
-    // that the correct SVG notehead stays highlighted while the tied note is held.
-    function registerTiedNotes(notes, tied, clef) {
-        for (let i = 0; i < notes.length; i++) {
-            if (!tied[i]) continue;
-            // Walk back to the start of this tie chain
-            let originIdx = i - 1;
-            while (originIdx > 0 && tied[originIdx]) originIdx--;
-            const origin = notes[originIdx];
-            const originKey = `${origin.time.toFixed(4)}|${origin.midi}|${origin.track}`;
-            const entry = _midiRankMap.get(originKey);
-            if (!entry) continue;
-            const tiedKey = `${notes[i].time.toFixed(4)}|${notes[i].midi}|${notes[i].track}`;
-            _midiRankMap.set(tiedKey, entry);
-        }
-    }
-
-    registerTiedNotes(trebleMidi, trebleTied, 'treble');
-    registerTiedNotes(bassMidi,   bassTied,   'bass');
-
     console.log(`🗺  Rank map built: ${_midiRankMap.size} MIDI notes mapped across ` +
         `${Object.keys(rankCounters).length} (measure, clef) buckets`);
 }
@@ -3384,10 +3348,7 @@ function _svgIndexForMidiNote(noteObj, hand) {
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
     if (!entry) {
-        // Extra debug: check if this note exists in allMidiNotes at all
-        const inAll = allMidiNotes.some(n =>
-            Math.abs(n.time - noteObj.time) < 0.001 && n.midi === noteObj.midi && n.track === noteObj.track);
-        console.warn(`_svgIndexForMidiNote: no rank entry for ${getNoteName(noteObj.midi)} t=${noteObj.time.toFixed(4)} track=${noteObj.track} | inAllMidiNotes=${inAll} | midiKey="${midiKey}"`);
+        console.warn(`_svgIndexForMidiNote: no rank entry for ${getNoteName(noteObj.midi)} t=${noteObj.time.toFixed(3)}`);
         return -1;
     }
 
