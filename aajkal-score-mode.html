@@ -3259,7 +3259,10 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
         return true;
     });
 
-    const GAP = 0.05;
+    // GAP must be < NOTE_GAP_TIME (0.02s) so that repeated notes trimmed by
+    // splitRepeatedNotes (gap = exactly 0.02s) are NOT falsely flagged as ties.
+    // Real ties have gap < 0.001s after trimming.
+    const GAP = 0.015;
     const isTied = new Array(filtered.length).fill(false);
     for (let i = 1; i < filtered.length; i++) {
         const prev = filtered[i - 1];
