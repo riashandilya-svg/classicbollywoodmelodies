@@ -3196,20 +3196,19 @@ function _buildSvgNoteIndex() {
     const svgEl = container.querySelector('svg');
     if (!svgEl) return;
 
-    // Extract tie destination x values (the end x of each tie arc)
-    const tieDestinationXs = new Set();
+    // Collect tie destinations: {x, y} of the tied-INTO notehead
+    const tieDestinations = [];
     svgEl.querySelectorAll('path.TieSegment').forEach(tie => {
-        const d = tie.getAttribute('d') || '';
-        // Format: "M startX,startY C x1,y1 x2,y2 endX,endY C ..."
-        // The endX is the 7th number (index 6) in the coordinate sequence
-        const nums = d.match(/[-\d.]+/g);
+        const nums = tie.getAttribute('d').match(/[-\d.]+/g);
         if (nums && nums.length >= 7) {
-            const endX = Math.round(parseFloat(nums[6]));
-            tieDestinationXs.add(endX);
+            tieDestinations.push({
+                x: parseFloat(nums[6]),
+                y: parseFloat(nums[7])
+            });
         }
     });
 
-    console.log('🎵 Tie destination X values:', [...tieDestinationXs].sort((a,b)=>a-b));
+    console.log('🎵 Tie destinations:', tieDestinations);
 
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
@@ -3219,15 +3218,10 @@ function _buildSvgNoteIndex() {
         const tx = parseFloat(mm[1]);
         const ty = parseFloat(mm[2]);
 
-        // Skip notes whose x matches a tie destination (tied-into = not played)
-        const rounded = Math.round(tx);
-        let isTiedInto = false;
-        for (const tieX of tieDestinationXs) {
-            if (Math.abs(rounded - tieX) < 10) {
-                isTiedInto = true;
-                break;
-            }
-        }
+        // Skip if this note matches a tie destination (x within 15px AND y within 50px)
+        const isTiedInto = tieDestinations.some(td =>
+            Math.abs(tx - td.x) < 15 && Math.abs(ty - td.y) < 50
+        );
         if (isTiedInto) return;
 
         raw.push({ el, tx, ty });
@@ -3265,9 +3259,10 @@ function _buildSvgNoteIndex() {
         svgEl.insertBefore(defs, svgEl.firstChild);
     }
 
-    console.log(`✅ SVG index: ${_svgNoteElements.length} notes after filtering tied noteheads (${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass)`);
-    console.log(`   Filtered out ${343 - _svgNoteElements.length} tied noteheads`);
+    const filtered = 343 - _svgNoteElements.length;
+    console.log(`✅ SVG index: ${_svgNoteElements.length} notes (filtered ${filtered} tied noteheads) — ${_svgNoteElements.filter(n=>n.clef==='treble').length} treble, ${_svgNoteElements.filter(n=>n.clef==='bass').length} bass`);
 }
+
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const firstTime = firstPracticeNote.time;
     let count = 0;
