@@ -957,18 +957,49 @@ async function loadSongMidi() {
 
     allMidiNotes.sort((a, b) => a.time - b.time);
     _tiedNoteKeys = new Set();
-    const tieSeenRaw = new Map();
+
+    // Detect ties by finding notes whose duration crosses a measure boundary.
+    // In MIDI, a "tied" note is encoded as a single long note. The score renders
+    // it as two noteheads (one per measure) connected by a tie arc. We find notes
+    // that cross into the next measure and mark the continuation (next same-pitch
+    // note in the subsequent measure) as a tied continuation to skip in training.
+    //
+    // We run this AFTER we have secondsPerMeasure. We build it inline here using
+    // the raw tempo since secondsPerMeasure is set below — so we compute it early.
+    const _earlyBpm = (currentMidi.header.tempos && currentMidi.header.tempos.length)
+        ? currentMidi.header.tempos[0].bpm : 120;
+    const _earlySpb = 60 / _earlyBpm;
+    const _earlySpm = _earlySpb * SONG_CONFIG.timeSignature[0];
+
+    // Build a lookup: for each (track, midi), find notes sorted by time
+    const byPitch = new Map();
     for (const note of allMidiNotes) {
         const k = `${note.track}|${note.midi}`;
-        const prev = tieSeenRaw.get(k);
-        if (prev) {
-            const gap = note.time - (prev.time + prev.duration);
-            if (Math.abs(gap) < 0.005) {
-                _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+        if (!byPitch.has(k)) byPitch.set(k, []);
+        byPitch.get(k).push(note);
+    }
+
+    for (const notes of byPitch.values()) {
+        notes.sort((a, b) => a.time - b.time);
+        for (let i = 0; i < notes.length - 1; i++) {
+            const note = notes[i];
+            const noteEnd = note.time + note.duration;
+            const noteMeasure = Math.floor(note.time / _earlySpm);
+            const noteEndMeasure = Math.floor((noteEnd - 1e-6) / _earlySpm);
+
+            // If this note's end crosses into the next measure, look for a
+            // continuation notehead (same pitch, starts near that boundary)
+            if (noteEndMeasure > noteMeasure) {
+                const boundaryTime = noteEndMeasure * _earlySpm;
+                const next = notes[i + 1];
+                // The continuation starts very close to the measure boundary
+                if (Math.abs(next.time - boundaryTime) < (_earlySpm * 0.15)) {
+                    _tiedNoteKeys.add(`${next.time.toFixed(4)}|${next.midi}|${next.track}`);
+                }
             }
         }
-        tieSeenRaw.set(k, note);
     }
+
     console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
 
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
