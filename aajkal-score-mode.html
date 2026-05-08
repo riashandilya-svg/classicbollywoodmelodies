@@ -3167,26 +3167,6 @@ let _tieDestinations = [];
 // ── FIX 2: _lastPannedMeasure and _panScoreToEntry live here,
 //           clean inside the module — NO wrapper <script> tags ──
 let _lastPannedMeasure = -1;
-
-function _panScoreToEntry(entry) {
-    requestAnimationFrame(() => {
-        const wrapper  = document.getElementById('scorePageWrapper');
-        const scoreObj = document.getElementById('scoreObj');
-        if (!wrapper || !scoreObj || !entry) return;
-
-        const noteRect    = entry.el.getBoundingClientRect();
-        const wrapperRect = wrapper.getBoundingClientRect();
-
-        const matrix   = new DOMMatrix(getComputedStyle(scoreObj).transform);
-        const currentX = matrix.m41;
-
-        const PADDING = 20;
-        const delta   = (wrapperRect.left + PADDING) - noteRect.left;
-        const newX    = currentX + delta;
-
-        // Never scroll past the start of the SVG
-        scoreObj.style.transform = `translateX(${Math.min(0, newX)}px)`;
-    });
 }
 
 function _buildSvgNoteIndex() {
@@ -3270,18 +3250,17 @@ function _buildSvgNoteIndex() {
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const targetTime = firstPracticeNote.time;
 
-    const filtered = allMidiNotes.filter(n => {
-        if (hand === 'both') return true;
-        return hand === 'treble' ? n.track === TREBLE : n.track === BASS;
-    });
-
-    for (let i = 0; i < filtered.length; i++) {
-        if (filtered[i].time >= targetTime - 0.005) {
-            console.log(`🎯 scoreNoteOffset=${i} (hand=${hand}, targetTime=${targetTime.toFixed(3)}, found=${filtered[i].time.toFixed(3)})`);
-            return i;
-        }
+    let count = 0;
+    for (let i = 0; i < allMidiNotes.length; i++) {
+        const n = allMidiNotes[i];
+        if (n.time >= targetTime - 0.005) break;
+        if (hand === 'both') { count++; continue; }
+        if (hand === 'treble' && n.track === TREBLE) count++;
+        if (hand === 'bass'   && n.track === BASS)   count++;
     }
-    return 0;
+
+    console.log(`🎯 scoreNoteOffset=${count} hand=${hand} targetTime=${targetTime.toFixed(3)}`);
+    return count;
 }
   
 function _highlightSvgNote(globalIdx, clefMode) {
