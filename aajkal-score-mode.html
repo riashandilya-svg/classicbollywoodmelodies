@@ -3162,6 +3162,9 @@ function startFullSongPlayback() {
     playbackTimeouts = [];
 
 
+    // For score mode: group notes by time so we highlight all simultaneous notes together
+    const seenHighlightTimes = new Set();
+
     allMidiNotes.forEach(note => {
 
         const visualStartTime =
@@ -3189,9 +3192,31 @@ addMidiFallingRectangle(
     );
 }, (note.time * 1000) / speedMultiplier);
 
-
-
         playbackTimeouts.push(t);
+
+        // Score mode highlight: fire once per unique timestamp
+        if (scoreModeActive) {
+            const timeKey = note.time.toFixed(4);
+            if (!seenHighlightTimes.has(timeKey)) {
+                seenHighlightTimes.add(timeKey);
+                const ht = setTimeout(() => {
+                    if (!fullSongPlaying) return;
+                    const simultaneous = allMidiNotes.filter(n =>
+                        Math.abs(n.time - note.time) < 0.01
+                    );
+                    const seen = new Set();
+                    const allIndices = [];
+                    for (const sn of simultaneous) {
+                        const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
+                        if (seen.has(k)) continue;
+                        seen.add(k);
+                        allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
+                    }
+                    if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+                }, (note.time * 1000) / speedMultiplier);
+                playbackTimeouts.push(ht);
+            }
+        }
     });
 
     const lastNote = allMidiNotes[allMidiNotes.length - 1];
