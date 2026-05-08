@@ -3250,38 +3250,39 @@ function _computeScoreNoteOffset(firstPracticeNote, hand) {
     const targetTime = firstPracticeNote.time;
     const targetMidi = firstPracticeNote.midi;
 
-    let count = 0;
-    for (let i = 0; i < allMidiNotes.length; i++) {
-        const n = allMidiNotes[i];
+    // Build treble/bass filtered list, skipping tied continuations
+    const filtered = allMidiNotes.filter(n => {
+        if (hand === 'treble') return n.track === TREBLE;
+        if (hand === 'bass')   return n.track === BASS;
+        return true;
+    });
 
+    // Mark tied notes: same pitch, same track, previous note ends exactly where this begins
+    const GAP = 0.05; // seconds tolerance for tie detection
+    const isTied = new Array(filtered.length).fill(false);
+    for (let i = 1; i < filtered.length; i++) {
+        const prev = filtered[i - 1];
+        const cur  = filtered[i];
         if (
-            Math.abs(n.time - targetTime) < 0.005 &&
-            n.midi === targetMidi &&
-            (hand === 'both' || (hand === 'treble' && n.track === TREBLE) || (hand === 'bass' && n.track === BASS))
-        ) break;
-
-        if (hand === 'both') { count++; continue; }
-        if (hand === 'treble' && n.track === TREBLE) count++;
-        if (hand === 'bass'   && n.track === BASS)   count++;
+            prev.midi === cur.midi &&
+            prev.track === cur.track &&
+            Math.abs((prev.time + prev.duration) - cur.time) < GAP
+        ) {
+            isTied[i] = true;
+        }
     }
 
-    // === NEW DIAGNOSTIC ===
-    const trebleOnly = allMidiNotes.filter(n => n.track === TREBLE);
-    console.log('=== TREBLE NOTE AUDIT (indices 60-70) ===');
-    for (let i = 60; i <= 70 && i < trebleOnly.length; i++) {
-        const n = trebleOnly[i];
-        console.log(`  midi[${i}]: ${getNoteName(n.midi)} t=${n.time.toFixed(3)}`);
+    // Count non-tied notes before our target
+    let count = 0;
+    for (let i = 0; i < filtered.length; i++) {
+        const n = filtered[i];
+        if (Math.abs(n.time - targetTime) < 0.005 && n.midi === targetMidi) break;
+        if (!isTied[i]) count++;
     }
-    const svgTreble = _svgNoteElements.filter(n => n.clef === 'treble');
-    console.log('=== SVG TREBLE ELEMENTS (indices 60-70) ===');
-    for (let i = 60; i <= 70 && i < svgTreble.length; i++) {
-        console.log(`  svg[${i}]: tx=${svgTreble[i].tx.toFixed(0)} ty=${svgTreble[i].ty.toFixed(0)}`);
-    }
-    console.log(`=== offset=${count}, SVG element at offset: tx=${svgTreble[count]?.tx.toFixed(0)} ===`);
-    // === END DIAGNOSTIC ===
 
+    console.log(`🎯 scoreNoteOffset=${count} hand=${hand} targetTime=${targetTime.toFixed(3)} targetMidi=${getNoteName(targetMidi)}`);
     return count;
-}  
+}
 function _highlightSvgNote(globalIdx, clefMode) {
     try {
         if (_currentHighlightEl) {
@@ -3427,17 +3428,50 @@ function highlightScoreNote(noteName, midiNote, trackType, trainingNoteObj) {
     if (!scoreModeActive) return;
     _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
 }
+function _midiIndexToSvgIndex(midiPracticeIdx, hand) {
+    // Count how many non-tied notes are in practiceNotes[0..midiPracticeIdx-1]
+    const filtered = allMidiNotes.filter(n => {
+        if (hand === 'treble') return n.track === TREBLE;
+        if (hand === 'bass')   return n.track === BASS;
+        return true;
+    });
 
+    const GAP = 0.05;
+    const isTied = new Array(filtered.length).fill(false);
+    for (let i = 1; i < filtered.length; i++) {
+        const prev = filtered[i - 1];
+        const cur  = filtered[i];
+        if (
+            prev.midi === cur.midi &&
+            prev.track === cur.track &&
+            Math.abs((prev.time + prev.duration) - cur.time) < GAP
+        ) {
+            isTied[i] = true;
+        }
+    }
+
+    // Find where practiceNotes[midiPracticeIdx] sits in filtered[]
+    const target = practiceNotes[midiPracticeIdx];
+    if (!target) return scoreNoteOffset;
+
+    let svgCount = 0;
+    for (let i = 0; i < filtered.length; i++) {
+        const n = filtered[i];
+        if (Math.abs(n.time - target.time) < 0.005 && n.midi === target.midi) break;
+        if (!isTied[i]) svgCount++;
+    }
+    return svgCount;
+}
 function onTrainingNoteSpawned(noteObj) {
     if (!scoreModeActive) return;
     const noteName = getNoteName(noteObj.midi);
     const beats = noteObj.duration / secondsPerBeat;
     const beatLabel = beatsToNoteName(beats);
     showScoreNoteDisplay(noteName, beatLabel);
-    // scoreNoteOffset = raw global midi idx of first practice note
-    // trainingIndex   = how many notes into practiceNotes we are
-    // together they give the current note's global midi index
-    _highlightSvgNote(scoreNoteOffset + trainingIndex, clefMode);
+
+    // Use tie-aware SVG index instead of raw trainingIndex
+    const svgIdx = _midiIndexToSvgIndex(trainingIndex, clefMode);
+    _highlightSvgNote(svgIdx, clefMode);
 }
 
 function showScoreNoteDisplay(noteName, hint) {
