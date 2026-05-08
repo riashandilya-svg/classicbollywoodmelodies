@@ -956,7 +956,7 @@ async function loadSongMidi() {
     });
 
     allMidiNotes.sort((a, b) => a.time - b.time);
-    _tiedNoteKeys = new Set();
+    _tiedNoteKeys = new Set(); // reset each load
     const tieSeenRaw = new Map();
     for (const note of allMidiNotes) {
         const k = `${note.track}|${note.midi}`;
@@ -1468,6 +1468,7 @@ window.addEventListener('resize', resizeCanvas);
 setTimeout(resizeCanvas, 800);
 setTimeout(animate, 900);
 let fallingRectangles = [];
+let _tiedNoteKeys = new Set();  // populated in loadSongMidi, read in _buildSvgMidiMap
 let midiFallingNotes = [];
 let songStartTime = null;
 let visualClockStart = null;
