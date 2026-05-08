@@ -3221,8 +3221,8 @@ function _buildSvgNoteIndex() {
         const ty = parseFloat(mm[2]);
 
         // Mark whether this notehead is a tie destination
-        const isTieDest = _tieDestinations.some(td =>
-            Math.abs(tx - td.x) < 15 && Math.abs(ty - td.y) < 50
+       const isTieDest = _tieDestinations.some(td =>
+            Math.abs(tx - td.x) < 8 && Math.abs(ty - td.y) < 30
         );
 
         raw.push({ el, tx, ty, isTieDest });
@@ -3325,21 +3325,13 @@ function _highlightSvgNote(globalTrainingIndex, clefMode) {
         ? _svgTieDestElements
         : _svgTieDestElements.filter(n => n.clef === clefMode);
 
-    const tieDest = filteredTieDests.find(td => td.tx > entry.tx);
+const tieDest = filteredTieDests
+        .filter(td => td.tx > entry.tx && Math.abs(td.ty - entry.ty) < 80)
+        .sort((a, b) => a.tx - b.tx)[0];
     if (tieDest) {
         tieDest.el.setAttribute('fill', '#E57373');
         tieDest.el.setAttribute('filter', 'url(#hlGlow)');
         _currentTieDestEl = tieDest;
-    }
-
-    // Pan the score when the measure changes
-    const _thisMeasure = (practiceNotes && practiceNotes[trainingIndex])
-        ? (practiceNotes[trainingIndex].logicalMeasure ?? trainingIndex)
-        : trainingIndex;
-
-    if (_thisMeasure !== _lastPannedMeasure) {
-        _lastPannedMeasure = _thisMeasure;
-        _panScoreToEntry(entry);
     }
 }
   
@@ -3478,10 +3470,6 @@ async function renderScorePage(pageNum) {
         svgEl.style.height = 'auto';
         svgEl.removeAttribute('width');
         svgEl.removeAttribute('height');
-
-        // Reset pan when page changes
-        document.getElementById('scoreObj').style.transform = 'translateX(0px)';
-        _lastPannedMeasure = -1;
     }
     _buildSvgNoteIndex();
     updateScorePageLabel();
