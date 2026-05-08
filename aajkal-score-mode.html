@@ -1105,8 +1105,17 @@ const BASS = "bass";
 const notesDisplay = document.getElementById('notesDisplay');
 const noteList = document.getElementById('noteList');
 const playbackControls = document.getElementById('playbackControls');
-const handSelect = document.getElementById('handSelect');
-
+const hand = document.getElementById('handSelect').value;
+const filtered = allMidiNotes.filter(n =>
+    hand === 'both' ? true : hand === 'treble' ? n.track === 'treble' : n.track === 'bass'
+);
+const pageOffset = (hand === 'treble' ? {1:0,2:187,3:339} : hand === 'bass' ? {1:0,2:156,3:354} : {1:0,2:343,3:693})[scoreCurrentPage] || 0;
+const svgFiltered = _svgNoteElements.filter(n => hand === 'both' || n.clef === hand);
+console.log('scoreNoteOffset (raw midi idx):', scoreNoteOffset);
+console.log('pageOffset:', pageOffset);
+console.log('localIdx:', scoreNoteOffset - pageOffset);
+console.log('MIDI note at that index:', filtered[scoreNoteOffset] ? getNoteName(filtered[scoreNoteOffset].midi) : 'OUT OF RANGE');
+console.log('SVG element at localIdx:', svgFiltered[scoreNoteOffset - pageOffset]?.clef, 'tx:', svgFiltered[scoreNoteOffset - pageOffset]?.tx?.toFixed(0));
 function setControlsEnabled(enabled) {
     const controls = playbackControls.querySelectorAll(
         'button, select, input[type="number"], input[type="checkbox"]'
@@ -3270,48 +3279,27 @@ function _buildSvgNoteIndex() {
 }
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
-    if (!_svgNoteElements.length) return 0;
+    const targetTime = firstPracticeNote.time; // use .time, not .playTime
 
-    // Find the first note in the SVG index that is AT or AFTER
-    // the first practice note, matching clef.
-    // We do this by finding the closest-time MIDI note to each SVG element,
-    // then finding which SVG index corresponds to our practice start.
-
-    const targetTime = firstPracticeNote.playTime ?? firstPracticeNote.time;
-
-    // Build a flat list of allMidiNotes filtered to the right hand,
-    // sorted by time — same order as SVG elements on this page
     const filtered = allMidiNotes.filter(n => {
         if (hand === 'both') return true;
         return hand === 'treble' ? n.track === TREBLE : n.track === BASS;
     });
 
-    // Find the index in allMidiNotes (filtered) where time >= targetTime
-    let midiIdx = 0;
+    let midiIdx = filtered.length; // default: past the end
     for (let i = 0; i < filtered.length; i++) {
-        if (filtered[i].time >= targetTime - 0.001) {
+        if (filtered[i].time >= targetTime - 0.005) {
             midiIdx = i;
             break;
         }
-        midiIdx = i + 1;
     }
 
-    // The SVG elements on this page start at PAGE_OFFSETS[page] in the
-    // full song's note sequence. So the local index within this page's
-    // SVG is: midiIdx - pageOffset
-    const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble
-                      : hand === 'bass'   ? PAGE_OFFSETS.bass
-                      : PAGE_OFFSETS.all;
-    const pageOffset = offsetTable[scoreCurrentPage] || 0;
-
-    const localIdx = Math.max(0, midiIdx - pageOffset);
-
-    console.log(`🎯 scoreNoteOffset: midiIdx=${midiIdx}, pageOffset=${pageOffset}, localIdx=${localIdx}, targetTime=${targetTime.toFixed(2)}`);
-    return localIdx;
+    console.log(`🎯 _computeScoreNoteOffset: hand=${hand}, targetTime=${targetTime.toFixed(3)}, midiIdx=${midiIdx}`);
+    return midiIdx; // RAW — do NOT subtract pageOffset here
 }
   
-function _highlightSvgNote(globalTrainingIndex, clefMode) {
-    // Clear previous highlights
+function _highlightSvgNote(globalIdx, clefMode) {
+    // Clear previous
     if (_currentHighlightEl) {
         _currentHighlightEl.removeAttribute('fill');
         _currentHighlightEl.removeAttribute('filter');
@@ -3324,44 +3312,47 @@ function _highlightSvgNote(globalTrainingIndex, clefMode) {
     }
     if (!_svgNoteElements.length) return;
 
-const filtered = clefMode === 'both'
-    ? _svgNoteElements
-    : _svgNoteElements.filter(n => n.clef === clefMode);
+    const filtered = clefMode === 'both'
+        ? _svgNoteElements
+        : _svgNoteElements.filter(n => n.clef === clefMode);
 
     const offsetTable = clefMode === 'treble' ? PAGE_OFFSETS.treble
                       : clefMode === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
 
     const pageOffset = offsetTable[scoreCurrentPage] || 0;
-    const localIdx   = globalTrainingIndex - pageOffset;
+    const localIdx   = globalIdx - pageOffset; // subtract ONCE here
+
+    console.log(`🔦 highlight: globalIdx=${globalIdx}, pageOffset=${pageOffset}, localIdx=${localIdx}, filtered.length=${filtered.length}`);
 
     if (localIdx < 0 || localIdx >= filtered.length) {
-        _autoNavigateToPage(globalTrainingIndex, clefMode, offsetTable);
+        _autoNavigateToPage(globalIdx, clefMode, offsetTable);
         return;
     }
 
-    // Highlight the main (source) notehead
     const entry = filtered[localIdx];
     entry.el.setAttribute('fill', '#E57373');
     entry.el.setAttribute('filter', 'url(#hlGlow)');
     _currentHighlightEl = entry.el;
 
-    // Also highlight the tie destination for this note, if one exists.
-    // The tie destination is to the RIGHT of the source note, on the same clef.
+    // Pan score so highlight is visible
+    _panScoreToEntry(entry);
+
+    // Highlight tie destination if one follows immediately to the right
     const filteredTieDests = clefMode === 'both'
         ? _svgTieDestElements
         : _svgTieDestElements.filter(n => n.clef === clefMode);
 
-const tieDest = filteredTieDests
+    const tieDest = filteredTieDests
         .filter(td => td.tx > entry.tx && Math.abs(td.ty - entry.ty) < 80)
         .sort((a, b) => a.tx - b.tx)[0];
+
     if (tieDest) {
         tieDest.el.setAttribute('fill', '#E57373');
         tieDest.el.setAttribute('filter', 'url(#hlGlow)');
         _currentTieDestEl = tieDest;
     }
-}
-  
+}  
 function _countTiesBeforeTime(cutoffTime, hand) {
     const container = document.getElementById('scoreObj');
     if (!container) return 0;
