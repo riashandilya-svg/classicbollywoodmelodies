@@ -3333,21 +3333,31 @@ function _buildSvgNoteIndex() {
         const pageSystems = SVG_PAGE_SYSTEMS[pageNum - 1] || [];
 
         // ── Step 1: collect all noteheads for this page ──────────────────
+        // SVG matrix() can use comma OR space separators per spec; handle both.
         const raw = [];
         svgEl.querySelectorAll('path.Note').forEach(el => {
             const t  = el.getAttribute('transform') || '';
-            const mm = t.match(/matrix\([^,]+,[^,]+,[^,]+,[^,]+,([^,]+),([^)]+)\)/);
+            // Matches: matrix(a  b  c  d  tx  ty)  — commas, spaces, or mixed
+            const mm = t.match(
+                /matrix\(\s*([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)\s*\)/
+            );
             if (!mm) return;
-            raw.push({ el, tx: parseFloat(mm[1]), ty: parseFloat(mm[2]) });
+            // Groups: 1=a 2=b 3=c 4=d  5=tx(e)  6=ty(f)
+            raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]) });
         });
 
-        if (!raw.length) continue;
+        if (!raw.length) {
+            console.warn(`⚠️  Page ${pageNum}: no path.Note elements found (SVG may be missing or use unexpected transform format)`);
+            continue;
+        }
+        console.log(`📄 Page ${pageNum}: found ${raw.length} raw noteheads`);
 
         // ── Step 2: find tied-continuation noteheads ─────────────────────
         const tiedNoteheadSet = new Set();
         svgEl.querySelectorAll('path.TieSegment').forEach(el => {
             const d = el.getAttribute('d') || '';
-            const coords = [...d.matchAll(/([\d.]+),([\d.]+)/g)].map(m => [parseFloat(m[1]), parseFloat(m[2])]);
+            // SVG path coords can use comma or space as separator
+            const coords = [...d.matchAll(/([\d.]+)[,\s]+([\d.]+)/g)].map(m => [parseFloat(m[1]), parseFloat(m[2])]);
             if (coords.length < 2) return;
             const [ex, ey] = coords[coords.length - 1];
             let bestIdx = -1, bestDist = Infinity;
@@ -3369,22 +3379,17 @@ function _buildSvgNoteIndex() {
                 if (!inTreble && !inBass) continue;
                 const clef = inTreble ? 'treble' : 'bass';
                 const bls  = sys.barline_xs;
-                // Skip double-barline gaps (< 30px wide) — they're repeat signs, not real measures
-                let realMeasureOffset = 0;
                 for (let i = 0; i < bls.length - 1; i++) {
-                    const slotWidth = bls[i + 1] - bls[i];
-                    if (slotWidth < 30) continue; // double barline — skip, don't increment measure
                     const leftBound  = (i === 0) ? (bls[i] - 20) : bls[i];
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
-                        const sheet_measure = sys.start_measure + realMeasureOffset;
+                        const sheet_measure = sys.start_measure + i;
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
                         _svgBuckets[sheet_measure][clef].push(idx);
                         break;
                     }
-                    realMeasureOffset++;
                 }
                 break;
             }
@@ -3422,7 +3427,16 @@ function _buildSvgMidiMap() {
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
-            const rank = rankCounters[bucketKey]++;
+
+            // Raw rank keeps incrementing across both passes of a repeated section.
+            // Wrap it by the SVG bucket size so that repeat-pass notes (e.g. physical
+            // measures 37-44 which map to the same logical measures 29-36 as the first
+            // pass) resolve to rank 0, 1, 2, … again — i.e. they highlight the same
+            // SVG noteheads as the first pass.  For measures that are never repeated
+            // the bucket size is never exceeded so % has no effect.
+            const rawRank    = rankCounters[bucketKey]++;
+            const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
+            const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
             const mk = midiKeyFor(note);
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
