@@ -934,6 +934,7 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
   MAX_LOGICAL_MEASURE = Math.max(MAX_LOGICAL_MEASURE, PHYSICAL_TO_LOGICAL[p] || 0);
 }
 
+
 async function loadSongMidi() {
     const response = await fetch("aajkal.mid");
     const arrayBuffer = await response.arrayBuffer();
@@ -953,39 +954,26 @@ async function loadSongMidi() {
             });
         });
     });
+
     allMidiNotes.sort((a, b) => a.time - b.time);
-  _tiedNoteKeys = new Set();
-const lastSeenRaw = new Map();
-for (const note of allMidiNotes) {
-    const k = `${note.track}|${note.midi}`;
-    const prev = lastSeenRaw.get(k);
-    if (prev) {
-        const gap = note.time - (prev.time + prev.duration);
-        if (Math.abs(gap) < 0.005) {
-            _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+    _tiedNoteKeys = new Set();
+    const tieSeenRaw = new Map();
+    for (const note of allMidiNotes) {
+        const k = `${note.track}|${note.midi}`;
+        const prev = tieSeenRaw.get(k);
+        if (prev) {
+            const gap = note.time - (prev.time + prev.duration);
+            if (Math.abs(gap) < 0.005) {
+                _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+            }
         }
+        tieSeenRaw.set(k, note);
     }
-    lastSeenRaw.set(k, note);
-}
-console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
-_tiedNoteKeys = new Set();
-const lastSeenRaw = new Map();
-for (const note of allMidiNotes) {
-    const k = `${note.track}|${note.midi}`;
-    const prev = lastSeenRaw.get(k);
-    if (prev) {
-        const gap = note.time - (prev.time + prev.duration);
-        if (Math.abs(gap) < 0.005) {
-            _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
-        }
-    }
-    lastSeenRaw.set(k, note);
-}
-console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
+    console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
 
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
-  let bpm;
+    let bpm;
     if (SONG_CONFIG.timeSignature[0] === 2 && SONG_CONFIG.timeSignature[1] === 2) {
         bpm = 100;
     } else {
@@ -1002,12 +990,8 @@ console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
     showTrainingProgress();
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
-
-    setControlsEnabled(true);
-    showTrainingProgress();
-
-    console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
+
 // ==================================
 // MEASURE → TIME MAPPING
 // ==================================
