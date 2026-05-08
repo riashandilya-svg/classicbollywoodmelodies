@@ -3270,20 +3270,46 @@ function _buildSvgNoteIndex() {
 }
 
 function _computeScoreNoteOffset(firstPracticeNote, hand) {
-    const firstTime = firstPracticeNote.time;
-    let count = 0;
-    for (const n of allMidiNotes) {
-        if (n.time >= firstTime - 0.001) break;
-        if (hand === 'both') { count++; continue; }
-        const isMatch = (hand === 'treble') ? n.track === TREBLE : n.track === BASS;
-        if (isMatch) count++;
+    if (!_svgNoteElements.length) return 0;
+
+    // Find the first note in the SVG index that is AT or AFTER
+    // the first practice note, matching clef.
+    // We do this by finding the closest-time MIDI note to each SVG element,
+    // then finding which SVG index corresponds to our practice start.
+
+    const targetTime = firstPracticeNote.playTime ?? firstPracticeNote.time;
+
+    // Build a flat list of allMidiNotes filtered to the right hand,
+    // sorted by time — same order as SVG elements on this page
+    const filtered = allMidiNotes.filter(n => {
+        if (hand === 'both') return true;
+        return hand === 'treble' ? n.track === TREBLE : n.track === BASS;
+    });
+
+    // Find the index in allMidiNotes (filtered) where time >= targetTime
+    let midiIdx = 0;
+    for (let i = 0; i < filtered.length; i++) {
+        if (filtered[i].time >= targetTime - 0.001) {
+            midiIdx = i;
+            break;
+        }
+        midiIdx = i + 1;
     }
+
+    // The SVG elements on this page start at PAGE_OFFSETS[page] in the
+    // full song's note sequence. So the local index within this page's
+    // SVG is: midiIdx - pageOffset
     const offsetTable = hand === 'treble' ? PAGE_OFFSETS.treble
                       : hand === 'bass'   ? PAGE_OFFSETS.bass
                       : PAGE_OFFSETS.all;
     const pageOffset = offsetTable[scoreCurrentPage] || 0;
-    return Math.max(0, count - pageOffset);
+
+    const localIdx = Math.max(0, midiIdx - pageOffset);
+
+    console.log(`🎯 scoreNoteOffset: midiIdx=${midiIdx}, pageOffset=${pageOffset}, localIdx=${localIdx}, targetTime=${targetTime.toFixed(2)}`);
+    return localIdx;
 }
+  
 function _highlightSvgNote(globalTrainingIndex, clefMode) {
     // Clear previous highlights
     if (_currentHighlightEl) {
