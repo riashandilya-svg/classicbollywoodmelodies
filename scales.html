@@ -1633,7 +1633,11 @@ function handlePracticeInput(noteStr){
   // Debug overlay
   const dbg=document.getElementById('debug-overlay');
   if(dbg){
-    dbg.textContent=`idx:${practiceIdx}  expected:${curKeys[practiceIdx]}  got:${noteStr}  total:${curKeys.length}`;
+    if (selectedHand === 'BH' && bhLHKeys.length > practiceIdx) {
+      dbg.textContent=`idx:${practiceIdx}  expected RH:${curKeys[practiceIdx]} LH:${bhLHKeys[practiceIdx]}  got:${noteStr}  total:${curKeys.length}`;
+    } else {
+      dbg.textContent=`idx:${practiceIdx}  expected:${curKeys[practiceIdx]}  got:${noteStr}  total:${curKeys.length}`;
+    }
   }
 
   // ── BOTH HANDS MODE ──
