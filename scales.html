@@ -1078,87 +1078,74 @@ function selectScale(id){
 const RH_FINGERING = {
   // === 7-NOTE SCALES (diatonic) ===
   // Default (C, G, D, A, E, B): 1 2 3 | 1 2 3 4  /  5 4 3 2 1 | 3 2 1
-  major:         { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  naturalMinor:  { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  harmonicMinor: { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  ionian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  dorian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  phrygian:      { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  lydian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  mixolydian:    { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  aeolian:       { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  locrian:       { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
+  major:         { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  naturalMinor:  { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  harmonicMinor: { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  ionian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  dorian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  phrygian:      { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  lydian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  mixolydian:    { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  aeolian:       { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
+  locrian:       { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1], cap:5, ret:1 },
   // === 5-NOTE SCALES (pentatonic) ===
-  // C major pent: C D E G A (C)  ->  1 2 3 1 2 (3)
-  majorPent:     { ascUnit:[1,2,3,1,2], descUnit:[2,1,3,2,1] },
-  // C minor pent: C Eb F G Bb (C) -> 1 2 3 1 2 (3) same shape
-  minorPent:     { ascUnit:[1,2,3,1,2], descUnit:[2,1,3,2,1] },
+  majorPent:     { ascUnit:[1,2,3,1,2], descUnit:[2,1,3,2,1], cap:5, ret:1 },
+  minorPent:     { ascUnit:[1,2,3,1,2], descUnit:[2,1,3,2,1], cap:5, ret:1 },
   // === 6-NOTE SCALES (blues) ===
-  // C major blues: C D Eb E G A (C) -> 1 2 3 1 2 3 (4)
-  majorBlues:    { ascUnit:[1,2,3,1,2,3], descUnit:[3,2,1,3,2,1] },
-  // C minor blues: C Eb F Gb G Bb (C) -> 1 2 3 1 2 3 (4)
-  minorBlues:    { ascUnit:[1,2,3,1,2,3], descUnit:[3,2,1,3,2,1] },
+  majorBlues:    { ascUnit:[1,2,3,1,2,3], descUnit:[3,2,1,3,2,1], cap:4, ret:1 },
+  minorBlues:    { ascUnit:[1,2,3,1,2,3], descUnit:[3,2,1,3,2,1], cap:4, ret:1 },
   // === 6-NOTE SCALE (whole tone) ===
-  // C whole tone: C D E F# G# Bb (C) -> 1 2 3 1 2 3 (4) — same shape
-  wholeTone:     { ascUnit:[1,2,3,1,2,3], descUnit:[3,2,1,3,2,1] },
+  wholeTone:     { ascUnit:[1,2,3,1,2,3], descUnit:[3,2,1,3,2,1], cap:4, ret:1 },
   // === 8-NOTE SCALES (diminished) ===
-  // C dim WH: C D Eb F Gb Ab A B (C) -> 1 2 3 1 2 3 4 1 (2) wrap
-  dimWH:         { ascUnit:[1,2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2,1] },
-  dimHW:         { ascUnit:[1,2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2,1] },
+  dimWH:         { ascUnit:[1,2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2,1], cap:2, ret:1 },
+  dimHW:         { ascUnit:[1,2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2,1], cap:2, ret:1 },
   // === 12-NOTE SCALE (chromatic) ===
-  // RH chromatic: 1 2 3 1 2 3 1 2 3 4 1 2 (3)
-  chromatic:     { ascUnit:[1,2,3,1,2,3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3,2,1,3,2,1] },
+  chromatic:     { ascUnit:[1,2,3,1,2,3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3,2,1,3,2,1], cap:3, ret:1 },
 };
 
-// Per-root overrides for scales with different standard fingerings
-// Key: `${pat}_${root}`, value: { ascUnit, descUnit } (same format)
+// Per-root overrides — cap = finger that lands on the top note of the scale
 const RH_FINGERING_OVERRIDES = {
-  // F MAJOR / modes on F: Bb on finger 4
-  // F G A Bb C D E F -> 1 2 3 4 1 2 3 (4) asc
-  // desc: 4 3 2 1 4 3 2 1
-  'major_F':         { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'ionian_F':        { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'mixolydian_F':    { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
+  // F MAJOR: F G A Bb C D E F -> 1 2 3 4 1 2 3 (4)
+  'major_F':         { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1], cap:4, ret:1 },
+  'ionian_F':        { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1], cap:4, ret:1 },
+  'mixolydian_F':    { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1], cap:4, ret:1 },
 
   // Bb MAJOR: Bb C D Eb F G A Bb -> 4 1 2 3 1 2 3 (4)
-  'major_Bb':        { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
-  'ionian_Bb':       { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
+  'major_Bb':        { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4], cap:4, ret:1 },
+  'ionian_Bb':       { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4], cap:4, ret:1 },
 
   // Eb MAJOR: Eb F G Ab Bb C D Eb -> 3 1 2 3 4 1 2 (3)
-  'major_Eb':        { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
-  'ionian_Eb':       { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
+  'major_Eb':        { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3], cap:3, ret:1 },
+  'ionian_Eb':       { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3], cap:3, ret:1 },
 
   // Ab MAJOR: Ab Bb C Db Eb F G Ab -> 3 4 1 2 3 1 2 (3)
-  'major_Ab':        { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
-  'ionian_Ab':       { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
+  'major_Ab':        { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3], cap:3, ret:1 },
+  'ionian_Ab':       { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3], cap:3, ret:1 },
 
   // Db MAJOR: Db Eb F Gb Ab Bb C Db -> 2 3 1 2 3 4 1 (2)
-  'major_Db':        { ascUnit:[2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2] },
-  'ionian_Db':       { ascUnit:[2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2] },
+  'major_Db':        { ascUnit:[2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2], cap:2, ret:1 },
+  'ionian_Db':       { ascUnit:[2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2], cap:2, ret:1 },
 
   // Gb MAJOR: Gb Ab Bb Cb Db Eb F Gb -> 2 3 4 1 2 3 1 (2)
-  'major_Gb':        { ascUnit:[2,3,4,1,2,3,1], descUnit:[1,3,2,1,4,3,2] },
-  'ionian_Gb':       { ascUnit:[2,3,4,1,2,3,1], descUnit:[1,3,2,1,4,3,2] },
-
-  // B MAJOR: B C# D# E F# G# A# B -> 1 2 3 1 2 3 4 (5) — same as C, no override needed
-  // E MAJOR: same as C pattern — no override needed
+  'major_Gb':        { ascUnit:[2,3,4,1,2,3,1], descUnit:[1,3,2,1,4,3,2], cap:2, ret:1 },
+  'ionian_Gb':       { ascUnit:[2,3,4,1,2,3,1], descUnit:[1,3,2,1,4,3,2], cap:2, ret:1 },
 
   // F NATURAL MINOR: F G Ab Bb C Db Eb F -> 1 2 3 4 1 2 3 (4)
-  'naturalMinor_F':  { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'aeolian_F':       { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'harmonicMinor_F': { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
+  'naturalMinor_F':  { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1], cap:4, ret:1 },
+  'aeolian_F':       { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1], cap:4, ret:1 },
+  'harmonicMinor_F': { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1], cap:4, ret:1 },
 
   // Bb NATURAL MINOR: Bb C Db Eb F Gb Ab Bb -> 4 1 2 3 1 2 3 (4)
-  'naturalMinor_Bb': { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
-  'aeolian_Bb':      { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
+  'naturalMinor_Bb': { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4], cap:4, ret:1 },
+  'aeolian_Bb':      { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4], cap:4, ret:1 },
 
   // Eb NATURAL MINOR: Eb F Gb Ab Bb Cb Db Eb -> 3 1 2 3 4 1 2 (3)
-  'naturalMinor_Eb': { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
-  'aeolian_Eb':      { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
+  'naturalMinor_Eb': { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3], cap:3, ret:1 },
+  'aeolian_Eb':      { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3], cap:3, ret:1 },
 
   // Ab NATURAL MINOR: Ab Bb Cb Db Eb Fb Gb Ab -> 3 4 1 2 3 1 2 (3)
-  'naturalMinor_Ab': { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
-  'aeolian_Ab':      { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
+  'naturalMinor_Ab': { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3], cap:3, ret:1 },
+  'aeolian_Ab':      { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3], cap:3, ret:1 },
 };
 
 // ══════════════════════════════════════════════
