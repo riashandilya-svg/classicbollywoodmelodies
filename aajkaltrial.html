@@ -3447,6 +3447,13 @@ function _buildSvgMidiMap() {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
+    // Track which physical measures are "second-pass" repeats.
+    // Physical measures 37..44 are the repeat of logical 29..36.
+    // When we encounter a note in a second-pass physical measure for the
+    // first time, we reset that bucket's counter to 0 so the second pass
+    // starts at rank 0 — exactly like the first pass.
+    const repeatPassSeen = new Set(); // tracks buckets already reset for pass-2
+
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
@@ -3460,17 +3467,23 @@ function _buildSvgMidiMap() {
             const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
+
+            // Detect entry into the second physical pass of a repeated section:
+            // physical measures REPEAT_END+1 .. REPEAT_END+REPEAT_LEN map to
+            // logical REPEAT_START .. REPEAT_END (same SVG measures as first pass).
+            // Reset the rank counter for that bucket so rank assignment starts
+            // fresh at 0 — matching the SVG bucket ordering of the first pass.
+            const isSecondPass = (physMeasure > REPEAT_END &&
+                                  physMeasure <= REPEAT_END + REPEAT_LEN);
+            const resetKey = `${bucketKey}|pass2`;
+            if (isSecondPass && !repeatPassSeen.has(resetKey)) {
+                repeatPassSeen.add(resetKey);
+                rankCounters[bucketKey] = 0;   // reset to start of SVG bucket
+            }
+
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
 
-            // Raw rank keeps incrementing across both passes of a repeated section.
-            // Wrap it by the SVG bucket size so that repeat-pass notes (e.g. physical
-            // measures 37-44 which map to the same logical measures 29-36 as the first
-            // pass) resolve to rank 0, 1, 2, … again — i.e. they highlight the same
-            // SVG noteheads as the first pass.  For measures that are never repeated
-            // the bucket size is never exceeded so % has no effect.
-            const rawRank    = rankCounters[bucketKey]++;
-            const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
-            const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
+            const rank = rankCounters[bucketKey]++;
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
         }
