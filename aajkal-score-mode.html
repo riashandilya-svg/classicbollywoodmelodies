@@ -3345,9 +3345,6 @@ function _buildSvgNoteIndex() {
             );
             if (!mm) return;
             // Groups: 1=a 2=b 3=c 4=d  5=tx(e)  6=ty(f)
-            // Grace notes use a smaller scale (a ≈ 0.675) vs regular notes (a ≈ 0.965).
-            // Skip them — they have no MIDI event and would shift rank mapping.
-            if (parseFloat(mm[1]) < 0.9) return;
             raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]) });
         });
 
