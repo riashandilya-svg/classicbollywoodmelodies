@@ -992,19 +992,6 @@ async function loadSongMidi() {
     }
     console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
 
-    // Grace notes have very short MIDI duration (typically < 0.1s).
-    // At 2/2 cut time BPM=100, a 16th note = 0.15s, so 0.1s is safely below
-    // any real note. Grace notes must be excluded from rank counting because
-    // they have no corresponding SVG notehead in the playable buckets.
-    _graceNoteKeys = new Set();
-    const GRACE_DURATION_THRESHOLD = 0.1;
-    for (const note of allMidiNotes) {
-        if (note.duration < GRACE_DURATION_THRESHOLD) {
-            _graceNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
-        }
-    }
-    console.log(`🎻 Grace notes detected: ${_graceNoteKeys.size}`);
-
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
     let bpm;
@@ -1117,7 +1104,7 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
       seq.push(logicalToPhysicalFirst(l));
     }
     
-    for (let l = 29; l <= 36; l++) {
+    for (let l = 29; l <= Math.min(36, endLogical); l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalSecond(l));
     }
@@ -1503,7 +1490,6 @@ setTimeout(resizeCanvas, 800);
 setTimeout(animate, 900);
 let fallingRectangles = [];
   let _tiedNoteKeys = new Set();
-let _graceNoteKeys = new Set();
 let midiFallingNotes = [];
 let songStartTime = null;
 let visualClockStart = null;
@@ -3350,9 +3336,9 @@ function _buildSvgNoteIndex() {
 
         // ── Step 1: collect all noteheads for this page ──────────────────
         // SVG matrix() can use comma OR space separators per spec; handle both.
-        // Grace notes have a smaller scale factor (≈0.6754 vs ≈0.9648 for normal notes).
-        // They are skipped from buckets entirely — their MIDI events are also skipped
-        // in assignRanks via _graceNoteKeys — so normal notes stay rank-aligned.
+        // The matrix 'a' value (scale) distinguishes grace notes (≈0.6754) from
+        // normal notes (≈0.9648). Grace notes are flagged so they can be bucketed
+        // into the NEXT measure (matching where the MIDI places them in time).
         const GRACE_SCALE_THRESHOLD = 0.85;
         const raw = [];
         svgEl.querySelectorAll('path.Note').forEach(el => {
@@ -3362,17 +3348,17 @@ function _buildSvgNoteIndex() {
                 /matrix\(\s*([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)\s*\)/
             );
             if (!mm) return;
-            const scaleA = parseFloat(mm[1]);
-            if (scaleA < GRACE_SCALE_THRESHOLD) return; // skip grace notes
             // Groups: 1=a 2=b 3=c 4=d  5=tx(e)  6=ty(f)
-            raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]) });
+            const scaleA = parseFloat(mm[1]);
+            const isGrace = scaleA < GRACE_SCALE_THRESHOLD;
+            raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]), isGrace });
         });
 
         if (!raw.length) {
             console.warn(`⚠️  Page ${pageNum}: no path.Note elements found (SVG may be missing or use unexpected transform format)`);
             continue;
         }
-        console.log(`📄 Page ${pageNum}: found ${raw.length} raw noteheads`);
+        console.log(`📄 Page ${pageNum}: found ${raw.length} raw noteheads (${raw.filter(n=>n.isGrace).length} grace)`);
 
         // ── Step 2: find tied-continuation noteheads ─────────────────────
         const tiedNoteheadSet = new Set();
@@ -3396,6 +3382,10 @@ function _buildSvgNoteIndex() {
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
+        // Grace notes are placed visually at the END of one measure in the SVG,
+        // but their MIDI events fire at the very START of the NEXT measure.
+        // So we assign grace notes to sheet_measure + 1 to keep SVG rank in sync
+        // with the MIDI rank counter.
         for (let ri = 0; ri < raw.length; ri++) {
             if (tiedNoteheadSet.has(ri)) continue;
             const n = raw[ri];
@@ -3409,7 +3399,16 @@ function _buildSvgNoteIndex() {
                     const leftBound  = (i === 0) ? (bls[i] - 20) : bls[i];
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
-                        const sheet_measure = sys.start_measure + i;
+                        const svgMeasure = sys.start_measure + i;
+                        // Grace notes: MIDI fires at start of next measure, so +1 to match.
+                        // Special case: a grace note visually at the end of REPEAT_END (measure 36)
+                        // fires at the start of the repeat section (REPEAT_START = 29) in MIDI,
+                        // because physical measure 37 maps to logical 29.  Assign it to bucket 29
+                        // so the SVG rank aligns with the MIDI rank counter.
+                        let sheet_measure = n.isGrace ? svgMeasure + 1 : svgMeasure;
+                        if (n.isGrace && sheet_measure === REPEAT_END + 1) {
+                            sheet_measure = REPEAT_START;
+                        }
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
@@ -3449,9 +3448,9 @@ function _buildSvgMidiMap() {
         for (const note of notes) {
             const mk = midiKeyFor(note);
 
-            // Skip tied-continuation and grace notes: the SVG buckets exclude both,
-            // so counting them here would shift every subsequent rank by +1.
-            if (_tiedNoteKeys.has(mk) || _graceNoteKeys.has(mk)) continue;
+            // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
+            // noteheads, so counting them here shifts every subsequent rank by +1.
+            if (_tiedNoteKeys.has(mk)) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
