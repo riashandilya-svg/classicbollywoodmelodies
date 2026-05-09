@@ -3336,6 +3336,10 @@ function _buildSvgNoteIndex() {
 
         // ── Step 1: collect all noteheads for this page ──────────────────
         // SVG matrix() can use comma OR space separators per spec; handle both.
+        // The matrix 'a' value (scale) distinguishes grace notes (≈0.6754) from
+        // normal notes (≈0.9648). Grace notes are flagged so they can be bucketed
+        // into the NEXT measure (matching where the MIDI places them in time).
+        const GRACE_SCALE_THRESHOLD = 0.85;
         const raw = [];
         svgEl.querySelectorAll('path.Note').forEach(el => {
             const t  = el.getAttribute('transform') || '';
@@ -3345,14 +3349,16 @@ function _buildSvgNoteIndex() {
             );
             if (!mm) return;
             // Groups: 1=a 2=b 3=c 4=d  5=tx(e)  6=ty(f)
-            raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]) });
+            const scaleA = parseFloat(mm[1]);
+            const isGrace = scaleA < GRACE_SCALE_THRESHOLD;
+            raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]), isGrace });
         });
 
         if (!raw.length) {
             console.warn(`⚠️  Page ${pageNum}: no path.Note elements found (SVG may be missing or use unexpected transform format)`);
             continue;
         }
-        console.log(`📄 Page ${pageNum}: found ${raw.length} raw noteheads`);
+        console.log(`📄 Page ${pageNum}: found ${raw.length} raw noteheads (${raw.filter(n=>n.isGrace).length} grace)`);
 
         // ── Step 2: find tied-continuation noteheads ─────────────────────
         const tiedNoteheadSet = new Set();
@@ -3360,10 +3366,9 @@ function _buildSvgNoteIndex() {
             const d = el.getAttribute('d') || '';
             // MuseScore tie paths are closed lens shapes:
             //   M x0,y0  C x1,y1 x2,y2 x3,y3  C x4,y4 x5,y5 x0,y0
-            // x0,y0 = LEFT (main) notehead anchor — where the arc starts AND ends.
+            // x0,y0 = LEFT (main) notehead — where the arc starts AND returns to.
             // x3,y3 = end of the FIRST cubic bezier = RIGHT (continuation) notehead.
-            // WRONG approach: coords[-1] always returns x0,y0 (the main note, not the tied one).
-            // CORRECT: extract all numbers and read indices [6],[7] = end of first C command.
+            // Using coords[-1] is WRONG — the path closes back to x0,y0 (the main note).
             const nums = [...d.matchAll(/[-\d.]+/g)].map(m => parseFloat(m[0]));
             if (nums.length < 8) return;
             const ex = nums[6], ey = nums[7]; // end of first C = continuation notehead
@@ -3377,6 +3382,10 @@ function _buildSvgNoteIndex() {
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
+        // Grace notes are placed visually at the END of one measure in the SVG,
+        // but their MIDI events fire at the very START of the NEXT measure.
+        // So we assign grace notes to sheet_measure + 1 to keep SVG rank in sync
+        // with the MIDI rank counter.
         for (let ri = 0; ri < raw.length; ri++) {
             if (tiedNoteheadSet.has(ri)) continue;
             const n = raw[ri];
@@ -3390,7 +3399,9 @@ function _buildSvgNoteIndex() {
                     const leftBound  = (i === 0) ? (bls[i] - 20) : bls[i];
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
-                        const sheet_measure = sys.start_measure + i;
+                        const svgMeasure = sys.start_measure + i;
+                        // Grace notes: MIDI fires at start of next measure, so +1 to match
+                        const sheet_measure = n.isGrace ? svgMeasure + 1 : svgMeasure;
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
