@@ -1308,7 +1308,11 @@ function buildFingerSequence(pat, root, noteList, ascCount, forceHand) {
     // u[0] = starting finger (usually 5=pinky)
     // u[1..] = inner repeating block (e.g. [4,3,2,1,3,2] for major)
     // cap (last ascending note) = 1 (thumb lands at top)
-    const innerUnit = u.slice(1); // repeating inner block
+    // innerUnit: everything after the starting finger, PLUS a thumb (1) appended
+    // so that the thumb-over crossing appears at every octave boundary in multi-octave playing.
+    // e.g. for major: u=[5,4,3,2,1,3,2], innerUnit=[4,3,2,1,3,2,1]
+    // This produces: 5 [4,3,2,1,3,2,1] [4,3,2,1,3,2,1] ... cap=1
+    const innerUnit = [...u.slice(1), 1];
     for (let i = 0; i < ascCount; i++) {
       if (i === ascCount - 1) {
         result.push(1); // cap always thumb for LH ascending
