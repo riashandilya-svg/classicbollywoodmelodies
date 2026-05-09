@@ -2209,7 +2209,7 @@
     /* ── Gramophone Easter Egg ── */
     .gramo-egg {
       position: fixed;
-      bottom: 28px;
+      bottom: 110px;
       right: 28px;
       z-index: 9999;
       width: 78px;
@@ -2224,7 +2224,7 @@
       opacity: 1;
     }
     .gramo-egg.glow-active {
-      filter: drop-shadow(0 0 14px rgba(255,186,0,0.85)) drop-shadow(0 0 28px rgba(255,130,0,0.5));
+      filter: drop-shadow(0 0 7px rgba(255,186,0,0.5));
     }
 
     /* The actual image */
@@ -2366,28 +2366,13 @@
       opacity: 1;
     }
 
-    /* Transition overlay */
-    #gramoTransition {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      pointer-events: none;
-      opacity: 0;
-      background: radial-gradient(ellipse at bottom right, rgba(255,176,0,0.9) 0%, rgba(232,21,107,0.7) 40%, rgba(58,15,42,0.95) 100%);
-      transition: opacity 0.7s ease;
-    }
-    #gramoTransition.active { opacity: 1; pointer-events: all; }
   </style>
-
-  <!-- Transition overlay -->
-  <div id="gramoTransition"></div>
 
   <script>
   (function(){
     const egg      = document.getElementById('gramoEgg');
     const img      = document.getElementById('gramoImg');
     const tooltip  = document.getElementById('gramoTooltip');
-    const transit  = document.getElementById('gramoTransition');
     const dustC    = document.getElementById('gramoDust');
     const dustCtx  = dustC.getContext('2d');
 
@@ -2454,8 +2439,8 @@
       droneStarted = true;
       try {
         audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-        // Sa (tonic) drone — layered harmonics for a harmonium-like tone
-        const freqs = [130.81, 261.63, 392.44, 523.25]; // C2, C3, G3, C4
+        const now = audioCtx.currentTime;
+        const freqs = [130.81, 261.63, 392.44, 523.25];
         freqs.forEach((f, i) => {
           const osc  = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
@@ -2463,38 +2448,57 @@
           osc.type = i < 2 ? 'sawtooth' : 'sine';
           osc.frequency.value = f;
           bq.type = 'lowpass'; bq.frequency.value = 900;
-          gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          // Fade in over 0.8s, hold, then fade out after 3s total
+          gain.gain.setValueAtTime(0, now);
           gain.gain.linearRampToValueAtTime(
             i===0 ? 0.09 : i===1 ? 0.07 : 0.04,
-            audioCtx.currentTime + 1.2
+            now + 0.8
           );
+          gain.gain.setValueAtTime(
+            i===0 ? 0.09 : i===1 ? 0.07 : 0.04,
+            now + 2.5
+          );
+          gain.gain.linearRampToValueAtTime(0, now + 3.5);
           osc.connect(bq); bq.connect(gain); gain.connect(audioCtx.destination);
-          osc.start();
-          // Add gentle vibrato
+          osc.start(now);
+          osc.stop(now + 3.6);
           const lfo  = audioCtx.createOscillator();
           const lfoG = audioCtx.createGain();
           lfo.frequency.value = 4.5;
           lfoG.gain.value = 1.5;
           lfo.connect(lfoG); lfoG.connect(osc.frequency);
-          lfo.start();
+          lfo.start(now);
+          lfo.stop(now + 3.6);
         });
-      } catch(e) { /* silently fail if no audio ctx */ }
+      } catch(e) {}
     }
 
+    egg.addEventListener('mousedown', (e) => e.stopPropagation());
+    egg.addEventListener('pointerdown', (e) => e.stopPropagation());
+
     // ── Click handler ──
-    egg.addEventListener('click', () => {
+    egg.addEventListener('click', (e) => {
+      e.stopPropagation(); // prevent glitter canvas pointerdown from firing
       if (egg.dataset.clicked) return;
       egg.dataset.clicked = '1';
       egg.classList.add('spinning');
       startDrone();
 
-      // After spin + short delay → transition out
+      // Stop drone after 3s then navigate
       setTimeout(() => {
-        transit.classList.add('active');
+        if (audioCtx) {
+          // Fade all gain nodes out
+          audioCtx.destination.channelCount; // keep alive
+          const fadeOut = audioCtx.createGain();
+          fadeOut.connect(audioCtx.destination);
+          fadeOut.gain.setValueAtTime(1, audioCtx.currentTime);
+          fadeOut.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+          setTimeout(() => { try { audioCtx.close(); } catch(e){} }, 900);
+        }
         setTimeout(() => {
           window.location.href = 'https://app.riaomshandilya.com/harmonium.html';
-        }, 800);
-      }, 1100);
+        }, 900);
+      }, 3000);
     });
 
     // ── Touch support (tooltip on 2nd tap) ──
