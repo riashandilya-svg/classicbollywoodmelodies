@@ -1010,6 +1010,18 @@ async function loadSongMidi() {
     secondsPerMeasure = secondsPerBeat * SONG_CONFIG.timeSignature[0];
     MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
 
+    // Tag grace notes: very short duration (< 1/8 of a beat = 32nd note equivalent)
+    const GRACE_DURATION_THRESHOLD = secondsPerBeat * 0.13;
+    const _graceNoteKeys = new Set();
+    for (const note of allMidiNotes) {
+        if (note.duration < GRACE_DURATION_THRESHOLD) {
+            _graceNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+        }
+    }
+    console.log(`🎵 Grace notes tagged: ${_graceNoteKeys.size}`);
+    // Store on window so _buildSvgMidiMap can access it
+    window._graceNoteKeys = _graceNoteKeys;
+
     setControlsEnabled(true);
     showTrainingProgress();
 
@@ -3403,15 +3415,14 @@ function _buildSvgNoteIndex() {
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
                         const svgMeasure = sys.start_measure + i;
-                        // Grace notes: MIDI fires at start of next measure, so +1 to match.
-                        // Special case: a grace note visually at the end of REPEAT_END (measure 36)
-                        // fires at the start of the repeat section (REPEAT_START = 29) in MIDI,
-                        // because physical measure 37 maps to logical 29.  Assign it to bucket 29
-                        // so the SVG rank aligns with the MIDI rank counter.
-                        let sheet_measure = n.isGrace ? svgMeasure + 1 : svgMeasure;
-                        if (n.isGrace && sheet_measure === REPEAT_END + 1) {
-                            sheet_measure = REPEAT_START;
-                        }
+                        // Grace notes are ornamental — keep them in their visual measure.
+                        // Previously we shifted them +1 to try to match MIDI timing, but that
+                        // caused rank misalignment on repeat passes (the grace note SVG ends up
+                        // sorted last in the next measure's bucket by X, while the MIDI grace
+                        // note gets rank 0, shifting every subsequent note off by 1 on repeats).
+                        // Since grace notes are tiny and hard to highlight anyway, we simply
+                        // leave them in their visual measure and skip them during MIDI matching.
+                        const sheet_measure = svgMeasure;
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
@@ -3448,12 +3459,20 @@ function _buildSvgMidiMap() {
     }
 
     function assignRanks(notes, clef) {
+        const graceKeys = window._graceNoteKeys || new Set();
         for (const note of notes) {
             const mk = midiKeyFor(note);
 
             // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
             // noteheads, so counting them here shifts every subsequent rank by +1.
             if (_tiedNoteKeys.has(mk)) continue;
+
+            // Skip grace notes: their SVG noteheads stay in their visual measure's bucket
+            // (not the next measure), so they have no matching SVG element in the next
+            // measure's bucket. Counting them here would shift all subsequent ranks by +1
+            // on repeat passes, causing every note in the repeated measure to highlight
+            // one position off.
+            if (graceKeys.has(mk)) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
