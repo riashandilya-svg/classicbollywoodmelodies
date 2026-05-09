@@ -1582,8 +1582,36 @@ function handlePracticeInput(noteStr){
   if (selectedHand === 'BH' && bhLHKeys.length > practiceIdx) {
     const expectedRH = curKeys[practiceIdx];
     const expectedLH = bhLHKeys[practiceIdx];
-    const isRH = noteStr === expectedRH || pitchClass(noteStr)===pitchClass(expectedRH);
-    const isLH = noteStr === expectedLH || pitchClass(noteStr)===pitchClass(expectedLH);
+
+    // Helper: extract octave number from note string, e.g. "C4" → 4, "Cs3" → 3
+    function noteOct(n){ const m = n.match(/(\d+)$/); return m ? parseInt(m[1]) : 0; }
+
+    // Determine which hand(s) this note belongs to.
+    // Priority: exact match > pitch-class match disambiguated by octave proximity.
+    // When both hands share the same pitch class (e.g. C3 vs C4), a pitch-class-only
+    // test would match BOTH hands with a single keypress — so we use octave distance
+    // to assign the note to exactly one hand.
+    const exactRH = noteStr === expectedRH;
+    const exactLH = noteStr === expectedLH;
+    const pcRH = !exactRH && !exactLH && pitchClass(noteStr) === pitchClass(expectedRH);
+    const pcLH = !exactRH && !exactLH && pitchClass(noteStr) === pitchClass(expectedLH);
+
+    let isRH = exactRH;
+    let isLH = exactLH;
+
+    if (!isRH && !isLH && (pcRH || pcLH)) {
+      if (pcRH && pcLH) {
+        // Same pitch class for both hands — assign to the hand whose octave is closer
+        const playedOct = noteOct(noteStr);
+        const distRH = Math.abs(playedOct - noteOct(expectedRH));
+        const distLH = Math.abs(playedOct - noteOct(expectedLH));
+        if (distRH <= distLH) isRH = true;
+        else isLH = true;
+      } else {
+        isRH = pcRH;
+        isLH = pcLH;
+      }
+    }
 
     if (isRH || isLH) {
       // Correct note for one of the hands — use color-coded flash
