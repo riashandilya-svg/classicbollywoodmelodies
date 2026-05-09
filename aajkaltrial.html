@@ -1884,6 +1884,7 @@ fallingRectangles.push({
 
 
 function spawnTrainingNote(noteObj) {
+    if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
     hardStopUserNote();
     trainingActive = true;
     visualsPlaying = true;
@@ -3785,7 +3786,9 @@ holdEl.innerHTML =
     `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
 
-    setTimeout(() => {
+    if (retryTimeout) clearTimeout(retryTimeout);
+    retryTimeout = setTimeout(() => {
+        retryTimeout = null;
         spawnTrainingNote(practiceNotes[trainingIndex]);
     }, 600);
 }
