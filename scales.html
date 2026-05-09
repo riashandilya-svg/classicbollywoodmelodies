@@ -1575,12 +1575,14 @@ function handlePracticeInput(noteStr){
   if (selectedHand === 'BH' && bhLHKeys.length > practiceIdx) {
     const expectedRH = curKeys[practiceIdx];
     const expectedLH = bhLHKeys[practiceIdx];
-    const isRH = noteStr === expectedRH;
-    const isLH = noteStr === expectedLH;
+    const isRH = noteStr === expectedRH || pitchClass(noteStr)===pitchClass(expectedRH);
+    const isLH = noteStr === expectedLH || pitchClass(noteStr)===pitchClass(expectedLH);
 
     if (isRH || isLH) {
       // Correct note for one of the hands — use color-coded flash
-      bhPendingNotes.add(noteStr);
+      // Store the *expected* note string (not played) so bhPendingNotes.has() works reliably
+      const canonNote = isRH ? expectedRH : expectedLH;
+      bhPendingNotes.add(canonNote);
       const el = q(noteStr);
       const litClass = isLH ? 'lit-lh' : 'lit';
       if (el) { el.classList.add(litClass); setTimeout(()=>el.classList.remove(litClass), 280); }
@@ -1655,7 +1657,10 @@ function handlePracticeInput(noteStr){
   }
 
   const expected=curKeys[practiceIdx];
-  if(noteStr===expected){
+  // Accept the note if it matches by pitch class (octave-agnostic) — handles MIDI keyboards
+  // that are transposed or set to a different octave than the app's default.
+  const noteMatches = noteStr===expected || pitchClass(noteStr)===pitchClass(expected);
+  if(noteMatches){
     // CORRECT
     practiceResults.push(true);scoreC++;
     document.getElementById('scoreCorrect').textContent=scoreC;
@@ -2325,6 +2330,19 @@ function midiToDataNote(midi){
   if(SEMI_NOTE[off]!=null) return SEMI_NOTE[off];
   // Then check extended range
   return SEMI_NOTE_EXT[off]??null;
+}
+
+// Extract pitch class (note name without octave number), e.g. "Cs4" → "Cs", "F3" → "F"
+function pitchClass(noteStr){ return noteStr ? noteStr.replace(/\d+$/, '') : ''; }
+
+// Find the best matching note in curKeys by pitch class, starting from practiceIdx.
+// Returns the noteStr from curKeys if a pitch-class match is found, otherwise null.
+function matchNoteByPC(played){
+  if(!practiceActive||practiceIdx>=curKeys.length) return null;
+  const pc=pitchClass(played);
+  const expected=curKeys[practiceIdx];
+  if(pitchClass(expected)===pc) return expected; // pitch class matches → treat as correct octave
+  return null;
 }
 
 function initMIDI(){
