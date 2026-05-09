@@ -632,7 +632,10 @@ canvas {
 #scorePageWrapper {
     position: relative;
     width: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 38vh;
+    scroll-behavior: smooth;
 }
 
 #scoreObj {
@@ -3524,6 +3527,31 @@ function _applyHighlight(els) {
         el.setAttribute('filter', 'url(#hlGlow)');
     }
 
+    // Auto-scroll the scorePageWrapper so the highlighted note stays visible
+    if (_currentHighlightEls.length > 0) {
+        const el = _currentHighlightEls[0];
+        requestAnimationFrame(() => {
+            try {
+                const wrapper = document.getElementById('scorePageWrapper');
+                if (!wrapper) return;
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                // Element's top relative to the wrapper's scrollable area
+                const elTopInWrapper = elRect.top - wrapperRect.top + wrapper.scrollTop;
+                const elBottomInWrapper = elTopInWrapper + elRect.height;
+                const wrapperH = wrapper.clientHeight;
+                // Only scroll if outside the middle 60% band
+                const band0 = wrapper.scrollTop + wrapperH * 0.2;
+                const band1 = wrapper.scrollTop + wrapperH * 0.8;
+                if (elTopInWrapper < band0 || elBottomInWrapper > band1) {
+                    wrapper.scrollTo({
+                        top: elTopInWrapper - wrapperH * 0.35,
+                        behavior: 'smooth'
+                    });
+                }
+            } catch(e) {}
+        });
+    }
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
