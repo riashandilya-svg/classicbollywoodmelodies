@@ -583,6 +583,8 @@ body { font-family:'Baloo 2',cursive; background:#1A0A02; color:white; display:f
       </div>
 
       <div class="piano-wrap" id="pianoWrap">
+        <!-- Debug overlay: shows live practice state for diagnosing MIDI issues -->
+        <div id="debug-overlay" style="position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#7DFFCC;font-family:monospace;font-size:11px;padding:3px 10px;border-radius:6px;white-space:nowrap;z-index:99;pointer-events:none;"></div>
         <canvas id="falling-notes-canvas"></canvas>
         <div class="piano-body" id="pianoBody">
           <div class="piano-top-rail"></div>
@@ -1570,6 +1572,11 @@ function resetPractice(){
 }
 function handlePracticeInput(noteStr){
   if(!practiceActive)return;
+  // Debug overlay
+  const dbg=document.getElementById('debug-overlay');
+  if(dbg){
+    dbg.textContent=`idx:${practiceIdx}  expected:${curKeys[practiceIdx]}  got:${noteStr}  total:${curKeys.length}`;
+  }
 
   // ── BOTH HANDS MODE ──
   if (selectedHand === 'BH' && bhLHKeys.length > practiceIdx) {
