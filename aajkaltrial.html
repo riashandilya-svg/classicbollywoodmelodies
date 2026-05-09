@@ -1079,45 +1079,14 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
   const seq = [];
   const logicalSeq = [];
 
-  if (skipRepeats) {
-    for (let l = startLogical; l <= endLogical; l++) {
-      const p = logicalToPhysicalFirst(l);
-      if (!p || p > SONG_CONFIG.measures) return null;
-      seq.push(p);
-      logicalSeq.push(l);
-    }
-    return { seq, logicalSeq };
-  }
-
-  if (endLogical <= 28) {
-    for (let l = startLogical; l <= endLogical; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
-    }
-  }
-  else if (startLogical > 36) {
-    for (let l = startLogical; l <= endLogical; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
-    }
-  }
-  else {
-    for (let l = startLogical; l <= Math.min(36, endLogical); l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
-    }
-    
-    for (let l = Math.max(29, startLogical); l <= Math.min(36, endLogical); l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalSecond(l));
-    }
-
-    if (endLogical > 36) {
-      for (let l = 37; l <= endLogical; l++) {
-        logicalSeq.push(l);
-        seq.push(logicalToPhysicalFirst(l));
-      }
-    }
+  // For section practice (always) and skip-repeats mode:
+  // use only the FIRST physical occurrence of each logical measure.
+  // The double-play of repeated measures only applies to full-song playback.
+  for (let l = startLogical; l <= endLogical; l++) {
+    const p = logicalToPhysicalFirst(l);
+    if (!p || p > SONG_CONFIG.measures) return null;
+    seq.push(p);
+    logicalSeq.push(l);
   }
   return { seq, logicalSeq };
 }
