@@ -1200,66 +1200,97 @@ function setHand(h) {
 // For multi-octave: 2 oct going down = 5 4 3 2 1 3 2 | 1 4 3 2 1 3 2 (1)
 //   The octave boundary repeats thumb (1) as the crossover, then continues with 4.
 
-// LH fingering uses the SAME finger numbers as RH (1=thumb, 5=pinky)
-// The notes just go DOWNWARD on the piano instead of upward.
-// 1 oct:  1 2 3 1 2 3 4 (5)
-// 2 oct:  1 2 3 1 2 3 4 1 2 3 1 2 3 4 (5)
-// Return: 5 4 3 2 1 3 2 (1)  — mirror of RH descending
+// LH fingering — standard classical piano (1=thumb, 5=pinky)
+// LH ascending (C major, going UP left→right): C D E F G A B C
+//   1 oct:  5 4 3 2 1 3 2 | 1      (pinky starts, thumb-OVER crossing, thumb lands on top)
+//   2 oct:  5 4 3 2 1 3 2 | 1 4 3 2 1 3 2 | 1
+//   Pattern: first note=5, repeating inner block=[4,3,2,1,3,2], cap=1
+//
+// LH descending (return trip, C4→C3):  2 3 1 2 3 4 | 5
+//   2 oct:  2 3 1 2 3 4 | 1 2 3 1 2 3 4 | 5
+//   Pattern: repeating block=[2,3,1,2,3,4,1], final note=5
+//
+// ascUnit[0] = starting finger (pinky=5 for most keys)
+// ascUnit[1..] = repeating inner block (6 notes for 7-note scales)
+// descUnit = repeating block (with thumb-over at end for multi-oct), final note=5
 const LH_FINGERING = {
-  major:         { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  naturalMinor:  { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  harmonicMinor: { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  ionian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  dorian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  phrygian:      { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  lydian:        { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  mixolydian:    { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  aeolian:       { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  locrian:       { ascUnit:[1,2,3,1,2,3,4], descUnit:[4,3,2,1,3,2,1] },
-  majorPent:     { ascUnit:[1,2,3,1,2],     descUnit:[2,1,3,2,1] },
-  minorPent:     { ascUnit:[1,2,3,1,2],     descUnit:[2,1,3,2,1] },
-  majorBlues:    { ascUnit:[1,2,3,1,2,3],   descUnit:[3,2,1,3,2,1] },
-  minorBlues:    { ascUnit:[1,2,3,1,2,3],   descUnit:[3,2,1,3,2,1] },
-  wholeTone:     { ascUnit:[1,2,3,1,2,3],   descUnit:[3,2,1,3,2,1] },
-  dimWH:         { ascUnit:[1,2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2,1] },
-  dimHW:         { ascUnit:[1,2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2,1] },
-  chromatic:     { ascUnit:[1,2,3,1,2,3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3,2,1,3,2,1] },
+  // 7-note (diatonic): ascUnit[0]=start finger, ascUnit[1..6]=inner repeat, descUnit=return repeat
+  major:         { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  naturalMinor:  { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  harmonicMinor: { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  ionian:        { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  dorian:        { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  phrygian:      { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  lydian:        { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  mixolydian:    { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  aeolian:       { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  locrian:       { ascUnit:[5,4,3,2,1,3,2], descUnit:[2,3,1,2,3,4,1] },
+  // 5-note (pentatonic): ascUnit[0]=start, ascUnit[1..4]=inner(4), descUnit=return(4+1)
+  majorPent:     { ascUnit:[5,4,3,1,2],   descUnit:[2,1,3,4,1] },
+  minorPent:     { ascUnit:[5,4,3,1,2],   descUnit:[2,1,3,4,1] },
+  // 6-note (blues): ascUnit[0]=start, ascUnit[1..5]=inner(5), descUnit=return(5+1)
+  majorBlues:    { ascUnit:[5,4,3,2,1,3], descUnit:[3,1,2,3,4,1] },
+  minorBlues:    { ascUnit:[5,4,3,2,1,3], descUnit:[3,1,2,3,4,1] },
+  wholeTone:     { ascUnit:[5,4,3,2,1,3], descUnit:[3,1,2,3,4,1] },
+  // 8-note (diminished)
+  dimWH:         { ascUnit:[5,4,3,2,1,3,2,1], descUnit:[1,2,3,1,2,3,4,1] },
+  dimHW:         { ascUnit:[5,4,3,2,1,3,2,1], descUnit:[1,2,3,1,2,3,4,1] },
+  // 12-note (chromatic)
+  chromatic:     { ascUnit:[5,4,3,2,1,4,3,2,1,3,2,1], descUnit:[1,2,3,1,2,3,4,1,2,3,4,1] },
 };
 
-// LH per-root overrides — same logic as RH overrides (different thumb crossings for black keys)
+// LH per-root overrides — standard classical fingerings that differ from the default C pattern
+// Format: ascUnit[0]=starting finger, ascUnit[1..]=inner repeating block, descUnit=return repeating block
 const LH_FINGERING_OVERRIDES = {
-  'major_F':        { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'ionian_F':       { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'major_Bb':       { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
-  'ionian_Bb':      { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
-  'major_Eb':       { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
-  'ionian_Eb':      { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
-  'major_Ab':       { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
-  'ionian_Ab':      { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
-  'major_Db':       { ascUnit:[2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2] },
-  'ionian_Db':      { ascUnit:[2,3,1,2,3,4,1], descUnit:[1,4,3,2,1,3,2] },
-  'major_Gb':       { ascUnit:[2,3,4,1,2,3,1], descUnit:[1,3,2,1,4,3,2] },
-  'ionian_Gb':      { ascUnit:[2,3,4,1,2,3,1], descUnit:[1,3,2,1,4,3,2] },
-  'naturalMinor_F': { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'aeolian_F':      { ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'harmonicMinor_F':{ ascUnit:[1,2,3,4,1,2,3], descUnit:[3,2,1,4,3,2,1] },
-  'naturalMinor_Bb':{ ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
-  'aeolian_Bb':     { ascUnit:[4,1,2,3,1,2,3], descUnit:[3,2,1,3,2,1,4] },
-  'naturalMinor_Eb':{ ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
-  'aeolian_Eb':     { ascUnit:[3,1,2,3,4,1,2], descUnit:[2,1,4,3,2,1,3] },
-  'naturalMinor_Ab':{ ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
-  'aeolian_Ab':     { ascUnit:[3,4,1,2,3,1,2], descUnit:[2,1,3,2,1,4,3] },
+  // B major LH: B C# D# E F# G# A# B → 4 3 2 1 4 3 2 1
+  'major_B':         { ascUnit:[4,3,2,1,4,3,2], descUnit:[2,3,4,1,2,3,1] },
+  'ionian_B':        { ascUnit:[4,3,2,1,4,3,2], descUnit:[2,3,4,1,2,3,1] },
+
+  // F# / Gb major LH: F# G# A# B C# D# E# F# → 4 3 2 1 3 2 1 4 (same as Gb below)
+  'major_Gb':        { ascUnit:[4,3,2,1,3,2,1], descUnit:[1,2,3,1,2,3,1] },
+  'ionian_Gb':       { ascUnit:[4,3,2,1,3,2,1], descUnit:[1,2,3,1,2,3,1] },
+
+  // Bb major LH: Bb C D Eb F G A Bb → 3 2 1 4 3 2 1 3
+  'major_Bb':        { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'ionian_Bb':       { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+
+  // Eb major LH: Eb F G Ab Bb C D Eb → 3 2 1 3 2 1 4 3
+  'major_Eb':        { ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
+  'ionian_Eb':       { ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
+
+  // Ab major LH: Ab Bb C Db Eb F G Ab → 3 2 1 4 3 2 1 3 (same pattern as Bb shifted)
+  'major_Ab':        { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'ionian_Ab':       { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+
+  // Db major LH: Db Eb F Gb Ab Bb C Db → 3 2 1 3 2 1 4 3
+  'major_Db':        { ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
+  'ionian_Db':       { ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
+
+  // F major LH: F G A Bb C D E F → 5 4 3 2 1 3 2 1 (same as C — no override needed)
+  // D major, E major, A major, G major LH: same as C — no override needed
+
+  // Minor overrides
+  'naturalMinor_Bb': { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'aeolian_Bb':      { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'naturalMinor_Eb': { ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
+  'aeolian_Eb':      { ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
+  'naturalMinor_Ab': { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'aeolian_Ab':      { ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'harmonicMinor_Bb':{ ascUnit:[3,2,1,4,3,2,1], descUnit:[1,2,3,4,1,2,1] },
+  'harmonicMinor_Eb':{ ascUnit:[3,2,1,3,2,1,4], descUnit:[4,1,2,3,1,2,1] },
 };
 
 // Build the full finger sequence for a given noteList.
 // ascCount: how many notes are in the ascending portion (= baseScaleKeys.length)
-function buildFingerSequence(pat, root, noteList, ascCount) {
+function buildFingerSequence(pat, root, noteList, ascCount, forceHand) {
   if (!noteList || !noteList.length) return [];
   if (!ascCount || ascCount < 1) return Array(noteList.length).fill(0);
 
   const overrideKey = `${pat}_${root}`;
+  const hand = forceHand || selectedHand;
+  const isLH = hand === 'LH' || hand === 'BH_LH';
   let f;
-  if (selectedHand === 'LH') {
+  if (isLH) {
     f = LH_FINGERING_OVERRIDES[overrideKey] || LH_FINGERING[pat];
   } else {
     f = RH_FINGERING_OVERRIDES[overrideKey] || RH_FINGERING[pat];
@@ -1272,26 +1303,53 @@ function buildFingerSequence(pat, root, noteList, ascCount) {
   const isRound = totalNotes > ascCount;
   const result = [];
 
-  // --- ASCENDING (for LH: going DOWN; for RH: going UP) ---
-  const capFinger = 5; // last note of outward journey always finger 5 (pinky), for both hands
-  const returnFinger = 1; // return journey always ends on finger 1 (thumb at root)
-  for (let i = 0; i < ascCount; i++) {
-    if (i === ascCount - 1) {
-      result.push(capFinger);
-    } else {
-      result.push(u[i % u.length]);
+  if (isLH) {
+    // ── LH ASCENDING: pinky-start pattern ──
+    // u[0] = starting finger (usually 5=pinky)
+    // u[1..] = inner repeating block (e.g. [4,3,2,1,3,2] for major)
+    // cap (last ascending note) = 1 (thumb lands at top)
+    const innerUnit = u.slice(1); // repeating inner block
+    for (let i = 0; i < ascCount; i++) {
+      if (i === ascCount - 1) {
+        result.push(1); // cap always thumb for LH ascending
+      } else if (i === 0) {
+        result.push(u[0]); // starting finger (pinky or override)
+      } else {
+        result.push(innerUnit[(i - 1) % innerUnit.length]);
+      }
     }
-  }
 
-  if (!isRound) return result;
+    if (!isRound) return result;
 
-  // --- DESCENDING (return journey) ---
-  const descNotes = totalNotes - ascCount;
-  for (let i = 0; i < descNotes; i++) {
-    if (i === descNotes - 1) {
-      result.push(returnFinger); // return to start
-    } else {
-      result.push(d[i % d.length]);
+    // ── LH DESCENDING (return): 2 3 1 2 3 4 … 5 ──
+    // d = repeating block (e.g. [2,3,1,2,3,4,1]), final note = 5
+    const descNotes = totalNotes - ascCount;
+    for (let i = 0; i < descNotes; i++) {
+      if (i === descNotes - 1) {
+        result.push(5); // return always ends on pinky at root
+      } else {
+        result.push(d[i % d.length]);
+      }
+    }
+  } else {
+    // ── RH (unchanged) ──
+    const capFinger = 5;
+    const returnFinger = 1;
+    for (let i = 0; i < ascCount; i++) {
+      if (i === ascCount - 1) {
+        result.push(capFinger);
+      } else {
+        result.push(u[i % u.length]);
+      }
+    }
+    if (!isRound) return result;
+    const descNotes = totalNotes - ascCount;
+    for (let i = 0; i < descNotes; i++) {
+      if (i === descNotes - 1) {
+        result.push(returnFinger);
+      } else {
+        result.push(d[i % d.length]);
+      }
     }
   }
 
@@ -1307,8 +1365,8 @@ function buildPills(){
     // Show two rows: RH on top, LH below
     const rhKeys = curKeys; // ascending only for display
     const lhKeys = baseLHScaleKeys.length ? baseLHScaleKeys : bhLHKeys;
-    const rhFingers = buildFingerSequence(curItem.pat, curItem.root, rhKeys, rhKeys.length);
-    const lhFingers = buildFingerSequence(curItem.pat, curItem.root, lhKeys, lhKeys.length);
+    const rhFingers = buildFingerSequence(curItem.pat, curItem.root, rhKeys, rhKeys.length, 'RH');
+    const lhFingers = buildFingerSequence(curItem.pat, curItem.root, lhKeys, lhKeys.length, 'BH_LH');
 
     // RH row label
     const rhLabel = document.createElement('div');
@@ -1431,10 +1489,10 @@ function playCurrentScale(){
   const FALL_LEAD=1800;     // must match FN's FALL_DURATION so notes arrive at hit zone on beat
 
   const ascCount = ascending.length;
-  const listenFingers = buildFingerSequence(curItem.pat, curItem.root, fullSequence, ascCount);
+  const listenFingers = buildFingerSequence(curItem.pat, curItem.root, fullSequence, ascCount, 'RH');
 
   const lhListenFingers = lhFullSequence
-    ? buildFingerSequence(curItem.pat, curItem.root, lhFullSequence, lhAscending.length)
+    ? buildFingerSequence(curItem.pat, curItem.root, lhFullSequence, lhAscending.length, 'BH_LH')
     : null;
 
   fullSequence.forEach((note,i)=>{
@@ -1504,8 +1562,8 @@ function startPracticeRound(){
     const lhDesc = [...baseLHScaleKeys].reverse().slice(1);
     bhLHKeys = [...lhAsc, ...lhDesc];
     // Build finger sequences for full asc+desc
-    curFingers = buildFingerSequence(curItem.pat, curItem.root, curKeys, asc.length);
-    bhLHFingers = buildFingerSequence(curItem.pat, curItem.root, bhLHKeys, lhAsc.length);
+    curFingers = buildFingerSequence(curItem.pat, curItem.root, curKeys, asc.length, 'RH');
+    bhLHFingers = buildFingerSequence(curItem.pat, curItem.root, bhLHKeys, lhAsc.length, 'BH_LH');
   }
   document.getElementById('startPracticeBtn').style.display='none';
   // Show scale highlights across both visual octaves so user can see all scale keys
