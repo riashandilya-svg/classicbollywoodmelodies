@@ -2366,10 +2366,17 @@ function bindMidiInputs(access){
   setMidiUI(n>0?'connected':'disconnected',n);
 }
 
+// Deduplication gate: if the same MIDI note fires twice within 50ms
+// (e.g. from two ports, two channels, or a USB echo), ignore the second hit.
+// A human can't physically retrigger the same key that fast.
+const _midiLastOn = {};
 function onMidi(ev){
   const[st,note,vel]=ev.data;
   const cmd=st&0xF0;
   if((cmd===0x90&&vel>0)){
+    const now=performance.now();
+    if(_midiLastOn[note] && now-_midiLastOn[note] < 50) return;
+    _midiLastOn[note]=now;
     const dn=midiToDataNote(note);if(!dn)return;
     if(AC.state==='suspended')AC.resume();
     handleKeyPress(q(dn));
