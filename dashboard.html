@@ -1487,6 +1487,10 @@
                     title="View sheet music">
                     🎼 View PDF
                   </button>
+                  <a class="download-pdf-btn" href="${songSlug}.html" title="Go to song page"
+                    style="text-decoration:none;">
+                    🎵 Go to Song
+                  </a>
                   <div class="progress-selector">
                     <button class="progress-btn not_started ${currentStatus === 'not_started' ? 'active' : ''}"
                       onclick="updateProgress('${songId}', 'not_started')">Not Started</button>
@@ -1599,6 +1603,10 @@
         </div>
         <div class="song-actions">
           <button class="download-pdf-btn" title="View sheet music">🎼 View PDF</button>
+          <a class="download-pdf-btn go-to-song-btn" title="Go to song page"
+            style="text-decoration:none;">
+            🎵 Go to Song
+          </a>
           <div class="progress-selector">
             <button class="progress-btn not_started ${notStartedActive}"
               onclick="updateProgress('${s.songId}', 'not_started')">Not Started</button>
@@ -1624,6 +1632,9 @@
       el.querySelector('.download-pdf-btn').addEventListener('click', () => {
         openSheetMusic(s.songSlug, s.songName);
       });
+
+      const goBtn = el.querySelector('.go-to-song-btn');
+      if (goBtn) goBtn.href = `${s.songSlug}.html`;
 
       detail.style.display = 'block';
       detail.innerHTML = '';
