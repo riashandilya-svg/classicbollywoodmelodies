@@ -3556,30 +3556,32 @@ function _applyHighlight(els) {
 // AUTO-SCROLL: only advance when the note moves to a new line
 // ============================================================
 let _lastScrolledDocY = -9999;
+let _scrollLocked     = false;
 
 function scrollToHighlight() {
     if (!scoreModeActive || !_currentHighlightEls.length) return;
+    if (_scrollLocked) return;                      // still animating — stay put
 
-    const el = _currentHighlightEls[0];
-    const rect  = el.getBoundingClientRect();
-    const docY  = rect.top + window.scrollY;   // absolute position in document
+    const el   = _currentHighlightEls[0];
+    const rect = el.getBoundingClientRect();
+    const docY = rect.top + window.scrollY;         // stable absolute position
 
-    // Same line as the last scroll — stay put
+    // Same line — nothing to do
     if (Math.abs(docY - _lastScrolledDocY) < 40) return;
 
     _lastScrolledDocY = docY;
 
-    // Fixed UI chrome
     const BRAND_BAR_H  = 56;
     const bottomDock   = document.getElementById('bottomDock');
     const BOTTOM_BAR_H = bottomDock ? bottomDock.getBoundingClientRect().height : 200;
     const visibleH     = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
+    const targetTop    = BRAND_BAR_H + visibleH * 0.30;
 
-    // Place the note 30% down in the visible band
-    const targetTop = BRAND_BAR_H + visibleH * 0.30;
-
-    // Absolute scroll — immune to mid-animation drift
     window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
+
+    // Lock for 1 s — long enough for the smooth-scroll animation to finish
+    _scrollLocked = true;
+    setTimeout(() => { _scrollLocked = false; }, 1000);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
@@ -3735,6 +3737,7 @@ scoreModeToggle.addEventListener('change', async () => {
         bottomDock.classList.remove('score-mode');
         document.body.classList.remove('score-mode');
         _lastScrolledDocY = -9999;
+        _scrollLocked = false;
         scoreView.classList.remove('active');
         scoreNoteDisplay.classList.remove('active');
         clearScoreHighlight();
