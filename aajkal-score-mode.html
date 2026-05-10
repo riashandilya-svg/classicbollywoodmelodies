@@ -3392,6 +3392,21 @@ function _buildSvgNoteIndex() {
             // Groups: 1=a 2=b 3=c 4=d  5=tx(e)  6=ty(f)
             const scaleA = parseFloat(mm[1]);
             const isGrace = scaleA < GRACE_SCALE_THRESHOLD;
+
+            // Cross/X noteheads (ghost notes, muted notes) produce no MIDI output.
+            // They appear in the SVG as path.Note but have no MIDI counterpart, so
+            // including them shifts every subsequent rank by +1.
+            // Detection: normal noteheads are wide ovals (width > height).
+            // Cross noteheads are roughly square (width ≈ height).
+            // Use getBBox() on the path in its local coordinate system.
+            try {
+                const bbox = el.getBBox();
+                if (bbox.width > 0 && bbox.height > 0 && bbox.width < bbox.height * 1.3) {
+                    // Cross/diamond/ghost notehead — skip, no MIDI event exists for it
+                    return;
+                }
+            } catch(e) { /* getBBox can fail if not yet rendered; skip the check */ }
+
             raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]), isGrace });
         });
 
@@ -3462,6 +3477,15 @@ function _buildSvgNoteIndex() {
         }
     }
 
+    // DEBUG: log bucket sizes for measures 20–28 so we can spot mismatches
+    console.group('SVG bucket sizes (measures 20–28)');
+    for (let m = 20; m <= 28; m++) {
+        const tb = (_svgBuckets[m]?.treble || []).length;
+        const bs = (_svgBuckets[m]?.bass   || []).length;
+        if (tb || bs) console.log(`measure ${m}: treble=${tb} bass=${bs}`);
+    }
+    console.groupEnd();
+
     console.log(`🔗 SVG tied-continuation noteheads detected: ${totalTied}`);
     console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${totalTied} tied continuations excluded) across measures ` +
         `${Math.min(...Object.keys(_svgBuckets).map(Number))}–` +
@@ -3528,6 +3552,20 @@ function _buildSvgMidiMap() {
     assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
+
+    // DEBUG: count how many MIDI notes are assigned per (measure, clef) for measures 20–28
+    console.group('MIDI rank counts (measures 20–28)');
+    const midiCounts = {};
+    for (const [key, val] of _midiRankMap) {
+        const k = `m${val.sheet_measure}|${val.clef}`;
+        midiCounts[k] = (midiCounts[k] || 0) + 1;
+    }
+    for (let m = 20; m <= 28; m++) {
+        const tb = midiCounts[`m${m}|treble`] || 0;
+        const bs = midiCounts[`m${m}|bass`]   || 0;
+        if (tb || bs) console.log(`measure ${m}: treble=${tb} bass=${bs}`);
+    }
+    console.groupEnd();
 }
 
 
