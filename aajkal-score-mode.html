@@ -153,7 +153,7 @@ button:hover:not(:disabled) {
 .ctrl-btn-secondary:hover:not(:disabled),
 .ctrl-btn-small:hover:not(:disabled),
 .ctrl-speed-btn:hover:not(:disabled) {
-    background-color: unset;
+    background-color: transparent;
     transform: translateY(-1px);
 }
 
@@ -820,10 +820,9 @@ body.score-mode #pdfBanner {
     right: 0;
     z-index: 900;
 
-    padding-top: 4px;
-    padding-bottom: 4px;
+    padding: 6px 8px;
 
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.97);
     backdrop-filter: blur(8px);
     border-top: 1px solid rgba(235, 50, 70, 0.18);
     box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
@@ -831,12 +830,10 @@ body.score-mode #pdfBanner {
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-height: 180px;
-    overflow: hidden;
 }
 
 #scoreView.active {
-    padding-bottom: 195px;
+    padding-bottom: 160px;
     width: 100%;
     max-width: 100%;
 }
@@ -1279,9 +1276,9 @@ body.score-mode #pdfBanner {
             <button id="stopButton" class="ctrl-btn-secondary">Stop</button>
             <button id="resetButton" class="ctrl-btn-secondary">Reset</button>
         </div>
-        <div class="ctrl-secondary-buttons">
-            <button id="toggleNamesButton" class="ctrl-btn-small">Hide Note Names</button>
-            <button id="playSongButton" class="ctrl-btn-small">Play Full Song</button>
+        <div class="ctrl-main-buttons" style="justify-content:center;">
+            <button id="toggleNamesButton" class="ctrl-btn-secondary">Hide Note Names</button>
+            <button id="playSongButton" class="ctrl-btn-secondary" style="background:rgba(200,80,95,0.55)!important;color:#fff!important;">Play Full Song</button>
         </div>
     </div>
 
@@ -1289,10 +1286,8 @@ body.score-mode #pdfBanner {
     <div class="ctrl-panel">
         <div class="ctrl-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
             <button id="beatToggle" class="ctrl-btn-small" style="display:inline-flex;align-items:center;gap:4px;">Beat ▾</button>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-                <span style="font-size:11px;color:#9a8870;font-weight:500;">Counting</span>
-                <button id="subdivisionToggle" class="ctrl-btn-small" style="white-space:nowrap;">1 &amp; 2 &amp;</button>
-            </div>
+            <button id="countToggle" class="ctrl-btn-small">Counting</button>
+            <button id="subdivisionToggle" class="ctrl-btn-small" style="white-space:nowrap;">1 &amp; 2 &amp;</button>
             <button id="languageToggle" class="ctrl-btn-small">EN</button>
         </div>
         <div class="ctrl-checkboxes" style="margin-top:6px;">
@@ -1304,12 +1299,11 @@ body.score-mode #pdfBanner {
             </label>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-            <span style="font-size:11px;color:#9a8870;font-weight:500;margin-right:2px;">Speed</span>
+            <span style="font-size:11px;color:var(--text-muted);font-weight:500;">Speed</span>
             <button id="speedDown" class="ctrl-speed-btn">–</button>
-            <span class="ctrl-speed-value" id="speedDisplay" style="font-size:16px;min-width:38px;text-align:center;">1.0×</span>
+            <span class="ctrl-speed-value" id="speedDisplay">1.0×</span>
             <button id="speedUp" class="ctrl-speed-btn">+</button>
         </div>
-        <button id="countToggle" class="ctrl-btn-small" style="display:none;"></button>
     </div>
 
 </div>
@@ -1580,7 +1574,7 @@ resetButton.addEventListener('click', () => {
 const playSongButton = document.getElementById('playSongButton');
 const loopCheckbox = document.getElementById('loopCheckbox');
 const freeModeButton = document.getElementById('freeModeButton');
-freeModeButton.classList.add('side-floating');
+// freeModeButton stays in Panel 1 — no side-floating
 setControlsEnabled(true);
 (async () => {
     await loadSongMidi();
