@@ -155,55 +155,66 @@ button:disabled {
 
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
 
+
 /* ============================
    3-PANEL CONTROLS BAR
    ============================ */
 #playbackControls {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 16px;
+    gap: 14px;
+    margin-top: 20px;
     justify-content: center;
     align-items: stretch;
-    width: min(960px, 96%);
+    width: min(980px, 96%);
+    padding: 0 8px;
 }
 
 .ctrl-panel {
-    background: rgba(255,255,255,0.82);
-    border: 1px solid rgba(235,50,70,0.15);
-    border-radius: 16px;
-    padding: 14px 18px;
+    background: #fffdf9;
+    border: none;
+    border-radius: 20px;
+    padding: 18px 22px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    justify-content: center;
+    gap: 8px;
     flex: 1 1 220px;
     min-width: 200px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 16px rgba(180,140,80,0.10), 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .ctrl-panel-center {
-    flex: 1.2 1 260px;
+    flex: 1.2 1 280px;
     align-items: center;
+    gap: 12px;
 }
 
 .ctrl-panel-title {
     font-size: 15px;
-    font-weight: 700;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-weight: 600;
+    color: #2a2015;
+    letter-spacing: 0.01em;
+}
+
+.ctrl-panel-sub {
+    font-size: 12.5px;
+    color: #9a8870;
+    font-weight: 400;
+    margin-top: -4px;
 }
 
 .ctrl-select {
     width: 100%;
     padding: 7px 10px;
-    border-radius: 9px;
-    border: 1px solid rgba(235,50,70,0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(180,140,80,0.18);
     background: #fff;
-    font-size: 14px;
-    color: var(--text-main);
+    font-size: 13px;
+    color: #2a2015;
     cursor: pointer;
+    outline: none;
+    appearance: auto;
 }
 
 .ctrl-row {
@@ -213,33 +224,36 @@ button:disabled {
 }
 
 .ctrl-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(0,0,0,0.6);
+    font-size: 12px;
+    font-weight: 500;
+    color: #9a8870;
     display: flex;
     flex-direction: column;
     gap: 3px;
 }
 
 .ctrl-arrow {
-    font-size: 16px;
-    color: rgba(0,0,0,0.35);
-    margin-top: 14px;
+    font-size: 15px;
+    color: #c4aa82;
+    margin-top: 16px;
 }
 
 .ctrl-input {
-    width: 54px;
-    padding: 5px 8px;
-    border-radius: 8px;
-    border: 1px solid rgba(235,50,70,0.2);
+    width: 52px;
+    padding: 6px 8px;
+    border-radius: 9px;
+    border: 1px solid rgba(180,140,80,0.18);
+    background: #fff;
     font-size: 14px;
     text-align: center;
+    color: #2a2015;
+    outline: none;
 }
 
 /* Centre panel buttons */
 .ctrl-main-buttons {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
 }
 
@@ -250,93 +264,122 @@ button:disabled {
     justify-content: center;
 }
 
+/* Golden primary pill — matches reference exactly */
 .ctrl-btn-primary {
-    background: #c8984a !important;
-    color: white !important;
+    background: linear-gradient(135deg, #c9a05a 0%, #b8893a 100%) !important;
+    color: #fff !important;
     border-radius: 999px !important;
-    padding: 9px 20px !important;
+    padding: 10px 22px !important;
     font-size: 15px !important;
     font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
     white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(180,130,50,0.28) !important;
+    transition: filter 0.18s, transform 0.15s !important;
+    border: none !important;
 }
 
 .ctrl-btn-primary:hover:not(:disabled) {
-    background: #b5852f !important;
+    filter: brightness(1.07) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 5px 16px rgba(180,130,50,0.34) !important;
 }
 
+/* Bare white ghost pills — matches Stop / Reset in reference */
 .ctrl-btn-secondary {
-    background: rgba(0,0,0,0.06) !important;
-    color: var(--text-main) !important;
+    background: #fff !important;
+    color: #2a2015 !important;
     border-radius: 999px !important;
-    padding: 9px 16px !important;
+    padding: 10px 18px !important;
     font-size: 14px !important;
     font-weight: 500 !important;
+    border: none !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08) !important;
+    transition: box-shadow 0.18s, transform 0.15s !important;
 }
 
 .ctrl-btn-secondary:hover:not(:disabled) {
-    background: rgba(0,0,0,0.11) !important;
-    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.13) !important;
+    transform: translateY(-1px) !important;
 }
 
+/* Small utility buttons */
 .ctrl-btn-small {
-    background: rgba(0,0,0,0.05) !important;
-    color: var(--text-main) !important;
-    border-radius: 8px !important;
-    padding: 5px 11px !important;
+    background: #f5efe6 !important;
+    color: #6b5a3e !important;
+    border-radius: 10px !important;
+    padding: 5px 13px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
+    border: none !important;
+    transition: background 0.15s !important;
 }
 
 .ctrl-btn-small:hover:not(:disabled) {
-    background: rgba(235,50,70,0.1) !important;
+    background: #ede4d6 !important;
 }
 
 /* Speed panel */
 .ctrl-speed-value {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
-    color: var(--accent-primary);
+    color: #2a2015;
+    letter-spacing: -0.01em;
 }
 
 .ctrl-speed-row {
     display: flex;
     gap: 10px;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .ctrl-speed-btn {
-    width: 44px;
-    height: 44px;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
-    font-size: 22px !important;
-    font-weight: 700 !important;
+    font-size: 20px !important;
+    font-weight: 500 !important;
     padding: 0 !important;
-    background: rgba(0,0,0,0.07) !important;
-    color: var(--text-main) !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: #f5efe6 !important;
+    color: #6b5a3e !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.15s !important;
 }
 
 .ctrl-speed-btn:hover:not(:disabled) {
-    background: rgba(235,50,70,0.12) !important;
+    background: #ede4d6 !important;
 }
 
 .ctrl-checkboxes {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .ctrl-checkbox-label {
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(0,0,0,0.7);
+    font-size: 13px;
+    font-weight: 400;
+    color: #9a8870;
     cursor: pointer;
 }
+
+/* Override the global red stop button style inside our new layout */
+#playbackControls #stopButton {
+    background: #fff !important;
+    color: #2a2015 !important;
+}
+#playbackControls #stopButton:hover:not(:disabled) {
+    background: #fff !important;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.13) !important;
+}
+
     
 #stopButton {
     background-color: var(--accent-error);
@@ -1076,6 +1119,10 @@ body.score-mode #pdfBanner {
                 <input id="endMeasureInput" type="number" min="1" value="4" class="ctrl-input">
             </label>
         </div>
+        <div class="ctrl-secondary-buttons" style="justify-content:flex-start;margin-top:2px;">
+            <button id="freeModeButton" class="ctrl-btn-small">Free Mode</button>
+            <button id="toggleNamesButton" class="ctrl-btn-small">Hide Names</button>
+        </div>
     </div>
 
     <!-- Panel 2: Main Controls -->
@@ -1086,11 +1133,7 @@ body.score-mode #pdfBanner {
             <button id="resetButton" class="ctrl-btn-secondary">Reset</button>
         </div>
         <div class="ctrl-secondary-buttons">
-            <button id="freeModeButton" class="ctrl-btn-small">Free Mode</button>
             <button id="playSongButton" class="ctrl-btn-small">Play Song</button>
-            <button id="toggleNamesButton" class="ctrl-btn-small">Hide Names</button>
-        </div>
-        <div class="ctrl-secondary-buttons">
             <button id="beatToggle" class="ctrl-btn-small">Beat</button>
             <button id="countToggle" class="ctrl-btn-small">Counting</button>
             <button id="subdivisionToggle" class="ctrl-btn-small">1 &amp; 2 &amp;</button>
@@ -1100,8 +1143,8 @@ body.score-mode #pdfBanner {
 
     <!-- Panel 3: Speed & Loop -->
     <div class="ctrl-panel">
-        <div class="ctrl-panel-title">Speed
-            <span id="speedDisplay" class="ctrl-speed-value">1.0×</span>
+        <div class="ctrl-panel-title">
+            Speed <span class="ctrl-speed-value" id="speedDisplay">1.0×</span>
         </div>
         <div class="ctrl-speed-row">
             <button id="speedDown" class="ctrl-speed-btn">–</button>
