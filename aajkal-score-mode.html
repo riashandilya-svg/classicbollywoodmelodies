@@ -3581,8 +3581,21 @@ function scrollToHighlight() {
 
     window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
 
+    // Lock until the scroll actually finishes (not just a fixed timer).
+    // 'scrollend' fires when smooth scrolling is truly done; the setTimeout
+    // is a safety fallback in case scrollend never fires (older browsers).
     _scrollLocked = true;
-    setTimeout(() => { _scrollLocked = false; }, 1000);
+    let _scrollUnlockTimer = null;
+
+    const unlock = () => {
+        _scrollLocked = false;
+        window.removeEventListener('scrollend', unlock);
+        if (_scrollUnlockTimer) clearTimeout(_scrollUnlockTimer);
+        _scrollUnlockTimer = null;
+    };
+
+    window.addEventListener('scrollend', unlock, { once: true });
+    _scrollUnlockTimer = setTimeout(unlock, 2000);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
