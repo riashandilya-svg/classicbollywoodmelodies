@@ -3553,33 +3553,34 @@ function _applyHighlight(els) {
 }
 
 // ============================================================
-// AUTO-SCROLL: only advance when the note moves to a new line
+// AUTO-SCROLL: only scroll when note leaves the visible band
 // ============================================================
 let _lastScrolledDocY = -9999;
 let _scrollLocked     = false;
 
 function scrollToHighlight() {
     if (!scoreModeActive || !_currentHighlightEls.length) return;
-    if (_scrollLocked) return;                      // still animating — stay put
+    if (_scrollLocked) return;
 
     const el   = _currentHighlightEls[0];
     const rect = el.getBoundingClientRect();
-    const docY = rect.top + window.scrollY;         // stable absolute position
-
-    // Same line — nothing to do
-    if (Math.abs(docY - _lastScrolledDocY) < 40) return;
-
-    _lastScrolledDocY = docY;
 
     const BRAND_BAR_H  = 56;
     const bottomDock   = document.getElementById('bottomDock');
     const BOTTOM_BAR_H = bottomDock ? bottomDock.getBoundingClientRect().height : 200;
-    const visibleH     = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
-    const targetTop    = BRAND_BAR_H + visibleH * 0.30;
+
+    const topBound    = BRAND_BAR_H + 10;
+    const bottomBound = window.innerHeight - BOTTOM_BAR_H - 10;
+
+    // Note is already visible — do nothing
+    if (rect.top >= topBound && rect.bottom <= bottomBound) return;
+
+    const docY     = rect.top + window.scrollY;
+    const visibleH = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
+    const targetTop = BRAND_BAR_H + visibleH * 0.30;
 
     window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
 
-    // Lock for 1 s — long enough for the smooth-scroll animation to finish
     _scrollLocked = true;
     setTimeout(() => { _scrollLocked = false; }, 1000);
 }
