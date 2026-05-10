@@ -1904,16 +1904,29 @@ function spawnTrainingNote(noteObj) {
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
+    // Store per-note track so we can highlight correctly
+    if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
+    const noteTrackMap = spawnTrainingNote._noteTrackMap;
+    noteTrackMap.clear();
+
     currentChordNotes.add(noteObj.midi);
-    
+    noteTrackMap.set(noteObj.midi, noteObj.track);
+
+    // Look ahead for simultaneous notes (within 10ms)
+    // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
-        
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01 && nextNote.track === noteObj.track) {
-            currentChordNotes.add(nextNote.midi);
-        } else if (Math.abs(nextPlayTime - currentPlayTime) >= 0.01) {
+
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
+            // In 'both' mode: include all simultaneous notes regardless of track
+            // In single-hand mode: only same track
+            if (clefMode === 'both' || nextNote.track === noteObj.track) {
+                currentChordNotes.add(nextNote.midi);
+                noteTrackMap.set(nextNote.midi, nextNote.track);
+            }
+        } else {
             break;
         }
     }
@@ -1933,9 +1946,10 @@ function spawnTrainingNote(noteObj) {
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         currentChordNotes.forEach(midi => {
-            if (noteObj.track === TREBLE) {
+            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
+            if (trackForMidi === TREBLE) {
                 expectedMidiTreble.add(midi);
-            } else if (noteObj.track === BASS) {
+            } else if (trackForMidi === BASS) {
                 expectedMidiBass.add(midi);
             }
         });
@@ -1944,27 +1958,28 @@ function spawnTrainingNote(noteObj) {
                 ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                 : `🎹 Play: ${noteName}`;
     } else {
+        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color)
         currentChordNotes.forEach(midi => {
+            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
             addMidiFallingRectangle(
                 midi,
                 noteObj.duration,
-                noteObj.track,
+                trackForMidi,
                 performance.now()
             );
         });
 
-        if (isChord) {
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
-            
-            currentChordNotes.forEach(midi => {
-                if (noteObj.track === TREBLE) {
-                    expectedMidiTreble.add(midi);
-                } else if (noteObj.track === BASS) {
-                    expectedMidiBass.add(midi);
-                }
-            });
-        }
+        // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        currentChordNotes.forEach(midi => {
+            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
+            if (trackForMidi === TREBLE) {
+                expectedMidiTreble.add(midi);
+            } else if (trackForMidi === BASS) {
+                expectedMidiBass.add(midi);
+            }
+        });
     }
 
     if (typeof onTrainingNoteSpawned === 'function') {
@@ -3728,7 +3743,17 @@ explanationLocked = false;
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     
-    trainingIndex += currentChordNotes.size;
+    // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
+    {
+        const baseTime = practiceNotes[trainingIndex] ? (practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time) : 0;
+        let skip = 0;
+        for (let i = trainingIndex; i < practiceNotes.length; i++) {
+            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+            if (Math.abs(t - baseTime) < 0.01) skip++;
+            else break;
+        }
+        trainingIndex += Math.max(skip, currentChordNotes.size);
+    }
 updateTrainingProgress();
     document.getElementById('holdInfo').textContent = '';
 
