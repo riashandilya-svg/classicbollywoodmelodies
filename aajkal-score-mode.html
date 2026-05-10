@@ -3531,7 +3531,34 @@ function _applyHighlight(els) {
         el.setAttribute('fill', '#E57373');
         el.setAttribute('filter', 'url(#hlGlow)');
     }
+    scrollToHighlight();
+}
 
+// ============================================================
+// AUTO-SCROLL: keep the active note centred in the score view
+// ============================================================
+function scrollToHighlight() {
+    if (!scoreModeActive || !_currentHighlightEls.length) return;
+
+    const el = _currentHighlightEls[0];
+    const noteRect = el.getBoundingClientRect();
+
+    // Fixed UI chrome heights
+    const BRAND_BAR_H  = 56;   // fixed top bar
+    const bottomDock   = document.getElementById('bottomDock');
+    const BOTTOM_BAR_H = bottomDock ? bottomDock.getBoundingClientRect().height : 200;
+
+    const viewH    = window.innerHeight;
+    const visibleH = viewH - BRAND_BAR_H - BOTTOM_BAR_H;
+
+    // Place the note 30% down inside the visible band
+    const targetTop   = BRAND_BAR_H + visibleH * 0.30;
+    const scrollDelta = noteRect.top - targetTop;
+
+    // Only scroll when the note is outside a +/-80 px dead-zone (avoids jitter on tiny advances)
+    if (Math.abs(scrollDelta) > 80) {
+        window.scrollBy({ top: scrollDelta, behavior: 'smooth' });
+    }
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
