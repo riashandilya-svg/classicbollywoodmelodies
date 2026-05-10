@@ -154,12 +154,131 @@ button:disabled {
 }
 
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
-    .button-group {
+
+/* ── Control dock layout ── */
+.button-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 20px;
     justify-content: center;
+    gap: 18px;
+    width: min(1200px, 95%);
+    margin: 22px auto 0 auto;
+}
+
+/* Individual glassmorphism panels */
+.control-panel {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(235, 50, 70, 0.16);
+    border-radius: 20px;
+    padding: 14px 16px;
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Panel heading */
+.panel-title {
+    width: 100%;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 2px;
+    color: var(--text-main);
+}
+
+/* Compact label (stacked) */
+.compact-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.85;
+    color: var(--text-main);
+}
+.compact-label select,
+.compact-label input {
+    font-size: 13px;
+}
+
+/* Checkbox label (inline) */
+.inline-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+/* Secondary buttons */
+button.secondary {
+    background: rgba(229, 115, 115, 0.14);
+    color: var(--text-main);
+    border: 1px solid rgba(229, 115, 115, 0.22);
+}
+button.secondary:hover:not(:disabled) {
+    background: rgba(229, 115, 115, 0.26);
+    transform: translateY(-1px);
+}
+
+/* Ghost (tertiary) buttons */
+button.ghost {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    color: var(--text-main);
+}
+button.ghost:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.04);
+    transform: translateY(-1px);
+}
+
+/* Ghost active state */
+button.ghost.active {
+    background: rgba(229, 115, 115, 0.15);
+    border-color: rgba(229, 115, 115, 0.4);
+    color: var(--accent-primary);
+}
+
+/* Speed control cluster */
+.speed-cluster {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.speed-cluster button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 18px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+    .control-panel {
+        width: 100%;
+        justify-content: center;
+    }
+    .button-group {
+        gap: 12px;
+    }
+    .control-panel button {
+        flex: 1 1 auto;
+    }
 }
     
 #stopButton {
@@ -370,7 +489,7 @@ button:disabled {
   transform: translateY(-1px);
 }
 
-#practiceControls {
+#playbackControls {
     flex-direction: column;
     align-items: stretch;
 }
@@ -428,6 +547,22 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+/* Floating dock style when in normal mode */
+#bottomDock:not(.score-mode) .button-group {
+    position: sticky;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(235, 50, 70, 0.12);
+    padding: 18px 14px 26px 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    border-radius: 0;
 }
 .falling-note {
     border-radius: 10px;
@@ -534,16 +669,21 @@ body.score-mode #pdfBanner {
     border-radius: 7px;
 }
 
-#bottomDock.score-mode #practiceControls {
+#bottomDock.score-mode .control-panel {
     gap: 6px;
+    padding: 10px 12px;
 }
 
-#bottomDock.score-mode #practiceControls label {
+#bottomDock.score-mode .compact-label {
+    font-size: 11px;
+}
+
+#bottomDock.score-mode .control-panel label {
     font-size: 12px;
 }
 
-#bottomDock.score-mode #practiceControls input,
-#bottomDock.score-mode #practiceControls select {
+#bottomDock.score-mode .control-panel input,
+#bottomDock.score-mode .control-panel select {
     font-size: 12px;
 }
 
@@ -578,15 +718,18 @@ body.score-mode #pdfBanner {
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(235, 50, 70, 0.18);
-    border-radius: 10px;
-    padding: 7px 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    padding: 10px 16px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
 }
 
 #viewToggleLabel {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
     color: var(--text-main);
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
 }
 
 .toggle-switch {
@@ -864,53 +1007,70 @@ body.score-mode #pdfBanner {
     </div>
 </div>
 <div class="button-group" id="playbackControls">
-    <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
-        <label>
-            Hand:
+
+    <!-- ── Panel 1: Practice ── -->
+    <div class="control-panel">
+        <div class="panel-title">Practice</div>
+
+        <label class="compact-label">
+            <span>Hand</span>
             <select id="handSelect">
                 <option value="treble">Right Hand (Treble)</option>
                 <option value="bass">Left Hand (Bass)</option>
                 <option value="both">Both Hands</option>
             </select>
         </label>
-    
-        <label>
-            Start Measure:
+
+        <label class="compact-label">
+            <span>Start</span>
             <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;">
         </label>
-        
-        <label>
-            End Measure:
+
+        <label class="compact-label">
+            <span>End</span>
             <input id="endMeasureInput" type="number" min="1" value="4" style="width:60px;">
         </label>
-        
-    
-        <button id="startPracticeButton">Start Practice</button>
+
+        <label class="inline-label">
+            <input type="checkbox" id="loopCheckbox">
+            Loop
+        </label>
+
+        <button id="startPracticeButton">▶ Start Practice</button>
+        <button id="stopButton">■ Stop</button>
     </div>
-    <button id="stopButton">Stop</button>
-    <button id="freeModeButton">Free Mode</button>
-    <button id="resetButton">Reset</button>
-    <button id="toggleNamesButton">Hide Note Names</button>
-<button id="playSongButton">Play Full Song</button>
-<button id="beatToggle">Beat</button>
-<button id="countToggle">Counting</button>
-<button id="subdivisionToggle">1 & 2 &</button>
-<button id="languageToggle">EN</button>
-    
-<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
-    <input type="checkbox" id="skipRepeatsCheckbox">
-    Skip repeats in sheet
-</label>
 
-<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
-    <input type="checkbox" id="loopCheckbox">
-    Loop section
-</label>
+    <!-- ── Panel 2: Playback ── -->
+    <div class="control-panel">
+        <div class="panel-title">Playback</div>
 
+        <button id="playSongButton" class="secondary">♪ Play Full Song</button>
+        <button id="beatToggle" class="ghost">Beat</button>
+        <button id="countToggle" class="ghost">Counting</button>
+        <button id="subdivisionToggle" class="ghost">1 &amp; 2 &amp;</button>
+        <button id="languageToggle" class="ghost">EN</button>
 
-    <button id="speedDown">–</button>
-    <span id="speedDisplay" style="font-size:18px;min-width:60px;text-align:center;">1.0×</span>
-    <button id="speedUp">+</button>
+        <div class="speed-cluster">
+            <button id="speedDown" class="ghost">−</button>
+            <span id="speedDisplay" style="font-size:15px;font-weight:700;min-width:48px;text-align:center;">1.0×</span>
+            <button id="speedUp" class="ghost">+</button>
+        </div>
+    </div>
+
+    <!-- ── Panel 3: Utility ── -->
+    <div class="control-panel">
+        <div class="panel-title">Utility</div>
+
+        <button id="freeModeButton" class="secondary">Free Mode</button>
+        <button id="resetButton" class="ghost">Reset</button>
+        <button id="toggleNamesButton" class="ghost">Hide Note Names</button>
+
+        <label class="inline-label">
+            <input type="checkbox" id="skipRepeatsCheckbox">
+            Skip repeats
+        </label>
+    </div>
+
 </div>
 
 <div id="notesDisplay" style="display: none;">
