@@ -1102,26 +1102,27 @@ body.score-mode #pdfBanner {
 
     <!-- Panel 1: Hand Select -->
     <div class="ctrl-panel" id="practiceControls">
-        <div class="ctrl-panel-title">Hand Select</div>
-        <select id="handSelect" class="ctrl-select">
-            <option value="treble">Right Hand (Treble)</option>
-            <option value="bass">Left Hand (Bass)</option>
-            <option value="both">Both Hands</option>
-        </select>
-        <div class="ctrl-row">
+        <div class="ctrl-row" style="align-items:center;gap:10px;">
+            <span class="ctrl-panel-title" style="white-space:nowrap;">Hand</span>
+            <select id="handSelect" class="ctrl-select" style="flex:1;">
+                <option value="treble">Right Hand (Treble)</option>
+                <option value="bass">Left Hand (Bass)</option>
+                <option value="both">Both Hands</option>
+            </select>
+        </div>
+        <div class="ctrl-row" style="margin-top:4px;">
             <label class="ctrl-label">
-                Start
+                Start Measure
                 <input id="startMeasureInput" type="number" min="1" value="1" class="ctrl-input">
             </label>
-            <span class="ctrl-arrow">→</span>
+            <span class="ctrl-arrow" style="margin-top:14px;">-</span>
             <label class="ctrl-label">
-                End
+                End Measure
                 <input id="endMeasureInput" type="number" min="1" value="4" class="ctrl-input">
             </label>
         </div>
         <div class="ctrl-secondary-buttons" style="justify-content:flex-start;margin-top:2px;">
             <button id="freeModeButton" class="ctrl-btn-small">Free Mode</button>
-            <button id="toggleNamesButton" class="ctrl-btn-small">Hide Names</button>
         </div>
     </div>
 
@@ -1133,31 +1134,36 @@ body.score-mode #pdfBanner {
             <button id="resetButton" class="ctrl-btn-secondary">Reset</button>
         </div>
         <div class="ctrl-secondary-buttons">
-            <button id="playSongButton" class="ctrl-btn-small">Play Song</button>
-            <button id="beatToggle" class="ctrl-btn-small">Beat</button>
-            <button id="countToggle" class="ctrl-btn-small">Counting</button>
-            <button id="subdivisionToggle" class="ctrl-btn-small">1 &amp; 2 &amp;</button>
-            <button id="languageToggle" class="ctrl-btn-small">EN</button>
+            <button id="toggleNamesButton" class="ctrl-btn-small">Hide Note Names</button>
+            <button id="playSongButton" class="ctrl-btn-small" style="background:linear-gradient(135deg,#c9a05a 0%,#b8893a 100%) !important;color:#fff !important;box-shadow:0 2px 8px rgba(180,130,50,0.22) !important;">Play Full Song</button>
         </div>
     </div>
 
-    <!-- Panel 3: Speed & Loop -->
+    <!-- Panel 3: Beat / Counting / Speed -->
     <div class="ctrl-panel">
-        <div class="ctrl-panel-title">
-            Speed <span class="ctrl-speed-value" id="speedDisplay">1.0×</span>
+        <div class="ctrl-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
+            <button id="beatToggle" class="ctrl-btn-small" style="display:inline-flex;align-items:center;gap:4px;">Beat ▾</button>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <span style="font-size:11px;color:#9a8870;font-weight:500;">Counting</span>
+                <button id="subdivisionToggle" class="ctrl-btn-small" style="white-space:nowrap;">1 &amp; 2 &amp;</button>
+            </div>
+            <button id="languageToggle" class="ctrl-btn-small">EN</button>
         </div>
-        <div class="ctrl-speed-row">
-            <button id="speedDown" class="ctrl-speed-btn">–</button>
-            <button id="speedUp" class="ctrl-speed-btn">+</button>
-        </div>
-        <div class="ctrl-checkboxes">
+        <div class="ctrl-checkboxes" style="margin-top:6px;">
+            <label class="ctrl-checkbox-label">
+                <input type="checkbox" id="skipRepeatsCheckbox"> Skip repeats in sheet
+            </label>
             <label class="ctrl-checkbox-label">
                 <input type="checkbox" id="loopCheckbox"> Loop section
             </label>
-            <label class="ctrl-checkbox-label">
-                <input type="checkbox" id="skipRepeatsCheckbox"> Skip repeats
-            </label>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+            <span style="font-size:11px;color:#9a8870;font-weight:500;margin-right:2px;">Speed</span>
+            <button id="speedDown" class="ctrl-speed-btn">–</button>
+            <span class="ctrl-speed-value" id="speedDisplay" style="font-size:16px;min-width:38px;text-align:center;">1.0×</span>
+            <button id="speedUp" class="ctrl-speed-btn">+</button>
+        </div>
+        <button id="countToggle" class="ctrl-btn-small" style="display:none;"></button>
     </div>
 
 </div>
