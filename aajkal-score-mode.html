@@ -2123,6 +2123,14 @@ function spawnNextValidNote() {
     while (trainingIndex < practiceNotes.length) {
         const note = practiceNotes[trainingIndex];
 
+        // Skip grace notes (near-zero duration ornaments — not interactive)
+        const GRACE_DURATION_THRESHOLD = 0.05;
+        if (note.duration < GRACE_DURATION_THRESHOLD) {
+            trainingIndex++;
+            updateTrainingProgress();
+            continue;
+        }
+
         // Check if this note is a tied continuation using _tiedNoteKeys directly
         // (populated in loadSongMidi — works regardless of score mode)
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
@@ -3470,6 +3478,13 @@ function _buildSvgMidiMap() {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
+    // Grace notes in MIDI have near-zero duration (< 0.05 s).
+    // The SVG builder assigns grace noteheads to sheet_measure + 1
+    // (because they appear visually at the END of one bar but sound at the
+    // START of the next).  We must apply the same +1 shift here so that
+    // the rank counter stays in sync with the SVG bucket.
+    const GRACE_DURATION_THRESHOLD = 0.05;
+
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
@@ -3480,7 +3495,12 @@ function _buildSvgMidiMap() {
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
-            const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+            const logicalMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+
+            // Grace notes: SVG places them in the NEXT measure's bucket, so we must
+            // count them in the same next-measure bucket here.
+            const isGraceMidi = note.duration < GRACE_DURATION_THRESHOLD;
+            const sheetMeasure = isGraceMidi ? logicalMeasure + 1 : logicalMeasure;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
@@ -3512,6 +3532,7 @@ function _buildSvgMidiMap() {
 
 
 function _svgIndicesForMidiNote(noteObj, hand) {
+    // Use the note's original time as key (rank map was built with original times)
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
     if (!entry) {
