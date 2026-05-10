@@ -3480,20 +3480,7 @@ function _buildSvgMidiMap() {
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
-            let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
-
-            // Grace notes: the SVG builder bucketed them into sheetMeasure+1 because
-            // they appear visually at the end of one measure but their MIDI fires at
-            // the very start of the next. getMeasureFromTime returns the earlier measure
-            // for the grace note's time, so we must shift +1 to match the SVG bucket.
-            // Detect by short duration (grace notes are typically < 0.15s in MIDI).
-            const GRACE_DURATION_THRESHOLD = 0.15;
-            if (note.duration < GRACE_DURATION_THRESHOLD) {
-                const nextMeasure = sheetMeasure + 1;
-                if (_svgBuckets[nextMeasure]?.[clef]?.length > 0) {
-                    sheetMeasure = nextMeasure;
-                }
-            }
+            const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
@@ -3594,21 +3581,8 @@ function scrollToHighlight() {
 
     window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
 
-    // Lock until the scroll actually finishes (not just a fixed timer).
-    // 'scrollend' fires when smooth scrolling is truly done; the setTimeout
-    // is a safety fallback in case scrollend never fires (older browsers).
     _scrollLocked = true;
-    let _scrollUnlockTimer = null;
-
-    const unlock = () => {
-        _scrollLocked = false;
-        window.removeEventListener('scrollend', unlock);
-        if (_scrollUnlockTimer) clearTimeout(_scrollUnlockTimer);
-        _scrollUnlockTimer = null;
-    };
-
-    window.addEventListener('scrollend', unlock, { once: true });
-    _scrollUnlockTimer = setTimeout(unlock, 2000);
+    setTimeout(() => { _scrollLocked = false; }, 1000);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
