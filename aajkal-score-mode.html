@@ -3553,30 +3553,33 @@ function _applyHighlight(els) {
 }
 
 // ============================================================
-// AUTO-SCROLL: keep the active note centred in the score view
+// AUTO-SCROLL: only advance when the note moves to a new line
 // ============================================================
+let _lastScrolledDocY = -9999;
+
 function scrollToHighlight() {
     if (!scoreModeActive || !_currentHighlightEls.length) return;
 
     const el = _currentHighlightEls[0];
-    const noteRect = el.getBoundingClientRect();
+    const rect  = el.getBoundingClientRect();
+    const docY  = rect.top + window.scrollY;   // absolute position in document
 
-    // Fixed UI chrome heights
-    const BRAND_BAR_H  = 56;   // fixed top bar
+    // Same line as the last scroll — stay put
+    if (Math.abs(docY - _lastScrolledDocY) < 40) return;
+
+    _lastScrolledDocY = docY;
+
+    // Fixed UI chrome
+    const BRAND_BAR_H  = 56;
     const bottomDock   = document.getElementById('bottomDock');
     const BOTTOM_BAR_H = bottomDock ? bottomDock.getBoundingClientRect().height : 200;
+    const visibleH     = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
 
-    const viewH    = window.innerHeight;
-    const visibleH = viewH - BRAND_BAR_H - BOTTOM_BAR_H;
+    // Place the note 30% down in the visible band
+    const targetTop = BRAND_BAR_H + visibleH * 0.30;
 
-    // Place the note 30% down inside the visible band
-    const targetTop   = BRAND_BAR_H + visibleH * 0.30;
-    const scrollDelta = noteRect.top - targetTop;
-
-    // Only scroll when the note is outside a +/-80 px dead-zone (avoids jitter on tiny advances)
-    if (Math.abs(scrollDelta) > 80) {
-        window.scrollBy({ top: scrollDelta, behavior: 'smooth' });
-    }
+    // Absolute scroll — immune to mid-animation drift
+    window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
@@ -3731,6 +3734,7 @@ scoreModeToggle.addEventListener('change', async () => {
     } else {
         bottomDock.classList.remove('score-mode');
         document.body.classList.remove('score-mode');
+        _lastScrolledDocY = -9999;
         scoreView.classList.remove('active');
         scoreNoteDisplay.classList.remove('active');
         clearScoreHighlight();
