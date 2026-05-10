@@ -154,203 +154,12 @@ button:disabled {
 }
 
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
-
-/* ── Glassmorphism dock layout ── */
-.button-group {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 14px;
-    width: min(1200px, 96%);
-    margin: 18px auto 0 auto;
-}
-
-/* Individual floating panels */
-.control-panel {
-    background: rgba(255,255,255,0.82);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(235,50,70,0.14);
-    border-radius: 22px;
-    padding: 14px 18px 16px 18px;
-    box-shadow:
-        0 12px 36px rgba(0,0,0,0.07),
-        0 2px 8px rgba(0,0,0,0.04),
-        inset 0 1px 0 rgba(255,255,255,0.7);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 0;
-}
-
-.panel-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--accent-primary);
-    opacity: 0.8;
-    margin-bottom: 0px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(235,50,70,0.10);
-}
-
-.panel-body {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-/* Compact label style */
-.compact-label {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    opacity: 0.75;
-    color: var(--text-main);
-}
-
-.compact-label input,
-.compact-label select {
-    font-size: 14px;
-    font-weight: 600;
-    border: 1px solid rgba(235,50,70,0.2);
-    border-radius: 8px;
-    padding: 5px 8px;
-    background: rgba(255,255,255,0.9);
-    color: var(--text-main);
-    outline: none;
-    transition: border-color 0.2s;
-    width: auto;
-}
-
-.compact-label input:focus,
-.compact-label select:focus {
-    border-color: var(--accent-primary);
-}
-
-/* Stepper: – N + */
-.stepper {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.stepper-val {
-    font-size: 16px;
-    font-weight: 700;
-    min-width: 28px;
-    text-align: center;
-    color: var(--text-main);
-}
-
-.stepper-btn {
-    width: 30px !important;
-    height: 30px !important;
-    padding: 0 !important;
-    font-size: 18px !important;
-    border-radius: 8px !important;
-    background: rgba(229,115,115,0.12) !important;
-    color: var(--accent-primary) !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: unset !important;
-}
-
-.stepper-btn:hover:not(:disabled) {
-    background: rgba(229,115,115,0.26) !important;
-    transform: none !important;
-}
-
-/* Button hierarchy */
-button.primary-btn {
-    background: linear-gradient(135deg, #E57373, #EF5350);
-    color: white;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    box-shadow: 0 4px 14px rgba(229,115,115,0.35);
-}
-
-button.primary-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #EF5350, #E53935);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(229,115,115,0.45);
-}
-
-button.secondary-btn {
-    background: rgba(229,115,115,0.12);
-    color: #C0392B;
-    font-weight: 600;
-    border: 1px solid rgba(229,115,115,0.2);
-}
-
-button.secondary-btn:hover:not(:disabled) {
-    background: rgba(229,115,115,0.22);
-    transform: translateY(-1px);
-}
-
-button.ghost-btn {
-    background: transparent;
-    color: var(--text-main);
-    border: 1px solid rgba(0,0,0,0.10);
-    font-weight: 500;
-}
-
-button.ghost-btn:hover:not(:disabled) {
-    background: rgba(0,0,0,0.04);
-    transform: translateY(-1px);
-}
-
-button.ghost-btn.active-btn {
-    background: rgba(229,115,115,0.14);
-    border-color: rgba(229,115,115,0.3);
-    color: #C0392B;
-}
-
-/* Compact toggle checkbox labels */
-.toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    color: var(--text-main);
-    opacity: 0.85;
-}
-
-/* Speed row */
-.speed-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-#speedDisplay {
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    min-width: 48px !important;
-    text-align: center;
-    color: var(--text-main);
-}
-
-/* ── Responsive ── */
-@media (max-width: 768px) {
-    .control-panel {
-        width: 100%;
-    }
     .button-group {
-        gap: 10px;
-    }
-    .panel-body {
-        justify-content: center;
-    }
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
 }
     
 #stopButton {
@@ -612,21 +421,13 @@ canvas {
     color: var(--text-main);
 }
 #bottomDock {
-    position: sticky;
-    bottom: 0;
+    margin-top: auto;
+    padding-top: 100px;
+    padding-bottom: 80px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 60px;
-    padding-bottom: 28px;
-
-    background: rgba(255,255,255,0.72);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-top: 1px solid rgba(235,50,70,0.10);
-    box-shadow: 0 -8px 32px rgba(0,0,0,0.06);
-    z-index: 100;
 }
 .falling-note {
     border-radius: 10px;
@@ -720,24 +521,14 @@ body.score-mode #pdfBanner {
     display: flex !important;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     padding: 4px 8px 2px 8px;
     max-width: 100%;
     overflow-x: auto;
+    font-size: 13px;
 }
 
-#bottomDock.score-mode .control-panel {
-    padding: 8px 12px 10px 12px;
-    border-radius: 14px;
-    gap: 6px;
-}
-
-#bottomDock.score-mode .panel-title {
-    font-size: 10px;
-    padding-bottom: 5px;
-}
-
-#bottomDock.score-mode .control-panel button {
+#bottomDock.score-mode #playbackControls button {
     padding: 5px 10px;
     font-size: 12px;
     border-radius: 7px;
@@ -776,9 +567,8 @@ body.score-mode #pdfBanner {
    ============================ */
 #viewToggleBar {
     position: fixed;
-    top: 64px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 64px;       /* just below the 56px brand bar */
+    left: 16px;
     z-index: 9999;
 
     display: flex;
@@ -786,22 +576,16 @@ body.score-mode #pdfBanner {
     gap: 10px;
 
     background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(8px);
     border: 1px solid rgba(235, 50, 70, 0.18);
-    border-radius: 16px;
-    padding: 10px 18px;
-    box-shadow:
-        0 8px 24px rgba(0,0,0,0.09),
-        inset 0 1px 0 rgba(255,255,255,0.8);
+    border-radius: 10px;
+    padding: 7px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 #viewToggleLabel {
-    font-size: 13px;
-    font-weight: 700;
-    opacity: 0.65;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+    font-size: 15px;
+    font-weight: 600;
     color: var(--text-main);
 }
 
@@ -1080,120 +864,54 @@ body.score-mode #pdfBanner {
     </div>
 </div>
 <div class="button-group" id="playbackControls">
-
-    <!-- ── PANEL 1: PRACTICE ── -->
-    <div class="control-panel" id="practiceControls">
-        <div class="panel-title">🎹 Practice</div>
-        <div class="panel-body">
-            <label class="compact-label">
-                Hand
-                <select id="handSelect">
-                    <option value="treble">Right (Treble)</option>
-                    <option value="bass">Left (Bass)</option>
-                    <option value="both">Both Hands</option>
-                </select>
-            </label>
-
-            <label class="compact-label">
-                Start
-                <div class="stepper">
-                    <button class="stepper-btn" onclick="let el=document.getElementById('startMeasureInput');el.value=Math.max(1,+el.value-1);el.dispatchEvent(new Event('change'))">−</button>
-                    <span class="stepper-val" id="startMeasureDisplay">1</span>
-                    <button class="stepper-btn" onclick="let el=document.getElementById('startMeasureInput');el.value=+el.value+1;el.dispatchEvent(new Event('change'))">+</button>
-                    <input id="startMeasureInput" type="number" min="1" value="1" style="display:none;">
-                </div>
-            </label>
-
-            <label class="compact-label">
-                End
-                <div class="stepper">
-                    <button class="stepper-btn" onclick="let el=document.getElementById('endMeasureInput');el.value=Math.max(1,+el.value-1);el.dispatchEvent(new Event('change'))">−</button>
-                    <span class="stepper-val" id="endMeasureDisplay">13</span>
-                    <button class="stepper-btn" onclick="let el=document.getElementById('endMeasureInput');el.value=+el.value+1;el.dispatchEvent(new Event('change'))">+</button>
-                    <input id="endMeasureInput" type="number" min="1" value="13" style="display:none;">
-                </div>
-            </label>
-
-            <div style="display:flex;flex-direction:column;gap:6px;">
-                <button id="startPracticeButton" class="primary-btn">▶ Start Practice</button>
-                <label class="toggle-label">
-                    <input type="checkbox" id="loopCheckbox">
-                    Loop section
-                </label>
-                <label class="toggle-label">
-                    <input type="checkbox" id="skipRepeatsCheckbox">
-                    Skip repeats
-                </label>
-            </div>
-        </div>
+    <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
+        <label>
+            Hand:
+            <select id="handSelect">
+                <option value="treble">Right Hand (Treble)</option>
+                <option value="bass">Left Hand (Bass)</option>
+                <option value="both">Both Hands</option>
+            </select>
+        </label>
+    
+        <label>
+            Start Measure:
+            <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;">
+        </label>
+        
+        <label>
+            End Measure:
+            <input id="endMeasureInput" type="number" min="1" value="4" style="width:60px;">
+        </label>
+        
+    
+        <button id="startPracticeButton">Start Practice</button>
     </div>
+    <button id="stopButton">Stop</button>
+    <button id="freeModeButton">Free Mode</button>
+    <button id="resetButton">Reset</button>
+    <button id="toggleNamesButton">Hide Note Names</button>
+<button id="playSongButton">Play Full Song</button>
+<button id="beatToggle">Beat</button>
+<button id="countToggle">Counting</button>
+<button id="subdivisionToggle">1 & 2 &</button>
+<button id="languageToggle">EN</button>
+    
+<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
+    <input type="checkbox" id="skipRepeatsCheckbox">
+    Skip repeats in sheet
+</label>
 
-    <!-- ── PANEL 2: PLAYBACK ── -->
-    <div class="control-panel">
-        <div class="panel-title">▶ Playback</div>
-        <div class="panel-body">
-            <button id="playSongButton" class="secondary-btn">Play Full Song</button>
-            <button id="beatToggle" class="ghost-btn">🥁 Beat</button>
-            <button id="countToggle" class="ghost-btn">🔢 Counting</button>
-            <button id="subdivisionToggle" class="ghost-btn">1 &amp; 2 &amp;</button>
-            <button id="languageToggle" class="ghost-btn">EN</button>
-        </div>
-        <div class="panel-body">
-            <label class="compact-label" style="text-align:center;">
-                Speed
-                <div class="speed-row">
-                    <button id="speedDown" class="stepper-btn">−</button>
-                    <span id="speedDisplay">1.0×</span>
-                    <button id="speedUp" class="stepper-btn">+</button>
-                </div>
-            </label>
-        </div>
-    </div>
+<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
+    <input type="checkbox" id="loopCheckbox">
+    Loop section
+</label>
 
-    <!-- ── PANEL 3: UTILITY ── -->
-    <div class="control-panel">
-        <div class="panel-title">⚙ Utility</div>
-        <div class="panel-body" style="flex-direction:column;align-items:stretch;gap:8px;">
-            <button id="freeModeButton" class="secondary-btn">🎵 Free Mode</button>
-            <button id="toggleNamesButton" class="ghost-btn">Hide Note Names</button>
-            <button id="stopButton" style="background:rgba(239,68,68,0.12);color:#DC2626;border:1px solid rgba(239,68,68,0.22);font-weight:600;">■ Stop</button>
-            <button id="resetButton" class="ghost-btn">↺ Reset</button>
-        </div>
-    </div>
 
+    <button id="speedDown">–</button>
+    <span id="speedDisplay" style="font-size:18px;min-width:60px;text-align:center;">1.0×</span>
+    <button id="speedUp">+</button>
 </div>
-
-<script>
-// Sync hidden inputs to visible stepper displays
-(function(){
-    function syncStepper(inputId, displayId) {
-        const inp = document.getElementById(inputId);
-        const disp = document.getElementById(displayId);
-        if (!inp || !disp) return;
-        disp.textContent = inp.value;
-        inp.addEventListener('change', () => { disp.textContent = inp.value; });
-        inp.addEventListener('input', () => { disp.textContent = inp.value; });
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-        syncStepper('startMeasureInput', 'startMeasureDisplay');
-        syncStepper('endMeasureInput', 'endMeasureDisplay');
-    });
-    // Also run immediately in case DOMContentLoaded already fired
-    syncStepper('startMeasureInput', 'startMeasureDisplay');
-    syncStepper('endMeasureInput', 'endMeasureDisplay');
-
-    // Toggle button active states
-    ['beatToggle','countToggle','subdivisionToggle','languageToggle'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            const orig = btn.onclick;
-            btn.addEventListener('click', function() {
-                this.classList.toggle('active-btn');
-            });
-        }
-    });
-})();
-</script>
 
 <div id="notesDisplay" style="display: none;">
     <h2>Note Numbers:</h2>
