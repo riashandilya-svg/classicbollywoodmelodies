@@ -470,6 +470,14 @@ canvas {
 #app { display: none; }
 
 /* ============================
+   SCORE MODE — HIDE TITLE & PDF BANNER
+   ============================ */
+body.score-mode h1,
+body.score-mode #pdfBanner {
+    display: none !important;
+}
+
+/* ============================
    SCORE MODE — KEYBOARD STRIP
    ============================ */
 
@@ -755,7 +763,7 @@ canvas {
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
 <!-- PDF Access Banner -->
-<a href="/dashboard.html" style="
+<a id="pdfBanner" href="/dashboard.html" style="
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3697,6 +3705,7 @@ scoreModeToggle.addEventListener('change', async () => {
 
     if (scoreModeActive) {
         bottomDock.classList.add('score-mode');
+        document.body.classList.add('score-mode');
         scoreView.classList.add('active');
         canvas.height = KEYBOARD_HEIGHT;
         drawKeyboard();
@@ -3711,6 +3720,7 @@ scoreModeToggle.addEventListener('change', async () => {
         }
     } else {
         bottomDock.classList.remove('score-mode');
+        document.body.classList.remove('score-mode');
         scoreView.classList.remove('active');
         scoreNoteDisplay.classList.remove('active');
         clearScoreHighlight();
