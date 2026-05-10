@@ -3480,7 +3480,20 @@ function _buildSvgMidiMap() {
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
-            const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+            let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+
+            // Grace notes: the SVG builder bucketed them into sheetMeasure+1 because
+            // they appear visually at the end of one measure but their MIDI fires at
+            // the very start of the next. getMeasureFromTime returns the earlier measure
+            // for the grace note's time, so we must shift +1 to match the SVG bucket.
+            // Detect by short duration (grace notes are typically < 0.15s in MIDI).
+            const GRACE_DURATION_THRESHOLD = 0.15;
+            if (note.duration < GRACE_DURATION_THRESHOLD) {
+                const nextMeasure = sheetMeasure + 1;
+                if (_svgBuckets[nextMeasure]?.[clef]?.length > 0) {
+                    sheetMeasure = nextMeasure;
+                }
+            }
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
