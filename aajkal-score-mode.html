@@ -2123,14 +2123,6 @@ function spawnNextValidNote() {
     while (trainingIndex < practiceNotes.length) {
         const note = practiceNotes[trainingIndex];
 
-        // Skip grace notes (near-zero duration ornaments — not interactive)
-        const GRACE_DURATION_THRESHOLD = 0.05;
-        if (note.duration < GRACE_DURATION_THRESHOLD) {
-            trainingIndex++;
-            updateTrainingProgress();
-            continue;
-        }
-
         // Check if this note is a tied continuation using _tiedNoteKeys directly
         // (populated in loadSongMidi — works regardless of score mode)
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
@@ -3392,19 +3384,6 @@ function _buildSvgNoteIndex() {
             // Groups: 1=a 2=b 3=c 4=d  5=tx(e)  6=ty(f)
             const scaleA = parseFloat(mm[1]);
             const isGrace = scaleA < GRACE_SCALE_THRESHOLD;
-
-            // Cross/X noteheads (ghost notes, muted notes) produce no MIDI output.
-            // In MuseScore SVGs, oval noteheads are a single closed cubic-bezier path
-            // (exactly 1 'M' moveto command). Cross noteheads are two diagonal strokes —
-            // two separate subpaths — so they have 2+ 'M' commands.
-            // Exclude them: they appear in the SVG but have no MIDI counterpart.
-            const pathD = el.getAttribute('d') || '';
-            const mCount = (pathD.match(/[Mm]/g) || []).length;
-            if (mCount >= 2) {
-                console.log(`🚫 Skipping cross notehead at tx=${parseFloat(mm[5]).toFixed(1)} (M-count=${mCount})`);
-                return;
-            }
-
             raw.push({ el, tx: parseFloat(mm[5]), ty: parseFloat(mm[6]), isGrace });
         });
 
@@ -3413,15 +3392,6 @@ function _buildSvgNoteIndex() {
             continue;
         }
         console.log(`📄 Page ${pageNum}: found ${raw.length} raw noteheads (${raw.filter(n=>n.isGrace).length} grace)`);
-        // DEBUG: print ty range so we can verify system bounds
-        if (raw.length) {
-            const tys = raw.map(n => n.ty);
-            console.log(`📄 Page ${pageNum}: ty range ${Math.min(...tys).toFixed(1)} – ${Math.max(...tys).toFixed(1)}`);
-            // Also log the systems expected for this page
-            for (const sys of pageSystems) {
-                console.log(`   system start_measure=${sys.start_measure}: treble ${sys.treble_top}–${sys.treble_bot}, bass ${sys.bass_top}–${sys.bass_bot}`);
-            }
-        }
 
         // ── Step 2: find tied-continuation noteheads ─────────────────────
         const tiedNoteheadSet = new Set();
@@ -3484,15 +3454,6 @@ function _buildSvgNoteIndex() {
         }
     }
 
-    // DEBUG: log bucket sizes for measures 20–28 so we can spot mismatches
-    console.group('SVG bucket sizes (measures 20–28)');
-    for (let m = 20; m <= 28; m++) {
-        const tb = (_svgBuckets[m]?.treble || []).length;
-        const bs = (_svgBuckets[m]?.bass   || []).length;
-        if (tb || bs) console.log(`measure ${m}: treble=${tb} bass=${bs}`);
-    }
-    console.groupEnd();
-
     console.log(`🔗 SVG tied-continuation noteheads detected: ${totalTied}`);
     console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${totalTied} tied continuations excluded) across measures ` +
         `${Math.min(...Object.keys(_svgBuckets).map(Number))}–` +
@@ -3509,13 +3470,6 @@ function _buildSvgMidiMap() {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
-    // Grace notes in MIDI have near-zero duration (< 0.05 s).
-    // The SVG builder assigns grace noteheads to sheet_measure + 1
-    // (because they appear visually at the END of one bar but sound at the
-    // START of the next).  We must apply the same +1 shift here so that
-    // the rank counter stays in sync with the SVG bucket.
-    const GRACE_DURATION_THRESHOLD = 0.05;
-
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
@@ -3526,12 +3480,7 @@ function _buildSvgMidiMap() {
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
-            const logicalMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
-
-            // Grace notes: SVG places them in the NEXT measure's bucket, so we must
-            // count them in the same next-measure bucket here.
-            const isGraceMidi = note.duration < GRACE_DURATION_THRESHOLD;
-            const sheetMeasure = isGraceMidi ? logicalMeasure + 1 : logicalMeasure;
+            const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
@@ -3559,25 +3508,10 @@ function _buildSvgMidiMap() {
     assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
-
-    // DEBUG: count how many MIDI notes are assigned per (measure, clef) for measures 20–28
-    console.group('MIDI rank counts (measures 20–28)');
-    const midiCounts = {};
-    for (const [key, val] of _midiRankMap) {
-        const k = `m${val.sheet_measure}|${val.clef}`;
-        midiCounts[k] = (midiCounts[k] || 0) + 1;
-    }
-    for (let m = 20; m <= 28; m++) {
-        const tb = midiCounts[`m${m}|treble`] || 0;
-        const bs = midiCounts[`m${m}|bass`]   || 0;
-        if (tb || bs) console.log(`measure ${m}: treble=${tb} bass=${bs}`);
-    }
-    console.groupEnd();
 }
 
 
 function _svgIndicesForMidiNote(noteObj, hand) {
-    // Use the note's original time as key (rank map was built with original times)
     const midiKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
     const entry   = _midiRankMap.get(midiKey);
     if (!entry) {
