@@ -6,7 +6,7 @@
 <title>Aaj Kal Tere Mere Pyaar Ke Charche</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 
 <style>
@@ -94,12 +94,49 @@
   --red2: rgba(255, 120, 130, 0.16);
   --softBlack: rgba(0, 0, 0, 0.10);
 
---accent-primary: #E57373;
+  --accent-primary: #E57373;
   --accent-success: #22C55E;
   --accent-error: #EF4444;
 
   --text-main: #1A1A1F;
   --border-soft: rgba(235, 50, 70, 0.18);
+
+  /* Dark mode palette */
+  --dm-bg: #0f1117;
+  --dm-panel: #181c25;
+  --dm-accent: #ff6b81;
+  --dm-text: #f0f0f5;
+  --dm-border: rgba(255,107,129,0.25);
+}
+
+/* ====== AMBIENT GLOW LIGHTING ====== */
+body::before {
+  content: '';
+  position: fixed;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, #ffb3c1 0%, transparent 70%);
+  filter: blur(100px);
+  opacity: 0.32;
+  top: -250px;
+  left: -150px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+body::after {
+  content: '';
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #ffd6e0 0%, transparent 70%);
+  filter: blur(90px);
+  opacity: 0.22;
+  bottom: -100px;
+  right: -100px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
 }
 
 body {
@@ -112,45 +149,131 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-background:
-  radial-gradient(900px 520px at 20% 0%, var(--red1), transparent 60%),
-  radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
-  radial-gradient(780px 480px at 50% 80%, var(--red2), transparent 60%),
-  radial-gradient(520px 320px at 35% 55%, rgba(235, 50, 70, 0.10), transparent 60%),
-  var(--bg-main);
+    background:
+      radial-gradient(900px 520px at 20% 0%, var(--red1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--red2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(235, 50, 70, 0.10), transparent 60%),
+      var(--bg-main);
 
     color: var(--text-main);
+    transition: background 0.4s, color 0.4s;
+}
+
+/* ====== DARK MODE ====== */
+body.dark-mode {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+body.dark-mode::before { opacity: 0.18; background: radial-gradient(circle, #ff6b81 0%, transparent 70%); }
+body.dark-mode::after  { opacity: 0.10; background: radial-gradient(circle, #ff8fa3 0%, transparent 70%); }
+
+body.dark-mode #brandBar {
+  background: rgba(24,28,37,0.96) !important;
+  border-bottom-color: var(--dm-border) !important;
+}
+body.dark-mode .ctrl-card {
+  background: rgba(24,28,37,0.92) !important;
+  border-color: var(--dm-border) !important;
+}
+body.dark-mode .ctrl-btn {
+  background: rgba(30,34,48,0.9) !important;
+  color: #ccc !important;
+  border-color: rgba(255,107,129,0.15) !important;
+}
+body.dark-mode .ctrl-btn:hover:not(:disabled) {
+  background: rgba(255,107,129,0.12) !important;
+  color: var(--dm-accent) !important;
+}
+body.dark-mode #bottomDock.score-mode {
+  background: rgba(15,17,23,0.97) !important;
+}
+body.dark-mode h1 { color: #f0f0f5; }
+body.dark-mode #viewToggleBar {
+  background: rgba(24,28,37,0.95) !important;
+  border-color: var(--dm-border) !important;
+}
+body.dark-mode .ctrl-speed-row {
+  background: rgba(30,34,48,0.9) !important;
+  border-color: rgba(255,107,129,0.15) !important;
+}
+body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
+
+/* Dark mode toggle button */
+#darkModeToggle {
+  position: fixed;
+  top: 68px;
+  right: 14px;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(235,50,70,0.18);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 0;
+}
+#darkModeToggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+body.dark-mode #darkModeToggle {
+  background: rgba(24,28,37,0.92);
+  border-color: var(--dm-border);
 }
 h1 {
-    font-size: clamp(32px, 6vw, 60px);
+    font-size: clamp(2rem, 5vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
     color: var(--text-main);
     text-align: center;
-
     margin-top: 12px;
     margin-bottom: 13px;
+    line-height: 1.1;
+    animation: fadeUp 0.7s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 button {
     padding: clamp(8px, 2vw, 15px) clamp(14px, 4vw, 30px);
     font-size: clamp(14px, 2.2vw, 18px);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
 
-    background-color: var(--accent-primary);
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
     color: white;
 
     border: none;
-    border-radius: 10px;
+    border-radius: 999px;
     cursor: pointer;
 
-    transition: background-color 0.2s, transform 0.15s;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(255,92,138,0.28);
 }
 
 button:hover:not(:disabled) {
-    background-color: #EF5350;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(255,92,138,0.36);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0px);
 }
 
 button:disabled {
-    background-color: #cccccc;
+    background: #cccccc;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
@@ -171,36 +294,157 @@ button:disabled {
 }
     #feedback {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.94) translateY(6px);
     transition:
-        opacity 0.25s ease,
-        transform 0.25s ease,
+        opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
         background-color 0.25s ease;
 
-    border-radius: 14px;
-    padding: 12px 18px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    border-radius: 20px;
+    padding: 12px 22px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.14);
 
     max-width: 520px;
     width: fit-content;
-    margin: 6px auto 0 auto;
+    margin: 8px auto 0 auto;
     text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
 }
 #feedback.show {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
 }
 
 #feedback.correct {
-    background-color: var(--accent-success);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
+    box-shadow: 0 8px 24px rgba(34,197,94,0.35);
 }
 
 #feedback.wrong {
-    background-color: var(--accent-error);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
+    box-shadow: 0 8px 24px rgba(239,68,68,0.35);
 }
-/* 🎵 Note feedback circles */
+/* ====== GAME STAGE ====== */
+#gameStage {
+    position: relative;
+    width: min(100%, 1420px);
+    border-radius: 24px;
+    background: linear-gradient(
+      180deg,
+      rgba(255,255,255,0.75) 0%,
+      rgba(255,245,247,0.88) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.07),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    border: 1px solid rgba(235,50,70,0.12);
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.05s;
+}
+
+body.dark-mode #gameStage {
+    background: linear-gradient(
+      180deg,
+      rgba(24,28,37,0.88) 0%,
+      rgba(15,17,23,0.95) 100%
+    );
+    border-color: rgba(255,107,129,0.18);
+}
+
+/* Glowing hit line at the keyboard top */
+#hitLine {
+    position: absolute;
+    bottom: 130px; /* KEYBOARD_HEIGHT */
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 2%, #ff6b6b 20%, #ff5c8a 50%, #ff6b6b 80%, transparent 98%);
+    box-shadow:
+      0 0 12px #ff6b6b,
+      0 0 28px rgba(255,107,107,0.5);
+    z-index: 2;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Stats bar above stage */
+#statsBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: min(900px, 96%);
+    margin: 10px auto 6px auto;
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(235,50,70,0.13);
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+    font-size: 13px;
+    font-weight: 600;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.1s;
+}
+
+#statsBar .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: #888;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+#statsBar .stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+body.dark-mode #statsBar {
+    background: rgba(24,28,37,0.85);
+    border-color: rgba(255,107,129,0.18);
+}
+body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
+
+/* Measure timeline */
+#measureTimeline {
+    width: min(900px, 96%);
+    margin: 6px auto 0 auto;
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 8px;
+    opacity: 0.8;
+}
+.measure-pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    transition: background 0.3s, transform 0.2s;
+}
+.measure-pip.done {
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
+}
+.measure-pip.active {
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
+    transform: scale(1.5);
+    box-shadow: 0 0 8px rgba(255,107,107,0.5);
+}
 .note-feedback {
     display: flex;
     align-items: center;
@@ -394,10 +638,10 @@ canvas {
 #trainingProgress {
     position: relative;
     width: min(600px, 90%);
-    height: 16px;
-    background: #E5E7EB;
+    height: 8px;
+    background: rgba(229,115,115,0.12);
     border-radius: 999px;
-    margin: 12px auto 0 auto;
+    margin: 10px auto 0 auto;
     overflow: hidden;
 }
 
@@ -406,19 +650,22 @@ canvas {
     width: 0%;
     background: linear-gradient(
         90deg,
-        var(--accent-primary),
+        #ff7b7b,
+        #ff5c8a,
         var(--accent-success)
     );
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 999px;
 }
 
 #trainingProgressText {
     position: absolute;
-    top: -24px;
+    top: -22px;
     right: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 700;
+    color: #E57373;
+    letter-spacing: 0.03em;
 }
 #bottomDock {
     margin-top: auto;
@@ -430,8 +677,8 @@ canvas {
     align-items: center;
 }
 .falling-note {
-    border-radius: 10px;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+    border-radius: 14px;
+    filter: drop-shadow(0 6px 14px rgba(229,115,115,0.35));
 }
 /* 🔒 Paywall card */
 #paywall{
@@ -575,12 +822,19 @@ body.score-mode #pdfBanner {
     align-items: center;
     gap: 10px;
 
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border: 1px solid rgba(235, 50, 70, 0.18);
-    border-radius: 10px;
-    padding: 7px 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    padding: 8px 14px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#viewToggleBar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
 }
 
 #viewToggleLabel {
@@ -765,17 +1019,26 @@ body.score-mode #pdfBanner {
     width: min(900px, 96%);
     margin: 18px auto 0 auto;
     flex-wrap: wrap;
+    animation: fadeUp 0.6s ease both;
+    animation-delay: 0.15s;
 }
 
 .ctrl-card {
     flex: 1;
     min-width: 200px;
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(235,50,70,0.18);
-    border-radius: 20px;
-    padding: 18px;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(235,50,70,0.15);
+    border-radius: 28px;
+    padding: 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.07), 0 2px 8px rgba(255,92,138,0.06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ctrl-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.1), 0 4px 12px rgba(255,92,138,0.1);
 }
 
 .ctrl-card-title {
@@ -797,54 +1060,59 @@ body.score-mode #pdfBanner {
     flex: 1;
     padding: 12px 6px !important;
     font-size: 14px !important;
-    border-radius: 12px !important;
-    background: #fafafa !important;
+    border-radius: 16px !important;
+    background: rgba(250,250,250,0.8) !important;
     color: #555 !important;
-    border: 1px solid #ececec !important;
+    border: 1px solid rgba(235,50,70,0.1) !important;
     cursor: pointer;
-    transition: background 0.18s, color 0.18s, transform 0.15s;
+    transition: all 0.2s ease;
     text-align: center;
+    font-weight: 500 !important;
+    box-shadow: none !important;
 }
 
 .ctrl-btn:hover:not(:disabled) {
-    background: #fff0f0 !important;
+    background: rgba(255,240,242,0.95) !important;
     color: #E57373 !important;
-    transform: translateY(-1px);
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(229,115,115,0.18) !important;
 }
 
 .ctrl-btn.active {
-    background: #fff0f0 !important;
+    background: linear-gradient(135deg, rgba(255,240,242,0.95), rgba(255,228,231,0.95)) !important;
     color: #E57373 !important;
-    border-color: #ffb7bb !important;
-    font-weight: 600;
+    border-color: rgba(229,115,115,0.3) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(229,115,115,0.2) !important;
 }
 
 .ctrl-btn-primary {
     width: 100%;
-    padding: 13px 6px !important;
+    padding: 14px 6px !important;
     font-size: 15px !important;
-    border-radius: 12px !important;
-    background: #E57373 !important;
+    border-radius: 16px !important;
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a) !important;
     color: white !important;
     border: none !important;
-    font-weight: 600;
+    font-weight: 700 !important;
     cursor: pointer;
-    transition: background 0.18s, transform 0.15s;
+    transition: all 0.25s ease !important;
     margin-top: 4px;
+    box-shadow: 0 6px 20px rgba(255,92,138,0.32) !important;
 }
 
 .ctrl-btn-primary:hover:not(:disabled) {
-    background: #EF5350 !important;
-    transform: translateY(-1px);
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px rgba(255,92,138,0.42) !important;
 }
 
 .ctrl-speed-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #fafafa;
-    border: 1px solid #ececec;
-    border-radius: 12px;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid rgba(235,50,70,0.1);
+    border-radius: 16px;
     padding: 10px 14px;
     margin-top: 4px;
 }
@@ -883,6 +1151,8 @@ body.score-mode #pdfBanner {
   </a>
 </div>
 
+
+<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); this.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙'">🌙</button>
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
@@ -955,13 +1225,44 @@ body.score-mode #pdfBanner {
     <span id="scoreNoteName">—</span>
     <span id="scoreNoteHint" style="font-size:14px;opacity:0.75;"></span>
 </div>
+<!-- Stats Bar -->
+<div id="statsBar">
+    <div class="stat-item">
+        <span class="stat-val" id="statMeasure">—</span>
+        <span>Measure</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statAccuracy">—</span>
+        <span>Accuracy</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statCombo">×0</span>
+        <span>Combo</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statPerfect">0</span>
+        <span>Perfect Hits</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statBPM">100</span>
+        <span>BPM</span>
+    </div>
+</div>
+
+<!-- Measure Timeline -->
+<div id="measureTimeline"></div>
+
 <div id="bottomDock">
     <div id="feedback"></div>
     <div id="holdInfo" style="color:#333;"></div>
 
-
     <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
-    <canvas id="canvas" width="1400"></canvas>
+
+    <!-- Game Stage wrapping the canvas -->
+    <div id="gameStage">
+      <div id="hitLine"></div>
+      <canvas id="canvas" width="1400"></canvas>
+    </div>
 
 <div id="countdownOverlay">3</div>
 <!-- 🎯 Right-side note indicators -->
@@ -1210,6 +1511,9 @@ async function loadSongMidi() {
 
     setControlsEnabled(true);
     showTrainingProgress();
+    buildMeasureTimeline(SONG_CONFIG.measures);
+    const bpmEl = document.getElementById('statBPM');
+    if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -1650,6 +1954,52 @@ let showBlackKeyArrow = false;
 let arrowTargetGroup = null;
 let explanationLocked = false;
 
+// ====== PREMIUM STATS ======
+let statsCombo = 0;
+let statsPerfect = 0;
+let statsTotalAttempts = 0;
+let statsWrong = 0;
+
+function updateStatsBar() {
+    const accuracy = statsTotalAttempts > 0
+        ? Math.round((statsPerfect / statsTotalAttempts) * 100)
+        : 0;
+    const measureEl = document.getElementById('statMeasure');
+    const accEl = document.getElementById('statAccuracy');
+    const comboEl = document.getElementById('statCombo');
+    const perfEl = document.getElementById('statPerfect');
+    if (measureEl) measureEl.textContent = statsMeasure || '—';
+    if (accEl) accEl.textContent = statsTotalAttempts > 0 ? accuracy + '%' : '—';
+    if (comboEl) comboEl.textContent = '×' + statsCombo;
+    if (perfEl) perfEl.textContent = statsPerfect;
+}
+
+let statsMeasure = '—';
+
+// Build measure timeline pips
+function buildMeasureTimeline(totalMeasures) {
+    const tl = document.getElementById('measureTimeline');
+    if (!tl) return;
+    tl.innerHTML = '';
+    for (let i = 0; i < Math.min(totalMeasures, 80); i++) {
+        const pip = document.createElement('div');
+        pip.className = 'measure-pip';
+        pip.dataset.m = i + 1;
+        tl.appendChild(pip);
+    }
+}
+
+function updateTimelinePip(measureNum) {
+    const pips = document.querySelectorAll('.measure-pip');
+    pips.forEach(p => {
+        const m = +p.dataset.m;
+        p.classList.remove('active');
+        if (m < measureNum) p.classList.add('done');
+        else if (m === measureNum) p.classList.add('active');
+        else { p.classList.remove('done'); }
+    });
+}
+
 let clefMode = 'treble';
 let sectionStartTime = 0;
 let sectionEndTime = 0;
@@ -1824,76 +2174,127 @@ function drawKeyboard() {
 
         const x = whiteIndex * getWhiteKeyWidth();
         const isTreble = expectedMidiTreble.has(midi);
-const isBass   = expectedMidiBass.has(midi);
-if (isTreble) {
-    ctx.fillStyle = "#FFCDD2";
-} else if (isBass) {
-    ctx.fillStyle = "#757575";
-} else {
-    ctx.fillStyle = "#ffffff";
-}
-        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
+        const isBass   = expectedMidiBass.has(midi);
 
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+        // Premium gradient white key
+        const wGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
+        if (isTreble) {
+            wGrad.addColorStop(0, '#FFCDD2');
+            wGrad.addColorStop(1, '#EF9A9A');
+        } else if (isBass) {
+            wGrad.addColorStop(0, '#9E9E9E');
+            wGrad.addColorStop(1, '#616161');
+        } else {
+            wGrad.addColorStop(0, '#ffffff');
+            wGrad.addColorStop(0.7, '#f5f5f5');
+            wGrad.addColorStop(1, '#e8e8e8');
+        }
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
 
-if (showNoteNames) {
-    ctx.fillStyle = "#000";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
+        // Key borders
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(x + 0.4, keyboardTop, getWhiteKeyWidth() - 0.8, keyHeight);
 
-    ctx.fillText(
-        getNoteName(midi),
-        x + getWhiteKeyWidth() / 2,
-        keyboardTop + keyHeight - 5
-    );
-}
+        // Inner shadow at top
+        const innerGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + 14);
+        innerGrad.addColorStop(0, 'rgba(0,0,0,0.08)');
+        innerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = innerGrad;
+        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), 14);
+
+        // Glow for active treble key
+        if (isTreble) {
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(255,107,107,0.15)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
+        if (showNoteNames) {
+            ctx.fillStyle = isBass ? '#fff' : '#555';
+            ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(
+                getNoteName(midi),
+                x + getWhiteKeyWidth() / 2,
+                keyboardTop + keyHeight - 5
+            );
+        }
 
         whiteIndex++;
     }
 
    // ---- BLACK KEYS ----
-whiteIndex = 0;
+    whiteIndex = 0;
 
-for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
-    if (!isBlackMidi(midi)) {
-        whiteIndex++;
-        continue;
-    }
+    for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
+        if (!isBlackMidi(midi)) {
+            whiteIndex++;
+            continue;
+        }
 
-    const blackKeyWidth = getWhiteKeyWidth() * 0.6;
-    const blackKeyHeight = keyHeight * 0.6;
-
-    const x =
-    (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
+        const blackKeyWidth  = getWhiteKeyWidth() * 0.6;
+        const blackKeyHeight = keyHeight * 0.62;
+        const x = (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
 
         const isTreble = expectedMidiTreble.has(midi);
-const isBass   = expectedMidiBass.has(midi);
+        const isBass   = expectedMidiBass.has(midi);
 
-if (isTreble) {
-    ctx.fillStyle = "#E57373";
-} else if (isBass) {
-    ctx.fillStyle = "#424242";
-} else {
-    ctx.fillStyle = "#000";
-}
+        // Premium gradient black key
+        const bGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + blackKeyHeight);
+        if (isTreble) {
+            bGrad.addColorStop(0, '#EF9A9A');
+            bGrad.addColorStop(1, '#E57373');
+        } else if (isBass) {
+            bGrad.addColorStop(0, '#555');
+            bGrad.addColorStop(1, '#222');
+        } else {
+            bGrad.addColorStop(0, '#333');
+            bGrad.addColorStop(0.5, '#111');
+            bGrad.addColorStop(1, '#000');
+        }
 
-    ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+        // Shadow under black key
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+        ctx.fillStyle = bGrad;
+        ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
 
-    if (showNoteNames) {
-        ctx.fillStyle = "#fff";
-        ctx.font = "10px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
+        // Glow for active treble
+        if (isTreble) {
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(255,107,107,0.4)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
 
-        ctx.fillText(
-            getNoteName(midi),
-            x + blackKeyWidth / 2,
-            keyboardTop + blackKeyHeight - 4
-        );
+        // Glossy highlight on top of black key
+        const glossGrad = ctx.createLinearGradient(x, keyboardTop, x + blackKeyWidth, keyboardTop + blackKeyHeight * 0.4);
+        glossGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+        glossGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glossGrad;
+        ctx.fillRect(x + blackKeyWidth * 0.1, keyboardTop, blackKeyWidth * 0.8, blackKeyHeight * 0.35);
+
+        if (showNoteNames) {
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.max(8, Math.min(10, blackKeyWidth * 0.55))}px Inter, Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(
+                getNoteName(midi),
+                x + blackKeyWidth / 2,
+                keyboardTop + blackKeyHeight - 3
+            );
+        }
     }
-}
 }
 
 function describeNoteByBlackKeys(midiNote) {
@@ -1988,6 +2389,10 @@ void feedback.offsetWidth;
 feedback.classList.add('wrong', 'show');
 
 failureCount++;
+statsWrong++;
+statsTotalAttempts++;
+statsCombo = 0;
+updateStatsBar();
 expectedMidiNote = expectedMidi;
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
@@ -2013,6 +2418,10 @@ explanationLocked = false;
 showBlackKeyArrow = false;
 arrowTargetGroup = null;
 failureCount = 0;
+statsPerfect++;
+statsTotalAttempts++;
+statsCombo++;
+updateStatsBar();
 
 midiPressedNotes.add(midiNote);
 
@@ -2042,42 +2451,42 @@ function isBlackKey(noteName) { return noteName.includes("#"); }
 function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const x = noteToX(midiNumber);
 
-    const height = Math.max(12, duration * 150 - NOTE_GAP_PX);
+    const height = Math.max(14, duration * 150 - NOTE_GAP_PX);
     const TOP_GAP = 10;
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-if (track === TREBLE) {
-    gradient.addColorStop(0.00, "#FFEBEE");
-    gradient.addColorStop(0.25, "#EF9A9A");
-    gradient.addColorStop(0.55, "#E57373");
-    gradient.addColorStop(1.00, "#EF5350");
-} else if (track === BASS) {
-    gradient.addColorStop(0.00, "#616161");
-    gradient.addColorStop(0.25, "#424242");
-    gradient.addColorStop(0.55, "#212121");
-    gradient.addColorStop(1.00, "#000000");
-}
+    if (track === TREBLE) {
+        gradient.addColorStop(0.00, "rgba(255,200,200,0.92)");
+        gradient.addColorStop(0.25, "rgba(255,150,150,0.88)");
+        gradient.addColorStop(0.65, "rgba(229,115,115,0.90)");
+        gradient.addColorStop(1.00, "rgba(239,83,80,0.94)");
+    } else if (track === BASS) {
+        gradient.addColorStop(0.00, "rgba(120,120,140,0.88)");
+        gradient.addColorStop(0.25, "rgba(80,80,100,0.85)");
+        gradient.addColorStop(0.65, "rgba(45,45,65,0.90)");
+        gradient.addColorStop(1.00, "rgba(15,15,30,0.94)");
+    }
 
-fallingRectangles.push({
-    midi: midiNumber,
-    noteName: getNoteName(midiNumber),
-    track,
-    isMidi: true,
+    fallingRectangles.push({
+        midi: midiNumber,
+        noteName: getNoteName(midiNumber),
+        track,
+        isMidi: true,
 
-    x,
-    y: startY,
-    startY,
-    endY,
-    width: getWhiteKeyWidth() * 0.86,
-    height,
+        x,
+        y: startY,
+        startY,
+        endY,
+        width: getWhiteKeyWidth() * 0.86,
+        height,
 
-    gradient,
-    startTime: noteStartTime,
-    landed: false,
-});
+        gradient,
+        startTime: noteStartTime,
+        landed: false,
+    });
 }
 
 
@@ -2421,7 +2830,16 @@ if (rect.y > canvas.height) {
 
 ctx.fillStyle = rect.gradient;
 
-const r = 9;
+// Glow shadow for treble notes
+if (rect.track === TREBLE) {
+    ctx.shadowColor = 'rgba(255,107,107,0.55)';
+    ctx.shadowBlur = 18;
+} else {
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 10;
+}
+
+const r = 12;
 ctx.beginPath();
 ctx.moveTo(rect.x + r, rect.y);
 ctx.lineTo(rect.x + rect.width - r, rect.y);
@@ -2434,6 +2852,7 @@ ctx.lineTo(rect.x, rect.y + r);
 ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
 ctx.closePath();
 ctx.fill();
+ctx.shadowBlur = 0;
 
 ctx.save();
 ctx.globalCompositeOperation = "screen";
