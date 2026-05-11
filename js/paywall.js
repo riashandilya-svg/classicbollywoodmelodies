@@ -707,20 +707,41 @@ const bundlePriceDisplay = bundlePrice
         <div style="margin: 20px 0; padding: 15px; background: #ede9fe; border: 2px solid #7c3aed; border-radius: 8px;">
           <h4 style="margin: 0 0 6px 0; color: #5b21b6;">🎵 Unlock All Songs</h4>
           <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #4c1d95;">
-            Subscribe for ₹249/month — access every song, cancel anytime.
+            Access every song, cancel anytime.
           </p>
-          <button id="subscribeBtn" type="button" style="
-            width: 100%;
-            padding: 12px;
-            background: #7c3aed;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-          ">
-            Subscribe ₹249/month
-          </button>
+          <div style="display: flex; gap: 8px;">
+            <button id="subscribeBtn" type="button" style="
+              flex: 1;
+              padding: 12px 8px;
+              background: #7c3aed;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 15px;
+              cursor: pointer;
+            ">
+              ₹249/month
+            </button>
+            <button id="subscribeAnnualBtn" type="button" style="
+              flex: 1;
+              padding: 12px 8px;
+              background: #5b21b6;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 15px;
+              cursor: pointer;
+              position: relative;
+            ">
+              ₹2,499/year
+              <span style="
+                display: block;
+                font-size: 11px;
+                opacity: 0.85;
+                margin-top: 2px;
+              ">Save ~17%</span>
+            </button>
+          </div>
         </div>
       `;
 
@@ -762,6 +783,14 @@ const subscribeBtn = document.getElementById("subscribeBtn");
         subscribeBtn.onclick = () => {
           console.log("[PAYWALL] 💳 User clicked: Subscribe Monthly");
           startSubscription('monthly');
+        };
+      }
+
+      const subscribeAnnualBtn = document.getElementById("subscribeAnnualBtn");
+      if (subscribeAnnualBtn) {
+        subscribeAnnualBtn.onclick = () => {
+          console.log("[PAYWALL] 💳 User clicked: Subscribe Annual");
+          startSubscription('annual');
         };
       }
       const redeemBtn = document.getElementById("redeemBtn");
