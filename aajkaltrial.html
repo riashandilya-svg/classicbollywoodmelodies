@@ -991,13 +991,13 @@ body.score-mode #pdfBanner {
     <div class="ctrl-row" style="gap:10px; align-items:center; justify-content:center;">
       <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
         Start Measure
-        <input type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+        <input id="panelStartMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
           oninput="document.getElementById('startMeasureInput').value=this.value"
           value="1">
       </label>
       <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
         End Measure
-        <input type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+        <input id="panelEndMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
           oninput="document.getElementById('endMeasureInput').value=this.value"
           value="4">
       </label>
@@ -3386,7 +3386,39 @@ function resetAll() {
 
     stopButton.disabled = true;
 
-    // ── 8. Confirm ───────────────────────────────────────────────────────
+    // ── 8. Reset panel measure inputs (the visible ones) ─────────────────
+    const panelStart = document.getElementById('panelStartMeasure');
+    const panelEnd   = document.getElementById('panelEndMeasure');
+    if (panelStart) panelStart.value = 1;
+    if (panelEnd)   panelEnd.value   = 4;
+
+    // ── 9. Reset hand-select buttons ─────────────────────────────────────
+    handSelect.value = 'both';
+    syncHandBtns();
+
+    // ── 10. Deactivate Beat / Counting / Subdivision panel buttons ───────
+    document.getElementById('beatBtn')   ?.classList.remove('active');
+    document.getElementById('countBtn')  ?.classList.remove('active');
+    document.getElementById('subdivBtn') ?.classList.remove('active');
+
+    // ── 11. Uncheck panel Loop & Skip-Repeats checkboxes ─────────────────
+    const panelLoop = document.getElementById('panelLoopCheckbox');
+    const panelSkip = document.getElementById('panelSkipRepeatsCheckbox');
+    if (panelLoop) panelLoop.checked = false;
+    if (panelSkip) panelSkip.checked = false;
+
+    // ── 12. Restore "Hide Note Names" button ─────────────────────────────
+    showNoteNames = true;
+    toggleNamesButton.textContent = 'Hide Note Names';
+
+    // ── 13. Turn off Score Mode if it is on ──────────────────────────────
+    const smToggle = document.getElementById('scoreModeToggle');
+    if (smToggle && smToggle.checked) {
+        smToggle.checked = false;
+        smToggle.dispatchEvent(new Event('change'));
+    }
+
+    // ── 14. Confirm ──────────────────────────────────────────────────────
     feedback.textContent = 'All reset — ready!';
     void feedback.offsetWidth;
     feedback.classList.add('show');
