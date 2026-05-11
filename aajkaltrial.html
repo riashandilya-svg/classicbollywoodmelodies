@@ -501,6 +501,7 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
     font-size: 18px;
     font-weight: 600;
     text-align: center;
+    min-height: 1.5em; /* prevents canvas from shifting when holdInfo text appears/disappears */
 }
 #notesDisplay {
     display: none !important;
@@ -2054,7 +2055,6 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 setTimeout(resizeCanvas, 800);
-setTimeout(animate, 900);
 let fallingRectangles = [];
   let _tiedNoteKeys = new Set();
 let midiFallingNotes = [];
