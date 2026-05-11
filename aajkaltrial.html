@@ -988,6 +988,20 @@ body.score-mode #pdfBanner {
       <button class="ctrl-btn active" id="handBothBtn" onclick="document.getElementById('handSelect').value='both'; syncHandBtns()">🎹 Both</button>
       <button class="ctrl-btn" id="handRightBtn" onclick="document.getElementById('handSelect').value='treble'; syncHandBtns()">✋ Right</button>
     </div>
+    <div class="ctrl-row" style="gap:10px; align-items:center; justify-content:center;">
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+        Start Measure
+        <input type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+          oninput="document.getElementById('startMeasureInput').value=this.value"
+          value="1">
+      </label>
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+        End Measure
+        <input type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+          oninput="document.getElementById('endMeasureInput').value=this.value"
+          value="4">
+      </label>
+    </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
   </div>
 
@@ -999,9 +1013,14 @@ body.score-mode #pdfBanner {
       <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
       <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
     </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
+    </div>
     <div class="ctrl-speed-row">
-      <span>Speed</span>
+      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
+      <span style="font-size:13px;color:#666;">Speed</span>
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
+      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
   </div>
 
@@ -1011,6 +1030,14 @@ body.score-mode #pdfBanner {
     <div class="ctrl-grid-2">
       <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
       <button class="ctrl-btn" onclick="document.getElementById('toggleNamesButton').click()">👁 Hide Note Names</button>
+      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="panelLoopCheckbox" onchange="document.getElementById('loopCheckbox').checked=this.checked; document.getElementById('loopCheckbox').dispatchEvent(new Event('change'))">
+        🔁 Loop Section
+      </label>
+      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="panelSkipRepeatsCheckbox" onchange="document.getElementById('skipRepeatsCheckbox').checked=this.checked; document.getElementById('skipRepeatsCheckbox').dispatchEvent(new Event('change'))">
+        ↩ Skip Repeats
+      </label>
       <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
     </div>
   </div>
