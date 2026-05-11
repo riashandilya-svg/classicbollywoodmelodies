@@ -3301,66 +3301,96 @@ stopButton.disabled = true;
 }
 
 function resetAll() {
-    hideTrainingProgress();
-    stopPlayback();
+    // ── 1. Kill every pending timer / animation immediately ──────────────
+    if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+    playbackTimeouts.forEach(t => clearTimeout(t)); playbackTimeouts = [];
+    previewTimeouts.forEach(t => clearTimeout(t));  previewTimeouts = [];
 
-    trainingActive = false;
-    fullSongPlaying = false;
-    previewMode = false;
-    waitingForInput = false;
-    visualsPlaying = false;
+    // ── 2. Stop all audio & transport ────────────────────────────────────
+    stopMetronome();
+    if (synth) synth.releaseAll();
+    try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch(e) {}
 
-    trainingIndex = 0;
-    scoreNoteOffset = 0;
+    // ── 3. Kill every active state flag ──────────────────────────────────
+    isPlaying        = false;
+    trainingActive   = false;
+    fullSongPlaying  = false;
+    previewMode      = false;
+    waitingForInput  = false;
+    visualsPlaying   = false;
+    speedLocked      = false;
+    countdownActive  = false;
+
+    // ── 4. Exit Free Mode if it is on ────────────────────────────────────
+    if (freeMode) {
+        freeMode = false;
+        freeModeButton.textContent = 'Free Mode';
+    }
+    if (freeModeActiveNote !== null) {
+        if (freeModeSynth) { try { freeModeSynth.releaseAll(); } catch(e) {} }
+        freeModeActiveNote = null;
+    }
+
+    // ── 5. Clear all note / MIDI state ───────────────────────────────────
+    trainingIndex      = 0;
+    scoreNoteOffset    = 0;
     _lastPannedMeasure = -1;
-    playbackTimeouts = [];
-    previewTimeouts = [];
-    fallingRectangles = [];
+    fallingRectangles  = [];
 
-    expectedMidiNote = null;
-    activeMidiNote = null;
+    expectedMidiNote    = null;
+    activeMidiNote      = null;
     currentTrainingNote = null;
-    noteHoldStartTime = null;
-    pressedNotes = [];
-    
+    noteHoldStartTime   = null;
+    pressedNotes        = [];
+
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
 
-    const feedback = document.getElementById('feedback');
-    feedback.textContent = '';
+    // ── 6. Hide all overlays / visuals ───────────────────────────────────
+    document.getElementById('countdownOverlay').style.display = 'none';
+    hideTrainingProgress();
+    hideScoreNoteDisplay();
+    clearScoreHighlight();
 
-feedback.classList.remove('correct', 'wrong', 'show');
+    // ── 7. Reset UI controls ─────────────────────────────────────────────
+    const feedback = document.getElementById('feedback');
+    feedback.classList.remove('correct', 'wrong', 'show');
+    feedback.textContent = '';
     document.getElementById('holdInfo').textContent = '';
 
     speedMultiplier = 1.0;
     speedDisplay.textContent = '1.0×';
 
-    beatEnabled = false;
-    countEnabled = false;
+    beatEnabled    = false;
+    countEnabled   = false;
+    subdivisionEnabled = false;
     metronomeRunning = false;
-    beatToggle.textContent = 'Beat';
-    countToggle.textContent = 'Counting';
+    beatToggle.textContent        = 'Beat';
+    countToggle.textContent       = 'Counting';
     subdivisionToggle.textContent = '1 & 2 &';
-    stopMetronome();
 
     handSelect.value = 'treble';
     startMeasureInput.value = 1;
-    endMeasureInput.value = 4;
+    endMeasureInput.value   = 4;
     skipRepeatsCheckbox.checked = false;
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
+    loopEnabled  = false;
 
-    feedback.textContent = 'All reset — ready!';
-    console.log('✅ All reset');
     document.getElementById('pressedNoteCircle').textContent = '';
-document.getElementById('pressedNoteCircle').className = 'note-circle';
-
-document.getElementById('correctNoteCircle').textContent = '';
+    document.getElementById('pressedNoteCircle').className   = 'note-circle';
+    document.getElementById('correctNoteCircle').textContent = '';
 
     stopButton.disabled = true;
+
+    // ── 8. Confirm ───────────────────────────────────────────────────────
+    feedback.textContent = 'All reset — ready!';
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+    console.log('✅ All reset');
 }
 window.resetAll = resetAll;
     
