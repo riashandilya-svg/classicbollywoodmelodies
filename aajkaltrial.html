@@ -470,6 +470,14 @@ canvas {
 #app { display: none; }
 
 /* ============================
+   SCORE MODE — HIDE TITLE & PDF BANNER
+   ============================ */
+body.score-mode h1,
+body.score-mode #pdfBanner {
+    display: none !important;
+}
+
+/* ============================
    SCORE MODE — KEYBOARD STRIP
    ============================ */
 
@@ -558,11 +566,21 @@ canvas {
    SCORE VIEW TOGGLE
    ============================ */
 #viewToggleBar {
+    position: fixed;
+    top: 64px;       /* just below the 56px brand bar */
+    left: 16px;
+    z-index: 9999;
+
     display: flex;
     align-items: center;
-    gap: 12px;
-    justify-content: center;
-    margin: 10px 0 6px 0;
+    gap: 10px;
+
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(235, 50, 70, 0.18);
+    border-radius: 10px;
+    padding: 7px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 }
 
 #viewToggleLabel {
@@ -632,10 +650,7 @@ canvas {
 #scorePageWrapper {
     position: relative;
     width: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    max-height: 38vh;
-    scroll-behavior: smooth;
+    overflow: hidden;
 }
 
 #scoreObj {
@@ -741,6 +756,120 @@ canvas {
     line-height: 1;
 }
 
+/* ============================
+   PRACTICE / PLAYBACK / UTILITY PANEL
+   ============================ */
+#controlPanel {
+    display: flex;
+    gap: 16px;
+    width: min(900px, 96%);
+    margin: 18px auto 0 auto;
+    flex-wrap: wrap;
+}
+
+.ctrl-card {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(235,50,70,0.18);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.08);
+}
+
+.ctrl-card-title {
+    text-align: center;
+    color: #E57373;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+
+.ctrl-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.ctrl-btn {
+    flex: 1;
+    padding: 12px 6px !important;
+    font-size: 14px !important;
+    border-radius: 12px !important;
+    background: #fafafa !important;
+    color: #555 !important;
+    border: 1px solid #ececec !important;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, transform 0.15s;
+    text-align: center;
+}
+
+.ctrl-btn:hover:not(:disabled) {
+    background: #fff0f0 !important;
+    color: #E57373 !important;
+    transform: translateY(-1px);
+}
+
+.ctrl-btn.active {
+    background: #fff0f0 !important;
+    color: #E57373 !important;
+    border-color: #ffb7bb !important;
+    font-weight: 600;
+}
+
+.ctrl-btn-primary {
+    width: 100%;
+    padding: 13px 6px !important;
+    font-size: 15px !important;
+    border-radius: 12px !important;
+    background: #E57373 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.15s;
+    margin-top: 4px;
+}
+
+.ctrl-btn-primary:hover:not(:disabled) {
+    background: #EF5350 !important;
+    transform: translateY(-1px);
+}
+
+.ctrl-speed-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-top: 4px;
+}
+
+.ctrl-speed-row span:first-child {
+    font-size: 14px;
+    color: #666;
+}
+
+.ctrl-speed-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.ctrl-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ctrl-grid-full {
+    grid-column: 1 / -1;
+}
+
 </style>
 </head>
 <body>
@@ -758,7 +887,7 @@ canvas {
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
 <!-- PDF Access Banner -->
-<a href="/dashboard.html" style="
+<a id="pdfBanner" href="/dashboard.html" style="
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -848,6 +977,47 @@ canvas {
         <div id="correctNoteCircle" class="note-circle correct"></div>
     </div>
 </div>
+<!-- ====== PRACTICE / PLAYBACK / UTILITY PANEL ====== -->
+<div id="controlPanel">
+
+  <!-- PRACTICE card -->
+  <div class="ctrl-card">
+    <div class="ctrl-card-title">PRACTICE</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="handLeftBtn" onclick="document.getElementById('handSelect').value='bass'; syncHandBtns()">✋ Left</button>
+      <button class="ctrl-btn active" id="handBothBtn" onclick="document.getElementById('handSelect').value='both'; syncHandBtns()">🎹 Both</button>
+      <button class="ctrl-btn" id="handRightBtn" onclick="document.getElementById('handSelect').value='treble'; syncHandBtns()">✋ Right</button>
+    </div>
+    <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
+  </div>
+
+  <!-- PLAYBACK card -->
+  <div class="ctrl-card">
+    <div class="ctrl-card-title">PLAYBACK</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
+    </div>
+    <div class="ctrl-speed-row">
+      <span>Speed</span>
+      <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
+    </div>
+  </div>
+
+  <!-- UTILITY card -->
+  <div class="ctrl-card">
+    <div class="ctrl-card-title">UTILITY</div>
+    <div class="ctrl-grid-2">
+      <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
+      <button class="ctrl-btn" onclick="document.getElementById('toggleNamesButton').click()">👁 Hide Note Names</button>
+      <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
+    </div>
+  </div>
+
+</div>
+<!-- ====== END PANEL ====== -->
+
 <div class="button-group" id="playbackControls">
     <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
         <label>
@@ -1107,7 +1277,7 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
       seq.push(logicalToPhysicalFirst(l));
     }
     
-    for (let l = Math.max(29, startLogical); l <= Math.min(36, endLogical); l++) {
+    for (let l = 29; l <= 36; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalSecond(l));
     }
@@ -1907,16 +2077,29 @@ function spawnTrainingNote(noteObj) {
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
+    // Store per-note track so we can highlight correctly
+    if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
+    const noteTrackMap = spawnTrainingNote._noteTrackMap;
+    noteTrackMap.clear();
+
     currentChordNotes.add(noteObj.midi);
-    
+    noteTrackMap.set(noteObj.midi, noteObj.track);
+
+    // Look ahead for simultaneous notes (within 10ms)
+    // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
-        
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01 && nextNote.track === noteObj.track) {
-            currentChordNotes.add(nextNote.midi);
-        } else if (Math.abs(nextPlayTime - currentPlayTime) >= 0.01) {
+
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
+            // In 'both' mode: include all simultaneous notes regardless of track
+            // In single-hand mode: only same track
+            if (clefMode === 'both' || nextNote.track === noteObj.track) {
+                currentChordNotes.add(nextNote.midi);
+                noteTrackMap.set(nextNote.midi, nextNote.track);
+            }
+        } else {
             break;
         }
     }
@@ -1936,9 +2119,10 @@ function spawnTrainingNote(noteObj) {
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         currentChordNotes.forEach(midi => {
-            if (noteObj.track === TREBLE) {
+            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
+            if (trackForMidi === TREBLE) {
                 expectedMidiTreble.add(midi);
-            } else if (noteObj.track === BASS) {
+            } else if (trackForMidi === BASS) {
                 expectedMidiBass.add(midi);
             }
         });
@@ -1947,27 +2131,28 @@ function spawnTrainingNote(noteObj) {
                 ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                 : `🎹 Play: ${noteName}`;
     } else {
+        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color)
         currentChordNotes.forEach(midi => {
+            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
             addMidiFallingRectangle(
                 midi,
                 noteObj.duration,
-                noteObj.track,
+                trackForMidi,
                 performance.now()
             );
         });
 
-        if (isChord) {
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
-            
-            currentChordNotes.forEach(midi => {
-                if (noteObj.track === TREBLE) {
-                    expectedMidiTreble.add(midi);
-                } else if (noteObj.track === BASS) {
-                    expectedMidiBass.add(midi);
-                }
-            });
-        }
+        // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        currentChordNotes.forEach(midi => {
+            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
+            if (trackForMidi === TREBLE) {
+                expectedMidiTreble.add(midi);
+            } else if (trackForMidi === BASS) {
+                expectedMidiBass.add(midi);
+            }
+        });
     }
 
     if (typeof onTrainingNoteSpawned === 'function') {
@@ -3403,15 +3588,8 @@ function _buildSvgNoteIndex() {
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
                         const svgMeasure = sys.start_measure + i;
-                        // Grace notes: MIDI fires at start of next measure, so +1 to match.
-                        // Special case: a grace note visually at the end of REPEAT_END (measure 36)
-                        // fires at the start of the repeat section (REPEAT_START = 29) in MIDI,
-                        // because physical measure 37 maps to logical 29.  Assign it to bucket 29
-                        // so the SVG rank aligns with the MIDI rank counter.
-                        let sheet_measure = n.isGrace ? svgMeasure + 1 : svgMeasure;
-                        if (n.isGrace && sheet_measure === REPEAT_END + 1) {
-                            sheet_measure = REPEAT_START;
-                        }
+                        // Grace notes: MIDI fires at start of next measure, so +1 to match
+                        const sheet_measure = n.isGrace ? svgMeasure + 1 : svgMeasure;
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
@@ -3447,13 +3625,6 @@ function _buildSvgMidiMap() {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
-    // Track which physical measures are "second-pass" repeats.
-    // Physical measures 37..44 are the repeat of logical 29..36.
-    // When we encounter a note in a second-pass physical measure for the
-    // first time, we reset that bucket's counter to 0 so the second pass
-    // starts at rank 0 — exactly like the first pass.
-    const repeatPassSeen = new Set(); // tracks buckets already reset for pass-2
-
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
@@ -3467,23 +3638,17 @@ function _buildSvgMidiMap() {
             const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
-
-            // Detect entry into the second physical pass of a repeated section:
-            // physical measures REPEAT_END+1 .. REPEAT_END+REPEAT_LEN map to
-            // logical REPEAT_START .. REPEAT_END (same SVG measures as first pass).
-            // Reset the rank counter for that bucket so rank assignment starts
-            // fresh at 0 — matching the SVG bucket ordering of the first pass.
-            const isSecondPass = (physMeasure > REPEAT_END &&
-                                  physMeasure <= REPEAT_END + REPEAT_LEN);
-            const resetKey = `${bucketKey}|pass2`;
-            if (isSecondPass && !repeatPassSeen.has(resetKey)) {
-                repeatPassSeen.add(resetKey);
-                rankCounters[bucketKey] = 0;   // reset to start of SVG bucket
-            }
-
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
 
-            const rank = rankCounters[bucketKey]++;
+            // Raw rank keeps incrementing across both passes of a repeated section.
+            // Wrap it by the SVG bucket size so that repeat-pass notes (e.g. physical
+            // measures 37-44 which map to the same logical measures 29-36 as the first
+            // pass) resolve to rank 0, 1, 2, … again — i.e. they highlight the same
+            // SVG noteheads as the first pass.  For measures that are never repeated
+            // the bucket size is never exceeded so % has no effect.
+            const rawRank    = rankCounters[bucketKey]++;
+            const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
+            const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
         }
@@ -3539,32 +3704,40 @@ function _applyHighlight(els) {
         el.setAttribute('fill', '#E57373');
         el.setAttribute('filter', 'url(#hlGlow)');
     }
+    scrollToHighlight();
+}
 
-    // Auto-scroll the scorePageWrapper so the highlighted note stays visible
-    if (_currentHighlightEls.length > 0) {
-        const el = _currentHighlightEls[0];
-        requestAnimationFrame(() => {
-            try {
-                const wrapper = document.getElementById('scorePageWrapper');
-                if (!wrapper) return;
-                const wrapperRect = wrapper.getBoundingClientRect();
-                const elRect = el.getBoundingClientRect();
-                // Element's top relative to the wrapper's scrollable area
-                const elTopInWrapper = elRect.top - wrapperRect.top + wrapper.scrollTop;
-                const elBottomInWrapper = elTopInWrapper + elRect.height;
-                const wrapperH = wrapper.clientHeight;
-                // Only scroll if outside the middle 60% band
-                const band0 = wrapper.scrollTop + wrapperH * 0.2;
-                const band1 = wrapper.scrollTop + wrapperH * 0.8;
-                if (elTopInWrapper < band0 || elBottomInWrapper > band1) {
-                    wrapper.scrollTo({
-                        top: elTopInWrapper - wrapperH * 0.35,
-                        behavior: 'smooth'
-                    });
-                }
-            } catch(e) {}
-        });
-    }
+// ============================================================
+// AUTO-SCROLL: only scroll when note leaves the visible band
+// ============================================================
+let _lastScrolledDocY = -9999;
+let _scrollLocked     = false;
+
+function scrollToHighlight() {
+    if (!scoreModeActive || !_currentHighlightEls.length) return;
+    if (_scrollLocked) return;
+
+    const el   = _currentHighlightEls[0];
+    const rect = el.getBoundingClientRect();
+
+    const BRAND_BAR_H  = 56;
+    const bottomDock   = document.getElementById('bottomDock');
+    const BOTTOM_BAR_H = bottomDock ? bottomDock.getBoundingClientRect().height : 200;
+
+    const topBound    = BRAND_BAR_H + 10;
+    const bottomBound = window.innerHeight - BOTTOM_BAR_H - 10;
+
+    // Note is already visible — do nothing
+    if (rect.top >= topBound && rect.bottom <= bottomBound) return;
+
+    const docY     = rect.top + window.scrollY;
+    const visibleH = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
+    const targetTop = BRAND_BAR_H + visibleH * 0.30;
+
+    window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
+
+    _scrollLocked = true;
+    setTimeout(() => { _scrollLocked = false; }, 1000);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
@@ -3703,6 +3876,7 @@ scoreModeToggle.addEventListener('change', async () => {
 
     if (scoreModeActive) {
         bottomDock.classList.add('score-mode');
+        document.body.classList.add('score-mode');
         scoreView.classList.add('active');
         canvas.height = KEYBOARD_HEIGHT;
         drawKeyboard();
@@ -3717,6 +3891,9 @@ scoreModeToggle.addEventListener('change', async () => {
         }
     } else {
         bottomDock.classList.remove('score-mode');
+        document.body.classList.remove('score-mode');
+        _lastScrolledDocY = -9999;
+        _scrollLocked = false;
         scoreView.classList.remove('active');
         scoreNoteDisplay.classList.remove('active');
         clearScoreHighlight();
@@ -3776,7 +3953,17 @@ explanationLocked = false;
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     
-    trainingIndex += currentChordNotes.size;
+    // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
+    {
+        const baseTime = practiceNotes[trainingIndex] ? (practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time) : 0;
+        let skip = 0;
+        for (let i = trainingIndex; i < practiceNotes.length; i++) {
+            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+            if (Math.abs(t - baseTime) < 0.01) skip++;
+            else break;
+        }
+        trainingIndex += Math.max(skip, currentChordNotes.size);
+    }
 updateTrainingProgress();
     document.getElementById('holdInfo').textContent = '';
 
@@ -3810,6 +3997,30 @@ holdEl.innerHTML =
 }
 
 </script>
+<!-- Panel sync helpers -->
+<script>
+function syncHandBtns() {
+    const val = document.getElementById('handSelect').value;
+    document.getElementById('handLeftBtn').classList.toggle('active', val === 'bass');
+    document.getElementById('handBothBtn').classList.toggle('active', val === 'both');
+    document.getElementById('handRightBtn').classList.toggle('active', val === 'treble');
+}
+
+// Mirror speed display into panel
+(function() {
+    const src = document.getElementById('speedDisplay');
+    const dst = document.getElementById('panelSpeedDisplay');
+    if (!src || !dst) return;
+    const obs = new MutationObserver(() => { dst.textContent = src.textContent; });
+    obs.observe(src, { childList: true, characterData: true, subtree: true });
+    dst.textContent = src.textContent;
+})();
+
+// Sync hand select → panel buttons on change
+document.getElementById('handSelect').addEventListener('change', syncHandBtns);
+syncHandBtns();
+</script>
+
 <!-- 1) Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
