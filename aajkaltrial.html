@@ -302,6 +302,8 @@ button:disabled {
 
     max-width: 520px;
     width: fit-content;
+    min-width: 120px;      /* stops width snapping when text changes */
+    min-height: 44px;      /* always holds its row even when invisible */
     margin: 8px auto 0 auto;
     text-align: center;
     font-weight: 600;
@@ -497,7 +499,8 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
     font-size: 18px;
     font-weight: 600;
     text-align: center;
-    min-height: 1.5em; /* prevents canvas from shifting when holdInfo text appears/disappears */
+    min-height: 1.5em;
+    visibility: visible; /* always holds space — text just goes empty */
 }
 #notesDisplay {
     display: none !important;
@@ -621,9 +624,6 @@ canvas {
     width: 100%;
     height: auto;
 }
-#holdInfo:empty {
-    display: none;
-}
 }
 canvas {
     display: block;
@@ -682,6 +682,8 @@ canvas {
     gap: 4px;
     width: 100%;
     margin: 8px 0 6px 0;
+    min-height: 84px;      /* reserves space so feedback + holdInfo never push content */
+    justify-content: center;
 }
 .falling-note {
     border-radius: 14px;
