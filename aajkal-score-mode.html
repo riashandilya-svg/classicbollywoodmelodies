@@ -4599,11 +4599,12 @@ function _buildSvgMidiMap() {
             const capKey = `${sheetMeasure}|${clef}`;
             const cap    = bucketCapacity[capKey] ?? 0;
             const used   = assignedCount[capKey] ?? 0;
-            // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
-            // but hasn't yet received second-pass notes (used < 2*cap).
-            // On the second repeat pass used >= 2*cap already, so we leave it alone
-            // and let the rawRank % bucketSize wrapping handle alignment.
-            if (cap > 0 && used >= cap && used < 2 * cap) {
+            // Overflow only on the TRUE first pass: bucket is at EXACTLY capacity
+            // (used === cap). This fires once per grace-note-before-barline event.
+            // On the second repeat pass, used is already > cap (cap + graceCount),
+            // so the strict equality guard never fires — leaving second-pass grace
+            // notes to be handled by the rawRank % bucketSize wrapping alone.
+            if (cap > 0 && used === cap) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
