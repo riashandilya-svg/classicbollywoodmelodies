@@ -996,12 +996,20 @@ body.dark-mode #viewToggleLabel {
    ============================ */
 #controlPanel {
     display: flex;
-    gap: 10px;                      /* ← gap between the 3 cards (was 16px) */
-    width: min(1100px, 98%);        /* ← max width of the whole panel (was 900px) */
-    margin: 10px auto 0 auto;       /* ← space above panel (was 18px) */
+    gap: 10px;                      /* ← gap between cards */
+    width: min(1100px, 98%);        /* ← max width in normal mode */
+    margin: 10px auto 0 auto;
     flex-wrap: wrap;
     animation: fadeUp 0.6s ease both;
     animation-delay: 0.15s;
+}
+
+/* In score mode: stretch panel wider and don't wrap cards onto new rows */
+body.score-mode #controlPanel {
+    width: min(1600px, 99%);        /* ← SCORE MODE panel width — raise to stretch further */
+    flex-wrap: nowrap;              /* ← keeps all cards on one row */
+    gap: 7px;                       /* ← gap between cards in score mode */
+    margin: 6px auto 0 auto;        /* ← space above panel in score mode */
 }
 
 .ctrl-card {
@@ -1012,9 +1020,16 @@ body.dark-mode #viewToggleLabel {
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(235,50,70,0.15);
     border-radius: 20px;
-    padding: 10px 14px;             /* ← card inner padding — MAIN HEIGHT DIAL (was 20px) */
+    padding: 10px 14px;             /* ← card inner padding (normal mode) */
     box-shadow: 0 12px 40px rgba(0,0,0,0.07), 0 2px 8px rgba(255,92,138,0.06);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* In score mode: reduce card padding to save vertical height */
+body.score-mode .ctrl-card {
+    padding: 6px 10px;              /* ← SCORE MODE vertical height dial — reduce top/bottom to shrink */
+    border-radius: 14px;
+    min-width: 0;                   /* allows cards to shrink below 200px on narrow screens */
 }
 
 .ctrl-card:hover {
@@ -1031,10 +1046,21 @@ body.dark-mode #viewToggleLabel {
     margin-bottom: 8px;             /* ← gap under the PRACTICE/PLAYBACK/UTILITY label (was 14px) */
 }
 
+/* Score mode: tighter label gap */
+body.score-mode .ctrl-card-title {
+    margin-bottom: 5px;             /* ← SCORE MODE label gap — reduce to save height */
+    font-size: 11px;
+}
+
 .ctrl-row {
     display: flex;
     gap: 6px;
     margin-bottom: 6px;             /* ← vertical gap between button rows (was 10px) */
+}
+
+/* Score mode: tighter row gap */
+body.score-mode .ctrl-row {
+    margin-bottom: 4px;             /* ← SCORE MODE row gap */
 }
 
 .ctrl-btn {
@@ -1085,6 +1111,31 @@ body.dark-mode #viewToggleLabel {
 .ctrl-btn-primary:hover:not(:disabled) {
     transform: translateY(-2px) !important;
     box-shadow: 0 10px 28px rgba(255,92,138,0.42) !important;
+}
+
+/* Score mode: smaller button padding to reduce height */
+body.score-mode .ctrl-btn {
+    padding: 5px 5px !important;    /* ← SCORE MODE button padding — reduce to shrink */
+    font-size: 12px !important;
+}
+
+body.score-mode .ctrl-btn-primary {
+    padding: 6px 6px !important;    /* ← SCORE MODE start-practice button padding */
+    font-size: 13px !important;
+    margin-top: 2px;
+}
+
+body.score-mode .ctrl-stat-item {
+    padding: 4px 3px;               /* ← SCORE MODE stat item padding */
+}
+
+body.score-mode .ctrl-stat-val {
+    font-size: 15px;                /* ← SCORE MODE stat value font size */
+}
+
+body.score-mode .ctrl-speed-row {
+    padding: 4px 10px;              /* ← SCORE MODE speed row padding */
+    margin-top: 2px;
 }
 
 .ctrl-speed-row {
