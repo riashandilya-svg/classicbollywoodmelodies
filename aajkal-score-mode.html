@@ -4569,28 +4569,26 @@ function _buildSvgMidiMap() {
 
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
-            // noteheads have been claimed for this pass), this MIDI note's timestamp
-            // must have landed fractionally before the barline while the SVG places
-            // it in the next measure. Nudge sheetMeasure forward so ranks stay aligned.
-            //
-            // This must fire on EVERY repeat pass, not just the first.
-            // We detect "bucket full for this pass" by checking whether (used % cap)
-            // has wrapped back to 0 — meaning we've filled the bucket exactly N times
-            // and are now at the start of a new pass that still hasn't consumed this slot.
+            // noteheads have been claimed), this MIDI note's timestamp must have
+            // landed fractionally before the barline while the SVG places it in
+            // the next measure. Nudge sheetMeasure forward so ranks stay aligned.
+            // Only apply during the first pass (assignedCount < 2× capacity would
+            // fire on the second repeat pass too — cap at exactly bucketCapacity).
             const capKey = `${sheetMeasure}|${clef}`;
             const cap    = bucketCapacity[capKey] ?? 0;
             const used   = assignedCount[capKey] ?? 0;
-            // Fire whenever we're exactly at a pass boundary (used is a nonzero multiple
-            // of cap). "used > 0 && used % cap === 0" means the previous pass just
-            // finished and the next pass hasn't started yet — the grace note overflows.
-            if (cap > 0 && used > 0 && used % cap === 0) {
+            // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
+            // but hasn't yet received second-pass notes (used < 2*cap).
+            // On the second repeat pass used >= 2*cap already, so we leave it alone
+            // and let the rawRank % bucketSize wrapping handle alignment.
+            if (cap > 0 && used >= cap && used < 2 * cap) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
                     sheetMeasure = sheetMeasure + 1;
                 }
             }
-            // Always increment assignedCount so pass-boundary detection works correctly.
+            // Always increment assignedCount so second-pass detection works correctly.
             const newCapKey = `${sheetMeasure}|${clef}`;
             assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
 
