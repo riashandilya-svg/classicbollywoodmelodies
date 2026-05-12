@@ -3959,8 +3959,39 @@ practiceNotes = allMidiNotes
         if (p === null) return null;
 
         let overflowCorrected = false;
-        if (!allowedPhysical.has(p)) {
-            // The raw MIDI time landed in a measure just outside the selection.
+        const isGrace = note.duration < 0.1;
+
+        if (isGrace) {
+            // Grace notes always belong to the NEXT physical measure — their MIDI
+            // timestamp lands fractionally before the barline. Redirect p regardless
+            // of whether the raw measure is in allowedPhysical or not.
+            const nextPhys = p + 1;
+            if (allowedPhysical.has(nextPhys)) {
+                console.log(`🎵 Grace-note redirect: time=${note.time.toFixed(4)} physMeasure ${p}→${nextPhys}`);
+                p = nextPhys;
+                overflowCorrected = true;
+            } else if (!allowedPhysical.has(p)) {
+                // Neither the raw nor the next measure is allowed — check rank map rescue.
+                const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+                const entry = _midiRankMap.get(mk);
+                if (entry && allowedLogical.has(entry.sheet_measure)) {
+                    const correctedPhys = physicalSeq.find(
+                        q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
+                    );
+                    if (correctedPhys !== undefined) {
+                        console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
+                        p = correctedPhys;
+                        overflowCorrected = true;
+                    } else {
+                        return null;
+                    }
+                } else {
+                    return null;
+                }
+            }
+            // else: raw measure is allowed but next isn't — keep p as-is (edge case).
+        } else if (!allowedPhysical.has(p)) {
+            // Non-grace note outside the allowed range.
             // Check whether the rank-map overflow correction moved it into an
             // allowed measure (classic grace-note-before-barline case).
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
@@ -4590,27 +4621,46 @@ function _buildSvgMidiMap() {
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
             // Measure-boundary overflow correction:
-            // If the current measure's SVG bucket is already at capacity (all its
-            // noteheads have been claimed), this MIDI note's timestamp must have
-            // landed fractionally before the barline while the SVG places it in
-            // the next measure. Nudge sheetMeasure forward so ranks stay aligned.
-            // Only apply during the first pass (assignedCount < 2× capacity would
-            // fire on the second repeat pass too — cap at exactly bucketCapacity).
-            const capKey = `${sheetMeasure}|${clef}`;
-            const cap    = bucketCapacity[capKey] ?? 0;
-            const used   = assignedCount[capKey] ?? 0;
-            // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
-            // but hasn't yet received second-pass notes (used < 2*cap).
-            // On the second repeat pass used >= 2*cap already, so we leave it alone
-            // and let the rawRank % bucketSize wrapping handle alignment.
-            if (cap > 0 && used >= cap && used < 2 * cap) {
-                const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
-                if (nextCap > 0) {
-                    console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
-                    sheetMeasure = sheetMeasure + 1;
+            // Grace notes have MIDI timestamps that land fractionally before the
+            // barline of the measure they visually belong to. getMeasureFromTime
+            // therefore assigns them to the PREVIOUS physical measure.
+            //
+            // The fix must operate in PHYSICAL space (physMeasure + 1) and then
+            // re-derive sheetMeasure. Using logical sheetMeasure + 1 breaks on the
+            // second repeat pass: e.g. physical 36 → logical 36, and logical 36+1=37
+            // is wrong — it should be logical 29 (= PHYSICAL_TO_LOGICAL[37]).
+            //
+            // Grace notes do NOT occupy a slot in the physical measure their timestamp
+            // lands in — they belong entirely to the NEXT physical measure. So we
+            // ALWAYS shift them forward without touching assignedCount for physMeasure.
+            //
+            // Non-grace notes: overflow only when the current-pass slot count is
+            // already at bucket capacity (edge-case safety net).
+            let resolvedPhys = physMeasure;
+            const isGrace    = note.duration < 0.1;
+
+            if (isGrace) {
+                // Always nudge grace note to the next physical measure.
+                resolvedPhys  = physMeasure + 1;
+                sheetMeasure  = PHYSICAL_TO_LOGICAL[resolvedPhys] ?? resolvedPhys;
+                console.log(`📐 Grace overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} physMeasure ${physMeasure}→${resolvedPhys} sheetMeasure→${sheetMeasure}`);
+            } else {
+                // For non-grace notes: overflow if current-pass slots are exhausted.
+                const capKey      = `${sheetMeasure}|${clef}`;
+                const cap         = bucketCapacity[capKey] ?? 0;
+                const used        = assignedCount[capKey] ?? 0;
+                const usedThisPass = (cap > 0) ? (used % cap) : used;
+                if (cap > 0 && usedThisPass >= cap) {
+                    resolvedPhys = physMeasure + 1;
+                    const nextSheet = PHYSICAL_TO_LOGICAL[resolvedPhys] ?? resolvedPhys;
+                    const nextCap   = bucketCapacity[`${nextSheet}|${clef}`] ?? 0;
+                    if (nextCap > 0) {
+                        console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${nextSheet}`);
+                        sheetMeasure = nextSheet;
+                    }
                 }
             }
-            // Always increment assignedCount so second-pass detection works correctly.
+            // Increment assignedCount only for the final resolved sheetMeasure.
             const newCapKey = `${sheetMeasure}|${clef}`;
             assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
 
