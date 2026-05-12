@@ -4609,9 +4609,16 @@ function _buildSvgMidiMap() {
 
             // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
             // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
-            // Bump them forward so they land in the correct SVG bucket.
-            if (note.duration < 0.1 && (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34)) {
-                sheetMeasure += 1;
+            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
+            // Bump them all forward to the correct SVG bucket.
+            if (note.duration < 0.1) {
+                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
+                    sheetMeasure += 1;
+                } else if (sheetMeasure === 36) {
+                    // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
+                    // The next SVG bucket is logical 29 (physical 37), not logical 37.
+                    sheetMeasure = 29;
+                }
             }
 
             // Measure-boundary overflow correction:
@@ -4662,8 +4669,7 @@ function _buildSvgMidiMap() {
             // Skip if grace pre-correction already bumped this note forward.
             if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
-                console.log(`🔬 overflow-check [${clef}] m=${sheetMeasure} cap=${cap} used=${used} nextCap=${nextCap} grace=${gracePreCorrected} midi=${note.midi} dur=${note.duration.toFixed(3)}`);
-                if (nextCap > 0) {
+if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
                     sheetMeasure = sheetMeasure + 1;
                 }
@@ -4700,32 +4706,6 @@ function _buildSvgMidiMap() {
     assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
-    // Diagnostic: print actual barline X positions from SVG for page 1 system 5 (measure 29)
-    const dbgContainer = document.getElementById('scorePage1');
-    if (dbgContainer) {
-        const dbgSvg = dbgContainer.querySelector('svg');
-        if (dbgSvg) {
-            const sys = SVG_PAGE_SYSTEMS[0][4]; // system starting at measure 29
-            // Find all vertical line elements (barlines are thin vertical paths or lines)
-            const allLines = [...dbgSvg.querySelectorAll('path')].filter(p => {
-                const d = p.getAttribute('d') || '';
-                // Vertical thin lines: M x,y V y2 or M x,y L x,y2 with same x
-                const m = d.match(/^M\s*([-\d.]+)[,\s]([-\d.]+)\s*[VL]\s*([-\d.]+)/);
-                if (!m) return false;
-                const x = parseFloat(m[1]), y1 = parseFloat(m[2]), y2 = parseFloat(m[3]);
-                // Must be vertical (L case: x unchanged) and span treble/bass region
-                const inRegion = (y1 >= sys.treble_top - 100 && y2 >= sys.treble_top - 100 &&
-                                  y1 <= sys.bass_bot + 100);
-                return inRegion && Math.abs(x) > 100;
-            });
-            const xs = [...new Set(allLines.map(p => {
-                const d = p.getAttribute('d') || '';
-                const m = d.match(/^M\s*([-\d.]+)/);
-                return m ? Math.round(parseFloat(m[1])) : null;
-            }).filter(Boolean))].sort((a,b)=>a-b);
-            console.log('🔍 SVG barline Xs for system 5 (m29):', JSON.stringify(xs));
-        }
-    }
 }
 
 
