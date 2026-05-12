@@ -4607,20 +4607,6 @@ function _buildSvgMidiMap() {
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
-            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
-            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
-            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
-            // Bump them all forward to the correct SVG bucket.
-            if (note.duration < 0.1) {
-                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
-                    sheetMeasure += 1;
-                } else if (sheetMeasure === 36) {
-                    // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
-                    // The next SVG bucket is logical 29 (physical 37), not logical 37.
-                    sheetMeasure = 29;
-                }
-            }
-
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
@@ -4653,6 +4639,21 @@ function _buildSvgMidiMap() {
                 ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
                 : (used < 2 * cap);            // normal bucket: within first pass
             let gracePreCorrected = false;
+
+            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
+            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
+            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
+            // Bump them all forward to the correct SVG bucket.
+            if (note.duration < 0.1) {
+                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
+                    sheetMeasure += 1;
+                } else if (sheetMeasure === 36) {
+                    // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
+                    // Must go to logical 29, not 37. Block overflow from overriding this.
+                    sheetMeasure = 29;
+                    gracePreCorrected = true;
+                }
+            }
             if (isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
                 const nextCap = bucketCapacity[nextKey] ?? 0;
                 if (nextCap > 0) {
@@ -4667,7 +4668,7 @@ function _buildSvgMidiMap() {
             // On the second repeat pass used >= 2*cap already, so we leave it alone
             // and let the rawRank % bucketSize wrapping handle alignment.
             // Skip if grace pre-correction already bumped this note forward.
-            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
+            if (!gracePreCorrected && (cap === 0 ? (isMidiGrace && used < 2) : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
