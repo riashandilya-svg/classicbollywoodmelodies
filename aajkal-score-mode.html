@@ -6,7 +6,7 @@
 <title>Aaj Kal Tere Mere Pyaar Ke Charche</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 
 <style>
@@ -94,12 +94,49 @@
   --red2: rgba(255, 120, 130, 0.16);
   --softBlack: rgba(0, 0, 0, 0.10);
 
---accent-primary: #E57373;
+  --accent-primary: #E57373;
   --accent-success: #22C55E;
   --accent-error: #EF4444;
 
   --text-main: #1A1A1F;
   --border-soft: rgba(235, 50, 70, 0.18);
+
+  /* Dark mode palette */
+  --dm-bg: #0f1117;
+  --dm-panel: #181c25;
+  --dm-accent: #ff6b81;
+  --dm-text: #f0f0f5;
+  --dm-border: rgba(255,107,129,0.25);
+}
+
+/* ====== AMBIENT GLOW LIGHTING ====== */
+body::before {
+  content: '';
+  position: fixed;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, #ffb3c1 0%, transparent 70%);
+  filter: blur(100px);
+  opacity: 0.32;
+  top: -250px;
+  left: -150px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+body::after {
+  content: '';
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, #ffd6e0 0%, transparent 70%);
+  filter: blur(90px);
+  opacity: 0.22;
+  bottom: -100px;
+  right: -100px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
 }
 
 body {
@@ -112,45 +149,127 @@ body {
     min-height: 100vh;
 
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-background:
-  radial-gradient(900px 520px at 20% 0%, var(--red1), transparent 60%),
-  radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
-  radial-gradient(780px 480px at 50% 80%, var(--red2), transparent 60%),
-  radial-gradient(520px 320px at 35% 55%, rgba(235, 50, 70, 0.10), transparent 60%),
-  var(--bg-main);
+    background:
+      radial-gradient(900px 520px at 20% 0%, var(--red1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--red2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(235, 50, 70, 0.10), transparent 60%),
+      var(--bg-main);
 
     color: var(--text-main);
+    transition: background 0.4s, color 0.4s;
+}
+
+/* ====== DARK MODE ====== */
+body.dark-mode {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+body.dark-mode::before { opacity: 0.18; background: radial-gradient(circle, #ff6b81 0%, transparent 70%); }
+body.dark-mode::after  { opacity: 0.10; background: radial-gradient(circle, #ff8fa3 0%, transparent 70%); }
+
+body.dark-mode #brandBar {
+  background: rgba(24,28,37,0.96) !important;
+  border-bottom-color: var(--dm-border) !important;
+}
+body.dark-mode .ctrl-card {
+  background: rgba(24,28,37,0.92) !important;
+  border-color: var(--dm-border) !important;
+}
+body.dark-mode .ctrl-btn {
+  background: rgba(30,34,48,0.9) !important;
+  color: #ccc !important;
+  border-color: rgba(255,107,129,0.15) !important;
+}
+body.dark-mode .ctrl-btn:hover:not(:disabled) {
+  background: rgba(255,107,129,0.12) !important;
+  color: var(--dm-accent) !important;
+}
+body.dark-mode #bottomDock.score-mode {
+  background: rgba(15,17,23,0.97) !important;
+}
+body.dark-mode h1 { color: #f0f0f5; }
+body.dark-mode .ctrl-speed-row {
+  background: rgba(30,34,48,0.9) !important;
+  border-color: rgba(255,107,129,0.15) !important;
+}
+body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
+
+/* Dark mode toggle button */
+#darkModeToggle {
+  position: fixed;
+  top: 68px;
+  right: 14px;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(235,50,70,0.18);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 0;
+}
+#darkModeToggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+body.dark-mode #darkModeToggle {
+  background: rgba(24,28,37,0.92);
+  border-color: var(--dm-border);
 }
 h1 {
-    font-size: clamp(32px, 6vw, 60px);
+    font-size: clamp(1.4rem, 3vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
     color: var(--text-main);
     text-align: center;
-
     margin-top: 12px;
     margin-bottom: 13px;
+    line-height: 1.1;
+    animation: fadeUp 0.7s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 button {
     padding: clamp(8px, 2vw, 15px) clamp(14px, 4vw, 30px);
     font-size: clamp(14px, 2.2vw, 18px);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
 
-    background-color: var(--accent-primary);
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
     color: white;
 
     border: none;
-    border-radius: 10px;
+    border-radius: 999px;
     cursor: pointer;
 
-    transition: background-color 0.2s, transform 0.15s;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(255,92,138,0.28);
 }
 
 button:hover:not(:disabled) {
-    background-color: #EF5350;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(255,92,138,0.36);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0px);
 }
 
 button:disabled {
-    background-color: #cccccc;
+    background: #cccccc;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
     button:disabled { background-color: #cccccc; cursor: not-allowed; }
@@ -171,36 +290,162 @@ button:disabled {
 }
     #feedback {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.94) translateY(6px);
     transition:
-        opacity 0.25s ease,
-        transform 0.25s ease,
+        opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
         background-color 0.25s ease;
 
     border-radius: 14px;
-    padding: 12px 18px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    padding: 8px 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 
     max-width: 520px;
     width: fit-content;
-    margin: 6px auto 0 auto;
+    min-width: 120px;
+    min-height: 36px;
+    margin: 0 auto;
     text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 #feedback.show {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
 }
 
 #feedback.correct {
-    background-color: var(--accent-success);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
+    box-shadow: 0 8px 24px rgba(34,197,94,0.35);
 }
 
 #feedback.wrong {
-    background-color: var(--accent-error);
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
+    box-shadow: 0 8px 24px rgba(239,68,68,0.35);
 }
-/* 🎵 Note feedback circles */
+/* ====== GAME STAGE ====== */
+#gameStage {
+    position: relative;
+    width: min(100%, 1420px);
+    border-radius: 24px;
+    background: linear-gradient(
+      180deg,
+      rgba(255,255,255,0.75) 0%,
+      rgba(255,245,247,0.88) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.07),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    border: 1px solid rgba(235,50,70,0.12);
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.05s;
+}
+
+body.dark-mode #gameStage {
+    background: linear-gradient(
+      180deg,
+      rgba(24,28,37,0.88) 0%,
+      rgba(15,17,23,0.95) 100%
+    );
+    border-color: rgba(255,107,129,0.18);
+}
+
+/* Glowing hit line at the keyboard top */
+#hitLine {
+    position: absolute;
+    bottom: 130px; /* KEYBOARD_HEIGHT */
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 2%, #ff6b6b 20%, #ff5c8a 50%, #ff6b6b 80%, transparent 98%);
+    box-shadow:
+      0 0 12px #ff6b6b,
+      0 0 28px rgba(255,107,107,0.5);
+    z-index: 2;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Stats bar above stage */
+#statsBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: min(900px, 96%);
+    margin: 10px auto 6px auto;
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(235,50,70,0.13);
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+    font-size: 13px;
+    font-weight: 600;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.1s;
+}
+
+#statsBar .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: #888;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+#statsBar .stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+body.dark-mode #statsBar {
+    background: rgba(24,28,37,0.85);
+    border-color: rgba(255,107,129,0.18);
+}
+body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
+
+/* Measure timeline */
+#measureTimeline {
+    width: min(900px, 96%);
+    margin: 6px auto 0 auto;
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 8px;
+    opacity: 0.8;
+}
+.measure-pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    transition: background 0.3s, transform 0.2s;
+}
+.measure-pip.done {
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
+}
+.measure-pip.active {
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
+    transform: scale(1.5);
+    box-shadow: 0 0 8px rgba(255,107,107,0.5);
+}
 .note-feedback {
     display: flex;
     align-items: center;
@@ -254,9 +499,7 @@ button:disabled {
 }
 
 #holdInfo {
-    font-size: 18px;
-    font-weight: 600;
-    text-align: center;
+    display: none !important;
 }
 #notesDisplay {
     display: none !important;
@@ -380,9 +623,6 @@ canvas {
     width: 100%;
     height: auto;
 }
-#holdInfo:empty {
-    display: none;
-}
 }
 canvas {
     display: block;
@@ -394,10 +634,10 @@ canvas {
 #trainingProgress {
     position: relative;
     width: min(600px, 90%);
-    height: 16px;
-    background: #E5E7EB;
+    height: 8px;
+    background: rgba(229,115,115,0.12);
     border-radius: 999px;
-    margin: 12px auto 0 auto;
+    margin: 10px auto 0 auto;
     overflow: hidden;
 }
 
@@ -406,32 +646,97 @@ canvas {
     width: 0%;
     background: linear-gradient(
         90deg,
-        var(--accent-primary),
+        #ff7b7b,
+        #ff5c8a,
         var(--accent-success)
     );
-    transition: width 0.3s ease;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 999px;
 }
 
 #trainingProgressText {
     position: absolute;
-    top: -24px;
+    top: -22px;
     right: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 700;
+    color: #E57373;
+    letter-spacing: 0.03em;
 }
 #bottomDock {
-    margin-top: auto;
-    padding-top: 100px;
+    margin-top: 0;
+    padding-top: 0;
     padding-bottom: 80px;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
-.falling-note {
+
+/* Feedback + holdInfo sit right below the stats box */
+#feedbackArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    margin: 4px 0 4px 0;
+    min-height: 44px;
+    justify-content: center;
+}
+
+/* ====== PANEL FEEDBACK SECTION ====== */
+#panelFeedbackBubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
     border-radius: 10px;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.97);
+    transition:
+        opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 36px;
+}
+
+#panelFeedbackBubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#panelFeedbackBubble.correct {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 6px 20px rgba(34,197,94,0.3);
+}
+
+#panelFeedbackBubble.wrong {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.3);
+}
+
+#panelFeedbackBubble.almost {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    box-shadow: 0 6px 20px rgba(249,115,22,0.3);
+}
+
+body.dark-mode #panelFeedbackBubble.correct { box-shadow: 0 8px 28px rgba(34,197,94,0.4); }
+body.dark-mode #panelFeedbackBubble.wrong   { box-shadow: 0 8px 28px rgba(239,68,68,0.4); }
+.falling-note {
+    border-radius: 14px;
+    filter: drop-shadow(0 6px 14px rgba(229,115,115,0.35));
 }
 /* 🔒 Paywall card */
 #paywall{
@@ -472,8 +777,7 @@ canvas {
 /* ============================
    SCORE MODE — HIDE TITLE & PDF BANNER
    ============================ */
-body.score-mode h1,
-body.score-mode #pdfBanner {
+body.score-mode h1 {
     display: none !important;
 }
 
@@ -511,9 +815,14 @@ body.score-mode #pdfBanner {
     max-width: 100%;
 }
 
-#bottomDock.score-mode #holdInfo,
-#bottomDock.score-mode #feedback,
-#bottomDock.score-mode #sideNoteFeedback {
+
+body.score-mode #feedbackArea {
+    display: none !important;
+}
+
+/* Floating keyboard toast removed — feedback lives in panelFeedbackCard instead */
+
+body.score-mode #hitLine {
     display: none !important;
 }
 
@@ -563,30 +872,31 @@ body.score-mode #pdfBanner {
 }
 
 /* ============================
-   SCORE VIEW TOGGLE
+   SCORE VIEW TOGGLE  (now lives inside #brandBar)
    ============================ */
 #viewToggleBar {
-    position: fixed;
-    top: 64px;       /* just below the 56px brand bar */
-    left: 16px;
-    z-index: 9999;
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
 
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 7px;
+}
 
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(235, 50, 70, 0.18);
-    border-radius: 10px;
-    padding: 7px 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+#viewToggleBar:hover {
+    /* no-op — hover effect removed now it's inline */
 }
 
 #viewToggleLabel {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-main);
+}
+
+body.dark-mode #viewToggleLabel {
+    color: var(--dm-text);
 }
 
 .toggle-switch {
@@ -659,6 +969,13 @@ body.score-mode #pdfBanner {
     transform-origin: left top;
 }
 
+/* In dark mode + score mode: white-warm paper behind the SVG so notation stays readable */
+body.dark-mode.score-mode #scoreObj {
+    background: #fff8f8;
+    border-radius: 10px;
+    box-shadow: 0 0 0 12px #fff8f8, 0 4px 32px rgba(229,115,115,0.18);
+}
+
 #scoreObj svg {
     width: 100%;
     height: auto;
@@ -706,33 +1023,10 @@ body.score-mode #pdfBanner {
     font-weight: 600;
 }
 
-/* Current note badge — circle above Free Mode button */
-#scoreNoteDisplay {
-    display: none;
-    position: fixed;
-    right: 20px;
-    top: max(70px, calc(50% - 334px));
-
-    width: 64px;
-    height: 64px;
-    padding: 0;
-
-    background: var(--accent-primary);
-    border: none;
-    border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(229,115,115,0.45);
-
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 0;
-
-    z-index: 1002;
-}
-
+/* Current note badge — hidden now that pressed/correct circles live in the stats card */
+#scoreNoteDisplay,
 #scoreNoteDisplay.active {
-    display: flex;
+    display: none !important;
 }
 
 /* Hide the "Play:" label — not needed in compact circle */
@@ -756,10 +1050,399 @@ body.score-mode #pdfBanner {
     line-height: 1;
 }
 
+/* Normal mode: simple 3-card flex row */
+#controlPanel {
+    display: flex;
+    gap: 10px;
+    width: min(1100px, 98%);
+    margin: 4px auto 0 auto;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s ease both;
+    animation-delay: 0.15s;
+}
+
+/* Grid placement by ID — only used in score mode above */
+#panelPracticeCard  { flex: 1; }
+#panelPlaybackCard  { flex: 1; }
+#panelUtilityCard   { flex: 1; }
+
+/* STATS + NOTES hidden in normal mode */
+#panelStatsCard,
+#panelNoteCirclesCard {
+    display: none;
+}
+
+/* Feedback card hidden in normal mode */
+#panelFeedbackCard {
+    display: none !important;
+}
+
+/* Normal mode: hide feedback card entirely */
+#panelFeedbackCard {
+    display: none !important;
+}
+
+/* Score mode: CSS grid so feedback fills the gap under Playback + Utility */
+body.score-mode #controlPanel {
+    display: grid;
+grid-template-columns: auto 0.4fr 0.4fr auto auto;
+    grid-template-rows: auto auto;
+    width: min(1600px, 99%);
+    gap: 7px;
+    margin: 6px auto 0 auto;
+  justify-content: center;
+}
+
+/* Explicit grid placement in score mode */
+body.score-mode #panelPracticeCard  { grid-column: 1; grid-row: 1 / 3; }
+body.score-mode #panelPlaybackCard  { grid-column: 2; grid-row: 1; }
+body.score-mode #panelUtilityCard   { grid-column: 3; grid-row: 1; }
+body.score-mode #panelStatsCard     { grid-column: 4; grid-row: 1 / 3; display: block; }
+body.score-mode #panelNoteCirclesCard { grid-column: 5; grid-row: 1 / 3; display: block; flex: unset; min-width: unset; width: 90px; }
+body.score-mode #panelFeedbackCard  {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    min-height: 40px;
+}
+body.score-mode #panelFeedbackCard:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.ctrl-card {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(235,50,70,0.15);
+    border-radius: 20px;
+    padding: 10px 14px;             /* ← card inner padding (normal mode) */
+    box-shadow: 0 12px 40px rgba(0,0,0,0.07), 0 2px 8px rgba(255,92,138,0.06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* In score mode: reduce card padding to save vertical height */
+body.score-mode .ctrl-card {
+    padding: 6px 10px;              /* ← SCORE MODE vertical height dial — reduce top/bottom to shrink */
+    border-radius: 14px;
+    min-width: 0;                   /* allows cards to shrink below 200px on narrow screens */
+}
+
+.ctrl-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.1), 0 4px 12px rgba(255,92,138,0.1);
+}
+
+.ctrl-card-title {
+    text-align: center;
+    color: #E57373;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    margin-bottom: 8px;             /* ← gap under the PRACTICE/PLAYBACK/UTILITY label (was 14px) */
+}
+
+/* Score mode: tighter label gap */
+body.score-mode .ctrl-card-title {
+    margin-bottom: 5px;             /* ← SCORE MODE label gap — reduce to save height */
+    font-size: 11px;
+}
+
+.ctrl-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;             /* ← vertical gap between button rows (was 10px) */
+}
+
+/* Score mode: tighter row gap */
+body.score-mode .ctrl-row {
+    margin-bottom: 4px;             /* ← SCORE MODE row gap */
+}
+
+.ctrl-btn {
+    flex: 1;
+    padding: 7px 6px !important;    /* ← button top/bottom padding (was 12px) */
+    font-size: 13px !important;
+    border-radius: 12px !important;
+    background: rgba(250,250,250,0.8) !important;
+    color: #555 !important;
+    border: 1px solid rgba(235,50,70,0.1) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+}
+
+.ctrl-btn:hover:not(:disabled) {
+    background: rgba(255,240,242,0.95) !important;
+    color: #E57373 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(229,115,115,0.18) !important;
+}
+
+.ctrl-btn.active {
+    background: linear-gradient(135deg, rgba(255,240,242,0.95), rgba(255,228,231,0.95)) !important;
+    color: #E57373 !important;
+    border-color: rgba(229,115,115,0.3) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(229,115,115,0.2) !important;
+}
+
+.ctrl-btn-primary {
+    width: 100%;
+    padding: 9px 6px !important;    /* ← Start Practice button top/bottom padding (was 14px) */
+    font-size: 14px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #ff7b7b, #ff5c8a) !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    transition: all 0.25s ease !important;
+    margin-top: 4px;
+    box-shadow: 0 6px 20px rgba(255,92,138,0.32) !important;
+}
+
+.ctrl-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px rgba(255,92,138,0.42) !important;
+}
+
+/* Score mode: smaller button padding to reduce height */
+body.score-mode .ctrl-btn {
+    padding: 5px 5px !important;    /* ← SCORE MODE button padding — reduce to shrink */
+    font-size: 12px !important;
+}
+
+body.score-mode .ctrl-btn-primary {
+    padding: 6px 6px !important;    /* ← SCORE MODE start-practice button padding */
+    font-size: 13px !important;
+    margin-top: 2px;
+}
+
+body.score-mode .ctrl-stat-item {
+    padding: 4px 3px;               /* ← SCORE MODE stat item padding */
+}
+
+body.score-mode .ctrl-stat-val {
+    font-size: 15px;                /* ← SCORE MODE stat value font size */
+}
+
+body.score-mode .ctrl-speed-row {
+    padding: 4px 10px;              /* ← SCORE MODE speed row padding */
+    margin-top: 2px;
+}
+
+.ctrl-speed-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid rgba(235,50,70,0.1);
+    border-radius: 12px;
+    padding: 6px 12px;              /* ← Speed row top/bottom padding (was 10px 14px) */
+    margin-top: 4px;
+}
+
+.ctrl-speed-row span:first-child {
+    font-size: 14px;
+    color: #666;
+}
+
+.ctrl-speed-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.ctrl-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ctrl-grid-full {
+    grid-column: 1 / -1;
+}
+
+.ctrl-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.ctrl-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid rgba(235,50,70,0.1);
+    border-radius: 10px;
+    padding: 6px 4px;
+    gap: 2px;
+}
+
+/* BPM spans full width at the bottom */
+.ctrl-stat-item:last-child {
+    grid-column: 1 / -1;
+}
+
+.ctrl-stat-val {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.ctrl-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+body.dark-mode .ctrl-stat-item {
+    background: rgba(30,34,48,0.9);
+    border-color: rgba(255,107,129,0.15);
+}
+
+body.dark-mode .ctrl-stat-val {
+    color: var(--dm-text);
+}
+
+/* Stats card: score mode only — handled in score-mode block above */
+
+/* Note circles card — score mode only, narrow standalone column — handled above */
+
+.panel-note-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid rgba(235,50,70,0.1);
+    border-radius: 10px;
+    padding: 8px 6px;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+body.dark-mode .panel-note-item {
+    background: rgba(30,34,48,0.9);
+    border-color: rgba(255,107,129,0.15);
+}
+
+.panel-note-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #111;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background 0.2s, color 0.2s;
+}
+
+.panel-note-circle.correct {
+    background: #E57373;
+    color: white;
+}
+
+.panel-note-circle.wrong {
+    background: #EF4444;
+    color: white;
+}
+
+.panel-note-circle-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+/* Hide top progress bar + measure dots in score mode */
+body.score-mode #trainingProgress,
+body.score-mode #measureTimeline {
+    display: none !important;
+}
+
+/* In score mode, hide the floating side note feedback — circles live in the stats card instead */
+body.score-mode #sideNoteFeedback {
+    display: none !important;
+}
+
+/* In-card progress bar (score mode stats card) */
+#panelProgressWrap {
+    display: none;
+}
+
+body.score-mode #panelProgressWrap {
+    display: block;
+    margin-top: 8px;
+}
+
+#panelProgressBar {
+    position: relative;
+    width: 100%;
+    height: 7px;
+    background: rgba(229,115,115,0.14);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+#panelProgressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff7b7b, #ff5c8a, var(--accent-success));
+    border-radius: 999px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#panelProgressText {
+    font-size: 11px;
+    font-weight: 700;
+    color: #E57373;
+    text-align: right;
+    margin-top: 3px;
+    letter-spacing: 0.03em;
+}
+
 </style>
 </head>
 <body>
 <div id="brandBar">
+  <!-- Score / Falling-notes toggle — left side -->
+  <div id="viewToggleBar">
+      <span id="viewToggleLabel">Notes</span>
+      <label class="toggle-switch" title="Switch between falling notes and sheet music score">
+          <input type="checkbox" id="scoreModeToggle">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+      </label>
+      <span style="font-size:13px;font-weight:600;color:var(--text-main);">Score</span>
+  </div>
+
   <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html" id="brandLink">
     <span>Ria Om Shandilya</span>
   </a>
@@ -770,30 +1453,11 @@ body.score-mode #pdfBanner {
 </div>
 
 
+<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); this.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙'">🌙</button>
+
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
-<!-- PDF Access Banner -->
-<a id="pdfBanner" href="/dashboard.html" style="
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 auto 6px auto;
-  padding: 9px 18px;
-  background: rgba(255,255,255,0.88);
-  border: 1px solid rgba(235, 50, 70, 0.22);
-  border-radius: 12px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1A1A1F;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
-  letter-spacing: 0.2px;
-  transition: box-shadow 0.2s, transform 0.15s;
-" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,0.12)'"
-   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.07)'">
-  📄 Access the PDF sheet from<strong>My Dashboard</strong>
-</a>
+
 
 <div id="paywall"></div>
 
@@ -805,16 +1469,6 @@ body.score-mode #pdfBanner {
     <span id="trainingProgressText">0%</span>
 </div>
 
-<!-- 🎵 View Toggle: Falling Notes ↔ Score -->
-<div id="viewToggleBar">
-    <span id="viewToggleLabel">Falling Notes</span>
-    <label class="toggle-switch" title="Switch between falling notes and sheet music score">
-        <input type="checkbox" id="scoreModeToggle">
-        <div class="toggle-track"></div>
-        <div class="toggle-thumb"></div>
-    </label>
-    <span style="font-size:15px;font-weight:600;color:var(--text-main);">Score View</span>
-</div>
 
 <!-- 📄 Score View (hidden by default) -->
 <div id="scoreView">
@@ -841,13 +1495,48 @@ body.score-mode #pdfBanner {
     <span id="scoreNoteName">—</span>
     <span id="scoreNoteHint" style="font-size:14px;opacity:0.75;"></span>
 </div>
-<div id="bottomDock">
+<!-- Stats Bar -->
+<div id="statsBar">
+    <div class="stat-item">
+        <span class="stat-val" id="statHold">—</span>
+        <span>Hold for</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statAccuracy">—</span>
+        <span>Accuracy</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statCombo">×0</span>
+        <span>Combo</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statPerfect">0</span>
+        <span>Perfect Hits</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-val" id="statBPM">100</span>
+        <span>BPM</span>
+    </div>
+</div>
+
+<!-- Measure Timeline -->
+<div id="measureTimeline"></div>
+
+<!-- Feedback right below stats box -->
+<div id="feedbackArea">
     <div id="feedback"></div>
     <div id="holdInfo" style="color:#333;"></div>
+</div>
 
+<div id="bottomDock">
 
     <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
-    <canvas id="canvas" width="1400"></canvas>
+
+    <!-- Game Stage wrapping the canvas -->
+    <div id="gameStage">
+      <div id="hitLine"></div>
+      <canvas id="canvas" width="1400"></canvas>
+    </div>
 
 <div id="countdownOverlay">3</div>
 <!-- 🎯 Right-side note indicators -->
@@ -863,7 +1552,131 @@ body.score-mode #pdfBanner {
         <div id="correctNoteCircle" class="note-circle correct"></div>
     </div>
 </div>
-<div class="button-group" id="playbackControls">
+<!-- ====== PRACTICE / PLAYBACK / UTILITY PANEL ====== -->
+<div id="controlPanel">
+
+  <!-- PRACTICE card -->
+  <div class="ctrl-card" id="panelPracticeCard">
+    <div class="ctrl-card-title">PRACTICE</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="handLeftBtn" onclick="document.getElementById('handSelect').value='bass'; syncHandBtns()">✋ Left</button>
+      <button class="ctrl-btn active" id="handBothBtn" onclick="document.getElementById('handSelect').value='both'; syncHandBtns()">🎹 Both</button>
+      <button class="ctrl-btn" id="handRightBtn" onclick="document.getElementById('handSelect').value='treble'; syncHandBtns()">✋ Right</button>
+    </div>
+    <div class="ctrl-row" style="gap:10px; align-items:center; justify-content:center;">
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+        Start Measure
+        <input id="panelStartMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+          oninput="document.getElementById('startMeasureInput').value=this.value"
+          value="1">
+      </label>
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+        End Measure
+        <input id="panelEndMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+          oninput="document.getElementById('endMeasureInput').value=this.value"
+          value="4">
+      </label>
+    </div>
+    <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
+    <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
+  </div>
+
+  <!-- PLAYBACK card -->
+  <div class="ctrl-card" id="panelPlaybackCard">
+    <div class="ctrl-card-title">PLAYBACK</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
+    </div>
+    <div class="ctrl-speed-row">
+      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
+      <span style="font-size:13px;color:#666;">Speed</span>
+      <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
+      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
+    </div>
+  </div>
+
+  <!-- UTILITY card -->
+  <div class="ctrl-card" id="panelUtilityCard">
+    <div class="ctrl-card-title">UTILITY</div>
+    <div class="ctrl-grid-2">
+      <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
+      <button class="ctrl-btn" onclick="document.getElementById('toggleNamesButton').click()">👁 Hide Note Names</button>
+      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="panelLoopCheckbox" onchange="document.getElementById('loopCheckbox').checked=this.checked; document.getElementById('loopCheckbox').dispatchEvent(new Event('change'))">
+        🔁 Loop Section
+      </label>
+      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="panelSkipRepeatsCheckbox" onchange="document.getElementById('skipRepeatsCheckbox').checked=this.checked; document.getElementById('skipRepeatsCheckbox').dispatchEvent(new Event('change'))">
+        ↩ Skip Repeats
+      </label>
+      <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- FEEDBACK card — fills gap under Playback + Utility via grid placement -->
+  <div class="ctrl-card" id="panelFeedbackCard">
+    <div id="panelFeedbackBubble"></div>
+  </div>
+
+  <!-- STATS card -->
+  <div class="ctrl-card" id="panelStatsCard">
+    <div class="ctrl-card-title">STATS</div>
+    <div class="ctrl-stats-grid">
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatHold">—</span>
+        <span class="ctrl-stat-label">Hold for</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatAccuracy">—</span>
+        <span class="ctrl-stat-label">Accuracy</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatCombo">×0</span>
+        <span class="ctrl-stat-label">Combo</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatPerfect">0</span>
+        <span class="ctrl-stat-label">Perfect</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatBPM">100</span>
+        <span class="ctrl-stat-label">BPM</span>
+      </div>
+    </div>
+    <!-- Progress bar — only visible in score mode -->
+    <div id="panelProgressWrap">
+      <div id="panelProgressBar">
+        <div id="panelProgressFill"></div>
+      </div>
+      <div id="panelProgressText">0%</div>
+    </div>
+  </div>
+
+  <!-- NOTE CIRCLES card — score mode only -->
+  <div class="ctrl-card" id="panelNoteCirclesCard">
+    <div class="ctrl-card-title">NOTES</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+      <div class="panel-note-item">
+        <div class="panel-note-circle" id="panelPressedCircle"></div>
+        <span class="panel-note-circle-label">You Pressed</span>
+      </div>
+      <div class="panel-note-item">
+        <div class="panel-note-circle correct" id="panelCorrectCircle"></div>
+        <span class="panel-note-circle-label">Correct Note</span>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+<!-- ====== END PANEL ====== -->
+
+<div class="button-group" id="playbackControls" style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
     <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
         <label>
             Hand:
@@ -1002,7 +1815,12 @@ async function loadSongMidi() {
         const prev = tieSeenRaw.get(k);
         if (prev) {
             const gap = note.time - (prev.time + prev.duration);
-            if (Math.abs(gap) < 0.005) {
+            // Only flag as a tied continuation if:
+            //   1. The gap is near-zero (genuine tie), AND
+            //   2. The previous note is NOT a grace note (grace notes have duration < 0.1s).
+            //      A main note immediately after a grace note must NOT be treated as a tie.
+            const prevIsGrace = prev.duration < 0.1;
+            if (Math.abs(gap) < 0.005 && !prevIsGrace) {
                 _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
             }
         }
@@ -1027,6 +1845,11 @@ async function loadSongMidi() {
 
     setControlsEnabled(true);
     showTrainingProgress();
+    buildMeasureTimeline(SONG_CONFIG.measures);
+    const bpmEl = document.getElementById('statBPM');
+    if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
+    const pBpm = document.getElementById('panelStatBPM');
+    if (pBpm) pBpm.textContent = Math.round(60 / secondsPerBeat);
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -1422,6 +2245,12 @@ function updateTrainingProgress() {
 
     document.getElementById('trainingProgressText').textContent =
         percent + "%";
+
+    // Mirror into the score-mode stats card
+    const pFill = document.getElementById('panelProgressFill');
+    const pText = document.getElementById('panelProgressText');
+    if (pFill) pFill.style.width = percent + "%";
+    if (pText) pText.textContent = percent + "%";
 }
 let trainingActive = false;
 let trainingIndex = 0;
@@ -1436,6 +2265,27 @@ let noteHoldStartTime = null;
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
+
+// ====== HOLD COUNTDOWN ======
+(function startHoldCountdownLoop() {
+    const el = document.getElementById('statHold');
+    const pel = document.getElementById('panelStatHold');
+    setInterval(() => {
+        let val, color;
+        if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+            const remaining = Math.max(0,
+                (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
+            );
+            val = remaining.toFixed(1) + 's';
+            color = remaining < 0.3 ? '#22c55e' : '';
+        } else {
+            val = '—';
+            color = '';
+        }
+        if (el)  { el.textContent  = val; el.style.color  = color; }
+        if (pel) { pel.textContent = val; pel.style.color = color; }
+    }, 50);
+})();
 
 let expectedMidiTreble = new Set();
 let expectedMidiBass   = new Set();
@@ -1466,6 +2316,58 @@ let autoSlowed = false;
 let showBlackKeyArrow = false;
 let arrowTargetGroup = null;
 let explanationLocked = false;
+
+// ====== PREMIUM STATS ======
+let statsCombo = 0;
+let statsPerfect = 0;
+let statsTotalAttempts = 0;
+let statsWrong = 0;
+
+function updateStatsBar() {
+    const accuracy = statsTotalAttempts > 0
+        ? Math.round((statsPerfect / statsTotalAttempts) * 100)
+        : 0;
+    const accEl = document.getElementById('statAccuracy');
+    const comboEl = document.getElementById('statCombo');
+    const perfEl = document.getElementById('statPerfect');
+    if (accEl) accEl.textContent = statsTotalAttempts > 0 ? accuracy + '%' : '—';
+    if (comboEl) comboEl.textContent = '×' + statsCombo;
+    if (perfEl) perfEl.textContent = statsPerfect;
+
+    // Mirror into panel stats card
+    const pAcc = document.getElementById('panelStatAccuracy');
+    const pCombo = document.getElementById('panelStatCombo');
+    const pPerf = document.getElementById('panelStatPerfect');
+    if (pAcc)   pAcc.textContent   = statsTotalAttempts > 0 ? accuracy + '%' : '—';
+    if (pCombo) pCombo.textContent = '×' + statsCombo;
+    if (pPerf)  pPerf.textContent  = statsPerfect;
+}
+
+let statsMeasure = '—';
+
+// Build measure timeline pips
+function buildMeasureTimeline(totalMeasures) {
+    const tl = document.getElementById('measureTimeline');
+    if (!tl) return;
+    tl.innerHTML = '';
+    for (let i = 0; i < Math.min(totalMeasures, 80); i++) {
+        const pip = document.createElement('div');
+        pip.className = 'measure-pip';
+        pip.dataset.m = i + 1;
+        tl.appendChild(pip);
+    }
+}
+
+function updateTimelinePip(measureNum) {
+    const pips = document.querySelectorAll('.measure-pip');
+    pips.forEach(p => {
+        const m = +p.dataset.m;
+        p.classList.remove('active');
+        if (m < measureNum) p.classList.add('done');
+        else if (m === measureNum) p.classList.add('active');
+        else { p.classList.remove('done'); }
+    });
+}
 
 let clefMode = 'treble';
 let sectionStartTime = 0;
@@ -1505,7 +2407,6 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 setTimeout(resizeCanvas, 800);
-setTimeout(animate, 900);
 let fallingRectangles = [];
   let _tiedNoteKeys = new Set();
 let midiFallingNotes = [];
@@ -1641,76 +2542,127 @@ function drawKeyboard() {
 
         const x = whiteIndex * getWhiteKeyWidth();
         const isTreble = expectedMidiTreble.has(midi);
-const isBass   = expectedMidiBass.has(midi);
-if (isTreble) {
-    ctx.fillStyle = "#FFCDD2";
-} else if (isBass) {
-    ctx.fillStyle = "#757575";
-} else {
-    ctx.fillStyle = "#ffffff";
-}
-        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth()        , keyHeight);
+        const isBass   = expectedMidiBass.has(midi);
 
-        ctx.strokeStyle = "#000";
-        ctx.strokeRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+        // Premium gradient white key
+        const wGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
+        if (isTreble) {
+            wGrad.addColorStop(0, '#FFCDD2');
+            wGrad.addColorStop(1, '#EF9A9A');
+        } else if (isBass) {
+            wGrad.addColorStop(0, '#9E9E9E');
+            wGrad.addColorStop(1, '#616161');
+        } else {
+            wGrad.addColorStop(0, '#ffffff');
+            wGrad.addColorStop(0.7, '#f5f5f5');
+            wGrad.addColorStop(1, '#e8e8e8');
+        }
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
 
-if (showNoteNames) {
-    ctx.fillStyle = "#000";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
+        // Key borders
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(x + 0.4, keyboardTop, getWhiteKeyWidth() - 0.8, keyHeight);
 
-    ctx.fillText(
-        getNoteName(midi),
-        x + getWhiteKeyWidth() / 2,
-        keyboardTop + keyHeight - 5
-    );
-}
+        // Inner shadow at top
+        const innerGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + 14);
+        innerGrad.addColorStop(0, 'rgba(0,0,0,0.08)');
+        innerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = innerGrad;
+        ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), 14);
+
+        // Glow for active treble key
+        if (isTreble) {
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(255,107,107,0.15)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
+        if (showNoteNames) {
+            ctx.fillStyle = isBass ? '#fff' : '#555';
+            ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(
+                getNoteName(midi),
+                x + getWhiteKeyWidth() / 2,
+                keyboardTop + keyHeight - 5
+            );
+        }
 
         whiteIndex++;
     }
 
    // ---- BLACK KEYS ----
-whiteIndex = 0;
+    whiteIndex = 0;
 
-for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
-    if (!isBlackMidi(midi)) {
-        whiteIndex++;
-        continue;
-    }
+    for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
+        if (!isBlackMidi(midi)) {
+            whiteIndex++;
+            continue;
+        }
 
-    const blackKeyWidth = getWhiteKeyWidth() * 0.6;
-    const blackKeyHeight = keyHeight * 0.6;
-
-    const x =
-    (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
+        const blackKeyWidth  = getWhiteKeyWidth() * 0.6;
+        const blackKeyHeight = keyHeight * 0.62;
+        const x = (whiteIndex - 1) * getWhiteKeyWidth() + getWhiteKeyWidth() * 0.7;
 
         const isTreble = expectedMidiTreble.has(midi);
-const isBass   = expectedMidiBass.has(midi);
+        const isBass   = expectedMidiBass.has(midi);
 
-if (isTreble) {
-    ctx.fillStyle = "#E57373";
-} else if (isBass) {
-    ctx.fillStyle = "#424242";
-} else {
-    ctx.fillStyle = "#000";
-}
+        // Premium gradient black key
+        const bGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + blackKeyHeight);
+        if (isTreble) {
+            bGrad.addColorStop(0, '#EF9A9A');
+            bGrad.addColorStop(1, '#E57373');
+        } else if (isBass) {
+            bGrad.addColorStop(0, '#555');
+            bGrad.addColorStop(1, '#222');
+        } else {
+            bGrad.addColorStop(0, '#333');
+            bGrad.addColorStop(0.5, '#111');
+            bGrad.addColorStop(1, '#000');
+        }
 
-    ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+        // Shadow under black key
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 4;
+        ctx.fillStyle = bGrad;
+        ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
 
-    if (showNoteNames) {
-        ctx.fillStyle = "#fff";
-        ctx.font = "10px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "bottom";
+        // Glow for active treble
+        if (isTreble) {
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(255,107,107,0.4)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
 
-        ctx.fillText(
-            getNoteName(midi),
-            x + blackKeyWidth / 2,
-            keyboardTop + blackKeyHeight - 4
-        );
+        // Glossy highlight on top of black key
+        const glossGrad = ctx.createLinearGradient(x, keyboardTop, x + blackKeyWidth, keyboardTop + blackKeyHeight * 0.4);
+        glossGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+        glossGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glossGrad;
+        ctx.fillRect(x + blackKeyWidth * 0.1, keyboardTop, blackKeyWidth * 0.8, blackKeyHeight * 0.35);
+
+        if (showNoteNames) {
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.max(8, Math.min(10, blackKeyWidth * 0.55))}px Inter, Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(
+                getNoteName(midi),
+                x + blackKeyWidth / 2,
+                keyboardTop + blackKeyHeight - 3
+            );
+        }
     }
-}
 }
 
 function describeNoteByBlackKeys(midiNote) {
@@ -1805,6 +2757,10 @@ void feedback.offsetWidth;
 feedback.classList.add('wrong', 'show');
 
 failureCount++;
+statsWrong++;
+statsTotalAttempts++;
+statsCombo = 0;
+updateStatsBar();
 expectedMidiNote = expectedMidi;
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
@@ -1830,6 +2786,10 @@ explanationLocked = false;
 showBlackKeyArrow = false;
 arrowTargetGroup = null;
 failureCount = 0;
+statsPerfect++;
+statsTotalAttempts++;
+statsCombo++;
+updateStatsBar();
 
 midiPressedNotes.add(midiNote);
 
@@ -1859,42 +2819,42 @@ function isBlackKey(noteName) { return noteName.includes("#"); }
 function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const x = noteToX(midiNumber);
 
-    const height = Math.max(12, duration * 150 - NOTE_GAP_PX);
+    const height = Math.max(14, duration * 150 - NOTE_GAP_PX);
     const TOP_GAP = 10;
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-if (track === TREBLE) {
-    gradient.addColorStop(0.00, "#FFEBEE");
-    gradient.addColorStop(0.25, "#EF9A9A");
-    gradient.addColorStop(0.55, "#E57373");
-    gradient.addColorStop(1.00, "#EF5350");
-} else if (track === BASS) {
-    gradient.addColorStop(0.00, "#616161");
-    gradient.addColorStop(0.25, "#424242");
-    gradient.addColorStop(0.55, "#212121");
-    gradient.addColorStop(1.00, "#000000");
-}
+    if (track === TREBLE) {
+        gradient.addColorStop(0.00, "rgba(255,200,200,0.92)");
+        gradient.addColorStop(0.25, "rgba(255,150,150,0.88)");
+        gradient.addColorStop(0.65, "rgba(229,115,115,0.90)");
+        gradient.addColorStop(1.00, "rgba(239,83,80,0.94)");
+    } else if (track === BASS) {
+        gradient.addColorStop(0.00, "rgba(120,120,140,0.88)");
+        gradient.addColorStop(0.25, "rgba(80,80,100,0.85)");
+        gradient.addColorStop(0.65, "rgba(45,45,65,0.90)");
+        gradient.addColorStop(1.00, "rgba(15,15,30,0.94)");
+    }
 
-fallingRectangles.push({
-    midi: midiNumber,
-    noteName: getNoteName(midiNumber),
-    track,
-    isMidi: true,
+    fallingRectangles.push({
+        midi: midiNumber,
+        noteName: getNoteName(midiNumber),
+        track,
+        isMidi: true,
 
-    x,
-    y: startY,
-    startY,
-    endY,
-    width: getWhiteKeyWidth() * 0.86,
-    height,
+        x,
+        y: startY,
+        startY,
+        endY,
+        width: getWhiteKeyWidth() * 0.86,
+        height,
 
-    gradient,
-    startTime: noteStartTime,
-    landed: false,
-});
+        gradient,
+        startTime: noteStartTime,
+        landed: false,
+    });
 }
 
 
@@ -2124,10 +3084,12 @@ function spawnNextValidNote() {
         const note = practiceNotes[trainingIndex];
 
         // Check if this note is a tied continuation using _tiedNoteKeys directly
-        // (populated in loadSongMidi — works regardless of score mode)
+        // (populated in loadSongMidi — works regardless of score mode).
+        // Grace notes (duration < 0.1s) are NEVER tied continuations — skip the check for them.
+        const isGraceMidi = note.duration < 0.1;
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
         const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
-        const isTiedContinuation = _tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey);
+        const isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
 
         if (isTiedContinuation) {
             // Tied continuation — skip silently (user already played the parent note)
@@ -2200,6 +3162,12 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
+    // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
+    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null) {
+        if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
+        if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
+    }
+
     if (visualsPlaying && !scoreModeActive) {
         fallingRectangles = fallingRectangles.filter(rect => {
             const elapsed =
@@ -2238,7 +3206,16 @@ if (rect.y > canvas.height) {
 
 ctx.fillStyle = rect.gradient;
 
-const r = 9;
+// Glow shadow for treble notes
+if (rect.track === TREBLE) {
+    ctx.shadowColor = 'rgba(255,107,107,0.55)';
+    ctx.shadowBlur = 18;
+} else {
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 10;
+}
+
+const r = 12;
 ctx.beginPath();
 ctx.moveTo(rect.x + r, rect.y);
 ctx.lineTo(rect.x + rect.width - r, rect.y);
@@ -2251,6 +3228,7 @@ ctx.lineTo(rect.x, rect.y + r);
 ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
 ctx.closePath();
 ctx.fill();
+ctx.shadowBlur = 0;
 
 ctx.save();
 ctx.globalCompositeOperation = "screen";
@@ -2547,6 +3525,7 @@ canvas.addEventListener('mouseup', () => {
     freeModeActiveNote = null;
     expectedMidiNote = null;
     expectedMidiTreble.clear();
+    expectedMidiBass.clear();
     return;
 }
 
@@ -2554,6 +3533,8 @@ canvas.addEventListener('mouseup', () => {
 if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     activeMidiNote = null;
     noteHoldStartTime = null;
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
     return;
 }
 
@@ -2561,6 +3542,10 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     const heldTime = performance.now() - noteHoldStartTime;
 
     synth.triggerRelease(getNoteName(note));
+
+    // Always clear highlights immediately on release — spawnTrainingNote re-adds them
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
 
     if (heldTime >= expectedHoldDuration) {
 const feedback = document.getElementById('feedback');
@@ -2698,6 +3683,10 @@ canvas.addEventListener('touchend', (e) => {
         mouseDown = false;
         activeTouches.clear();
 
+        // Always clear highlights immediately — spawnTrainingNote re-adds them
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+
         if (!freeMode && noteHoldStartTime !== null) {
             const heldTime = performance.now() - noteHoldStartTime;
 
@@ -2770,6 +3759,10 @@ canvas.addEventListener('touchcancel', (e) => {
         touchActive = false;
         mouseDown = false;
         activeTouches.clear();
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        noteHoldStartTime = null;
+        activeMidiNote = null;
     }
 }, { passive: false });
 
@@ -3118,67 +4111,140 @@ stopButton.disabled = true;
 }
 
 function resetAll() {
-    hideTrainingProgress();
-    stopPlayback();
+    // ── 1. Kill every pending timer / animation immediately ──────────────
+    if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+    playbackTimeouts.forEach(t => clearTimeout(t)); playbackTimeouts = [];
+    previewTimeouts.forEach(t => clearTimeout(t));  previewTimeouts = [];
 
-    trainingActive = false;
-    fullSongPlaying = false;
-    previewMode = false;
-    waitingForInput = false;
-    visualsPlaying = false;
+    // ── 2. Stop all audio & transport ────────────────────────────────────
+    stopMetronome();
+    if (synth) synth.releaseAll();
+    try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch(e) {}
 
-    trainingIndex = 0;
-    scoreNoteOffset = 0;
+    // ── 3. Kill every active state flag ──────────────────────────────────
+    isPlaying        = false;
+    trainingActive   = false;
+    fullSongPlaying  = false;
+    previewMode      = false;
+    waitingForInput  = false;
+    visualsPlaying   = false;
+    speedLocked      = false;
+    countdownActive  = false;
+
+    // ── 4. Exit Free Mode if it is on ────────────────────────────────────
+    if (freeMode) {
+        freeMode = false;
+        freeModeButton.textContent = 'Free Mode';
+    }
+    if (freeModeActiveNote !== null) {
+        if (freeModeSynth) { try { freeModeSynth.releaseAll(); } catch(e) {} }
+        freeModeActiveNote = null;
+    }
+
+    // ── 5. Clear all note / MIDI state ───────────────────────────────────
+    trainingIndex      = 0;
+    scoreNoteOffset    = 0;
     _lastPannedMeasure = -1;
-    playbackTimeouts = [];
-    previewTimeouts = [];
-    fallingRectangles = [];
+    fallingRectangles  = [];
 
-    expectedMidiNote = null;
-    activeMidiNote = null;
+    expectedMidiNote    = null;
+    activeMidiNote      = null;
     currentTrainingNote = null;
-    noteHoldStartTime = null;
-    pressedNotes = [];
-    
+    noteHoldStartTime   = null;
+    pressedNotes        = [];
+
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
 
-    const feedback = document.getElementById('feedback');
-    feedback.textContent = '';
+    // ── 6. Hide all overlays / visuals ───────────────────────────────────
+    document.getElementById('countdownOverlay').style.display = 'none';
+    hideTrainingProgress();
+    hideScoreNoteDisplay();
+    clearScoreHighlight();
 
-feedback.classList.remove('correct', 'wrong', 'show');
+    // ── 7. Reset UI controls ─────────────────────────────────────────────
+    const feedback = document.getElementById('feedback');
+    feedback.classList.remove('correct', 'wrong', 'show');
+    feedback.textContent = '';
     document.getElementById('holdInfo').textContent = '';
 
     speedMultiplier = 1.0;
     speedDisplay.textContent = '1.0×';
 
-    beatEnabled = false;
-    countEnabled = false;
+    beatEnabled    = false;
+    countEnabled   = false;
+    subdivisionEnabled = false;
     metronomeRunning = false;
-    beatToggle.textContent = 'Beat';
-    countToggle.textContent = 'Counting';
+    beatToggle.textContent        = 'Beat';
+    countToggle.textContent       = 'Counting';
     subdivisionToggle.textContent = '1 & 2 &';
-    stopMetronome();
 
     handSelect.value = 'treble';
     startMeasureInput.value = 1;
-    endMeasureInput.value = 4;
+    endMeasureInput.value   = 4;
     skipRepeatsCheckbox.checked = false;
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
+    loopEnabled  = false;
 
-    feedback.textContent = 'All reset — ready!';
-    console.log('✅ All reset');
     document.getElementById('pressedNoteCircle').textContent = '';
-document.getElementById('pressedNoteCircle').className = 'note-circle';
-
-document.getElementById('correctNoteCircle').textContent = '';
+    document.getElementById('pressedNoteCircle').className   = 'note-circle';
+    document.getElementById('correctNoteCircle').textContent = '';
 
     stopButton.disabled = true;
+
+    // ── 8. Reset panel measure inputs (the visible ones) ─────────────────
+    const panelStart = document.getElementById('panelStartMeasure');
+    const panelEnd   = document.getElementById('panelEndMeasure');
+    if (panelStart) panelStart.value = 1;
+    if (panelEnd)   panelEnd.value   = 4;
+
+    // ── 9. Reset hand-select buttons ─────────────────────────────────────
+    handSelect.value = 'both';
+    syncHandBtns();
+
+    // ── 10. Deactivate Beat / Counting / Subdivision panel buttons ───────
+    document.getElementById('beatBtn')   ?.classList.remove('active');
+    document.getElementById('countBtn')  ?.classList.remove('active');
+    document.getElementById('subdivBtn') ?.classList.remove('active');
+
+    // ── 11. Uncheck panel Loop & Skip-Repeats checkboxes ─────────────────
+    const panelLoop = document.getElementById('panelLoopCheckbox');
+    const panelSkip = document.getElementById('panelSkipRepeatsCheckbox');
+    if (panelLoop) panelLoop.checked = false;
+    if (panelSkip) panelSkip.checked = false;
+
+    // ── 12. Restore "Hide Note Names" button ─────────────────────────────
+    showNoteNames = true;
+    toggleNamesButton.textContent = 'Hide Note Names';
+
+    // ── 13. Turn off Score Mode if it is on ──────────────────────────────
+    const smToggle = document.getElementById('scoreModeToggle');
+    if (smToggle && smToggle.checked) {
+        smToggle.checked = false;
+        smToggle.dispatchEvent(new Event('change'));
+    }
+
+    // ── 14. Confirm ──────────────────────────────────────────────────────
+    statsCombo         = 0;
+    statsPerfect       = 0;
+    statsTotalAttempts = 0;
+    statsWrong         = 0;
+    updateStatsBar();
+    const pFill = document.getElementById('panelProgressFill');
+    const pText = document.getElementById('panelProgressText');
+    if (pFill) pFill.style.width = '0%';
+    if (pText) pText.textContent = '0%';
+
+    feedback.textContent = 'All reset — ready!';
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+    console.log('✅ All reset');
 }
+window.resetAll = resetAll;
     
 function startFullSongPlayback() {
     
@@ -3415,10 +4481,12 @@ function _buildSvgNoteIndex() {
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
-        // Grace notes are placed visually at the END of one measure in the SVG,
-        // but their MIDI events fire at the very START of the NEXT measure.
-        // So we assign grace notes to sheet_measure + 1 to keep SVG rank in sync
-        // with the MIDI rank counter.
+        // Grace notes in MuseScore SVGs are placed at the BEGINNING of the measure
+        // they belong to (visually just before the main beat of that measure).
+        // Their MIDI events also fire at the start of that same measure.
+        // So grace notes stay in their visual measure — NO +1 offset needed.
+        // They are ranked BEFORE the main notes in the same measure (lower tx),
+        // which matches the MIDI ordering (grace note time < main note time).
         for (let ri = 0; ri < raw.length; ri++) {
             if (tiedNoteheadSet.has(ri)) continue;
             const n = raw[ri];
@@ -3433,10 +4501,10 @@ function _buildSvgNoteIndex() {
                     const rightBound = (i === bls.length - 2) ? (bls[i + 1] + 20) : bls[i + 1];
                     if (n.tx >= leftBound && n.tx < rightBound) {
                         const svgMeasure = sys.start_measure + i;
-                        // Grace notes: MIDI fires at start of next measure, so +1 to match
-                        const sheet_measure = n.isGrace ? svgMeasure + 1 : svgMeasure;
+                        // Grace notes stay in their visual measure (same as MIDI measure)
+                        const sheet_measure = svgMeasure;
                         const idx = _svgNoteElements.length;
-                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure });
+                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace });
                         if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
                         _svgBuckets[sheet_measure][clef].push(idx);
                         break;
@@ -3500,9 +4568,9 @@ function _buildSvgMidiMap() {
     }
 
     const trebleMidi = allMidiNotes.filter(n => n.track === TREBLE)
-        .sort((a, b) => a.time - b.time || a.midi - b.midi);
+        .sort((a, b) => a.time - b.time || (a.duration < 0.1 ? -1 : b.duration < 0.1 ? 1 : 0) || a.midi - b.midi);
     const bassMidi = allMidiNotes.filter(n => n.track === BASS)
-        .sort((a, b) => a.time - b.time || a.midi - b.midi);
+        .sort((a, b) => a.time - b.time || (a.duration < 0.1 ? -1 : b.duration < 0.1 ? 1 : 0) || a.midi - b.midi);
 
     assignRanks(trebleMidi, 'treble');
     assignRanks(bassMidi, 'bass');
@@ -3783,6 +4851,10 @@ if (freeMode && note === freeModeActiveNote) {
         
         if (noteHoldStartTime === null) return;
 
+        // Always clear highlights immediately on release — spawnTrainingNote re-adds them
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+
         const heldTime = performance.now() - noteHoldStartTime;
 
         if (heldTime >= expectedHoldDuration) {
@@ -3842,6 +4914,76 @@ holdEl.innerHTML =
 }
 
 </script>
+<!-- Panel sync helpers -->
+<script>
+function syncHandBtns() {
+    const val = document.getElementById('handSelect').value;
+    document.getElementById('handLeftBtn').classList.toggle('active', val === 'bass');
+    document.getElementById('handBothBtn').classList.toggle('active', val === 'both');
+    document.getElementById('handRightBtn').classList.toggle('active', val === 'treble');
+}
+
+// Mirror pressedNoteCircle / correctNoteCircle into the stats-card panel versions
+function syncPanelNoteCircles() {
+    const src  = document.getElementById('pressedNoteCircle');
+    const dst  = document.getElementById('panelPressedCircle');
+    if (src && dst) {
+        dst.textContent = src.textContent;
+        dst.className   = src.className.replace('note-circle', 'panel-note-circle');
+    }
+    const srcC = document.getElementById('correctNoteCircle');
+    const dstC = document.getElementById('panelCorrectCircle');
+    if (srcC && dstC) {
+        dstC.textContent = srcC.textContent;
+    }
+}
+
+// Observe both source circles and keep panel in sync
+(function() {
+    const obs = new MutationObserver(syncPanelNoteCircles);
+    const cfg = { childList: true, characterData: true, subtree: true, attributes: true };
+    const p = document.getElementById('pressedNoteCircle');
+    const c = document.getElementById('correctNoteCircle');
+    if (p) obs.observe(p, cfg);
+    if (c) obs.observe(c, cfg);
+})();
+
+// Mirror speed display into panel
+(function() {
+    const src = document.getElementById('speedDisplay');
+    const dst = document.getElementById('panelSpeedDisplay');
+    if (!src || !dst) return;
+    const obs = new MutationObserver(() => { dst.textContent = src.textContent; });
+    obs.observe(src, { childList: true, characterData: true, subtree: true });
+    dst.textContent = src.textContent;
+})();
+
+// Sync hand select → panel buttons on change
+document.getElementById('handSelect').addEventListener('change', syncHandBtns);
+syncHandBtns();
+
+// Mirror #feedback into #panelFeedbackBubble
+(function() {
+    const src = document.getElementById('feedback');
+    const dst = document.getElementById('panelFeedbackBubble');
+    if (!src || !dst) return;
+
+    function syncFeedback() {
+        dst.innerHTML = src.innerHTML;
+        dst.className = src.className.replace('show', '').trim();
+        // small rAF delay so the class removal triggers a transition restart
+        requestAnimationFrame(() => {
+            if (src.classList.contains('show')) {
+                dst.classList.add('show');
+            }
+        });
+    }
+
+    const obs = new MutationObserver(syncFeedback);
+    obs.observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+
 <!-- 1) Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
