@@ -4544,6 +4544,19 @@ function _buildSvgNoteIndex() {
         }
     }
 
+    // Build a lookup: does a given (sheet_measure, clef) bucket START with a grace note?
+    // This is used in assignRanks to detect when a MIDI grace note at the tail of
+    // measure M actually belongs in measure M+1's SVG bucket (the "leading grace note" case).
+    _svgBucketStartsWithGrace = {};
+    for (const [m, clefs] of Object.entries(_svgBuckets)) {
+        for (const clef of ['treble', 'bass']) {
+            const bucket = clefs[clef];
+            if (bucket && bucket.length > 0) {
+                _svgBucketStartsWithGrace[`${m}|${clef}`] = _svgNoteElements[bucket[0]].isGrace;
+            }
+        }
+    }
+
     console.log(`🔗 SVG tied-continuation noteheads detected: ${totalTied}`);
     console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${totalTied} tied continuations excluded) across measures ` +
         `${Math.min(...Object.keys(_svgBuckets).map(Number))}–` +
