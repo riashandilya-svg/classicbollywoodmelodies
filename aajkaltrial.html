@@ -686,69 +686,54 @@ canvas {
 }
 
 /* ====== PANEL FEEDBACK SECTION ====== */
-#panelFeedbackSection {
-    width: min(1100px, 98%);
-    margin: 50px auto 0 auto;
-}
-
 #panelFeedbackBubble {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     padding: 10px 20px;
-    border-radius: 14px;
+    border-radius: 10px;
     font-weight: 600;
     font-size: 15px;
     letter-spacing: 0.01em;
     text-align: center;
     opacity: 0;
-    transform: translateY(6px) scale(0.97);
+    transform: scale(0.97);
     transition:
         opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
-        transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    pointer-events: none;
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        background 0.25s ease,
+        box-shadow 0.25s ease;
     width: 100%;
     box-sizing: border-box;
-    min-height: 0;
+    min-height: 36px;
 }
 
 #panelFeedbackBubble.show {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-    min-height: 44px;
+    transform: scale(1);
 }
 
 #panelFeedbackBubble.correct {
     background: linear-gradient(135deg, #22c55e, #16a34a);
     color: white;
-    box-shadow: 0 8px 24px rgba(34,197,94,0.3);
+    box-shadow: 0 6px 20px rgba(34,197,94,0.3);
 }
 
 #panelFeedbackBubble.wrong {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
-    box-shadow: 0 8px 24px rgba(239,68,68,0.3);
+    box-shadow: 0 6px 20px rgba(239,68,68,0.3);
 }
 
 #panelFeedbackBubble.almost {
     background: linear-gradient(135deg, #f97316, #ea580c);
     color: white;
-    box-shadow: 0 8px 24px rgba(249,115,22,0.3);
+    box-shadow: 0 6px 20px rgba(249,115,22,0.3);
 }
 
-body.dark-mode #panelFeedbackBubble.correct {
-    box-shadow: 0 8px 28px rgba(34,197,94,0.4);
-}
-
-body.dark-mode #panelFeedbackBubble.wrong {
-    box-shadow: 0 8px 28px rgba(239,68,68,0.4);
-}
-
-body.score-mode #panelFeedbackSection {
-    display: none !important;
-}
+body.dark-mode #panelFeedbackBubble.correct { box-shadow: 0 8px 28px rgba(34,197,94,0.4); }
+body.dark-mode #panelFeedbackBubble.wrong   { box-shadow: 0 8px 28px rgba(239,68,68,0.4); }
 .falling-note {
     border-radius: 14px;
     filter: drop-shadow(0 6px 14px rgba(229,115,115,0.35));
@@ -1078,21 +1063,83 @@ body.dark-mode.score-mode #scoreObj {
    PRACTICE / PLAYBACK / UTILITY PANEL
    ============================ */
 #controlPanel {
-    display: flex;
-    gap: 10px;                      /* ← gap between cards */
-    width: min(1100px, 98%);        /* ← max width in normal mode */
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    width: min(1100px, 98%);
     margin: 4px auto 0 auto;
-    flex-wrap: wrap;
     animation: fadeUp 0.6s ease both;
     animation-delay: 0.15s;
 }
 
-/* In score mode: stretch panel wider and don't wrap cards onto new rows */
+/* PRACTICE card spans both rows in column 1 */
+#controlPanel > .ctrl-card:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1 / 3;
+}
+
+/* PLAYBACK card: row 1, col 2 */
+#controlPanel > .ctrl-card:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+/* UTILITY card: row 1, col 3 */
+#controlPanel > .ctrl-card:nth-child(3) {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+/* FEEDBACK card: row 2, spans col 2–3 (the gap under Playback + Utility) */
+#panelFeedbackCard {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#panelFeedbackCard:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* STATS + NOTES cards: only visible in score mode — push them out of normal grid flow */
+#panelStatsCard,
+#panelNoteCirclesCard {
+    display: none;
+}
+
+/* In score mode: stretch panel wider and revert to flex for all cards */
 body.score-mode #controlPanel {
-    width: min(1600px, 99%);        /* ← SCORE MODE panel width — raise to stretch further */
-    flex-wrap: nowrap;              /* ← keeps all cards on one row */
-    gap: 7px;                       /* ← gap between cards in score mode */
-    margin: 6px auto 0 auto;        /* ← space above panel in score mode */
+    display: flex;
+    width: min(1600px, 99%);
+    flex-wrap: nowrap;
+    gap: 7px;
+    margin: 6px auto 0 auto;
+}
+
+body.score-mode #panelStatsCard {
+    display: block;
+}
+
+body.score-mode #panelNoteCirclesCard {
+    display: block;
+    flex: 0 0 auto;
+    min-width: unset;
+    width: 90px;
+}
+
+body.score-mode #panelFeedbackCard {
+    display: none !important;
 }
 
 .ctrl-card {
@@ -1301,26 +1348,9 @@ body.dark-mode .ctrl-stat-val {
     color: var(--dm-text);
 }
 
-/* Stats card: score mode only */
-#panelStatsCard {
-    display: none;
-}
+/* Stats card: score mode only — handled in score-mode block above */
 
-body.score-mode #panelStatsCard {
-    display: block;
-}
-
-/* Note circles card — score mode only, narrow standalone column */
-#panelNoteCirclesCard {
-    display: none;
-    flex: 0 0 auto;
-    min-width: unset;
-    width: 90px;
-}
-
-body.score-mode #panelNoteCirclesCard {
-    display: block;
-}
+/* Note circles card — score mode only, narrow standalone column — handled above */
 
 .panel-note-item {
     display: flex;
@@ -1661,13 +1691,13 @@ body.score-mode #panelProgressWrap {
     </div>
   </div>
 
+  <!-- FEEDBACK card — fills the gap under Playback + Utility (row 2, col 2-3) -->
+  <div class="ctrl-card" id="panelFeedbackCard">
+    <div id="panelFeedbackBubble"></div>
+  </div>
+
 </div>
 <!-- ====== END PANEL ====== -->
-
-<!-- ====== PANEL FEEDBACK SECTION ====== -->
-<div id="panelFeedbackSection">
-  <div id="panelFeedbackBubble"></div>
-</div>
 
 <div class="button-group" id="playbackControls" style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
     <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
