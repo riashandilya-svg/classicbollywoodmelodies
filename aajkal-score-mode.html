@@ -4629,8 +4629,17 @@ function _buildSvgMidiMap() {
             const thisStartsGrace = !!_bucketFirstIsGrace[capKey];
             const nextKey         = `${sheetMeasure + 1}|${clef}`;
             const nextStartsGrace = !!_bucketFirstIsGrace[nextKey];
+            // Grace-note pre-correction pass-guard:
+            // cap===0 means the current bucket is EMPTY for this clef (e.g. measure 30
+            // treble has zero SVG notes — all bass chords). used < 2*cap would be 0 < 0
+            // = false and the correction would never fire. Handle cap===0 specially:
+            // allow the correction on the very first encounter (used===0), and again
+            // on the second repeat pass (used===1 etc.) by using used < max(2*cap, 2).
+            const allowGraceCorrect = (cap === 0)
+                ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
+                : (used < 2 * cap);            // normal bucket: within first pass
             let gracePreCorrected = false;
-            if (isMidiGrace && !thisStartsGrace && nextStartsGrace && used < 2 * cap) {
+            if (isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
                 const nextCap = bucketCapacity[nextKey] ?? 0;
                 if (nextCap > 0) {
                     console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
@@ -4683,6 +4692,14 @@ function _buildSvgMidiMap() {
     assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
+    // Diagnostic: print bucket sizes for measures 28-37
+    for (let dm = 28; dm <= 37; dm++) {
+        const tb = (bucketCapacity[`${dm}|treble`] ?? 0);
+        const bb = (bucketCapacity[`${dm}|bass`] ?? 0);
+        const tg = (_svgBuckets[dm]?.treble?.length > 0) ? !!_svgNoteElements[_svgBuckets[dm].treble[0]].isGrace : false;
+        const bg = (_svgBuckets[dm]?.bass?.length > 0)   ? !!_svgNoteElements[_svgBuckets[dm].bass[0]].isGrace   : false;
+        console.log(`🪣 m${dm}: treble=${tb}${tg?' (grace)':''}, bass=${bb}${bg?' (grace)':''}`);
+    }
 }
 
 
