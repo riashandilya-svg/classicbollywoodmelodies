@@ -300,9 +300,9 @@ button:disabled {
     padding: 8px 20px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 
-    max-width: 100%;
-    width: 100%;
-    min-width: 0;
+    max-width: 520px;
+    width: fit-content;
+    min-width: 120px;
     min-height: 36px;
     margin: 0 auto;
     text-align: center;
@@ -312,7 +312,6 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-sizing: border-box;
 }
 #feedback.show {
     opacity: 1;
@@ -674,16 +673,81 @@ canvas {
     align-items: center;
 }
 
-/* Feedback + holdInfo sit inside the PLAYBACK card */
+/* Feedback + holdInfo sit right below the stats box */
 #feedbackArea {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
     width: 100%;
-    margin: 8px 0 2px 0;
+    margin: 4px 0 4px 0;
     min-height: 44px;
     justify-content: center;
+}
+
+/* ====== PANEL FEEDBACK SECTION ====== */
+#panelFeedbackSection {
+    width: min(1100px, 98%);
+    margin: 6px auto 0 auto;
+}
+
+#panelFeedbackBubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+    transition:
+        opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 0;
+}
+
+#panelFeedbackBubble.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    min-height: 44px;
+}
+
+#panelFeedbackBubble.correct {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 8px 24px rgba(34,197,94,0.3);
+}
+
+#panelFeedbackBubble.wrong {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 8px 24px rgba(239,68,68,0.3);
+}
+
+#panelFeedbackBubble.almost {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    box-shadow: 0 8px 24px rgba(249,115,22,0.3);
+}
+
+body.dark-mode #panelFeedbackBubble.correct {
+    box-shadow: 0 8px 28px rgba(34,197,94,0.4);
+}
+
+body.dark-mode #panelFeedbackBubble.wrong {
+    box-shadow: 0 8px 28px rgba(239,68,68,0.4);
+}
+
+body.score-mode #panelFeedbackSection {
+    display: none !important;
 }
 .falling-note {
     border-radius: 14px;
@@ -772,8 +836,7 @@ body.score-mode #feedbackArea {
 }
 
 /* Show wrong-note feedback in score mode as a fixed toast above the keyboard */
-body.score-mode #feedbackArea:has(#feedback.wrong),
-body.score-mode #feedbackArea:has(#feedback.correct) {
+body.score-mode #feedbackArea:has(#feedback.wrong) {
     display: flex !important;
     position: fixed;
     bottom: calc(var(--dock-h, 220px) + 10px);
@@ -781,9 +844,6 @@ body.score-mode #feedbackArea:has(#feedback.correct) {
     transform: translateX(-50%);
     z-index: 1100;
     pointer-events: none;
-    width: auto;
-    min-height: unset;
-    margin: 0;
 }
 
 body.score-mode #hitLine {
@@ -1021,7 +1081,7 @@ body.dark-mode.score-mode #scoreObj {
     display: flex;
     gap: 10px;                      /* ← gap between cards */
     width: min(1100px, 98%);        /* ← max width in normal mode */
-    margin: 10px auto 0 auto;
+    margin: 4px auto 0 auto;
     flex-wrap: wrap;
     animation: fadeUp 0.6s ease both;
     animation-delay: 0.15s;
@@ -1456,7 +1516,11 @@ body.score-mode #panelProgressWrap {
 <!-- Measure Timeline -->
 <div id="measureTimeline"></div>
 
-<!-- feedbackArea moved into control panel PLAYBACK card -->
+<!-- Feedback right below stats box -->
+<div id="feedbackArea">
+    <div id="feedback"></div>
+    <div id="holdInfo" style="color:#333;"></div>
+</div>
 
 <div id="bottomDock">
 
@@ -1527,11 +1591,6 @@ body.score-mode #panelProgressWrap {
       <span style="font-size:13px;color:#666;">Speed</span>
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
       <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
-    </div>
-    <!-- Feedback lives here in normal mode -->
-    <div id="feedbackArea">
-      <div id="feedback"></div>
-      <div id="holdInfo" style="color:#333;"></div>
     </div>
   </div>
 
@@ -1604,6 +1663,11 @@ body.score-mode #panelProgressWrap {
 
 </div>
 <!-- ====== END PANEL ====== -->
+
+<!-- ====== PANEL FEEDBACK SECTION ====== -->
+<div id="panelFeedbackSection">
+  <div id="panelFeedbackBubble"></div>
+</div>
 
 <div class="button-group" id="playbackControls" style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
     <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
@@ -4881,6 +4945,27 @@ function syncPanelNoteCircles() {
 // Sync hand select → panel buttons on change
 document.getElementById('handSelect').addEventListener('change', syncHandBtns);
 syncHandBtns();
+
+// Mirror #feedback into #panelFeedbackBubble
+(function() {
+    const src = document.getElementById('feedback');
+    const dst = document.getElementById('panelFeedbackBubble');
+    if (!src || !dst) return;
+
+    function syncFeedback() {
+        dst.innerHTML = src.innerHTML;
+        dst.className = src.className.replace('show', '').trim();
+        // small rAF delay so the class removal triggers a transition restart
+        requestAnimationFrame(() => {
+            if (src.classList.contains('show')) {
+                dst.classList.add('show');
+            }
+        });
+    }
+
+    const obs = new MutationObserver(syncFeedback);
+    obs.observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
 </script>
 
 <!-- 1) Supabase library -->
