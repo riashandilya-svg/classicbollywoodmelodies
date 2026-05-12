@@ -300,9 +300,9 @@ button:disabled {
     padding: 8px 20px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 
-    max-width: 520px;
-    width: fit-content;
-    min-width: 120px;
+    max-width: 100%;
+    width: 100%;
+    min-width: 0;
     min-height: 36px;
     margin: 0 auto;
     text-align: center;
@@ -312,6 +312,7 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
 }
 #feedback.show {
     opacity: 1;
@@ -673,14 +674,14 @@ canvas {
     align-items: center;
 }
 
-/* Feedback + holdInfo sit right below the stats box */
+/* Feedback + holdInfo sit inside the PLAYBACK card */
 #feedbackArea {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
     width: 100%;
-    margin: 8px 0 6px 0;
+    margin: 8px 0 2px 0;
     min-height: 44px;
     justify-content: center;
 }
@@ -771,7 +772,8 @@ body.score-mode #feedbackArea {
 }
 
 /* Show wrong-note feedback in score mode as a fixed toast above the keyboard */
-body.score-mode #feedbackArea:has(#feedback.wrong) {
+body.score-mode #feedbackArea:has(#feedback.wrong),
+body.score-mode #feedbackArea:has(#feedback.correct) {
     display: flex !important;
     position: fixed;
     bottom: calc(var(--dock-h, 220px) + 10px);
@@ -779,6 +781,9 @@ body.score-mode #feedbackArea:has(#feedback.wrong) {
     transform: translateX(-50%);
     z-index: 1100;
     pointer-events: none;
+    width: auto;
+    min-height: unset;
+    margin: 0;
 }
 
 body.score-mode #hitLine {
@@ -1451,11 +1456,7 @@ body.score-mode #panelProgressWrap {
 <!-- Measure Timeline -->
 <div id="measureTimeline"></div>
 
-<!-- Feedback right below stats box -->
-<div id="feedbackArea">
-    <div id="feedback"></div>
-    <div id="holdInfo" style="color:#333;"></div>
-</div>
+<!-- feedbackArea moved into control panel PLAYBACK card -->
 
 <div id="bottomDock">
 
@@ -1526,6 +1527,11 @@ body.score-mode #panelProgressWrap {
       <span style="font-size:13px;color:#666;">Speed</span>
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
       <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
+    </div>
+    <!-- Feedback lives here in normal mode -->
+    <div id="feedbackArea">
+      <div id="feedback"></div>
+      <div id="holdInfo" style="color:#333;"></div>
     </div>
   </div>
 
