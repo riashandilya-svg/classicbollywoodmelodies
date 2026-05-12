@@ -4548,13 +4548,25 @@ function _buildSvgMidiMap() {
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
-            const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+            let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
-            // DEBUG: log grace notes so we can see if their sheetMeasure matches the SVG bucket
+            // Grace note measure-boundary correction:
+            // A grace note's MIDI time can fall fractionally before a barline, causing
+            // getMeasureFromTime to assign it to measure M while the SVG places it
+            // visually at the start of measure M+1. Detect this by checking whether
+            // bucket[M] contains any SVG grace noteheads for this clef. If it doesn't
+            // but bucket[M+1] does, the grace note belongs to M+1.
             if (note.duration < 0.1) {
-                const bucketExists = !!_svgBuckets[sheetMeasure]?.[clef]?.length;
-                const nextBucket   = !!_svgBuckets[sheetMeasure + 1]?.[clef]?.length;
-                console.log(`🎵 GRACE NOTE [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → physMeasure=${physMeasure} sheetMeasure=${sheetMeasure} | bucket[${sheetMeasure}] exists=${bucketExists} | bucket[${sheetMeasure+1}] exists=${nextBucket}`);
+                const currentBucketGrace = (_svgBuckets[sheetMeasure]?.[clef] || [])
+                    .some(idx => _svgNoteElements[idx]?.isGrace);
+                const nextBucketGrace    = (_svgBuckets[sheetMeasure + 1]?.[clef] || [])
+                    .some(idx => _svgNoteElements[idx]?.isGrace);
+                if (!currentBucketGrace && nextBucketGrace) {
+                    console.log(`🎵 GRACE NOTE [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → physMeasure=${physMeasure} sheetMeasure corrected ${sheetMeasure}→${sheetMeasure + 1} (no grace in current bucket, grace in next)`);
+                    sheetMeasure = sheetMeasure + 1;
+                } else {
+                    console.log(`🎵 GRACE NOTE [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → physMeasure=${physMeasure} sheetMeasure=${sheetMeasure} (kept, currentGrace=${currentBucketGrace} nextGrace=${nextBucketGrace})`);
+                }
             }
 
             const bucketKey = `${sheetMeasure}|${clef}`;
