@@ -551,13 +551,13 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
 /* 🎯 Right-side fixed note feedback */
 #sideNoteFeedback {
     position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-90%);
+    right: 14px;
+    top: 118px; /* sits just below the dark mode toggle (68px + 40px height + 10px gap) */
+    transform: none;
 
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 10px;
 
     z-index: 1000;
 }
@@ -585,7 +585,38 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+    position: relative;
+}
+
+.note-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(235,50,70,0.15);
+    border-radius: 8px;
+    padding: 3px 8px;
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%) translateX(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.side-note:hover .note-label {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+body.dark-mode .note-label {
+    background: rgba(24,28,37,0.92);
+    border-color: var(--dm-border);
+    color: var(--dm-text);
 }
 @media (max-width: 900px) {
 
@@ -1203,13 +1234,6 @@ body.score-mode #panelStatsCard {
 body.score-mode #trainingProgress,
 body.score-mode #measureTimeline {
     display: none !important;
-}
-
-/* In score mode, move "You pressed / Correct note" above the fixed piano dock */
-body.score-mode #sideNoteFeedback {
-    top: auto;
-    bottom: 400px; /* sits above the fixed keyboard strip */
-    transform: none;
 }
 
 /* In-card progress bar (score mode stats card) */
