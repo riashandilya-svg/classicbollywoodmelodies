@@ -765,9 +765,6 @@ body.score-mode h1 {
     max-width: 100%;
 }
 
-#bottomDock.score-mode #sideNoteFeedback {
-    display: none !important;
-}
 
 body.score-mode #feedbackArea {
     display: none !important;
@@ -3996,6 +3993,16 @@ function resetAll() {
     }
 
     // ── 14. Confirm ──────────────────────────────────────────────────────
+    statsCombo         = 0;
+    statsPerfect       = 0;
+    statsTotalAttempts = 0;
+    statsWrong         = 0;
+    updateStatsBar();
+    const pFill = document.getElementById('panelProgressFill');
+    const pText = document.getElementById('panelProgressText');
+    if (pFill) pFill.style.width = '0%';
+    if (pText) pText.textContent = '0%';
+
     feedback.textContent = 'All reset — ready!';
     void feedback.offsetWidth;
     feedback.classList.add('show');
