@@ -1223,8 +1223,8 @@ body.score-mode #hitLine {
 <!-- Stats Bar -->
 <div id="statsBar">
     <div class="stat-item">
-        <span class="stat-val" id="statMeasure">—</span>
-        <span>Measure</span>
+        <span class="stat-val" id="statHold">—</span>
+        <span>Hold for</span>
     </div>
     <div class="stat-item">
         <span class="stat-val" id="statAccuracy">—</span>
@@ -1923,6 +1923,24 @@ let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
 
+// ====== HOLD COUNTDOWN ======
+(function startHoldCountdownLoop() {
+    const el = document.getElementById('statHold');
+    setInterval(() => {
+        if (!el) return;
+        if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+            const remaining = Math.max(0,
+                (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
+            );
+            el.textContent = remaining.toFixed(1) + 's';
+            el.style.color = remaining < 0.3 ? '#22c55e' : '';
+        } else {
+            el.textContent = '—';
+            el.style.color = '';
+        }
+    }, 50);
+})();
+
 let expectedMidiTreble = new Set();
 let expectedMidiBass   = new Set();
 let currentChordNotes = new Set();
@@ -1963,11 +1981,9 @@ function updateStatsBar() {
     const accuracy = statsTotalAttempts > 0
         ? Math.round((statsPerfect / statsTotalAttempts) * 100)
         : 0;
-    const measureEl = document.getElementById('statMeasure');
     const accEl = document.getElementById('statAccuracy');
     const comboEl = document.getElementById('statCombo');
     const perfEl = document.getElementById('statPerfect');
-    if (measureEl) measureEl.textContent = statsMeasure || '—';
     if (accEl) accEl.textContent = statsTotalAttempts > 0 ? accuracy + '%' : '—';
     if (comboEl) comboEl.textContent = '×' + statsCombo;
     if (perfEl) perfEl.textContent = statsPerfect;
