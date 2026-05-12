@@ -1176,18 +1176,16 @@ body.score-mode #panelStatsCard {
     display: block;
 }
 
-/* Note circles inside stats card — score mode only */
-.panel-note-row {
+/* Note circles card — score mode only, narrow standalone column */
+#panelNoteCirclesCard {
     display: none;
-    grid-column: 1 / -1;
-    gap: 6px;
-    margin-top: 2px;
+    flex: 0 0 auto;
+    min-width: unset;
+    width: 90px;
 }
 
-body.score-mode .panel-note-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
+body.score-mode #panelNoteCirclesCard {
+    display: block;
 }
 
 .panel-note-item {
@@ -1198,8 +1196,10 @@ body.score-mode .panel-note-row {
     background: rgba(250,250,250,0.8);
     border: 1px solid rgba(235,50,70,0.1);
     border-radius: 10px;
-    padding: 6px 4px;
-    gap: 4px;
+    padding: 8px 6px;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 body.dark-mode .panel-note-item {
@@ -1208,8 +1208,8 @@ body.dark-mode .panel-note-item {
 }
 
 .panel-note-circle {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: #e5e7eb;
     color: #111;
@@ -1238,6 +1238,7 @@ body.dark-mode .panel-note-item {
     color: #999;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    text-align: center;
 }
 
 /* Hide top progress bar + measure dots in score mode */
@@ -1502,8 +1503,19 @@ body.score-mode #panelProgressWrap {
         <span class="ctrl-stat-label">BPM</span>
       </div>
     </div>
-    <!-- Pressed / Correct note circles — score mode only -->
-    <div class="panel-note-row">
+    <!-- Progress bar — only visible in score mode -->
+    <div id="panelProgressWrap">
+      <div id="panelProgressBar">
+        <div id="panelProgressFill"></div>
+      </div>
+      <div id="panelProgressText">0%</div>
+    </div>
+  </div>
+
+  <!-- NOTE CIRCLES card — score mode only -->
+  <div class="ctrl-card" id="panelNoteCirclesCard">
+    <div class="ctrl-card-title">NOTES</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
       <div class="panel-note-item">
         <div class="panel-note-circle" id="panelPressedCircle"></div>
         <span class="panel-note-circle-label">You Pressed</span>
@@ -1512,13 +1524,6 @@ body.score-mode #panelProgressWrap {
         <div class="panel-note-circle correct" id="panelCorrectCircle"></div>
         <span class="panel-note-circle-label">Correct Note</span>
       </div>
-    </div>
-    <!-- Progress bar — only visible in score mode -->
-    <div id="panelProgressWrap">
-      <div id="panelProgressBar">
-        <div id="panelProgressFill"></div>
-      </div>
-      <div id="panelProgressText">0%</div>
     </div>
   </div>
 
