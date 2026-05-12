@@ -4607,6 +4607,20 @@ function _buildSvgMidiMap() {
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
+            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
+            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
+            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
+            // Bump them all forward to the correct SVG bucket.
+            if (note.duration < 0.1) {
+                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
+                    sheetMeasure += 1;
+                } else if (sheetMeasure === 36) {
+                    // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
+                    // The next SVG bucket is logical 29 (physical 37), not logical 37.
+                    sheetMeasure = 29;
+                }
+            }
+
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
@@ -4614,32 +4628,46 @@ function _buildSvgMidiMap() {
             // the next measure. Nudge sheetMeasure forward so ranks stay aligned.
             // Only apply during the first pass (assignedCount < 2× capacity would
             // fire on the second repeat pass too — cap at exactly bucketCapacity).
-            const isMidiGrace = note.duration < 0.1;
-            let gracePreCorrected = false;
-
-            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
-            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
-            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
-            if (isMidiGrace) {
-                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
-                    sheetMeasure += 1;
-                    gracePreCorrected = true;
-                } else if (sheetMeasure === 36) {
-                    sheetMeasure = 29;
-                    gracePreCorrected = true;
-                }
-            }
-
             const capKey = `${sheetMeasure}|${clef}`;
             const cap    = bucketCapacity[capKey] ?? 0;
             const used   = assignedCount[capKey] ?? 0;
+
+            // Grace-note pre-correction (handles measures 29, 31, 33, 35, etc.):
+            // The MIDI file timestamps some grace notes in measure M-1, but their
+            // SVG notehead sits at the very beginning of measure M (the bucket for
+            // measure M starts with a grace note). In that case the current bucket
+            // does NOT start with a grace note, so assigning here would misalign
+            // every subsequent rank. Detect this and bump forward immediately,
+            // before the bucket-full overflow check runs.
+            const isMidiGrace   = note.duration < 0.1;
+            const thisStartsGrace = !!_bucketFirstIsGrace[capKey];
+            const nextKey         = `${sheetMeasure + 1}|${clef}`;
+            const nextStartsGrace = !!_bucketFirstIsGrace[nextKey];
+            // Grace-note pre-correction pass-guard:
+            // cap===0 means the current bucket is EMPTY for this clef (e.g. measure 30
+            // treble has zero SVG notes — all bass chords). used < 2*cap would be 0 < 0
+            // = false and the correction would never fire. Handle cap===0 specially:
+            // allow the correction on the very first encounter (used===0), and again
+            // on the second repeat pass (used===1 etc.) by using used < max(2*cap, 2).
+            const allowGraceCorrect = (cap === 0)
+                ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
+                : (used < 2 * cap);            // normal bucket: within first pass
+            let gracePreCorrected = false;
+            if (isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
+                const nextCap = bucketCapacity[nextKey] ?? 0;
+                if (nextCap > 0) {
+                    console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
+                    sheetMeasure = sheetMeasure + 1;
+                    gracePreCorrected = true;
+                }
+            }
 
             // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
             // but hasn't yet received second-pass notes (used < 2*cap).
             // On the second repeat pass used >= 2*cap already, so we leave it alone
             // and let the rawRank % bucketSize wrapping handle alignment.
             // Skip if grace pre-correction already bumped this note forward.
-            if (!gracePreCorrected && (cap === 0 ? (isMidiGrace && used < 2) : (used >= cap && used < 2 * cap))) {
+            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
