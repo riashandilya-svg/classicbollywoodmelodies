@@ -1154,6 +1154,54 @@ body.score-mode #hitLine {
     grid-column: 1 / -1;
 }
 
+.ctrl-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.ctrl-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid rgba(235,50,70,0.1);
+    border-radius: 10px;
+    padding: 6px 4px;
+    gap: 2px;
+}
+
+/* BPM spans full width at the bottom */
+.ctrl-stat-item:last-child {
+    grid-column: 1 / -1;
+}
+
+.ctrl-stat-val {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.ctrl-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+body.dark-mode .ctrl-stat-item {
+    background: rgba(30,34,48,0.9);
+    border-color: rgba(255,107,129,0.15);
+}
+
+body.dark-mode .ctrl-stat-val {
+    color: var(--dm-text);
+}
+
 </style>
 </head>
 <body>
@@ -1343,6 +1391,33 @@ body.score-mode #hitLine {
     </div>
   </div>
 
+  <!-- STATS card -->
+  <div class="ctrl-card" id="panelStatsCard">
+    <div class="ctrl-card-title">STATS</div>
+    <div class="ctrl-stats-grid">
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatHold">—</span>
+        <span class="ctrl-stat-label">Hold for</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatAccuracy">—</span>
+        <span class="ctrl-stat-label">Accuracy</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatCombo">×0</span>
+        <span class="ctrl-stat-label">Combo</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatPerfect">0</span>
+        <span class="ctrl-stat-label">Perfect</span>
+      </div>
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatBPM">100</span>
+        <span class="ctrl-stat-label">BPM</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 <!-- ====== END PANEL ====== -->
 
@@ -1513,6 +1588,8 @@ async function loadSongMidi() {
     buildMeasureTimeline(SONG_CONFIG.measures);
     const bpmEl = document.getElementById('statBPM');
     if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
+    const pBpm = document.getElementById('panelStatBPM');
+    if (pBpm) pBpm.textContent = Math.round(60 / secondsPerBeat);
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -1926,18 +2003,21 @@ let expectedMidiNote = null;
 // ====== HOLD COUNTDOWN ======
 (function startHoldCountdownLoop() {
     const el = document.getElementById('statHold');
+    const pel = document.getElementById('panelStatHold');
     setInterval(() => {
-        if (!el) return;
+        let val, color;
         if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
             const remaining = Math.max(0,
                 (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
             );
-            el.textContent = remaining.toFixed(1) + 's';
-            el.style.color = remaining < 0.3 ? '#22c55e' : '';
+            val = remaining.toFixed(1) + 's';
+            color = remaining < 0.3 ? '#22c55e' : '';
         } else {
-            el.textContent = '—';
-            el.style.color = '';
+            val = '—';
+            color = '';
         }
+        if (el)  { el.textContent  = val; el.style.color  = color; }
+        if (pel) { pel.textContent = val; pel.style.color = color; }
     }, 50);
 })();
 
@@ -1987,6 +2067,14 @@ function updateStatsBar() {
     if (accEl) accEl.textContent = statsTotalAttempts > 0 ? accuracy + '%' : '—';
     if (comboEl) comboEl.textContent = '×' + statsCombo;
     if (perfEl) perfEl.textContent = statsPerfect;
+
+    // Mirror into panel stats card
+    const pAcc = document.getElementById('panelStatAccuracy');
+    const pCombo = document.getElementById('panelStatCombo');
+    const pPerf = document.getElementById('panelStatPerfect');
+    if (pAcc)   pAcc.textContent   = statsTotalAttempts > 0 ? accuracy + '%' : '—';
+    if (pCombo) pCombo.textContent = '×' + statsCombo;
+    if (pPerf)  pPerf.textContent  = statsPerfect;
 }
 
 let statsMeasure = '—';
