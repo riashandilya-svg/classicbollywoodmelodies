@@ -380,8 +380,8 @@ body.dark-mode #gameStage {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: min(900px, 96%);
-    margin: 10px auto 6px auto;
+    flex: 1;
+    margin: 0;
     padding: 10px 20px;
     background: rgba(255,255,255,0.7);
     backdrop-filter: blur(16px);
@@ -548,18 +548,20 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
 .music-symbol {
     font-family: "Arial Unicode MS", "Segoe UI Symbol", "Noto Music", serif;
 }
-/* 🎯 Right-side fixed note feedback */
-#sideNoteFeedback {
-    position: fixed;
-    right: 14px;
-    top: 118px; /* sits just below the dark mode toggle (68px + 40px height + 10px gap) */
-    transform: none;
+/* 🎯 Note indicator circles — inline beside stats bar */
+#statsBarRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(960px, 96%);
+    margin: 10px auto 6px auto;
+}
 
+#sideNoteFeedback {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-
-    z-index: 1000;
+    gap: 8px;
+    flex-shrink: 0;
 }
 #freeModeButton.side-floating {
     position: fixed;
@@ -592,31 +594,39 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
 .note-label {
     font-size: 11px;
     font-weight: 600;
-    color: #666;
+    color: #555;
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    background: rgba(255,255,255,0.92);
+    background: rgba(255,255,255,0.94);
     backdrop-filter: blur(6px);
-    border: 1px solid rgba(235,50,70,0.15);
+    border: 1px solid rgba(235,50,70,0.18);
     border-radius: 8px;
-    padding: 3px 8px;
+    padding: 3px 9px;
     position: absolute;
-    right: calc(100% + 8px);
-    top: 50%;
-    transform: translateY(-50%) translateX(6px);
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
     transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+/* Hover: user-triggered reveal */
 .side-note:hover .note-label {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Wrong-note: auto-reveal both labels */
+#sideNoteFeedback.wrong-flash .note-label {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 body.dark-mode .note-label {
-    background: rgba(24,28,37,0.92);
-    border-color: var(--dm-border);
-    color: var(--dm-text);
+    background: rgba(24,28,37,0.94);
+    border-color: rgba(255,107,129,0.25);
+    color: #ccc;
 }
 @media (max-width: 900px) {
 
@@ -995,33 +1005,10 @@ body.dark-mode #viewToggleLabel {
     font-weight: 600;
 }
 
-/* Current note badge — circle above Free Mode button */
-#scoreNoteDisplay {
-    display: none;
-    position: fixed;
-    right: 20px;
-    top: max(70px, calc(50% - 334px));
-
-    width: 64px;
-    height: 64px;
-    padding: 0;
-
-    background: var(--accent-primary);
-    border: none;
-    border-radius: 50%;
-    box-shadow: 0 4px 16px rgba(229,115,115,0.45);
-
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 0;
-
-    z-index: 1002;
-}
-
+/* Current note badge — hidden; replaced by sideNoteFeedback circles */
+#scoreNoteDisplay,
 #scoreNoteDisplay.active {
-    display: flex;
+    display: none !important;
 }
 
 /* Hide the "Play:" label — not needed in compact circle */
@@ -1339,6 +1326,19 @@ body.score-mode #panelProgressWrap {
     <span id="scoreNoteName">—</span>
     <span id="scoreNoteHint" style="font-size:14px;opacity:0.75;"></span>
 </div>
+<!-- Stats Bar + note circles wrapper -->
+<div id="statsBarRow">
+<!-- 🎯 Note indicator circles -->
+<div id="sideNoteFeedback">
+    <div class="side-note">
+        <div class="note-label">You pressed</div>
+        <div id="pressedNoteCircle" class="note-circle"></div>
+    </div>
+    <div class="side-note">
+        <div class="note-label">Correct note</div>
+        <div id="correctNoteCircle" class="note-circle correct"></div>
+    </div>
+</div>
 <!-- Stats Bar -->
 <div id="statsBar">
     <div class="stat-item">
@@ -1362,6 +1362,7 @@ body.score-mode #panelProgressWrap {
         <span>BPM</span>
     </div>
 </div>
+</div><!-- end statsBarRow -->
 
 <!-- Measure Timeline -->
 <div id="measureTimeline"></div>
@@ -1383,19 +1384,7 @@ body.score-mode #panelProgressWrap {
     </div>
 
 <div id="countdownOverlay">3</div>
-<!-- 🎯 Right-side note indicators -->
-<div id="sideNoteFeedback">
 
-    <div class="side-note">
-        <div class="note-label">You pressed</div>
-        <div id="pressedNoteCircle" class="note-circle"></div>
-    </div>
-
-    <div class="side-note">
-        <div class="note-label">Correct note</div>
-        <div id="correctNoteCircle" class="note-circle correct"></div>
-    </div>
-</div>
 <!-- ====== PRACTICE / PLAYBACK / UTILITY PANEL ====== -->
 <div id="controlPanel">
 
@@ -2588,6 +2577,14 @@ document.getElementById('pressedNoteCircle')
 
 document.getElementById('correctNoteCircle').textContent =
     currentTrainingNote;
+
+// Auto-show labels on wrong note
+(function() {
+    const snf = document.getElementById('sideNoteFeedback');
+    snf.classList.add('wrong-flash');
+    clearTimeout(snf._wrongFlashTimer);
+    snf._wrongFlashTimer = setTimeout(() => snf.classList.remove('wrong-flash'), 3000);
+})();
 return;
 }
 
