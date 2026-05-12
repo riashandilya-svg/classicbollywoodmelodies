@@ -4607,6 +4607,13 @@ function _buildSvgMidiMap() {
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
+            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
+            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
+            // Bump them forward so they land in the correct SVG bucket.
+            if (note.duration < 0.1 && (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34)) {
+                sheetMeasure += 1;
+            }
+
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
