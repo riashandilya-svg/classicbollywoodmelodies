@@ -2947,6 +2947,12 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
+    // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
+    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null) {
+        if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
+        if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
+    }
+
     if (visualsPlaying && !scoreModeActive) {
         fallingRectangles = fallingRectangles.filter(rect => {
             const elapsed =
@@ -3304,6 +3310,7 @@ canvas.addEventListener('mouseup', () => {
     freeModeActiveNote = null;
     expectedMidiNote = null;
     expectedMidiTreble.clear();
+    expectedMidiBass.clear();
     return;
 }
 
@@ -3311,6 +3318,8 @@ canvas.addEventListener('mouseup', () => {
 if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     activeMidiNote = null;
     noteHoldStartTime = null;
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
     return;
 }
 
@@ -3318,6 +3327,10 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     const heldTime = performance.now() - noteHoldStartTime;
 
     synth.triggerRelease(getNoteName(note));
+
+    // Always clear highlights immediately on release — spawnTrainingNote re-adds them
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
 
     if (heldTime >= expectedHoldDuration) {
 const feedback = document.getElementById('feedback');
@@ -3455,6 +3468,10 @@ canvas.addEventListener('touchend', (e) => {
         mouseDown = false;
         activeTouches.clear();
 
+        // Always clear highlights immediately — spawnTrainingNote re-adds them
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+
         if (!freeMode && noteHoldStartTime !== null) {
             const heldTime = performance.now() - noteHoldStartTime;
 
@@ -3527,6 +3544,10 @@ canvas.addEventListener('touchcancel', (e) => {
         touchActive = false;
         mouseDown = false;
         activeTouches.clear();
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        noteHoldStartTime = null;
+        activeMidiNote = null;
     }
 }, { passive: false });
 
@@ -4612,6 +4633,10 @@ if (freeMode && note === freeModeActiveNote) {
         if (midiPressedNotes.size > 0) return;
         
         if (noteHoldStartTime === null) return;
+
+        // Always clear highlights immediately on release — spawnTrainingNote re-adds them
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
 
         const heldTime = performance.now() - noteHoldStartTime;
 
