@@ -770,6 +770,17 @@ body.score-mode #feedbackArea {
     display: none !important;
 }
 
+/* Show wrong-note feedback in score mode as a fixed toast above the keyboard */
+body.score-mode #feedbackArea:has(#feedback.wrong) {
+    display: flex !important;
+    position: fixed;
+    bottom: calc(var(--dock-h, 220px) + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    pointer-events: none;
+}
+
 body.score-mode #hitLine {
     display: none !important;
 }
