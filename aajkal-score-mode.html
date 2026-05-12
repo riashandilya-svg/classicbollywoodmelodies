@@ -4577,18 +4577,25 @@ function _buildSvgMidiMap() {
             const capKey = `${sheetMeasure}|${clef}`;
             const cap    = bucketCapacity[capKey] ?? 0;
             const used   = assignedCount[capKey] ?? 0;
-            // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
-            // but hasn't yet received second-pass notes (used < 2*cap).
-            // On the second repeat pass used >= 2*cap already, so we leave it alone
-            // and let the rawRank % bucketSize wrapping handle alignment.
-            if (cap > 0 && used >= cap && used < 2 * cap) {
+            // Measure-boundary overflow: a MIDI note can straddle a barline when its
+            // timestamp fractionally precedes the barline but the SVG places the
+            // notehead in the next measure (classic grace-note case).
+            //
+            // CRITICAL guard: only fire when physMeasure === sheetMeasure, i.e. this
+            // note was NOT remapped by PHYSICAL_TO_LOGICAL.  Repeat-pass notes always
+            // have physMeasure !== sheetMeasure (e.g. physical 37 -> logical 29), so
+            // they are never overflowed — they rely on the % bucketSize wrap instead.
+            // For non-repeated measures physMeasure always equals sheetMeasure, so the
+            // guard is a no-op for them and the capacity check still fires correctly.
+            const rawRankNow = rankCounters[capKey] ?? 0;
+            if (physMeasure === sheetMeasure && cap > 0 && rawRankNow === cap) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
-                    console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
+                    console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} -> sheetMeasure ${sheetMeasure}->${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
                     sheetMeasure = sheetMeasure + 1;
                 }
             }
-            // Always increment assignedCount so second-pass detection works correctly.
+            // Always increment assignedCount (kept for logging/diagnostics).
             const newCapKey = `${sheetMeasure}|${clef}`;
             assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
 
