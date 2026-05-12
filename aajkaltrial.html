@@ -189,10 +189,6 @@ body.dark-mode #bottomDock.score-mode {
   background: rgba(15,17,23,0.97) !important;
 }
 body.dark-mode h1 { color: #f0f0f5; }
-body.dark-mode #viewToggleBar {
-  background: rgba(24,28,37,0.95) !important;
-  border-color: var(--dm-border) !important;
-}
 body.dark-mode .ctrl-speed-row {
   background: rgba(30,34,48,0.9) !important;
   border-color: rgba(255,107,129,0.15) !important;
@@ -826,37 +822,31 @@ body.score-mode #hitLine {
 }
 
 /* ============================
-   SCORE VIEW TOGGLE
+   SCORE VIEW TOGGLE  (now lives inside #brandBar)
    ============================ */
 #viewToggleBar {
-    position: fixed;
-    top: 64px;       /* just below the 56px brand bar */
-    left: 16px;
-    z-index: 9999;
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
 
     display: flex;
     align-items: center;
-    gap: 10px;
-
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(235, 50, 70, 0.18);
-    border-radius: 16px;
-    padding: 8px 14px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    gap: 7px;
 }
 
 #viewToggleBar:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+    /* no-op — hover effect removed now it's inline */
 }
 
 #viewToggleLabel {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-main);
+}
+
+body.dark-mode #viewToggleLabel {
+    color: var(--dm-text);
 }
 
 .toggle-switch {
@@ -1215,6 +1205,17 @@ body.score-mode #panelStatsCard {
 </head>
 <body>
 <div id="brandBar">
+  <!-- Score / Falling-notes toggle — left side -->
+  <div id="viewToggleBar">
+      <span id="viewToggleLabel">Notes</span>
+      <label class="toggle-switch" title="Switch between falling notes and sheet music score">
+          <input type="checkbox" id="scoreModeToggle">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+      </label>
+      <span style="font-size:13px;font-weight:600;color:var(--text-main);">Score</span>
+  </div>
+
   <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html" id="brandLink">
     <span>Ria Om Shandilya</span>
   </a>
@@ -1241,16 +1242,6 @@ body.score-mode #panelStatsCard {
     <span id="trainingProgressText">0%</span>
 </div>
 
-<!-- 🎵 View Toggle: Falling Notes ↔ Score -->
-<div id="viewToggleBar">
-    <span id="viewToggleLabel">Falling Notes</span>
-    <label class="toggle-switch" title="Switch between falling notes and sheet music score">
-        <input type="checkbox" id="scoreModeToggle">
-        <div class="toggle-track"></div>
-        <div class="toggle-thumb"></div>
-    </label>
-    <span style="font-size:15px;font-weight:600;color:var(--text-main);">Score View</span>
-</div>
 
 <!-- 📄 Score View (hidden by default) -->
 <div id="scoreView">
