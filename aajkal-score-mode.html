@@ -4692,13 +4692,31 @@ function _buildSvgMidiMap() {
     assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
-    // Diagnostic: print bucket sizes for measures 28-37
-    for (let dm = 28; dm <= 37; dm++) {
-        const tb = (bucketCapacity[`${dm}|treble`] ?? 0);
-        const bb = (bucketCapacity[`${dm}|bass`] ?? 0);
-        const tg = (_svgBuckets[dm]?.treble?.length > 0) ? !!_svgNoteElements[_svgBuckets[dm].treble[0]].isGrace : false;
-        const bg = (_svgBuckets[dm]?.bass?.length > 0)   ? !!_svgNoteElements[_svgBuckets[dm].bass[0]].isGrace   : false;
-        console.log(`🪣 m${dm}: treble=${tb}${tg?' (grace)':''}, bass=${bb}${bg?' (grace)':''}`);
+    // Diagnostic: print actual barline X positions from SVG for page 1 system 5 (measure 29)
+    const dbgContainer = document.getElementById('scorePage1');
+    if (dbgContainer) {
+        const dbgSvg = dbgContainer.querySelector('svg');
+        if (dbgSvg) {
+            const sys = SVG_PAGE_SYSTEMS[0][4]; // system starting at measure 29
+            // Find all vertical line elements (barlines are thin vertical paths or lines)
+            const allLines = [...dbgSvg.querySelectorAll('path')].filter(p => {
+                const d = p.getAttribute('d') || '';
+                // Vertical thin lines: M x,y V y2 or M x,y L x,y2 with same x
+                const m = d.match(/^M\s*([-\d.]+)[,\s]([-\d.]+)\s*[VL]\s*([-\d.]+)/);
+                if (!m) return false;
+                const x = parseFloat(m[1]), y1 = parseFloat(m[2]), y2 = parseFloat(m[3]);
+                // Must be vertical (L case: x unchanged) and span treble/bass region
+                const inRegion = (y1 >= sys.treble_top - 100 && y2 >= sys.treble_top - 100 &&
+                                  y1 <= sys.bass_bot + 100);
+                return inRegion && Math.abs(x) > 100;
+            });
+            const xs = [...new Set(allLines.map(p => {
+                const d = p.getAttribute('d') || '';
+                const m = d.match(/^M\s*([-\d.]+)/);
+                return m ? Math.round(parseFloat(m[1])) : null;
+            }).filter(Boolean))].sort((a,b)=>a-b);
+            console.log('🔍 SVG barline Xs for system 5 (m29):', JSON.stringify(xs));
+        }
     }
 }
 
