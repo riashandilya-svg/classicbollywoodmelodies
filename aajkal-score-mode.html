@@ -4653,8 +4653,9 @@ function _buildSvgMidiMap() {
             // On the second repeat pass used >= 2*cap already, so we leave it alone
             // and let the rawRank % bucketSize wrapping handle alignment.
             // Skip if grace pre-correction already bumped this note forward.
-            if (!gracePreCorrected && cap > 0 && used >= cap && used < 2 * cap) {
+            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
+                console.log(`🔬 overflow-check [${clef}] m=${sheetMeasure} cap=${cap} used=${used} nextCap=${nextCap} grace=${gracePreCorrected} midi=${note.midi} dur=${note.duration.toFixed(3)}`);
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
                     sheetMeasure = sheetMeasure + 1;
