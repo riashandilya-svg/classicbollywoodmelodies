@@ -1199,17 +1199,79 @@ body.score-mode #panelStatsCard {
     display: block;
 }
 
+/* Note circles inside stats card — score mode only */
+.panel-note-row {
+    display: none;
+    grid-column: 1 / -1;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+body.score-mode .panel-note-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.panel-note-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid rgba(235,50,70,0.1);
+    border-radius: 10px;
+    padding: 6px 4px;
+    gap: 4px;
+}
+
+body.dark-mode .panel-note-item {
+    background: rgba(30,34,48,0.9);
+    border-color: rgba(255,107,129,0.15);
+}
+
+.panel-note-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #111;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background 0.2s, color 0.2s;
+}
+
+.panel-note-circle.correct {
+    background: #E57373;
+    color: white;
+}
+
+.panel-note-circle.wrong {
+    background: #EF4444;
+    color: white;
+}
+
+.panel-note-circle-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 /* Hide top progress bar + measure dots in score mode */
 body.score-mode #trainingProgress,
 body.score-mode #measureTimeline {
     display: none !important;
 }
 
-/* In score mode, move "You pressed / Correct note" above the fixed piano dock */
+/* In score mode, hide the floating side note feedback — circles live in the stats card instead */
 body.score-mode #sideNoteFeedback {
-    top: auto;
-    bottom: 400px; /* sits above the fixed keyboard strip */
-    transform: none;
+    display: none !important;
 }
 
 /* In-card progress bar (score mode stats card) */
@@ -1461,6 +1523,17 @@ body.score-mode #panelProgressWrap {
       <div class="ctrl-stat-item">
         <span class="ctrl-stat-val" id="panelStatBPM">100</span>
         <span class="ctrl-stat-label">BPM</span>
+      </div>
+    </div>
+    <!-- Pressed / Correct note circles — score mode only -->
+    <div class="panel-note-row">
+      <div class="panel-note-item">
+        <div class="panel-note-circle" id="panelPressedCircle"></div>
+        <span class="panel-note-circle-label">You Pressed</span>
+      </div>
+      <div class="panel-note-item">
+        <div class="panel-note-circle correct" id="panelCorrectCircle"></div>
+        <span class="panel-note-circle-label">Correct Note</span>
       </div>
     </div>
     <!-- Progress bar — only visible in score mode -->
@@ -4712,6 +4785,31 @@ function syncHandBtns() {
     document.getElementById('handBothBtn').classList.toggle('active', val === 'both');
     document.getElementById('handRightBtn').classList.toggle('active', val === 'treble');
 }
+
+// Mirror pressedNoteCircle / correctNoteCircle into the stats-card panel versions
+function syncPanelNoteCircles() {
+    const src  = document.getElementById('pressedNoteCircle');
+    const dst  = document.getElementById('panelPressedCircle');
+    if (src && dst) {
+        dst.textContent = src.textContent;
+        dst.className   = src.className.replace('note-circle', 'panel-note-circle');
+    }
+    const srcC = document.getElementById('correctNoteCircle');
+    const dstC = document.getElementById('panelCorrectCircle');
+    if (srcC && dstC) {
+        dstC.textContent = srcC.textContent;
+    }
+}
+
+// Observe both source circles and keep panel in sync
+(function() {
+    const obs = new MutationObserver(syncPanelNoteCircles);
+    const cfg = { childList: true, characterData: true, subtree: true, attributes: true };
+    const p = document.getElementById('pressedNoteCircle');
+    const c = document.getElementById('correctNoteCircle');
+    if (p) obs.observe(p, cfg);
+    if (c) obs.observe(c, cfg);
+})();
 
 // Mirror speed display into panel
 (function() {
