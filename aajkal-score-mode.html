@@ -3952,23 +3952,37 @@ sectionEndTime   = physicalSeq.length * secondsPerMeasure;
 
 practiceNotes = allMidiNotes
     .map(note => {
-        const p = getMeasureFromTime(note.time);
+        // Grace notes (duration < 0.1s) have MIDI times placed just before the
+        // downbeat they visually belong to.  If a grace note sits within 0.1s
+        // before a measure boundary, snap its effective physical measure forward
+        // so it is (a) included when that next measure is selected, and (b) given
+        // the correct logicalMeasure for SVG highlighting.
+        const isGracePractice = note.duration < 0.1;
+        let p = getMeasureFromTime(note.time);
         if (p === null) return null;
-        
-        if (!allowedPhysical.has(p)) return null;
-if (!allowedPhysical.has(p)) {
+        if (isGracePractice) {
+            const nextBoundary = MEASURE_TIME_MAP[p]?.end;
+            if (nextBoundary !== undefined && (nextBoundary - note.time) < 0.1) {
+                const snapped = getMeasureFromTime(nextBoundary + 1e-6);
+                if (snapped !== null) p = snapped;
+            }
+        }
+
+        if (!allowedPhysical.has(p)) {
             if (note.time >= 48 && note.time <= 54) {
                 console.log("❌ REJECTED note at time", note.time.toFixed(2), "in physical measure", p, "- not in allowed set");
             }
             return null;
         }
-const mapEntry = MEASURE_TIME_MAP[p];
-if (!mapEntry) return null;   // skip note — MIDI hasn't loaded yet or measure out of range
-const measureStart = mapEntry.start;
-const measureEnd   = mapEntry.end;
-
-const TOLERANCE = 0.001;
-if (note.time < measureStart || note.time >= measureEnd + TOLERANCE) return null;
+        const mapEntry = MEASURE_TIME_MAP[p];
+        if (!mapEntry) return null;   // skip note — MIDI hasn't loaded yet or measure out of range
+        const measureEnd = mapEntry.end;
+        // For regular notes: reject anything outside the measure window.
+        // For grace notes: they may have been snapped forward, so their note.time
+        // can legitimately be before mapEntry.start — only reject if beyond the end.
+        const TOLERANCE = 0.001;
+        if (!isGracePractice && note.time < mapEntry.start) return null;
+        if (note.time >= measureEnd + TOLERANCE) return null;
         const isTreble = note.track === TREBLE;
         const isBass   = note.track === BASS;
         if (selectedHand !== "both") {
@@ -4546,8 +4560,21 @@ function _buildSvgMidiMap() {
             // noteheads, so counting them here shifts every subsequent rank by +1.
             if (_tiedNoteKeys.has(mk)) continue;
 
-            const physMeasure = getMeasureFromTime(note.time);
+            // Grace notes (duration < 0.1s) are placed in MIDI just before the beat
+            // they visually belong to.  If a grace note's time falls within 0.1s
+            // before a measure boundary, snap it forward into the next measure so
+            // that the rank map's sheet_measure matches the SVG bucket (which places
+            // the notehead visually in the measure it belongs to).
+            const isGraceRank = note.duration < 0.1;
+            let physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
+            if (isGraceRank) {
+                const nextBoundary = MEASURE_TIME_MAP[physMeasure]?.end;
+                if (nextBoundary !== undefined && (nextBoundary - note.time) < 0.1) {
+                    const snapped = getMeasureFromTime(nextBoundary + 1e-6);
+                    if (snapped !== null) physMeasure = snapped;
+                }
+            }
             const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
