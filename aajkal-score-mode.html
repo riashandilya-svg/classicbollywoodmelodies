@@ -3950,33 +3950,47 @@ console.log("Physical measures used:", physicalSeq.join(","));
 sectionStartTime = 0;
 sectionEndTime   = physicalSeq.length * secondsPerMeasure;
 
+// Build a set of allowed logical measures so overflow-corrected notes can be rescued.
+const allowedLogical = new Set(physicalSeq.map(q => PHYSICAL_TO_LOGICAL[q] ?? q));
+
 practiceNotes = allMidiNotes
     .map(note => {
-        const p = getMeasureFromTime(note.time);
+        let p = getMeasureFromTime(note.time);
         if (p === null) return null;
 
-        const mapEntryP = MEASURE_TIME_MAP[p];
-        if (!mapEntryP) return null;
-        const rawOffset = note.time - mapEntryP.start;
-
-        // Grace-note-before-barline detection:
-        // A MIDI note whose time lands in measure p but whose SVG notehead visually
-        // sits at the START of measure p+1 (because MuseScore exports grace notes
-        // fractionally before the barline). Detected when offset > 90% of a measure.
-        const isGraceBeforeBarline = rawOffset > secondsPerMeasure * 0.9;
-
-        // Section membership: include the note if its MIDI measure is allowed,
-        // OR if it's a barline-pileup grace note whose visual measure (p+1) is allowed.
-        const inSectionDirect  = allowedPhysical.has(p);
-        const inSectionAsGrace = isGraceBeforeBarline && allowedPhysical.has(p + 1);
-        if (!inSectionDirect && !inSectionAsGrace) return null;
-
-        // Strict time-boundary check (only for non-grace notes in their own measure).
-        const TOLERANCE = 0.001;
-        if (!isGraceBeforeBarline) {
-            if (note.time < mapEntryP.start || note.time >= mapEntryP.end + TOLERANCE) return null;
+        let overflowCorrected = false;
+        if (!allowedPhysical.has(p)) {
+            // The raw MIDI time landed in a measure just outside the selection.
+            // Check whether the rank-map overflow correction moved it into an
+            // allowed measure (classic grace-note-before-barline case).
+            const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+            const entry = _midiRankMap.get(mk);
+            if (entry && allowedLogical.has(entry.sheet_measure)) {
+                const correctedPhys = physicalSeq.find(
+                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
+                );
+                if (correctedPhys !== undefined) {
+                    console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
+                    p = correctedPhys;
+                    overflowCorrected = true;
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
         }
 
+const mapEntry = MEASURE_TIME_MAP[p];
+if (!mapEntry) return null;   // skip note — MIDI hasn't loaded yet or measure out of range
+const measureStart = mapEntry.start;
+const measureEnd   = mapEntry.end;
+
+const TOLERANCE = 0.001;
+// Overflow-corrected notes (grace notes whose MIDI time sits fractionally before
+// the barline) are by definition outside the corrected measure's time window,
+// so skip the time-range guard for them.
+if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd + TOLERANCE)) return null;
         const isTreble = note.track === TREBLE;
         const isBass   = note.track === BASS;
         if (selectedHand !== "both") {
@@ -3984,42 +3998,22 @@ practiceNotes = allMidiNotes
             if (!want) return null;
         }
 
-        // Determine the effective section-slot measure for playTime / logicalMeasure.
-        // For a barline-pileup grace note, it visually opens measure p+1.
-        // Use p+1 if it's in the section; otherwise the grace note opens the very
-        // first slot of the current section (e.g. selecting 25–25: grace note at
-        // end of MIDI measure 25 belongs visually to measure 26, but measure 26 is
-        // not in the section — so it plays at the very start of the section).
-        let effectiveP;
-        if (isGraceBeforeBarline && allowedPhysical.has(p + 1)) {
-            effectiveP = p + 1;
-        } else if (isGraceBeforeBarline) {
-            // p+1 not in section — pin to the first physical measure of the section
-            effectiveP = physicalSeq[0];
-        } else {
-            effectiveP = p;
-        }
+        const idx = physicalIndex.get(p);
+        const offsetInMeasure = Math.max(0, note.time - MEASURE_TIME_MAP[p].start);
 
-        const idx = physicalIndex.get(effectiveP);
-
-        let playTime;
-        if (isGraceBeforeBarline) {
-            // Play just before beat 1 of the effective slot.
-            playTime = (idx * secondsPerMeasure) - 0.001;
-        } else {
-            playTime = (idx * secondsPerMeasure) + Math.max(0, rawOffset);
-        }
+        const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
         const logicalMeasure =
             skipSheetRepeats
                 ? (startLogical + idx)
-                : (PHYSICAL_TO_LOGICAL[effectiveP] ?? null);
+                : (PHYSICAL_TO_LOGICAL[p] ?? null);
+
 
         return {
             ...note,
             playTime,
             logicalMeasure,
-            physicalMeasure: effectiveP,
+            physicalMeasure: p,
         };
     })
     .filter(Boolean);
