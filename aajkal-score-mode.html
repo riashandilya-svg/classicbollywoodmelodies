@@ -4386,6 +4386,11 @@ let _lastPannedMeasure  = -1;
 // _svgBuckets[sheet_measure][clef] = ordered array of indices into _svgNoteElements
 let _svgBuckets = {};
 
+// _bucketFirstIsGrace[`${measure}|${clef}`] = true if that bucket's first (lowest-tx) note is a grace note.
+// Used in assignRanks to detect MIDI grace notes placed by the MIDI file in the preceding measure
+// but whose SVG notehead sits at the start of the next measure (e.g. measures 29, 31, 33, 35).
+let _bucketFirstIsGrace = {};
+
 // _midiRankMap: for each MIDI note (keyed by time+midi+track), stores its rank
 // within its (sheet_measure, clef) bucket so we can do an O(1) lookup.
 // Built in _buildSvgMidiMap() alongside the SVG index.
@@ -4431,6 +4436,7 @@ const SVG_PAGE_SYSTEMS = [
 function _buildSvgNoteIndex() {
     _svgNoteElements    = [];
     _svgBuckets         = {};
+    _bucketFirstIsGrace = {};
     _midiRankMap        = new Map();
     _currentHighlightEl = null;
 
@@ -4544,15 +4550,14 @@ function _buildSvgNoteIndex() {
         }
     }
 
-    // Build a lookup: does a given (sheet_measure, clef) bucket START with a grace note?
-    // This is used in assignRanks to detect when a MIDI grace note at the tail of
-    // measure M actually belongs in measure M+1's SVG bucket (the "leading grace note" case).
-    _svgBucketStartsWithGrace = {};
+    // Build a lookup: does each measure|clef bucket START with a grace note?
+    // Used by assignRanks to detect MIDI grace notes that belong to the next measure.
+    _bucketFirstIsGrace = {};
     for (const [m, clefs] of Object.entries(_svgBuckets)) {
         for (const clef of ['treble', 'bass']) {
-            const bucket = clefs[clef];
-            if (bucket && bucket.length > 0) {
-                _svgBucketStartsWithGrace[`${m}|${clef}`] = _svgNoteElements[bucket[0]].isGrace;
+            const arr = clefs[clef] || [];
+            if (arr.length > 0) {
+                _bucketFirstIsGrace[`${m}|${clef}`] = !!_svgNoteElements[arr[0]].isGrace;
             }
         }
     }
@@ -4612,11 +4617,34 @@ function _buildSvgMidiMap() {
             const capKey = `${sheetMeasure}|${clef}`;
             const cap    = bucketCapacity[capKey] ?? 0;
             const used   = assignedCount[capKey] ?? 0;
+
+            // Grace-note pre-correction (handles measures 29, 31, 33, 35, etc.):
+            // The MIDI file timestamps some grace notes in measure M-1, but their
+            // SVG notehead sits at the very beginning of measure M (the bucket for
+            // measure M starts with a grace note). In that case the current bucket
+            // does NOT start with a grace note, so assigning here would misalign
+            // every subsequent rank. Detect this and bump forward immediately,
+            // before the bucket-full overflow check runs.
+            const isMidiGrace   = note.duration < 0.1;
+            const thisStartsGrace = !!_bucketFirstIsGrace[capKey];
+            const nextKey         = `${sheetMeasure + 1}|${clef}`;
+            const nextStartsGrace = !!_bucketFirstIsGrace[nextKey];
+            let gracePreCorrected = false;
+            if (isMidiGrace && !thisStartsGrace && nextStartsGrace && used < 2 * cap) {
+                const nextCap = bucketCapacity[nextKey] ?? 0;
+                if (nextCap > 0) {
+                    console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
+                    sheetMeasure = sheetMeasure + 1;
+                    gracePreCorrected = true;
+                }
+            }
+
             // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
             // but hasn't yet received second-pass notes (used < 2*cap).
             // On the second repeat pass used >= 2*cap already, so we leave it alone
             // and let the rawRank % bucketSize wrapping handle alignment.
-            if (cap > 0 && used >= cap && used < 2 * cap) {
+            // Skip if grace pre-correction already bumped this note forward.
+            if (!gracePreCorrected && cap > 0 && used >= cap && used < 2 * cap) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
