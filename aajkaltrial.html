@@ -558,10 +558,14 @@ body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
 }
 
 #sideNoteFeedback {
-    display: flex;
-    flex-direction: column;
+    display: none; /* hidden in falling-notes mode */
+    flex-direction: row;
     gap: 8px;
     flex-shrink: 0;
+}
+
+body.score-mode #sideNoteFeedback {
+    display: flex; /* only visible in score mode */
 }
 #freeModeButton.side-floating {
     position: fixed;
