@@ -1073,49 +1073,35 @@ body.dark-mode.score-mode #scoreObj {
     animation-delay: 0.15s;
 }
 
-/* PRACTICE card spans both rows in column 1 */
-#controlPanel > .ctrl-card:nth-child(1) {
-    grid-column: 1;
-    grid-row: 1 / 3;
+/* Grid placement by ID — reliable regardless of DOM order */
+#panelPracticeCard  { grid-column: 1; grid-row: 1 / 3; }
+#panelPlaybackCard  { grid-column: 2; grid-row: 1; }
+#panelUtilityCard   { grid-column: 3; grid-row: 1; }
+#panelFeedbackCard  { grid-column: 2 / 4; grid-row: 2; }
+
+/* STATS + NOTES cards hidden in normal mode */
+#panelStatsCard,
+#panelNoteCirclesCard {
+    display: none;
 }
 
-/* PLAYBACK card: row 1, col 2 */
-#controlPanel > .ctrl-card:nth-child(2) {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-/* UTILITY card: row 1, col 3 */
-#controlPanel > .ctrl-card:nth-child(3) {
-    grid-column: 3;
-    grid-row: 1;
-}
-
-/* FEEDBACK card: row 2, spans col 2–3 (the gap under Playback + Utility) */
+/* Feedback card: transparent shell, just holds the bubble */
 #panelFeedbackCard {
-    grid-column: 2 / 4;
-    grid-row: 2;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 44px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    padding: 6px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
 #panelFeedbackCard:hover {
-    transform: none;
-    box-shadow: none;
-}
-
-/* STATS + NOTES cards: only visible in score mode — push them out of normal grid flow */
-#panelStatsCard,
-#panelNoteCirclesCard {
-    display: none;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 /* In score mode: stretch panel wider and revert to flex for all cards */
@@ -1580,7 +1566,7 @@ body.score-mode #panelProgressWrap {
 <div id="controlPanel">
 
   <!-- PRACTICE card -->
-  <div class="ctrl-card">
+  <div class="ctrl-card" id="panelPracticeCard">
     <div class="ctrl-card-title">PRACTICE</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" id="handLeftBtn" onclick="document.getElementById('handSelect').value='bass'; syncHandBtns()">✋ Left</button>
@@ -1606,7 +1592,7 @@ body.score-mode #panelProgressWrap {
   </div>
 
   <!-- PLAYBACK card -->
-  <div class="ctrl-card">
+  <div class="ctrl-card" id="panelPlaybackCard">
     <div class="ctrl-card-title">PLAYBACK</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
@@ -1625,7 +1611,7 @@ body.score-mode #panelProgressWrap {
   </div>
 
   <!-- UTILITY card -->
-  <div class="ctrl-card">
+  <div class="ctrl-card" id="panelUtilityCard">
     <div class="ctrl-card-title">UTILITY</div>
     <div class="ctrl-grid-2">
       <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
@@ -1640,6 +1626,11 @@ body.score-mode #panelProgressWrap {
       </label>
       <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
     </div>
+  </div>
+
+  <!-- FEEDBACK card — fills gap under Playback + Utility via grid placement -->
+  <div class="ctrl-card" id="panelFeedbackCard">
+    <div id="panelFeedbackBubble"></div>
   </div>
 
   <!-- STATS card -->
@@ -1691,10 +1682,6 @@ body.score-mode #panelProgressWrap {
     </div>
   </div>
 
-  <!-- FEEDBACK card — fills the gap under Playback + Utility (row 2, col 2-3) -->
-  <div class="ctrl-card" id="panelFeedbackCard">
-    <div id="panelFeedbackBubble"></div>
-  </div>
 
 </div>
 <!-- ====== END PANEL ====== -->
