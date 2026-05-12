@@ -4538,6 +4538,23 @@ function _buildSvgMidiMap() {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
+    // Pre-compute how many SVG noteheads each measure+clef bucket holds for one pass.
+    // For repeated sections the MIDI sends notes twice but the SVG only has them once,
+    // so the % bucketSize wrapping handles the second pass. What we need here is the
+    // raw (single-pass) capacity of each bucket.
+    const bucketCapacity = {};
+    for (const [m, clefs] of Object.entries(_svgBuckets)) {
+        for (const c of ['treble', 'bass']) {
+            bucketCapacity[`${m}|${c}`] = (clefs[c] || []).length;
+        }
+    }
+
+    // assignedCount tracks how many MIDI notes have been assigned to each measure|clef
+    // within the current (first) pass. Once it hits bucketCapacity, any further note
+    // whose MIDI time still lands in that measure is a boundary-straddle and belongs
+    // to the next measure (classic grace-note-before-barline case).
+    const assignedCount = {};
+
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
@@ -4550,24 +4567,30 @@ function _buildSvgMidiMap() {
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
-            // Grace note measure-boundary correction:
-            // A grace note's MIDI time can fall fractionally before a barline, causing
-            // getMeasureFromTime to assign it to measure M while the SVG places it
-            // visually at the start of measure M+1. Detect this by checking whether
-            // bucket[M] contains any SVG grace noteheads for this clef. If it doesn't
-            // but bucket[M+1] does, the grace note belongs to M+1.
-            if (note.duration < 0.1) {
-                const currentBucketGrace = (_svgBuckets[sheetMeasure]?.[clef] || [])
-                    .some(idx => _svgNoteElements[idx]?.isGrace);
-                const nextBucketGrace    = (_svgBuckets[sheetMeasure + 1]?.[clef] || [])
-                    .some(idx => _svgNoteElements[idx]?.isGrace);
-                if (!currentBucketGrace && nextBucketGrace) {
-                    console.log(`🎵 GRACE NOTE [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → physMeasure=${physMeasure} sheetMeasure corrected ${sheetMeasure}→${sheetMeasure + 1} (no grace in current bucket, grace in next)`);
+            // Measure-boundary overflow correction:
+            // If the current measure's SVG bucket is already at capacity (all its
+            // noteheads have been claimed), this MIDI note's timestamp must have
+            // landed fractionally before the barline while the SVG places it in
+            // the next measure. Nudge sheetMeasure forward so ranks stay aligned.
+            // Only apply during the first pass (assignedCount < 2× capacity would
+            // fire on the second repeat pass too — cap at exactly bucketCapacity).
+            const capKey = `${sheetMeasure}|${clef}`;
+            const cap    = bucketCapacity[capKey] ?? 0;
+            const used   = assignedCount[capKey] ?? 0;
+            // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
+            // but hasn't yet received second-pass notes (used < 2*cap).
+            // On the second repeat pass used >= 2*cap already, so we leave it alone
+            // and let the rawRank % bucketSize wrapping handle alignment.
+            if (cap > 0 && used >= cap && used < 2 * cap) {
+                const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
+                if (nextCap > 0) {
+                    console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
                     sheetMeasure = sheetMeasure + 1;
-                } else {
-                    console.log(`🎵 GRACE NOTE [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → physMeasure=${physMeasure} sheetMeasure=${sheetMeasure} (kept, currentGrace=${currentBucketGrace} nextGrace=${nextBucketGrace})`);
                 }
             }
+            // Always increment assignedCount so second-pass detection works correctly.
+            const newCapKey = `${sheetMeasure}|${clef}`;
+            assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
