@@ -1983,14 +1983,22 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
     }
   }
   else {
+    // First pass: add physical measures for the user's selection (up to logical 36)
     for (let l = startLogical; l <= Math.min(36, endLogical); l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
-    
-    for (let l = 29; l <= 36; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalSecond(l));
+
+    // Second pass (repeat): only add if the selection spans measures inside the
+    // repeated section (29-36). The repeat loops back from physical 37-44 → logical 29-36.
+    // Only include the repeat when startLogical <= 29 (selection starts at or before the
+    // repeat-start barline), meaning the user wants to practice the repeated section in full.
+    // Selecting a subset like 35-35 should NOT pull in the whole repeat.
+    if (startLogical <= 29) {
+      for (let l = 29; l <= Math.min(36, endLogical); l++) {
+        logicalSeq.push(l);
+        seq.push(logicalToPhysicalSecond(l));
+      }
     }
 
     if (endLogical > 36) {
@@ -4151,23 +4159,17 @@ practiceNotes.sort((a, b) => {
 });
 
 // ── Remove wrap-around duplicates ──────────────────────────────────────────
-// The rank map uses rawRank % bucketSize to re-use SVG slots for the second
-// pass of a repeated section. But when the user selects only a single pass
-// (e.g. just measure 35), extra MIDI notes whose rawRank >= bucketSize would
-// wrap back to rank 0 and re-highlight the grace note a second time.
-// Drop any note whose rank entry shows rawRank >= bucketSize — these are
-// second-pass / overflow MIDI notes that have no unique SVG slot in this pass.
+// rawRank >= bucketSize means the note belongs to a second pass of a repeated
+// section and would wrap (rank = rawRank % bucketSize) back to an already-used
+// SVG slot. Drop these so the highlight never cycles back to the grace note.
 practiceNotes = practiceNotes.filter(note => {
+    if (note.isOverflowGrace) return true; // always keep rescued grace notes
     const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     const entry = _midiRankMap.get(mk);
-    // Keep notes with no rank entry, notes with bucketSize 0, and explicitly-rescued
-    // overflow grace notes (they must always be played regardless of rank wrapping).
-    if (!entry || entry.bucketSize === 0 || note.isOverflowGrace) return true;
-    // Drop if rawRank >= bucketSize: this note's highlight would wrap to an already-
-    // used SVG slot (rank = rawRank % bucketSize), causing a false re-highlight.
+    if (!entry || entry.bucketSize === 0) return true; // no rank info → keep
     if (entry.rawRank >= entry.bucketSize) {
-        console.log(`\u1f6ab Drop wrap-around: midi=${note.midi} t=${note.time.toFixed(4)} sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`);
-        dbg(`\u1f6ab DROP wrap midi=${note.midi} t=${note.time.toFixed(3)}s sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`, 'dw');
+        console.log(`🚫 Drop wrap-around: midi=${note.midi} t=${note.time.toFixed(4)} sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`);
+        dbg(`🚫 DROP wrap midi=${note.midi} t=${note.time.toFixed(3)}s sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`, 'dw');
         return false;
     }
     return true;
@@ -4882,9 +4884,7 @@ if (nextCap > 0) {
             const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
-            // Store rawRank too so practiceNotes filtering can detect second-pass
-            // wrap-around notes (rawRank >= bucketSize) and exclude them when the
-            // user has only selected a single pass through the section.
+            // Store rawRank+bucketSize so practiceNotes filtering can detect wrap-around notes
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank, rawRank, bucketSize });
         }
     }
