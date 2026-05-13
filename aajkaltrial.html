@@ -3011,7 +3011,7 @@ function spawnTrainingNote(noteObj) {
     }
 }
 
-function playMeasurePreview(startTime, clef) {
+function playMeasurePreview(startTime, clef, isLoopRestart = false) {
     speedLocked = true;
     ensureSynth();
     hardStopUserNote();
@@ -3031,7 +3031,9 @@ feedback.classList.add('show');
 const sectionNotes = practiceNotes.filter(note => {
     const isTreble = note.track === TREBLE;
     const isBass   = note.track === BASS;
-
+    // On loop restarts, exclude overflow grace notes (pre-barline pickups from the
+    // preceding measure) — they belong to the very first play only.
+    if (isLoopRestart && note.isOverflowGrace) return false;
     return (
         clef === 'both' ||
         (clef === 'treble' && isTreble) ||
@@ -3185,21 +3187,21 @@ function spawnNextValidNote() {
     }
 
     if (loopEnabled) {
-        // On loop restart, skip any overflow-rescued grace notes with playTime < 0.
-        // These are pickup grace notes whose MIDI timestamp sits in the preceding
-        // measure; they play correctly on the first pass but should not cause the
-        // loop to appear to "go back" before the measure boundary on repeat.
+        // On loop restart, skip overflow-rescued grace notes (isOverflowGrace=true).
+        // These are pickup grace notes whose MIDI timestamp belongs to the preceding
+        // measure; on a clean loop restart the measure should begin from its first
+        // true note, not from a pre-barline pickup that already played at the start.
         let loopStartIndex = 0;
         while (
             loopStartIndex < practiceNotes.length &&
-            (practiceNotes[loopStartIndex].playTime ?? 0) < 0
+            practiceNotes[loopStartIndex].isOverflowGrace
         ) {
             loopStartIndex++;
         }
         trainingIndex = loopStartIndex;
         document.getElementById('feedback').textContent = 'Looping section…';
         setTimeout(() => {
-            playMeasurePreview(sectionStartTime, clefMode);
+            playMeasurePreview(sectionStartTime, clefMode, true);
         }, 600);
         return;
     }
@@ -4114,10 +4116,11 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Give them a tiny pre-measure offset (-0.001s) so they sort just before
         // the measure's main notes and are always a separate step.
         const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
-        // Overflow-corrected grace notes get a playTime 0.015s BEFORE the measure start
-        // so they sort before the main notes AND are outside the 0.01s chord-grouping
-        // window used in spawnTrainingNote's lookahead (which uses a < 0.01s threshold).
-        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.015 : Math.max(0, rawOffset);
+        // Overflow-corrected grace notes whose MIDI time sits before the measure boundary
+        // get playTime clamped to 0 (the measure's start). A flag marks them so the sort
+        // below can place them before any other note at playTime=0.
+        const isOverflowGrace = overflowCorrected && rawOffset < 0;
+        const offsetInMeasure = isOverflowGrace ? 0 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -4132,11 +4135,19 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
             playTime,
             logicalMeasure,
             physicalMeasure: p,
+            isOverflowGrace,
         };
     })
     .filter(Boolean);
 
-practiceNotes.sort((a, b) => a.playTime - b.playTime);
+practiceNotes.sort((a, b) => {
+    const dt = a.playTime - b.playTime;
+    if (dt !== 0) return dt;
+    // At equal playTime, overflow grace notes come first
+    if (a.isOverflowGrace && !b.isOverflowGrace) return -1;
+    if (!a.isOverflowGrace && b.isOverflowGrace) return 1;
+    return 0;
+});
 
 // ── DEBUG: dump sorted practiceNotes ────────────────────────────────────────
 dbg('── Sorted practiceNotes ──', 'dh');
