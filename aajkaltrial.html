@@ -4968,6 +4968,8 @@ async function renderAllScorePages() {
             svgEl.style.display = 'block';
             svgEl.removeAttribute('width');
             svgEl.removeAttribute('height');
+            // Remove all <title> elements so browsers don't show filename tooltips on hover
+            svgEl.querySelectorAll('title').forEach(t => t.remove());
         }
     }
     // Build the full SVG↔MIDI map across all pages
