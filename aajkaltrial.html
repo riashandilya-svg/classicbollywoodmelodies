@@ -2960,6 +2960,7 @@ function spawnTrainingNote(noteObj) {
         });
     }
 
+    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
@@ -4034,6 +4035,15 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
 
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
+// DEBUG: log every practiceNote for measure 35 analysis
+console.group('🔬 practiceNotes dump (all notes):');
+practiceNotes.forEach((n, i) => {
+    const mk = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+    const rankEntry = _midiRankMap.get(mk);
+    console.log(`[${i}] midi=${n.midi} track=${n.track} time=${n.time.toFixed(4)} playTime=${(n.playTime??n.time).toFixed(4)} dur=${n.duration.toFixed(3)} physMeasure=${n.physicalMeasure} logMeasure=${n.logicalMeasure} svgSheet=${rankEntry?.sheet_measure} rank=${rankEntry?.rank}`);
+});
+console.groupEnd();
+
 // scoreNoteOffset no longer used for highlighting — kept at 0
 scoreNoteOffset = 0;
 
@@ -4830,6 +4840,7 @@ function onTrainingNoteSpawned(noteObj) {
     const simultaneousNotes = practiceNotes.filter(n =>
         Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
     );
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
 
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
@@ -4838,6 +4849,7 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
+        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
