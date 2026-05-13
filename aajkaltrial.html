@@ -4599,6 +4599,19 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
+    // DEBUG: dump SVG buckets 34-36
+    for (const m of [34,35,36]) {
+        for (const c of ["treble","bass"]) {
+            const bucket = _svgBuckets[m]?.[c] || [];
+            if (!bucket.length) continue;
+            const items = bucket.map((idx,r) => {
+                const n = _svgNoteElements[idx];
+                return "rank"+r+":tx="+n.tx.toFixed(0)+" midi_ty="+n.ty.toFixed(0)+" grace="+n.isGrace;
+            }).join("  ");
+            console.log("🪣 SVG bucket m="+m+" "+c+" ("+bucket.length+" notes): "+items);
+        }
+    }
+
     const rankCounters = {};
 
     function midiKeyFor(note) {
