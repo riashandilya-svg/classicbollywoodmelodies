@@ -2960,7 +2960,6 @@ function spawnTrainingNote(noteObj) {
         });
     }
 
-    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
@@ -4038,15 +4037,6 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
 
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
-// DEBUG: log every practiceNote for measure 35 analysis
-console.group('🔬 practiceNotes dump (all notes):');
-practiceNotes.forEach((n, i) => {
-    const mk = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
-    const rankEntry = _midiRankMap.get(mk);
-    console.log(`[${i}] midi=${n.midi} track=${n.track} time=${n.time.toFixed(4)} playTime=${(n.playTime??n.time).toFixed(4)} dur=${n.duration.toFixed(3)} physMeasure=${n.physicalMeasure} logMeasure=${n.logicalMeasure} svgSheet=${rankEntry?.sheet_measure} rank=${rankEntry?.rank}`);
-});
-console.groupEnd();
-
 // scoreNoteOffset no longer used for highlighting — kept at 0
 scoreNoteOffset = 0;
 
@@ -4599,18 +4589,7 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // DEBUG: dump SVG buckets 34-36
-    for (const m of [34,35,36]) {
-        for (const c of ["treble","bass"]) {
-            const bucket = _svgBuckets[m]?.[c] || [];
-            if (!bucket.length) continue;
-            const items = bucket.map((idx,r) => {
-                const n = _svgNoteElements[idx];
-                return "rank"+r+":tx="+n.tx.toFixed(0)+" midi_ty="+n.ty.toFixed(0)+" grace="+n.isGrace;
-            }).join("  ");
-            console.log("🪣 SVG bucket m="+m+" "+c+" ("+bucket.length+" notes): "+items);
-        }
-    }
+
 
     const rankCounters = {};
 
@@ -4727,18 +4706,36 @@ if (nextCap > 0) {
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
 
             // Raw rank keeps incrementing across both passes of a repeated section.
-            // Wrap it by the SVG bucket size so that repeat-pass notes (e.g. physical
-            // measures 37-44 which map to the same logical measures 29-36 as the first
-            // pass) resolve to rank 0, 1, 2, … again — i.e. they highlight the same
-            // SVG noteheads as the first pass.  For measures that are never repeated
-            // the bucket size is never exceeded so % has no effect.
+            // For repeat-pass notes (physical 37-44 → logical 29-36), wrap with
+            // % bucketSize so they re-highlight the same SVG noteheads as pass 1.
+            //
+            // FIRST-PASS OVERFLOW: if the MIDI has more notes than SVG noteheads
+            // (e.g. a chord where two MIDI pitches share one notehead x-position),
+            // the rawRank will equal bucketSize on the first pass. In that case clamp
+            // to bucketSize-1 (the last notehead) instead of wrapping to rank 0.
+            // We detect first-pass-overflow vs second-pass using assignedCount:
+            // on the first pass assignedCount (used) is still < cap (=bucketCapacity),
+            // whereas second-pass notes already have used >= cap.
             const rawRank    = rankCounters[bucketKey]++;
             const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
-            const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
-
-            // DEBUG: log all assignments to sheet 35 treble
-            if (sheetMeasure === 35 && clef === 'treble') {
-                console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
+            let rank;
+            if (bucketSize === 0) {
+                rank = rawRank;
+            } else {
+                // used/cap here reflect state BEFORE this note was counted
+                // used is the count BEFORE this note; first pass is while used <= cap-1,
+                // i.e. used < cap. But when used === cap exactly it means we just filled
+                // the bucket on the previous note — this note is the first overflow of
+                // the first pass (MIDI has more notes than SVG slots, e.g. a chord).
+                // Treat used <= cap as first-pass so overflow clamps to last slot.
+                const isFirstPass = (cap === 0) ? (used === 0) : (used <= cap);
+                if (isFirstPass) {
+                    // First pass: clamp overflow to last slot (shared notehead / chord)
+                    rank = Math.min(rawRank, bucketSize - 1);
+                } else {
+                    // Second pass (repeat): wrap to re-highlight same noteheads
+                    rank = rawRank % bucketSize;
+                }
             }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
@@ -4861,8 +4858,6 @@ function onTrainingNoteSpawned(noteObj) {
     const simultaneousNotes = practiceNotes.filter(n =>
         Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
     );
-    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
-
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
     for (const n of simultaneousNotes) {
@@ -4870,7 +4865,6 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
-        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
