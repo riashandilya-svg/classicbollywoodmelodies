@@ -2935,7 +2935,10 @@ function spawnTrainingNote(noteObj) {
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
-    for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+    // Grace notes (duration < 0.1s) are never grouped as chords — they are always
+    // a standalone step that must be played alone before the next note.
+    const isGraceNote = noteObj.duration < 0.1;
+    for (let i = trainingIndex + 1; i < practiceNotes.length && !isGraceNote; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
@@ -3182,7 +3185,18 @@ function spawnNextValidNote() {
     }
 
     if (loopEnabled) {
-        trainingIndex = 0;
+        // On loop restart, skip any overflow-rescued grace notes with playTime < 0.
+        // These are pickup grace notes whose MIDI timestamp sits in the preceding
+        // measure; they play correctly on the first pass but should not cause the
+        // loop to appear to "go back" before the measure boundary on repeat.
+        let loopStartIndex = 0;
+        while (
+            loopStartIndex < practiceNotes.length &&
+            (practiceNotes[loopStartIndex].playTime ?? 0) < 0
+        ) {
+            loopStartIndex++;
+        }
+        trainingIndex = loopStartIndex;
         document.getElementById('feedback').textContent = 'Looping section…';
         setTimeout(() => {
             playMeasurePreview(sectionStartTime, clefMode);
@@ -4100,10 +4114,10 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Give them a tiny pre-measure offset (-0.001s) so they sort just before
         // the measure's main notes and are always a separate step.
         const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
-        // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
+        // Overflow-corrected grace notes get a playTime 0.015s BEFORE the measure start
         // so they sort before the main notes AND are outside the 0.01s chord-grouping
-        // window used in spawnTrainingNote's lookahead.
-        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.001 : Math.max(0, rawOffset);
+        // window used in spawnTrainingNote's lookahead (which uses a < 0.01s threshold).
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.015 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
