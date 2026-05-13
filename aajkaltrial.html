@@ -224,80 +224,6 @@ body.dark-mode #darkModeToggle {
   background: rgba(24,28,37,0.92);
   border-color: var(--dm-border);
 }
-
-/* Stats toggle button */
-#statsToggle {
-  position: fixed;
-  top: 116px; /* below darkModeToggle (68 + 40 + 8) */
-  right: 14px;
-  z-index: 9999;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(235,50,70,0.18);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-  padding: 0;
-}
-#statsToggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-}
-body.dark-mode #statsToggle {
-  background: rgba(24,28,37,0.92);
-  border-color: var(--dm-border);
-}
-/* Dimmed appearance when stats are off */
-body.stats-hidden #statsToggle {
-  opacity: 0.5;
-}
-
-/* ── STATS HIDDEN: Notes mode ───────────────────────────────────────── */
-body.stats-hidden #statsBar,
-body.stats-hidden #measureTimeline,
-body.stats-hidden #sideNoteFeedback,
-body.stats-hidden #scoreNoteDisplay {
-  display: none !important;
-}
-/* Hide the feedback bubble but keep holdInfo (and feedbackArea wrapper) */
-body.stats-hidden #feedbackArea #feedback {
-  display: none !important;
-}
-
-/* ── STATS HIDDEN: Score mode ────────────────────────────────────────── */
-/* Hide stats & notes circles cards — but keep progress wrap visible */
-body.stats-hidden.score-mode #panelStatsCard .ctrl-card-title,
-body.stats-hidden.score-mode #panelStatsCard .ctrl-stats-grid,
-body.stats-hidden.score-mode #panelNoteCirclesCard,
-body.stats-hidden.score-mode #panelFeedbackCard {
-  display: none !important;
-}
-/* Keep the progress bar visible inside the stats card */
-body.stats-hidden.score-mode #panelStatsCard {
-  display: block !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  padding: 4px 0 0 0 !important;
-  min-width: unset !important;
-}
-body.stats-hidden.score-mode #panelProgressWrap {
-  display: block !important;
-  margin-top: 0 !important;
-}
-/* Collapse the grid gap where notes circles card was */
-body.stats-hidden.score-mode #controlPanel {
-  grid-template-columns: auto 0.4fr 0.4fr auto;
-}
 h1 {
     font-size: clamp(1.4rem, 3vw, 2.8rem);
     font-weight: 800;
@@ -1493,16 +1419,27 @@ body.score-mode #panelProgressWrap {
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#panelProgressText {
-    font-size: 11px;
-    font-weight: 700;
-    color: #E57373;
-    text-align: right;
-    margin-top: 3px;
-    letter-spacing: 0.03em;
+/* ====== STATS TOGGLE — notes mode ====== */
+.notes-stat-extra {
+    transition: opacity 0.2s, max-width 0.25s, padding 0.2s, margin 0.2s;
+}
+#statsBar.stats-minimal .notes-stat-extra {
+    display: none !important;
 }
 
-</style>
+/* ====== STATS TOGGLE — score mode ====== */
+.score-stat-extra {
+    transition: opacity 0.2s;
+}
+#panelStatsCard.stats-minimal .score-stat-extra {
+    display: none !important;
+}
+/* When minimal: Hold for spans full width of the 2-col grid */
+#panelStatsCard.stats-minimal .ctrl-stats-grid {
+    grid-template-columns: 1fr;
+}
+
+
 </head>
 <body>
 <div id="brandBar">
@@ -1528,7 +1465,6 @@ body.score-mode #panelProgressWrap {
 
 
 <button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); this.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙'">🌙</button>
-<button id="statsToggle" title="Toggle stats display">📊</button>
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
@@ -1576,22 +1512,26 @@ body.score-mode #panelProgressWrap {
         <span class="stat-val" id="statHold">—</span>
         <span>Hold for</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statAccuracy">—</span>
         <span>Accuracy</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statCombo">×0</span>
         <span>Combo</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statPerfect">0</span>
         <span>Perfect Hits</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statBPM">100</span>
         <span>BPM</span>
     </div>
+    <label title="Hide extra stats" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;white-space:nowrap;">
+        <input type="checkbox" id="notesStatsToggle" checked style="width:13px;height:13px;accent-color:#E57373;cursor:pointer;">
+        all stats
+    </label>
 </div>
 
 <!-- Measure Timeline -->
@@ -1700,25 +1640,31 @@ body.score-mode #panelProgressWrap {
 
   <!-- STATS card -->
   <div class="ctrl-card" id="panelStatsCard">
-    <div class="ctrl-card-title">STATS</div>
+    <div class="ctrl-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>STATS</span>
+      <label title="Show/hide stats" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;">
+        <input type="checkbox" id="scoreStatsToggle" checked style="width:13px;height:13px;accent-color:#E57373;cursor:pointer;">
+        all
+      </label>
+    </div>
     <div class="ctrl-stats-grid">
       <div class="ctrl-stat-item">
         <span class="ctrl-stat-val" id="panelStatHold">—</span>
         <span class="ctrl-stat-label">Hold for</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatAccuracy">—</span>
         <span class="ctrl-stat-label">Accuracy</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatCombo">×0</span>
         <span class="ctrl-stat-label">Combo</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatPerfect">0</span>
         <span class="ctrl-stat-label">Perfect</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatBPM">100</span>
         <span class="ctrl-stat-label">BPM</span>
       </div>
@@ -4345,7 +4291,12 @@ function resetAll() {
     showNoteNames = true;
     toggleNamesButton.textContent = 'Hide Note Names';
 
-    // ── 13. (Score Mode and Dark Mode are intentionally preserved on reset) ─
+    // ── 13. Turn off Score Mode if it is on ──────────────────────────────
+    const smToggle = document.getElementById('scoreModeToggle');
+    if (smToggle && smToggle.checked) {
+        smToggle.checked = false;
+        smToggle.dispatchEvent(new Event('change'));
+    }
 
     // ── 14. Confirm ──────────────────────────────────────────────────────
     statsCombo         = 0;
@@ -5166,6 +5117,28 @@ holdEl.innerHTML =
 }
 
 </script>
+<!-- Stats toggle logic -->
+<script>
+// Score mode: stats card toggle
+(function() {
+    const toggle = document.getElementById('scoreStatsToggle');
+    const card   = document.getElementById('panelStatsCard');
+    if (!toggle || !card) return;
+    toggle.addEventListener('change', function() {
+        card.classList.toggle('stats-minimal', !this.checked);
+    });
+})();
+
+// Notes mode: statsBar toggle
+(function() {
+    const toggle = document.getElementById('notesStatsToggle');
+    const bar    = document.getElementById('statsBar');
+    if (!toggle || !bar) return;
+    toggle.addEventListener('change', function() {
+        bar.classList.toggle('stats-minimal', !this.checked);
+    });
+})();
+</script>
 <!-- Panel sync helpers -->
 <script>
 function syncHandBtns() {
@@ -5233,18 +5206,6 @@ syncHandBtns();
 
     const obs = new MutationObserver(syncFeedback);
     obs.observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-})();
-
-// ── Stats Toggle ────────────────────────────────────────────────────────
-(function() {
-    const btn = document.getElementById('statsToggle');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-        document.body.classList.toggle('stats-hidden');
-        btn.title = document.body.classList.contains('stats-hidden')
-            ? 'Stats hidden — click to show'
-            : 'Toggle stats display';
-    });
 })();
 </script>
 
