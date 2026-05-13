@@ -297,6 +297,86 @@
       background: var(--border-gold);
     }
 
+    /* ─────────── Banner Mobile Responsiveness ─────────── */
+    @media (max-width: 600px) {
+      .navGrid {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        min-height: unset;
+        padding: 8px 12px;
+        gap: 6px 8px;
+      }
+
+      /* Logo: row 1, col 1 */
+      .navLogo {
+        grid-column: 1;
+        grid-row: 1;
+        padding-left: 0;
+      }
+      .navLogo img[alt="piano-logo"], .navLogo img:first-child {
+        height: 38px !important;
+      }
+      .navLogo img[alt="riaaz logo"], .navLogo img:last-child {
+        height: 34px !important;
+      }
+
+      /* Title: row 1, col 2 — right-aligned next to logo */
+      .navTitle {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        text-align: right;
+      }
+      .banner-link {
+        font-size: 17px;
+        white-space: normal;
+        line-height: 1.2;
+        padding: 2px 6px;
+      }
+
+      /* Account dock: row 2, full width */
+      .accountDock {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-self: stretch;
+        max-width: 100%;
+      }
+      .accountLayout {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+      .welcomeText {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        max-width: 100%;
+      }
+
+      /* Make action strip scroll horizontally rather than wrap oddly */
+      .actionStrip {
+        width: 100%;
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        border-radius: 12px;
+      }
+      .actionStrip::-webkit-scrollbar { display: none; }
+      .stripItem {
+        padding: 9px 12px;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .banner-link { font-size: 14px; }
+      .navLogo img:last-child { display: none; } /* hide second logo on very small screens */
+    }
+
     /* ─────────── Floating Social Dock ─────────── */
     .floatingSocialDock{
       position: fixed;
