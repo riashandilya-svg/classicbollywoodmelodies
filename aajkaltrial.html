@@ -4007,7 +4007,13 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         }
 
         const idx = physicalIndex.get(p);
-        const offsetInMeasure = Math.max(0, note.time - MEASURE_TIME_MAP[p].start);
+        // For overflow-corrected grace notes whose MIDI time sits just before the
+        // barline, note.time - measureStart is negative. Clamping to 0 makes their
+        // playTime identical to the first main note, grouping them as a chord.
+        // Give them a tiny pre-measure offset (-0.001s) so they sort just before
+        // the measure's main notes and are always a separate step.
+        const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.001 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
