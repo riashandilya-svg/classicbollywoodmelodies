@@ -1428,33 +1428,6 @@ body.score-mode #panelProgressWrap {
     letter-spacing: 0.03em;
 }
 
-
-/* 🐛 DEBUG PANEL */
-#debugPanel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 520px;
-    max-height: 300px;
-    overflow-y: auto;
-    background: rgba(8,10,18,0.95);
-    color: #00ff99;
-    font-family: monospace;
-    font-size: 11px;
-    line-height: 1.5;
-    padding: 6px 8px 8px;
-    z-index: 99999;
-    border-top: 2px solid #00ff99;
-    border-right: 2px solid #00ff99;
-    border-radius: 0 10px 0 0;
-    pointer-events: none;
-    word-break: break-all;
-}
-#debugPanel .dh { color: #ffcc00; font-weight: bold; margin: 3px 0 1px; }
-#debugPanel .dg { color: #ff6b6b; }
-#debugPanel .ds { color: #66ccff; }
-#debugPanel .dq { color: #aaaaaa; }
-#debugPanel .dw { color: #ff9900; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -1764,22 +1737,6 @@ body.score-mode #panelProgressWrap {
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script type="module">
 import { Midi } from 'https://esm.sh/@tonejs/midi@2.0.28';
-
-// ── DEBUG helpers (module-scoped so spawnNextValidNote can reach them) ────────
-function dbg(html, cls = '') {
-    const p = document.getElementById('debugPanel');
-    if (!p) return;
-    const d = document.createElement('div');
-    if (cls) d.className = cls;
-    d.innerHTML = html;
-    p.appendChild(d);
-    p.scrollTop = p.scrollHeight;
-}
-function dbgClear() {
-    const p = document.getElementById('debugPanel');
-    if (p) p.innerHTML = '';
-}
-// ─────────────────────────────────────────────────────────────────────────────
 // ================================
 // SONG CONFIG (SHEET STRUCTURE)
 // ================================
@@ -1983,22 +1940,14 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
     }
   }
   else {
-    // First pass: add physical measures for the user's selection (up to logical 36)
     for (let l = startLogical; l <= Math.min(36, endLogical); l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
-
-    // Second pass (repeat): only add if the selection spans measures inside the
-    // repeated section (29-36). The repeat loops back from physical 37-44 → logical 29-36.
-    // Only include the repeat when startLogical <= 29 (selection starts at or before the
-    // repeat-start barline), meaning the user wants to practice the repeated section in full.
-    // Selecting a subset like 35-35 should NOT pull in the whole repeat.
-    if (startLogical <= 29) {
-      for (let l = 29; l <= Math.min(36, endLogical); l++) {
-        logicalSeq.push(l);
-        seq.push(logicalToPhysicalSecond(l));
-      }
+    
+    for (let l = 29; l <= 36; l++) {
+      logicalSeq.push(l);
+      seq.push(logicalToPhysicalSecond(l));
     }
 
     if (endLogical > 36) {
@@ -2943,10 +2892,7 @@ function spawnTrainingNote(noteObj) {
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
-    // Overflow grace notes (isOverflowGrace=true) are never chord-grouped — they must
-    // always be played as a standalone step before the measure's first main note.
-    const isOverflowGraceNote = !!noteObj.isOverflowGrace;
-    for (let i = trainingIndex + 1; i < practiceNotes.length && !isOverflowGraceNote; i++) {
+    for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
@@ -3014,12 +2960,13 @@ function spawnTrainingNote(noteObj) {
         });
     }
 
+    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
 }
 
-function playMeasurePreview(startTime, clef, isLoopRestart = false) {
+function playMeasurePreview(startTime, clef) {
     speedLocked = true;
     ensureSynth();
     hardStopUserNote();
@@ -3039,9 +2986,7 @@ feedback.classList.add('show');
 const sectionNotes = practiceNotes.filter(note => {
     const isTreble = note.track === TREBLE;
     const isBass   = note.track === BASS;
-    // On loop restarts, exclude overflow grace notes (pre-barline pickups from the
-    // preceding measure) — they belong to the very first play only.
-    if (isLoopRestart && note.isOverflowGrace) return false;
+
     return (
         clef === 'both' ||
         (clef === 'treble' && isTreble) ||
@@ -3141,9 +3086,8 @@ function spawnNextValidNote() {
 
         // Check if this note is a tied continuation using _tiedNoteKeys directly
         // (populated in loadSongMidi — works regardless of score mode).
-        // Grace notes (duration < 0.1s) and overflow-rescued grace notes are NEVER
-        // tied continuations — skip the tied-continuation check for them.
-        const isGraceMidi = note.duration < 0.1 || !!note.isOverflowGrace;
+        // Grace notes (duration < 0.1s) are NEVER tied continuations — skip the check for them.
+        const isGraceMidi = note.duration < 0.1;
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
         const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
         const isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
@@ -3163,30 +3107,6 @@ function spawnNextValidNote() {
             (clefMode === 'treble' && isTreble) ||
             (clefMode === 'bass'   && isBass)
         ) {
-            // ── DEBUG ────────────────────────────────────────────────────────
-            const _prev    = trainingIndex > 0 ? practiceNotes[trainingIndex - 1] : null;
-            const _grace   = note.duration < 0.1;
-            const _rawP    = getMeasureFromTime(note.time);
-            const _rescued = _rawP !== null && _rawP !== note.physicalMeasure;
-            console.log(
-                `🎯 SPAWN [${trainingIndex}] playT=${(note.playTime??note.time).toFixed(4)} ` +
-                `midi=${note.midi} phys=${note.physicalMeasure} log=${note.logicalMeasure}` +
-                (_grace   ? ' [GRACE]' : '') + (_rescued ? ` [rescued rawPhys=${_rawP}]` : '')
-            );
-            dbg(
-                `▶ SPAWN [<b>${trainingIndex}</b>] ` +
-                `pt=<b>${(note.playTime??note.time).toFixed(3)}</b>s ` +
-                `midi=${note.midi} ph=${note.physicalMeasure} lg=<b>${note.logicalMeasure}</b>` +
-                (_grace   ? ' <span class="dg"><b>[GRACE]</b></span>' : '') +
-                (_rescued ? ` <span class="dw">[was phys${_rawP}]</span>` : ''),
-                'ds'
-            );
-            if (_prev && _prev.logicalMeasure !== note.logicalMeasure) {
-                const _msg = `⚠️ MEASURE JUMP: log ${_prev.logicalMeasure}→${note.logicalMeasure} (phys ${_prev.physicalMeasure}→${note.physicalMeasure})`;
-                console.warn(_msg);
-                dbg(_msg, 'dw');
-            }
-            // ─────────────────────────────────────────────────────────────────
             spawnTrainingNote(note);
             return;
         }
@@ -3196,21 +3116,10 @@ function spawnNextValidNote() {
     }
 
     if (loopEnabled) {
-        // On loop restart, skip overflow-rescued grace notes (isOverflowGrace=true).
-        // These are pickup grace notes whose MIDI timestamp belongs to the preceding
-        // measure; on a clean loop restart the measure should begin from its first
-        // true note, not from a pre-barline pickup that already played at the start.
-        let loopStartIndex = 0;
-        while (
-            loopStartIndex < practiceNotes.length &&
-            practiceNotes[loopStartIndex].isOverflowGrace
-        ) {
-            loopStartIndex++;
-        }
-        trainingIndex = loopStartIndex;
+        trainingIndex = 0;
         document.getElementById('feedback').textContent = 'Looping section…';
         setTimeout(() => {
-            playMeasurePreview(sectionStartTime, clefMode, true);
+            playMeasurePreview(sectionStartTime, clefMode);
         }, 600);
         return;
     }
@@ -4037,14 +3946,6 @@ console.log("Skip repeats:", skipSheetRepeats);
 console.log("Logical sequence:", logicalSeq.join(","));
 console.log("Physical measures used:", physicalSeq.join(","));
 
-// ── DEBUG: init panel for this practice run ──────────────────────────────────
-dbgClear();
-dbg(`<b>▶ Selection: logical ${startLogical}→${endLogical} | skipRepeats=${skipSheetRepeats}</b>`, 'dh');
-dbg(`physSeq : [${physicalSeq.join(', ')}]`, 'dq');
-dbg(`logSeq  : [${logicalSeq.join(', ')}]`, 'dq');
-dbg(`secPerM : ${secondsPerMeasure.toFixed(3)}s`, 'dq');
-// ─────────────────────────────────────────────────────────────────────────────
-
 
 
 sectionStartTime = 0;
@@ -4078,19 +3979,7 @@ practiceNotes = allMidiNotes
                     q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
                 );
                 if (correctedPhys !== undefined) {
-                    const _corrIdx  = physicalSeq.indexOf(correctedPhys);
-                    const _rawOff   = note.time - (MEASURE_TIME_MAP[correctedPhys]?.start ?? 0);
-                    const _adjOff   = (_rawOff < 0) ? -0.001 : Math.max(0, _rawOff);
-                    const _estPlay  = _corrIdx * secondsPerMeasure + _adjOff;
-                    const _adjTrig  = physicalSeq.find(q => Math.abs(q - p) <= 1) ?? '?';
-                    console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure}) corrIdx=${_corrIdx} estPlayT=${_estPlay.toFixed(3)}s adjTrigger=phys${_adjTrig}|dist=${Math.abs(_adjTrig-p)}|`);
-                    dbg(
-                        `🔁 RESCUE midi=<b>${note.midi}</b> t=${note.time.toFixed(3)}s ` +
-                        `rawPhys=<b>${p}</b>→corrPhys=<b>${correctedPhys}</b> sheet=${entry.sheet_measure} ` +
-                        `adjTrig=phys${_adjTrig}|dist=${Math.abs(_adjTrig-p)}| ` +
-                        `corrIdx=<b>${_corrIdx}</b> estPlayT=<b>${_estPlay.toFixed(3)}s</b>`,
-                        'dg'
-                    );
+                    console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
                     p = correctedPhys;
                     overflowCorrected = true;
                 } else {
@@ -4125,11 +4014,10 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Give them a tiny pre-measure offset (-0.001s) so they sort just before
         // the measure's main notes and are always a separate step.
         const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
-        // Overflow-corrected grace notes whose MIDI time sits before the measure boundary
-        // get playTime clamped to 0 (the measure's start). A flag marks them so the sort
-        // below can place them before any other note at playTime=0.
-        const isOverflowGrace = overflowCorrected && rawOffset < 0;
-        const offsetInMeasure = isOverflowGrace ? 0 : Math.max(0, rawOffset);
+        // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
+        // so they sort before the main notes AND are outside the 0.01s chord-grouping
+        // window used in spawnTrainingNote's lookahead.
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -4144,56 +4032,20 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
             playTime,
             logicalMeasure,
             physicalMeasure: p,
-            isOverflowGrace,
         };
     })
     .filter(Boolean);
 
-practiceNotes.sort((a, b) => {
-    const dt = a.playTime - b.playTime;
-    if (dt !== 0) return dt;
-    // At equal playTime, overflow grace notes come first
-    if (a.isOverflowGrace && !b.isOverflowGrace) return -1;
-    if (!a.isOverflowGrace && b.isOverflowGrace) return 1;
-    return 0;
-});
+practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
-// ── Remove wrap-around duplicates ──────────────────────────────────────────
-// rawRank >= bucketSize means the note belongs to a second pass of a repeated
-// section and would wrap (rank = rawRank % bucketSize) back to an already-used
-// SVG slot. Drop these so the highlight never cycles back to the grace note.
-practiceNotes = practiceNotes.filter(note => {
-    if (note.isOverflowGrace) return true; // always keep rescued grace notes
-    const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
-    const entry = _midiRankMap.get(mk);
-    if (!entry || entry.bucketSize === 0) return true; // no rank info → keep
-    if (entry.rawRank >= entry.bucketSize) {
-        console.log(`🚫 Drop wrap-around: midi=${note.midi} t=${note.time.toFixed(4)} sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`);
-        dbg(`🚫 DROP wrap midi=${note.midi} t=${note.time.toFixed(3)}s sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`, 'dw');
-        return false;
-    }
-    return true;
-});
-// ──────────────────────────────────────────────────────────────────────────
-
-// ── DEBUG: dump sorted practiceNotes ────────────────────────────────────────
-dbg('── Sorted practiceNotes ──', 'dh');
+// DEBUG: log every practiceNote for measure 35 analysis
+console.group('🔬 practiceNotes dump (all notes):');
 practiceNotes.forEach((n, i) => {
-    const isGrace  = n.duration < 0.1;
-    const rawPhys  = getMeasureFromTime(n.time);
-    const rescued  = rawPhys !== null && rawPhys !== n.physicalMeasure;
-    dbg(
-        `[<b>${String(i).padStart(3,' ')}</b>] ` +
-        `pt=<b>${(n.playTime??n.time).toFixed(3)}</b>s ` +
-        `midi=${n.midi} ph=${n.physicalMeasure} lg=<b>${n.logicalMeasure}</b> ` +
-        `t=${n.time.toFixed(3)}s d=${n.duration.toFixed(3)}` +
-        (isGrace  ? ' <span class="dg"><b>[GRACE]</b></span>' : '') +
-        (rescued  ? ` <span class="dw">[was phys${rawPhys}]</span>` : ''),
-        'dq'
-    );
+    const mk = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+    const rankEntry = _midiRankMap.get(mk);
+    console.log(`[${i}] midi=${n.midi} track=${n.track} time=${n.time.toFixed(4)} playTime=${(n.playTime??n.time).toFixed(4)} dur=${n.duration.toFixed(3)} physMeasure=${n.physicalMeasure} logMeasure=${n.logicalMeasure} svgSheet=${rankEntry?.sheet_measure} rank=${rankEntry?.rank}`);
 });
-dbg(`Total: <b>${practiceNotes.length}</b> notes`, 'dh');
-// ─────────────────────────────────────────────────────────────────────────────
+console.groupEnd();
 
 // scoreNoteOffset no longer used for highlighting — kept at 0
 scoreNoteOffset = 0;
@@ -4747,7 +4599,18 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-
+    // DEBUG: dump SVG buckets 34-36
+    for (const m of [34,35,36]) {
+        for (const c of ["treble","bass"]) {
+            const bucket = _svgBuckets[m]?.[c] || [];
+            if (!bucket.length) continue;
+            const items = bucket.map((idx,r) => {
+                const n = _svgNoteElements[idx];
+                return "rank"+r+":tx="+n.tx.toFixed(0)+" midi_ty="+n.ty.toFixed(0)+" grace="+n.isGrace;
+            }).join("  ");
+            console.log("🪣 SVG bucket m="+m+" "+c+" ("+bucket.length+" notes): "+items);
+        }
+    }
 
     const rankCounters = {};
 
@@ -4784,27 +4647,18 @@ function _buildSvgMidiMap() {
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
-            // Grace notes for measures 29, 31, 33, 35 have their MIDI timestamp in the
-            // preceding measure (28, 30, 32, 34). These grace notes may have any duration
-            // (some are 0.149s, not the typical <0.1s), so we detect them via
-            // _bucketFirstIsGrace: if the NEXT bucket starts with a grace note and the
-            // current bucket is empty (cap=0), this note belongs in the next bucket.
-            // Special case: repeat-pass grace note for logical 29 lands in logical 36 (cap=0).
+            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
+            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
+            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
+            // Bump them all forward to the correct SVG bucket.
+            // IMPORTANT: set gracePreCorrected=true here so the overflow check below
+            // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
-            {
-                const _capKey = `${sheetMeasure}|${clef}`;
-                const _cap    = bucketCapacity[_capKey] ?? 0;
-                const _used   = assignedCount[_capKey] ?? 0;
-                const _nextKey = `${sheetMeasure + 1}|${clef}`;
-                const _nextStartsGrace = !!_bucketFirstIsGrace[_nextKey];
-                const _isEmptyBucket   = _cap === 0 && (_used === 0 || _used === 1);
-
-                if (_isEmptyBucket && _nextStartsGrace) {
-                    // Current bucket is empty and next bucket starts with a grace note:
-                    // this note's MIDI time landed in the wrong (empty) bucket.
+            if (note.duration < 0.1) {
+                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
-                } else if (sheetMeasure === 36 && _cap === 0) {
+                } else if (sheetMeasure === 36) {
                     // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
                     // The next SVG bucket is logical 29 (physical 37), not logical 37.
                     sheetMeasure = 29;
@@ -4830,9 +4684,7 @@ function _buildSvgMidiMap() {
             // does NOT start with a grace note, so assigning here would misalign
             // every subsequent rank. Detect this and bump forward immediately,
             // before the bucket-full overflow check runs.
-            // isMidiGrace: short-duration MIDI grace notes OR any note that landed
-            // in an empty bucket immediately before a grace-starting bucket (duration-agnostic).
-            const isMidiGrace   = note.duration < 0.1 || hardcodedGraceCorrected;
+            const isMidiGrace   = note.duration < 0.1;
             const thisStartsGrace = !!_bucketFirstIsGrace[capKey];
             const nextKey         = `${sheetMeasure + 1}|${clef}`;
             const nextStartsGrace = !!_bucketFirstIsGrace[nextKey];
@@ -4884,8 +4736,12 @@ if (nextCap > 0) {
             const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
-            // Store rawRank+bucketSize so practiceNotes filtering can detect wrap-around notes
-            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank, rawRank, bucketSize });
+            // DEBUG: log all assignments to sheet 35 treble
+            if (sheetMeasure === 35 && clef === 'treble') {
+                console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
+            }
+
+            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
         }
     }
 
@@ -5005,6 +4861,8 @@ function onTrainingNoteSpawned(noteObj) {
     const simultaneousNotes = practiceNotes.filter(n =>
         Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
     );
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
+
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
     for (const n of simultaneousNotes) {
@@ -5012,6 +4870,7 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
+        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
@@ -5342,8 +5201,5 @@ window.location.replace("/login.html");
   });
 </script>
 
-
-<!-- 🐛 DEBUG PANEL -->
-<div id="debugPanel"><div class="dh">🐛 Grace-note debug — press Start Practice to populate</div></div>
 </body>
 </html>
