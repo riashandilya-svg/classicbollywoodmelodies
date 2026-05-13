@@ -1434,28 +1434,27 @@ body.score-mode #panelProgressWrap {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: 500px;
-    max-height: 280px;
+    width: 520px;
+    max-height: 300px;
     overflow-y: auto;
-    background: rgba(10,10,20,0.94);
+    background: rgba(8,10,18,0.95);
     color: #00ff99;
     font-family: monospace;
     font-size: 11px;
-    line-height: 1.45;
+    line-height: 1.5;
     padding: 6px 8px 8px;
     z-index: 99999;
     border-top: 2px solid #00ff99;
     border-right: 2px solid #00ff99;
     border-radius: 0 10px 0 0;
     pointer-events: none;
-    white-space: pre-wrap;
     word-break: break-all;
 }
-#debugPanel .dh  { color: #ffcc00; font-weight: bold; margin: 3px 0 1px; }
-#debugPanel .dg  { color: #ff6b6b; }
-#debugPanel .ds  { color: #66ccff; }
-#debugPanel .dq  { color: #aaaaaa; }
-#debugPanel .dw  { color: #ff9900; font-weight: bold; }
+#debugPanel .dh { color: #ffcc00; font-weight: bold; margin: 3px 0 1px; }
+#debugPanel .dg { color: #ff6b6b; }
+#debugPanel .ds { color: #66ccff; }
+#debugPanel .dq { color: #aaaaaa; }
+#debugPanel .dw { color: #ff9900; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -1765,6 +1764,22 @@ body.score-mode #panelProgressWrap {
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script type="module">
 import { Midi } from 'https://esm.sh/@tonejs/midi@2.0.28';
+
+// ── DEBUG helpers (module-scoped so spawnNextValidNote can reach them) ────────
+function dbg(html, cls = '') {
+    const p = document.getElementById('debugPanel');
+    if (!p) return;
+    const d = document.createElement('div');
+    if (cls) d.className = cls;
+    d.innerHTML = html;
+    p.appendChild(d);
+    p.scrollTop = p.scrollHeight;
+}
+function dbgClear() {
+    const p = document.getElementById('debugPanel');
+    if (p) p.innerHTML = '';
+}
+// ─────────────────────────────────────────────────────────────────────────────
 // ================================
 // SONG CONFIG (SHEET STRUCTURE)
 // ================================
@@ -3134,32 +3149,28 @@ function spawnNextValidNote() {
             (clefMode === 'treble' && isTreble) ||
             (clefMode === 'bass'   && isBass)
         ) {
-            // ── DEBUG spawn ──────────────────────────────────────────────────
-            const _prevNote  = trainingIndex > 0 ? practiceNotes[trainingIndex - 1] : null;
-            const _isGrace   = note.duration < 0.1;
-            const _rawPhys   = getMeasureFromTime(note.time);
-            const _rescued   = _rawPhys !== null && _rawPhys !== note.physicalMeasure;
+            // ── DEBUG ────────────────────────────────────────────────────────
+            const _prev    = trainingIndex > 0 ? practiceNotes[trainingIndex - 1] : null;
+            const _grace   = note.duration < 0.1;
+            const _rawP    = getMeasureFromTime(note.time);
+            const _rescued = _rawP !== null && _rawP !== note.physicalMeasure;
             console.log(
                 `🎯 SPAWN [${trainingIndex}] playT=${(note.playTime??note.time).toFixed(4)} ` +
                 `midi=${note.midi} phys=${note.physicalMeasure} log=${note.logicalMeasure}` +
-                (_isGrace  ? ' [GRACE]' : '') +
-                (_rescued  ? ` [rescued rawPhys=${_rawPhys}]` : '')
+                (_grace   ? ' [GRACE]' : '') + (_rescued ? ` [rescued rawPhys=${_rawP}]` : '')
             );
             dbg(
                 `▶ SPAWN [<b>${trainingIndex}</b>] ` +
                 `pt=<b>${(note.playTime??note.time).toFixed(3)}</b>s ` +
                 `midi=${note.midi} ph=${note.physicalMeasure} lg=<b>${note.logicalMeasure}</b>` +
-                (_isGrace  ? ' <span class="dg"><b>[GRACE]</b></span>' : '') +
-                (_rescued  ? ` <span class="dw">[was phys${_rawPhys}]</span>` : ''),
+                (_grace   ? ' <span class="dg"><b>[GRACE]</b></span>' : '') +
+                (_rescued ? ` <span class="dw">[was phys${_rawP}]</span>` : ''),
                 'ds'
             );
-            if (_prevNote) {
-                const _lgJump = note.logicalMeasure !== _prevNote.logicalMeasure;
-                if (_lgJump) {
-                    const _msg = `⚠️ MEASURE JUMP: log ${_prevNote.logicalMeasure}→${note.logicalMeasure} (phys ${_prevNote.physicalMeasure}→${note.physicalMeasure})`;
-                    console.warn(_msg);
-                    dbg(_msg, 'dw');
-                }
+            if (_prev && _prev.logicalMeasure !== note.logicalMeasure) {
+                const _msg = `⚠️ MEASURE JUMP: log ${_prev.logicalMeasure}→${note.logicalMeasure} (phys ${_prev.physicalMeasure}→${note.physicalMeasure})`;
+                console.warn(_msg);
+                dbg(_msg, 'dw');
             }
             // ─────────────────────────────────────────────────────────────────
             spawnTrainingNote(note);
@@ -4001,20 +4012,7 @@ console.log("Skip repeats:", skipSheetRepeats);
 console.log("Logical sequence:", logicalSeq.join(","));
 console.log("Physical measures used:", physicalSeq.join(","));
 
-// ── DEBUG helpers ────────────────────────────────────────────────────────────
-function dbg(html, cls='') {
-    const p = document.getElementById('debugPanel');
-    if (!p) return;
-    const d = document.createElement('div');
-    if (cls) d.className = cls;
-    d.innerHTML = html;
-    p.appendChild(d);
-    p.scrollTop = p.scrollHeight;
-}
-function dbgClear() {
-    const p = document.getElementById('debugPanel');
-    if (p) p.innerHTML = '';
-}
+// ── DEBUG: init panel for this practice run ──────────────────────────────────
 dbgClear();
 dbg(`<b>▶ Selection: logical ${startLogical}→${endLogical} | skipRepeats=${skipSheetRepeats}</b>`, 'dh');
 dbg(`physSeq : [${physicalSeq.join(', ')}]`, 'dq');
@@ -4055,17 +4053,17 @@ practiceNotes = allMidiNotes
                     q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
                 );
                 if (correctedPhys !== undefined) {
-                    const _corrIdx   = physicalSeq.indexOf(correctedPhys);
-                    const _rawOff    = note.time - (MEASURE_TIME_MAP[correctedPhys]?.start ?? 0);
-                    const _adjOff    = (_rawOff < 0) ? -0.001 : Math.max(0, _rawOff);
-                    const _estPlay   = _corrIdx * secondsPerMeasure + _adjOff;
-                    const _adjTrigQ  = physicalSeq.find(q => Math.abs(q - p) <= 1) ?? '?';
-                    console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
+                    const _corrIdx  = physicalSeq.indexOf(correctedPhys);
+                    const _rawOff   = note.time - (MEASURE_TIME_MAP[correctedPhys]?.start ?? 0);
+                    const _adjOff   = (_rawOff < 0) ? -0.001 : Math.max(0, _rawOff);
+                    const _estPlay  = _corrIdx * secondsPerMeasure + _adjOff;
+                    const _adjTrig  = physicalSeq.find(q => Math.abs(q - p) <= 1) ?? '?';
+                    console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure}) corrIdx=${_corrIdx} estPlayT=${_estPlay.toFixed(3)}s adjTrigger=phys${_adjTrig}|dist=${Math.abs(_adjTrig-p)}|`);
                     dbg(
                         `🔁 RESCUE midi=<b>${note.midi}</b> t=${note.time.toFixed(3)}s ` +
-                        `rawPhys=<b>${p}</b>→corrPhys=<b>${correctedPhys}</b>(sheet ${entry.sheet_measure}) ` +
-                        `adjTrigger=phys${_adjTrigQ}|dist=${Math.abs(_adjTrigQ-p)}| ` +
-                        `corrIdx=${_corrIdx} estPlayT=<b>${_estPlay.toFixed(3)}s</b>`,
+                        `rawPhys=<b>${p}</b>→corrPhys=<b>${correctedPhys}</b> sheet=${entry.sheet_measure} ` +
+                        `adjTrig=phys${_adjTrig}|dist=${Math.abs(_adjTrig-p)}| ` +
+                        `corrIdx=<b>${_corrIdx}</b> estPlayT=<b>${_estPlay.toFixed(3)}s</b>`,
                         'dg'
                     );
                     p = correctedPhys;
@@ -4126,19 +4124,19 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
 
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
-// ── DEBUG: full sorted practiceNotes dump ────────────────────────────────────
+// ── DEBUG: dump sorted practiceNotes ────────────────────────────────────────
 dbg('── Sorted practiceNotes ──', 'dh');
 practiceNotes.forEach((n, i) => {
-    const isGrace    = n.duration < 0.1;
-    const rawPhys    = getMeasureFromTime(n.time);
-    const rescued    = rawPhys !== null && rawPhys !== n.physicalMeasure;
-    const graceTag   = isGrace  ? ' <span class="dg"><b>[GRACE]</b></span>' : '';
-    const rescueTag  = rescued  ? ` <span class="dw">[was phys${rawPhys}]</span>` : '';
+    const isGrace  = n.duration < 0.1;
+    const rawPhys  = getMeasureFromTime(n.time);
+    const rescued  = rawPhys !== null && rawPhys !== n.physicalMeasure;
     dbg(
         `[<b>${String(i).padStart(3,' ')}</b>] ` +
         `pt=<b>${(n.playTime??n.time).toFixed(3)}</b>s ` +
-        `midi=${n.midi} ph=${n.physicalMeasure} lg=${n.logicalMeasure} ` +
-        `t=${n.time.toFixed(3)}s d=${n.duration.toFixed(3)}${graceTag}${rescueTag}`,
+        `midi=${n.midi} ph=${n.physicalMeasure} lg=<b>${n.logicalMeasure}</b> ` +
+        `t=${n.time.toFixed(3)}s d=${n.duration.toFixed(3)}` +
+        (isGrace  ? ' <span class="dg"><b>[GRACE]</b></span>' : '') +
+        (rescued  ? ` <span class="dw">[was phys${rawPhys}]</span>` : ''),
         'dq'
     );
 });
@@ -5279,6 +5277,7 @@ window.location.replace("/login.html");
     }
   });
 </script>
+
 
 <!-- 🐛 DEBUG PANEL -->
 <div id="debugPanel"><div class="dh">🐛 Grace-note debug — press Start Practice to populate</div></div>
