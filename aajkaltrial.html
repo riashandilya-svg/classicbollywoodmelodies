@@ -2935,10 +2935,10 @@ function spawnTrainingNote(noteObj) {
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
-    // Grace notes (duration < 0.1s) are never grouped as chords — they are always
-    // a standalone step that must be played alone before the next note.
-    const isGraceNote = noteObj.duration < 0.1;
-    for (let i = trainingIndex + 1; i < practiceNotes.length && !isGraceNote; i++) {
+    // Overflow grace notes (isOverflowGrace=true) are never chord-grouped — they must
+    // always be played as a standalone step before the measure's first main note.
+    const isOverflowGraceNote = !!noteObj.isOverflowGrace;
+    for (let i = trainingIndex + 1; i < practiceNotes.length && !isOverflowGraceNote; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
@@ -3133,8 +3133,9 @@ function spawnNextValidNote() {
 
         // Check if this note is a tied continuation using _tiedNoteKeys directly
         // (populated in loadSongMidi — works regardless of score mode).
-        // Grace notes (duration < 0.1s) are NEVER tied continuations — skip the check for them.
-        const isGraceMidi = note.duration < 0.1;
+        // Grace notes (duration < 0.1s) and overflow-rescued grace notes are NEVER
+        // tied continuations — skip the tied-continuation check for them.
+        const isGraceMidi = note.duration < 0.1 || !!note.isOverflowGrace;
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
         const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
         const isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
