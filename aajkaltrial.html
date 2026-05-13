@@ -4014,7 +4014,10 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Give them a tiny pre-measure offset (-0.001s) so they sort just before
         // the measure's main notes and are always a separate step.
         const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
-        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.001 : Math.max(0, rawOffset);
+        // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
+        // so they sort before the main notes AND are outside the 0.01s chord-grouping
+        // window used in spawnTrainingNote's lookahead.
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -4719,6 +4722,11 @@ if (nextCap > 0) {
             const rawRank    = rankCounters[bucketKey]++;
             const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
+
+            // DEBUG: log all assignments to sheet 35 treble
+            if (sheetMeasure === 35 && clef === 'treble') {
+                console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
+            }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
         }
