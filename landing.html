@@ -285,7 +285,7 @@ margin-top: -0.5rem;
 
     /* PIANO NAV LOGO */
     .piano-nav-logo {
-      height: 52px;
+      height: 48px;
       width: auto;
       display: block;
       object-fit: contain;
@@ -296,6 +296,13 @@ margin-top: -0.5rem;
     .piano-nav-logo:hover {
       filter: drop-shadow(0 4px 14px rgba(255,176,0,0.45));
       transform: scale(1.06);
+    }
+    .nav-logo-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      min-width: 0;
     }
 
     /* BETA MODE HIGHLIGHT - pulsing glow treatment */
@@ -722,14 +729,22 @@ margin-top: -0.5rem;
       .story-vertical-text { writing-mode: horizontal-tb !important; transform: none !important; font-size: 2rem !important; }
     }
 @media (max-width: 640px) {
-  nav { padding: 0 1rem; min-height: 52px; }
-  .nav-logo img { height: 38px; }
-  .nav-center { font-size: 0.75rem; letter-spacing: 0.06em; }
+  nav { padding: 0 1rem; min-height: 56px; }
+  .piano-nav-logo { height: 36px; }
+  .nav-logo img { height: 36px; }
+  .nav-beta-badge { display: none; }
+  .nav-center { display: none; }
   .nav-link { display: none; }
-  .nav-btn { padding: 6px 12px; font-size: 0.75rem; }
-  .hero, .demo-wrap, .features, .songs-section, .how-section, .testimonials, .compare-section, .pricing, .final { padding-left: 1.5rem; padding-right: 1.5rem; }
+  .nav-btn { padding: 7px 14px; font-size: 0.75rem; letter-spacing: 0.01em; }
+  .hero, .demo-wrap, .features, .songs-section, .how-section, .testimonials, .compare-section, .pricing, .final { padding-left: 1.2rem; padding-right: 1.2rem; }
   footer { padding: 1.5rem 1.5rem 2.5rem; }
-  .hero { padding-top: 2.5rem; padding-bottom: 1.5rem; }
+  .hero { padding-top: 2rem; padding-bottom: 1.5rem; }
+  .earlyAccessTag { font-size: 11px; padding: 9px 14px; gap: 7px; }
+  .premiereCard { padding: 1.5rem 1.4rem; }
+  .premiereCard ul { grid-template-columns: 1fr; }
+  .glitchPill { bottom: 16px; left: 12px; padding: 8px 14px; }
+  .glitchPill-sub { display: none; }
+  .founderNote { padding: 1.6rem 1.4rem; }
 }
 
     .shimmer-line { position: fixed; pointer-events: none; z-index: 0; width: 1px; height: 30vh; background: linear-gradient(transparent, rgba(var(--violet),0.08), transparent); animation: shimmerDown linear infinite; }
@@ -781,7 +796,7 @@ margin-top: -0.5rem;
 <div class="shimmer-line" style="left:80%;animation-duration:13s;animation-delay:1s;"></div>
 
 <nav>
-  <div style="display:flex;align-items:center;gap:10px;">
+  <div class="nav-logo-group">
     <img src="piano-logo.png" alt="riaaz piano logo" class="piano-nav-logo">
     <a href="#" class="nav-logo">
       <img src="logo1.png" alt="riaaz logo">
