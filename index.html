@@ -2731,11 +2731,11 @@
     /* ── Gramophone Easter Egg ── */
     .gramo-egg {
       position: fixed;
-      bottom: 110px;
+      bottom: 70px;   /* just above the Report Bug button (18px bottom + ~40px btn height + 12px gap) */
       right: 28px;
       z-index: 9999;
-      width: 78px;
-      height: 78px;
+      width: 56px;    /* reduced from 78px on desktop */
+      height: 56px;
       cursor: pointer;
       opacity: 0.38;
       transition: opacity 0.5s ease;
@@ -2745,8 +2745,32 @@
     .gramo-egg:hover {
       opacity: 1;
     }
+
+    /* Mobile: hidden until scroll, then fixed to bottom */
+    @media (max-width: 600px) {
+      .gramo-egg {
+        bottom: 18px;
+        right: 18px;
+        width: 60px;
+        height: 60px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(16px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .gramo-egg.mobile-visible {
+        opacity: 0.42;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+      .gramo-egg.mobile-visible:hover,
+      .gramo-egg.mobile-visible.glow-active {
+        opacity: 1;
+      }
+    }
     .gramo-egg.glow-active {
       filter: drop-shadow(0 0 7px rgba(255,186,0,0.5));
+      opacity: 1;
     }
 
     /* The actual image */
@@ -2939,6 +2963,23 @@
       spawnDust();
       dustRaf = requestAnimationFrame(tickDust);
     }
+
+    // ── Mobile: show gramophone after scrolling down ──
+    (function() {
+      const SCROLL_THRESHOLD = 120; // px scrolled before gramophone appears
+      function checkScroll() {
+        if (window.innerWidth <= 600) {
+          if (window.scrollY > SCROLL_THRESHOLD) {
+            egg.classList.add('mobile-visible');
+          } else {
+            egg.classList.remove('mobile-visible');
+          }
+        }
+      }
+      window.addEventListener('scroll', checkScroll, { passive: true });
+      window.addEventListener('resize', checkScroll, { passive: true });
+      checkScroll();
+    })();
 
     egg.addEventListener('mouseenter', () => {
       hoverCount++;
