@@ -4150,6 +4150,30 @@ practiceNotes.sort((a, b) => {
     return 0;
 });
 
+// ── Remove wrap-around duplicates ──────────────────────────────────────────
+// The rank map uses rawRank % bucketSize to re-use SVG slots for the second
+// pass of a repeated section. But when the user selects only a single pass
+// (e.g. just measure 35), extra MIDI notes whose rawRank >= bucketSize would
+// wrap back to rank 0 and re-highlight the grace note a second time.
+// Drop any note whose rank entry shows rawRank >= bucketSize — these are
+// second-pass / overflow MIDI notes that have no unique SVG slot in this pass.
+practiceNotes = practiceNotes.filter(note => {
+    const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+    const entry = _midiRankMap.get(mk);
+    // Keep notes with no rank entry, notes with bucketSize 0, and explicitly-rescued
+    // overflow grace notes (they must always be played regardless of rank wrapping).
+    if (!entry || entry.bucketSize === 0 || note.isOverflowGrace) return true;
+    // Drop if rawRank >= bucketSize: this note's highlight would wrap to an already-
+    // used SVG slot (rank = rawRank % bucketSize), causing a false re-highlight.
+    if (entry.rawRank >= entry.bucketSize) {
+        console.log(`\u1f6ab Drop wrap-around: midi=${note.midi} t=${note.time.toFixed(4)} sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`);
+        dbg(`\u1f6ab DROP wrap midi=${note.midi} t=${note.time.toFixed(3)}s sheet=${entry.sheet_measure} ${entry.clef} rawRank=${entry.rawRank}/${entry.bucketSize}`, 'dw');
+        return false;
+    }
+    return true;
+});
+// ──────────────────────────────────────────────────────────────────────────
+
 // ── DEBUG: dump sorted practiceNotes ────────────────────────────────────────
 dbg('── Sorted practiceNotes ──', 'dh');
 practiceNotes.forEach((n, i) => {
@@ -4763,14 +4787,6 @@ function _buildSvgMidiMap() {
             // (some are 0.149s, not the typical <0.1s), so we detect them via
             // _bucketFirstIsGrace: if the NEXT bucket starts with a grace note and the
             // current bucket is empty (cap=0), this note belongs in the next bucket.
-            //
-            // Measures 30→31 and 32→33 fire via the _isEmptyBucket path (measure 30/32
-            // treble has cap=0 — bass-only measures). Measures 28→29 and 34→35 have
-            // cap>0 in both clefs, so we need an explicit hardcoded correction for them:
-            // when the current bucket is AT CAPACITY (all SVG notes already assigned) and
-            // the NEXT bucket starts with a grace note, this MIDI note is the overflow
-            // grace note that belongs in the next measure.
-            //
             // Special case: repeat-pass grace note for logical 29 lands in logical 36 (cap=0).
             let hardcodedGraceCorrected = false;
             {
@@ -4780,28 +4796,12 @@ function _buildSvgMidiMap() {
                 const _nextKey = `${sheetMeasure + 1}|${clef}`;
                 const _nextStartsGrace = !!_bucketFirstIsGrace[_nextKey];
                 const _isEmptyBucket   = _cap === 0 && (_used === 0 || _used === 1);
-                // Bucket-full detection: current bucket has been fully assigned on the
-                // FIRST pass (used === cap), and the next bucket starts with a grace note.
-                // This catches measures 28→29 and 34→35 (and their repeat-pass clones
-                // 34→35 second pass) where measure 28/34 has real notes that fill the
-                // bucket, and the grace note for 29/35 overflows into it.
-                // Guard: only fire once per pass (used === cap, not used === 2*cap etc.)
-                const _isBucketFull = _cap > 0 && (_used === _cap || _used === 2 * _cap);
 
                 if (_isEmptyBucket && _nextStartsGrace) {
                     // Current bucket is empty and next bucket starts with a grace note:
                     // this note's MIDI time landed in the wrong (empty) bucket.
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
-                } else if (_isBucketFull && _nextStartsGrace) {
-                    // Current bucket is full and next bucket starts with a grace note:
-                    // this is the grace note for the next measure (e.g. 28→29, 34→35).
-                    const _nextCap = bucketCapacity[_nextKey] ?? 0;
-                    if (_nextCap > 0) {
-                        console.log(`🎶 BucketFullGraceCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
-                        sheetMeasure += 1;
-                        hardcodedGraceCorrected = true;
-                    }
                 } else if (sheetMeasure === 36 && _cap === 0) {
                     // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
                     // The next SVG bucket is logical 29 (physical 37), not logical 37.
@@ -4882,7 +4882,10 @@ if (nextCap > 0) {
             const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
-            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
+            // Store rawRank too so practiceNotes filtering can detect second-pass
+            // wrap-around notes (rawRank >= bucketSize) and exclude them when the
+            // user has only selected a single pass through the section.
+            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank, rawRank, bucketSize });
         }
     }
 
