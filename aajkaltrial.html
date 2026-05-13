@@ -3963,6 +3963,14 @@ practiceNotes = allMidiNotes
             // The raw MIDI time landed in a measure just outside the selection.
             // Check whether the rank-map overflow correction moved it into an
             // allowed measure (classic grace-note-before-barline case).
+            //
+            // IMPORTANT: only rescue notes that are physically adjacent (within 1
+            // measure) to an allowed physical measure. This prevents repeat-pass
+            // notes (e.g. physical 42-43 which also map to logical 35 via the rank
+            // map) from being pulled into a single-measure skip-repeats selection.
+            const isPhysicallyAdjacent = physicalSeq.some(q => Math.abs(q - p) <= 1);
+            if (!isPhysicallyAdjacent) return null;
+
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
             if (entry && allowedLogical.has(entry.sheet_measure)) {
