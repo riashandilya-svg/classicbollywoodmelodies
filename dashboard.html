@@ -99,6 +99,65 @@
     .banner::before { top: 0; }
     .banner::after  { bottom: -1px; height: 1px; opacity: 0.55; }
 
+    /* ── Beta Banner ───────────────────────────────── */
+    .beta-banner{
+      width: 100%;
+      padding: 11px 18px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      color: #fff;
+      background: linear-gradient(135deg, #ffb000 0%, #e8156b 50%, #6b2bb5 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      position: sticky;
+      top: 68px;
+      z-index: 99;
+      box-shadow: 0 10px 24px rgba(232,21,107,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      text-shadow: 0 1px 3px rgba(58,15,42,0.30);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .beta-banner .beta-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.22);
+      border: 1px solid rgba(255,255,255,0.40);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+    }
+    .beta-banner .beta-dismiss{
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.18);
+      border: none;
+      border-radius: 50%;
+      width: 24px; height: 24px;
+      color: #fff;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .beta-banner .beta-dismiss:hover{ background: rgba(255,255,255,0.32); }
+    @media (max-width: 600px){
+      .beta-banner{ font-size: 12px; padding: 9px 36px 9px 14px; top: 0; }
+    }
+
     .navGrid {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
@@ -977,6 +1036,13 @@
       </div>
     </div>
   </header>
+
+  <!-- ── Beta Access Banner ── -->
+  <div class="beta-banner" id="betaBanner" role="status" aria-live="polite">
+    <span class="beta-pill">🎬 Early Access Beta</span>
+    <span>You are among the first listeners. Expect bugs, unfinished features &amp; magical chaos, please report issues to help us improve! 💛</span>
+    <button class="beta-dismiss" onclick="document.getElementById('betaBanner').style.display='none'" aria-label="Dismiss beta banner">×</button>
+  </div>
 
   <div class="container">
 
