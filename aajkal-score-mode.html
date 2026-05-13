@@ -1419,13 +1419,24 @@ body.score-mode #panelProgressWrap {
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#panelProgressText {
-    font-size: 11px;
-    font-weight: 700;
-    color: #E57373;
-    text-align: right;
-    margin-top: 3px;
-    letter-spacing: 0.03em;
+/* ====== STATS TOGGLE — notes mode ====== */
+.notes-stat-extra {
+    transition: opacity 0.2s, max-width 0.25s, padding 0.2s, margin 0.2s;
+}
+#statsBar.stats-minimal .notes-stat-extra {
+    display: none !important;
+}
+
+/* ====== STATS TOGGLE — score mode ====== */
+.score-stat-extra {
+    transition: opacity 0.2s;
+}
+#panelStatsCard.stats-minimal .score-stat-extra {
+    display: none !important;
+}
+/* When minimal: Hold for spans full width of the 2-col grid */
+#panelStatsCard.stats-minimal .ctrl-stats-grid {
+    grid-template-columns: 1fr;
 }
 
 </style>
@@ -1501,22 +1512,26 @@ body.score-mode #panelProgressWrap {
         <span class="stat-val" id="statHold">—</span>
         <span>Hold for</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statAccuracy">—</span>
         <span>Accuracy</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statCombo">×0</span>
         <span>Combo</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statPerfect">0</span>
         <span>Perfect Hits</span>
     </div>
-    <div class="stat-item">
+    <div class="stat-item notes-stat-extra">
         <span class="stat-val" id="statBPM">100</span>
         <span>BPM</span>
     </div>
+    <label title="Hide extra stats" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;white-space:nowrap;">
+        <input type="checkbox" id="notesStatsToggle" checked style="width:13px;height:13px;accent-color:#E57373;cursor:pointer;">
+        all stats
+    </label>
 </div>
 
 <!-- Measure Timeline -->
@@ -1625,25 +1640,31 @@ body.score-mode #panelProgressWrap {
 
   <!-- STATS card -->
   <div class="ctrl-card" id="panelStatsCard">
-    <div class="ctrl-card-title">STATS</div>
+    <div class="ctrl-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>STATS</span>
+      <label title="Show/hide stats" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;">
+        <input type="checkbox" id="scoreStatsToggle" checked style="width:13px;height:13px;accent-color:#E57373;cursor:pointer;">
+        all
+      </label>
+    </div>
     <div class="ctrl-stats-grid">
       <div class="ctrl-stat-item">
         <span class="ctrl-stat-val" id="panelStatHold">—</span>
         <span class="ctrl-stat-label">Hold for</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatAccuracy">—</span>
         <span class="ctrl-stat-label">Accuracy</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatCombo">×0</span>
         <span class="ctrl-stat-label">Combo</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatPerfect">0</span>
         <span class="ctrl-stat-label">Perfect</span>
       </div>
-      <div class="ctrl-stat-item">
+      <div class="ctrl-stat-item score-stat-extra">
         <span class="ctrl-stat-val" id="panelStatBPM">100</span>
         <span class="ctrl-stat-label">BPM</span>
       </div>
@@ -2960,6 +2981,7 @@ function spawnTrainingNote(noteObj) {
         });
     }
 
+    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
@@ -3963,6 +3985,14 @@ practiceNotes = allMidiNotes
             // The raw MIDI time landed in a measure just outside the selection.
             // Check whether the rank-map overflow correction moved it into an
             // allowed measure (classic grace-note-before-barline case).
+            //
+            // IMPORTANT: only rescue notes that are physically adjacent (within 1
+            // measure) to an allowed physical measure. This prevents repeat-pass
+            // notes (e.g. physical 42-43 which also map to logical 35 via the rank
+            // map) from being pulled into a single-measure skip-repeats selection.
+            const isPhysicallyAdjacent = physicalSeq.some(q => Math.abs(q - p) <= 1);
+            if (!isPhysicallyAdjacent) return null;
+
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
             if (entry && allowedLogical.has(entry.sheet_measure)) {
@@ -3999,7 +4029,16 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         }
 
         const idx = physicalIndex.get(p);
-        const offsetInMeasure = Math.max(0, note.time - MEASURE_TIME_MAP[p].start);
+        // For overflow-corrected grace notes whose MIDI time sits just before the
+        // barline, note.time - measureStart is negative. Clamping to 0 makes their
+        // playTime identical to the first main note, grouping them as a chord.
+        // Give them a tiny pre-measure offset (-0.001s) so they sort just before
+        // the measure's main notes and are always a separate step.
+        const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
+        // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
+        // so they sort before the main notes AND are outside the 0.01s chord-grouping
+        // window used in spawnTrainingNote's lookahead.
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -4019,6 +4058,15 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
     .filter(Boolean);
 
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
+
+// DEBUG: log every practiceNote for measure 35 analysis
+console.group('🔬 practiceNotes dump (all notes):');
+practiceNotes.forEach((n, i) => {
+    const mk = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+    const rankEntry = _midiRankMap.get(mk);
+    console.log(`[${i}] midi=${n.midi} track=${n.track} time=${n.time.toFixed(4)} playTime=${(n.playTime??n.time).toFixed(4)} dur=${n.duration.toFixed(3)} physMeasure=${n.physicalMeasure} logMeasure=${n.logicalMeasure} svgSheet=${rankEntry?.sheet_measure} rank=${rankEntry?.rank}`);
+});
+console.groupEnd();
 
 // scoreNoteOffset no longer used for highlighting — kept at 0
 scoreNoteOffset = 0;
@@ -4572,7 +4620,26 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
+    // DEBUG: dump SVG buckets 34-36
+    for (const m of [34,35,36]) {
+        for (const c of ["treble","bass"]) {
+            const bucket = _svgBuckets[m]?.[c] || [];
+            if (!bucket.length) continue;
+            const items = bucket.map((idx,r) => {
+                const n = _svgNoteElements[idx];
+                return "rank"+r+":tx="+n.tx.toFixed(0)+" midi_ty="+n.ty.toFixed(0)+" grace="+n.isGrace;
+            }).join("  ");
+            console.log("🪣 SVG bucket m="+m+" "+c+" ("+bucket.length+" notes): "+items);
+        }
+    }
+
     const rankCounters = {};
+    // Track which bucket|clef combinations have already sent an overflow note to the
+    // next measure during the FIRST pass. On the second repeat pass, a note that
+    // overflows m29→m30 must NOT cascade-overflow m30→m31 again (double overflow).
+    // This set records buckets that have already overflowed; we skip the overflow
+    // check if the DESTINATION bucket is already in this set.
+    const _overflowSentFrom = new Set();
 
     function midiKeyFor(note) {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
@@ -4611,13 +4678,18 @@ function _buildSvgMidiMap() {
             // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
             // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
             // Bump them all forward to the correct SVG bucket.
+            // IMPORTANT: set gracePreCorrected=true here so the overflow check below
+            // does not fire a second time on the already-corrected sheetMeasure.
+            let hardcodedGraceCorrected = false;
             if (note.duration < 0.1) {
                 if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
                     sheetMeasure += 1;
+                    hardcodedGraceCorrected = true;
                 } else if (sheetMeasure === 36) {
                     // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
                     // The next SVG bucket is logical 29 (physical 37), not logical 37.
                     sheetMeasure = 29;
+                    hardcodedGraceCorrected = true;
                 }
             }
 
@@ -4652,8 +4724,8 @@ function _buildSvgMidiMap() {
             const allowGraceCorrect = (cap === 0)
                 ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
                 : (used < 2 * cap);            // normal bucket: within first pass
-            let gracePreCorrected = false;
-            if (isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
+            let gracePreCorrected = hardcodedGraceCorrected; // inherit hardcoded guard
+            if (!hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
                 const nextCap = bucketCapacity[nextKey] ?? 0;
                 if (nextCap > 0) {
                     console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
@@ -4667,10 +4739,21 @@ function _buildSvgMidiMap() {
             // On the second repeat pass used >= 2*cap already, so we leave it alone
             // and let the rawRank % bucketSize wrapping handle alignment.
             // Skip if grace pre-correction already bumped this note forward.
-            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
+            //
+            // CRITICAL FIX — double-overflow guard:
+            // On the second repeat pass a note can cascade-overflow TWICE:
+            //   physical m37 → logical m29 (cap=8, used=8) → overflow to m30
+            //   m30 (cap=1, used=1) → overflow AGAIN to m31  ← WRONG
+            // This is caused by the receiving bucket (m30) satisfying used>=cap&&used<2*cap
+            // on the second pass. We prevent this by recording which buckets are
+            // "overflow receivers" — those buckets must never themselves cascade-overflow.
+            const alreadyOverflowed = _overflowSentFrom.has(capKey);
+            if (!gracePreCorrected && !alreadyOverflowed && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
-if (nextCap > 0) {
+                if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
+                    // Mark the receiving bucket so it won't cascade-overflow later.
+                    _overflowSentFrom.add(`${sheetMeasure + 1}|${clef}`);
                     sheetMeasure = sheetMeasure + 1;
                 }
             }
@@ -4690,6 +4773,11 @@ if (nextCap > 0) {
             const rawRank    = rankCounters[bucketKey]++;
             const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
+
+            // DEBUG: log all assignments to sheet 35 treble
+            if (sheetMeasure === 35 && clef === 'treble') {
+                console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
+            }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
         }
@@ -4811,6 +4899,7 @@ function onTrainingNoteSpawned(noteObj) {
     const simultaneousNotes = practiceNotes.filter(n =>
         Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
     );
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
 
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
@@ -4819,6 +4908,7 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
+        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
@@ -4895,6 +4985,8 @@ async function renderAllScorePages() {
             svgEl.style.display = 'block';
             svgEl.removeAttribute('width');
             svgEl.removeAttribute('height');
+            // Remove all <title> elements so browsers don't show filename tooltips on hover
+            svgEl.querySelectorAll('title').forEach(t => t.remove());
         }
     }
     // Build the full SVG↔MIDI map across all pages
@@ -5043,6 +5135,28 @@ holdEl.innerHTML =
     }
 }
 
+</script>
+<!-- Stats toggle logic -->
+<script>
+// Score mode: stats card toggle
+(function() {
+    const toggle = document.getElementById('scoreStatsToggle');
+    const card   = document.getElementById('panelStatsCard');
+    if (!toggle || !card) return;
+    toggle.addEventListener('change', function() {
+        card.classList.toggle('stats-minimal', !this.checked);
+    });
+})();
+
+// Notes mode: statsBar toggle
+(function() {
+    const toggle = document.getElementById('notesStatsToggle');
+    const bar    = document.getElementById('statsBar');
+    if (!toggle || !bar) return;
+    toggle.addEventListener('change', function() {
+        bar.classList.toggle('stats-minimal', !this.checked);
+    });
+})();
 </script>
 <!-- Panel sync helpers -->
 <script>
