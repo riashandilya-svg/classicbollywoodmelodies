@@ -4329,10 +4329,13 @@ document.getElementById('feedback').textContent = 'Get ready…';
 
 startVisualCountdown(() => {
 
-transportStartTime = performance.now();
+// The MIDI audio fires after a visualPreroll delay (getFallTimeMs() ms).
+// Offset transportStartTime forward by that same amount so beat "1"
+// fires exactly when the first note sounds, not 2 s before it.
+transportStartTime = performance.now() + getFallTimeMs();
 
 if (beatEnabled || countEnabled) {
-    startMetronome();
+    startMetronome(transportStartTime);
 }
 
 playMeasurePreview(sectionStartTime, clefMode);
