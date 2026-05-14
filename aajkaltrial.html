@@ -3154,6 +3154,23 @@ function spawnNextValidNote() {
     stopButton.disabled = true;
 }
 
+// ── Shared chord-advance helper ──────────────────────────────────────────────
+// Counts how many practiceNotes share the same playTime as practiceNotes[trainingIndex]
+// and takes the larger of that count vs currentChordNotes.size, so mouse, touch,
+// and MIDI paths all advance by exactly the same amount.
+function advanceChordIndex() {
+    if (!practiceNotes[trainingIndex]) return;
+    const baseTime = practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time;
+    let skip = 0;
+    for (let i = trainingIndex; i < practiceNotes.length; i++) {
+        const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+        if (Math.abs(t - baseTime) < 0.01) skip++;
+        else break;
+    }
+    trainingIndex += Math.max(skip, currentChordNotes.size);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function startVisualCountdown(onComplete) {
     const overlay = document.getElementById('countdownOverlay');
     let count = 3;
@@ -3583,7 +3600,7 @@ explanationLocked = false;
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         
-        trainingIndex += currentChordNotes.size;
+        advanceChordIndex();
 updateTrainingProgress();
 
 document.getElementById('holdInfo').textContent = '';
@@ -3727,7 +3744,7 @@ canvas.addEventListener('touchend', (e) => {
                 expectedMidiTreble.clear();
                 expectedMidiBass.clear();
 
-                trainingIndex += currentChordNotes.size;
+                advanceChordIndex();
                 updateTrainingProgress();
 
                 document.getElementById('holdInfo').textContent = '';
@@ -5076,16 +5093,7 @@ explanationLocked = false;
     expectedMidiBass.clear();
     
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
-    {
-        const baseTime = practiceNotes[trainingIndex] ? (practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time) : 0;
-        let skip = 0;
-        for (let i = trainingIndex; i < practiceNotes.length; i++) {
-            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
-            if (Math.abs(t - baseTime) < 0.01) skip++;
-            else break;
-        }
-        trainingIndex += Math.max(skip, currentChordNotes.size);
-    }
+    advanceChordIndex();
 updateTrainingProgress();
     document.getElementById('holdInfo').textContent = '';
 
