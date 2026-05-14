@@ -2191,12 +2191,143 @@ let metronomeRunning = false;
 let transportStartTime = null;
 let countdownActive = false;
 
+// ── SpeechSynthesis kept ONLY as last-resort fallback ──────────────────────
 const speechSynth = window.speechSynthesis;
 
-let countMode = "normal"; 
+let countMode = "normal";
 let subdivisionEnabled = false;
-
 let countLanguage = "en";
+
+// ── Web Audio counting engine ───────────────────────────────────────────────
+// Uses AudioContext.currentTime-based lookahead scheduling for sample-accurate,
+// Chrome-reliable playback. Falls back to SpeechSynthesis for any word whose
+// audio file hasn't loaded yet (e.g. before you drop the .mp3 files in).
+let _countAudioCtx = null;
+let _countBuffers  = {};      // key → AudioBuffer
+let _countSources  = [];      // live nodes, kept for cancellation
+let _countSchedTimer = null;
+let _lastScheduledStep = -1;
+
+const SCHEDULE_LOOKAHEAD_SEC = 0.25;  // schedule this far ahead
+const SCHEDULE_INTERVAL_MS   = 100;   // re-run scheduler every 100ms
+
+// ↓ Edit these paths to wherever you put the .mp3 files on your server.
+const COUNT_AUDIO_PATHS = {
+    'one':     '/audio/count_one.mp3',
+    'two':     '/audio/count_two.mp3',
+    'three':   '/audio/count_three.mp3',
+    'four':    '/audio/count_four.mp3',
+    'uno':     '/audio/count_uno.mp3',
+    'due':     '/audio/count_due.mp3',
+    'tre':     '/audio/count_tre.mp3',
+    'quattro': '/audio/count_quattro.mp3',
+    'e':       '/audio/count_e.mp3',
+    'and':     '/audio/count_and.mp3',
+    'a':       '/audio/count_a.mp3',
+};
+
+async function _ensureCountAudioCtx() {
+    if (!_countAudioCtx) {
+        _countAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (_countAudioCtx.state === 'suspended') {
+        await _countAudioCtx.resume();
+    }
+    return _countAudioCtx;
+}
+
+// Call once on the first user gesture that enables counting.
+async function _loadCountBuffers() {
+    const ctx = await _ensureCountAudioCtx();
+    const results = await Promise.allSettled(
+        Object.entries(COUNT_AUDIO_PATHS).map(async ([key, url]) => {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`${res.status} ${url}`);
+            const ab  = await res.arrayBuffer();
+            const buf = await ctx.decodeAudioData(ab);
+            _countBuffers[key] = buf;
+        })
+    );
+    const loaded  = Object.keys(_countBuffers);
+    const missing = Object.keys(COUNT_AUDIO_PATHS).filter(k => !_countBuffers[k]);
+    if (loaded.length)  console.log('[Count Audio] Loaded:', loaded.join(', '));
+    if (missing.length) console.warn('[Count Audio] Missing (will use SpeechSynthesis fallback):', missing.join(', '));
+}
+
+// Schedule one word at a precise AudioContext time. Returns true if done via WebAudio.
+function _webAudioPlayAt(word, ctxTime, isMainBeat) {
+    if (!_countAudioCtx || !_countBuffers[word]) return false;
+    const src  = _countAudioCtx.createBufferSource();
+    src.buffer = _countBuffers[word];
+    const gain = _countAudioCtx.createGain();
+    gain.gain.value = isMainBeat ? 1.0 : 0.65;
+    src.connect(gain);
+    gain.connect(_countAudioCtx.destination);
+    src.start(Math.max(ctxTime, _countAudioCtx.currentTime + 0.005));
+    _countSources.push(src);
+    return true;
+}
+
+// Stop all scheduled Web Audio nodes and clear the re-schedule timer.
+function _cancelCountAudio() {
+    if (_countSchedTimer) { clearTimeout(_countSchedTimer); _countSchedTimer = null; }
+    _countSources.forEach(src => { try { src.stop(0); } catch(e) {} });
+    _countSources = [];
+    _lastScheduledStep = -1;
+}
+
+// The lookahead scheduler: called every SCHEDULE_INTERVAL_MS.
+// Schedules every syllable whose fire-time falls in [now, now + LOOKAHEAD].
+function _runCountScheduler(bpm) {
+    if (!metronomeRunning || !countEnabled || !_countAudioCtx) return;
+
+    const stepSec   = (60 / bpm) / 4;                       // 16th-note duration
+    const elapsedSec = (performance.now() - transportStartTime) / 1000;
+    // Relationship: ctx.currentTime ≈ elapsedSec + ctxBase
+    const ctxBase   = _countAudioCtx.currentTime - elapsedSec;
+
+    const fromStep  = Math.max(Math.floor(elapsedSec / stepSec), _lastScheduledStep + 1);
+    const toStep    = Math.ceil((elapsedSec + SCHEDULE_LOOKAHEAD_SEC) / stepSec);
+
+    for (let step = fromStep; step <= toStep; step++) {
+        const slotInBeat = step % 4;
+        const beatIndex  = Math.floor(step / 4);
+        const isMainBeat = slotInBeat === 0;
+        const shouldPlay = subdivisionEnabled || isMainBeat;
+        if (!shouldPlay) continue;
+
+        const word = getCountWord(beatIndex, slotInBeat);
+        if (!word) continue;
+
+        const fireAtSec  = step * stepSec;
+        const ctxFireAt  = ctxBase + fireAtSec;
+
+        if (!_webAudioPlayAt(word, ctxFireAt, isMainBeat)) {
+            // Fallback: SpeechSynthesis with a matching setTimeout
+            const delayMs = Math.max(0, (fireAtSec - elapsedSec) * 1000);
+            setTimeout(() => {
+                if (!metronomeRunning || !countEnabled) return;
+                if (isMainBeat && speechSynth.speaking) speechSynth.cancel();
+                const u = new SpeechSynthesisUtterance(word);
+                u.volume = isMainBeat ? 1 : 0.65;
+                u.rate   = 1.6;
+                u.pitch  = 1;
+                if (window.__preferredVoice) u.voice = window.__preferredVoice;
+                speechSynth.speak(u);
+            }, delayMs);
+        }
+
+        _lastScheduledStep = step;
+    }
+
+    // Prune finished sources to avoid unbounded array growth
+    _countSources = _countSources.filter(s => {
+        try { return s.playbackState !== undefined ? s.playbackState < 3 : true; }
+        catch(e) { return false; }
+    });
+
+    _countSchedTimer = setTimeout(() => _runCountScheduler(bpm), SCHEDULE_INTERVAL_MS);
+}
 
 function stopMetronome() {
     if (metroInterval) {
@@ -2205,10 +2336,9 @@ function stopMetronome() {
     }
 
     metroBeat = 0;
+    _cancelCountAudio();
 
-    if (speechSynth) {
-        speechSynth.cancel();
-    }
+    if (speechSynth) speechSynth.cancel();
 
     if (window._speechKeepAlive) {
         clearInterval(window._speechKeepAlive);
@@ -2242,15 +2372,22 @@ countEnabled = !countEnabled;
 countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
 if (countEnabled) {
-    // Unlock Chrome's speech synthesis on first user gesture and preload a voice.
+    // On first enable: initialise AudioContext (must happen on a user gesture)
+    // and load the count audio buffers. Also prime SpeechSynthesis as fallback.
+    _ensureCountAudioCtx().then(() => {
+        if (!window.__countAudioLoaded) {
+            window.__countAudioLoaded = true;
+            _loadCountBuffers();
+        }
+    });
+
     if (!window.__chromeSpeechUnlocked) {
         const tryUnlock = () => {
             const voices = speechSynthesis.getVoices();
-            const u = new SpeechSynthesisUtterance("");
-            // Prefer a local/offline English voice for speed; fall back to any English.
             const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
                            || voices.find(v => v.lang.startsWith('en'))
                            || voices[0];
+            const u = new SpeechSynthesisUtterance("");
             if (preferred) u.voice = preferred;
             u.volume = 0;
             speechSynthesis.speak(u);
@@ -3622,49 +3759,8 @@ function getCountWord(beatIndex, slotInBeat) {
     return null;
 }
 
-// ── Speech counting via pre-scheduled setTimeouts ──────────────────────────
-// SpeechSynthesisUtterance fired inside requestAnimationFrame is unreliable:
-// Chrome cancels/queues too fast and words get dropped. Instead we schedule
-// each word with its own setTimeout so it fires exactly once at the right moment.
-let _metroSpeechTimeouts = [];
-
-function _scheduleCountWords(fromMs, windowMs, bpm) {
-    const stepMs = (60000 / bpm) / 4;
-    const startStep = Math.ceil(fromMs / stepMs);
-    const endStep   = Math.floor((fromMs + windowMs) / stepMs);
-
-    for (let step = startStep; step <= endStep; step++) {
-        const slotInBeat = step % 4;
-        const beatIndex  = Math.floor(step / 4);
-        const isMainBeat = slotInBeat === 0;
-        const shouldSpeak = subdivisionEnabled || isMainBeat;
-        if (!shouldSpeak) continue;
-        const word = getCountWord(beatIndex, slotInBeat);
-        if (!word) continue;
-
-        const fireAt = step * stepMs;
-        const elapsed = performance.now() - transportStartTime;
-        const delay   = Math.max(0, fireAt - elapsed);
-
-        const t = setTimeout(() => {
-            if (!metronomeRunning || !countEnabled) return;
-            if (speechSynth.speaking) speechSynth.cancel();
-            const u = new SpeechSynthesisUtterance(word);
-            u.volume = isMainBeat ? 1 : 0.65;
-            u.rate   = 1.6;
-            u.pitch  = 1;
-            if (window.__preferredVoice) u.voice = window.__preferredVoice;
-            speechSynth.speak(u);
-        }, delay);
-        _metroSpeechTimeouts.push(t);
-    }
-}
-
-function _clearSpeechTimeouts() {
-    _metroSpeechTimeouts.forEach(t => clearTimeout(t));
-    _metroSpeechTimeouts = [];
-    if (speechSynth) speechSynth.cancel();
-}
+// (Old _scheduleCountWords / _clearSpeechTimeouts removed — replaced by
+//  the Web Audio lookahead scheduler: _runCountScheduler / _cancelCountAudio)
 
 function startMetronome(startTimeOverride = null) {
     stopMetronome();
@@ -3700,39 +3796,30 @@ function startMetronome(startTimeOverride = null) {
         if (step !== lastStep) {
             lastStep = step;
 
-            const slotInBeat = step % 4;        // 0=beat, 1=e, 2=&, 3=a
-            const beatIndex  = Math.floor(step / 4);
+            const slotInBeat = step % 4;
             const isMainBeat = slotInBeat === 0;
 
+            // Beat click sound only
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
-
-            if (countEnabled && speechSynth) {
-                const shouldSpeak = subdivisionEnabled || isMainBeat;
-                const word = shouldSpeak ? getCountWord(beatIndex, slotInBeat) : null;
-
-                if (word) {
-                    // Only cancel if currently speaking to avoid killing queued words.
-                    // For main beats (1, 2) we force-cancel so the word stays crisp;
-                    // for subdivision syllables we let them queue naturally.
-                    if (isMainBeat && speechSynth.speaking) {
-                        speechSynth.cancel();
-                    }
-                    const u = new SpeechSynthesisUtterance(word);
-                    u.volume = isMainBeat ? 1 : 0.6;
-                    u.rate = 1.4;
-                    u.pitch = 1;
-                    if (window.__preferredVoice) u.voice = window.__preferredVoice;
-                    speechSynth.speak(u);
-                }
-            }
+            // NOTE: counting words are now handled by the Web Audio lookahead
+            // scheduler (_runCountScheduler) started below — NOT in this rAF loop.
         }
 
         metroInterval = requestAnimationFrame(tick);
     }
 
     tick();
+
+    // Start the Web Audio lookahead scheduler for counting words.
+    // This runs independently of rAF for Chrome-reliable timing.
+    if (countEnabled) {
+        _ensureCountAudioCtx().then(() => {
+            _lastScheduledStep = -1;
+            _runCountScheduler(bpm);
+        });
+    }
 }
 
 // ================================
@@ -4431,7 +4518,8 @@ playSongButton.addEventListener('click', async () => {
 
     countEnabled = false;
     countToggle.textContent = "Counting";
-    speechSynth.cancel();
+    _cancelCountAudio();
+    if (speechSynth) speechSynth.cancel();
 
     if ((beatEnabled || countEnabled) && !metronomeRunning) {
         startMetronome();
