@@ -3418,6 +3418,164 @@ previewTimeouts.push(endTimeout);
 
 }
 
+// ============================================================
+// PER-NOTE COUNT-IN
+// When beat / counting / subdivision is enabled, count one full
+// measure before every note so the user hears "1  2" (or "1 e & a
+// 2 e & a") and then the note preview, before being asked to play.
+// ============================================================
+
+// Central entry point called after a correct note is accepted.
+// Replaces all raw `setTimeout(() => spawnNextValidNote(), 300)` calls.
+function scheduleNextNote() {
+    if (beatEnabled || countEnabled || subdivisionEnabled) {
+        setTimeout(() => playNoteCountIn(), 300);
+    } else {
+        setTimeout(() => spawnNextValidNote(), 300);
+    }
+}
+
+// Find the next playable note index (same tie / hand filtering as spawnNextValidNote)
+// WITHOUT actually spawning it.  Returns the index or -1 if none remains.
+function peekNextNoteIndex() {
+    for (let i = trainingIndex; i < practiceNotes.length; i++) {
+        const note = practiceNotes[i];
+        const isGraceMidi   = note.duration < 0.1;
+        const midiKey       = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+        const shiftedKey    = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
+        const isTied        = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
+        if (isTied) continue;
+        const isTreble = note.track === TREBLE;
+        const isBass   = note.track === BASS;
+        if (clefMode === 'both' || (clefMode === 'treble' && isTreble) || (clefMode === 'bass' && isBass)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function playNoteCountIn() {
+    if (!trainingActive) return;
+
+    const nextIdx = peekNextNoteIndex();
+    if (nextIdx === -1) {
+        spawnNextValidNote();
+        return;
+    }
+
+    const noteObj   = practiceNotes[nextIdx];
+    const noteName  = getNoteName(noteObj.midi);
+    const beats     = noteObj.duration / secondsPerBeat;
+    const beatLabel = beatsToNoteName(beats);
+
+    const bpm       = (60 / secondsPerBeat) * speedMultiplier;
+    const beatMs    = 60000 / bpm;          // ms per beat
+    const stepMs    = beatMs / 4;           // ms per 16th-note step
+
+    // How many beats does this note last? Round up to at least 1.
+    const noteMs    = (noteObj.duration * 1000) / speedMultiplier;
+    // Number of 16th-note steps that span the note's duration
+    const totalSteps = Math.max(4, Math.ceil(noteMs / stepMs));
+    // Total listening window = note duration + small tail before "Your turn"
+    const totalMs   = noteMs + 200;
+
+    // Show feedback while note + count play together
+    const feedback  = document.getElementById('feedback');
+    // Peek ahead to see if upcoming note is a chord (currentChordNotes is stale here,
+    // so rebuild from practiceNotes at nextIdx)
+    const basePlayTime = noteObj.playTime ?? noteObj.time;
+    const chordMidis = practiceNotes
+        .filter(n => Math.abs((n.playTime ?? n.time) - basePlayTime) < 0.01)
+        .map(n => getNoteName(n.midi));
+    const isChord = chordMidis.length > 1;
+
+    feedback.textContent = `Listen: ${isChord ? chordMidis.join(' + ') : noteName} (${beatLabel})`;
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+
+    _ensureCountAudioCtx().then(ctx => {
+        if (!ctx || !trainingActive) { spawnNextValidNote(); return; }
+
+        const wallStart = performance.now();
+        const ctxStart  = ctx.currentTime + 0.02;
+
+        // ── 1. Note sound — fires immediately (t = 0) ────────────────
+        ensureSynth();
+        synth.triggerAttackRelease(noteName, noteObj.duration / speedMultiplier);
+
+        // Score mode: highlight note while it sounds
+        if (scoreModeActive) {
+            const simultaneous = practiceNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - basePlayTime) < 0.01
+            );
+            const seen = new Set();
+            const allIndices = [];
+            for (const sn of simultaneous) {
+                const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
+                if (seen.has(k)) continue;
+                seen.add(k);
+                allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
+            }
+            if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+            const clrT = setTimeout(() => clearScoreHighlight(), noteMs);
+            previewTimeouts.push(clrT);
+        }
+
+        // ── 2. Count words — start simultaneously with the note ───────
+        if (countEnabled || subdivisionEnabled) {
+            for (let step = 0; step < totalSteps; step++) {
+                const slotInBeat = step % 4;
+                const beatIndex  = Math.floor(step / 4);
+                const isMainBeat = slotInBeat === 0;
+                const shouldSpeak = subdivisionEnabled || isMainBeat;
+                if (!shouldSpeak) continue;
+
+                const word = getCountWord(beatIndex, slotInBeat);
+                if (!word) continue;
+
+                const fireCtxTime = ctxStart + (step * stepMs) / 1000;
+                if (!_webAudioPlayAt(word, fireCtxTime, isMainBeat)) {
+                    const delayMs = step * stepMs;
+                    const t = setTimeout(() => {
+                        if (!trainingActive) return;
+                        const u = new SpeechSynthesisUtterance(word);
+                        u.volume = isMainBeat ? 1 : 0.65;
+                        u.rate   = 1.6;
+                        if (window.__preferredVoice) u.voice = window.__preferredVoice;
+                        speechSynth.speak(u);
+                    }, delayMs);
+                    previewTimeouts.push(t);
+                }
+            }
+        }
+
+        // ── 3. Metronome clicks — one per beat for the note's duration ─
+        if (beatEnabled && metroSynth) {
+            const numBeats = Math.max(1, Math.ceil(noteMs / beatMs));
+            for (let b = 0; b < numBeats; b++) {
+                const delayMs = b * beatMs;
+                const t = setTimeout(() => {
+                    if (!trainingActive) return;
+                    metroSynth.triggerAttackRelease('16n');
+                }, delayMs);
+                previewTimeouts.push(t);
+            }
+        }
+
+        // ── 4. After note finishes → "Your turn" → spawn ──────────────
+        const endT = setTimeout(() => {
+            if (!trainingActive) return;
+            feedback.textContent = 'Your turn';
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('show');
+            spawnNextValidNote();
+        }, totalMs);
+        previewTimeouts.push(endT);
+    });
+}
+
 function spawnNextValidNote() {
 
     // Guard: check up-front whether the current hand filter matches ANY note in
@@ -3479,7 +3637,11 @@ function spawnNextValidNote() {
         trainingIndex = 0;
         document.getElementById('feedback').textContent = 'Looping section…';
         setTimeout(() => {
-            playMeasurePreview(sectionStartTime, clefMode);
+            if (beatEnabled || countEnabled || subdivisionEnabled) {
+                playNoteCountIn();
+            } else {
+                playMeasurePreview(sectionStartTime, clefMode);
+            }
         }, 600);
         return;
     }
@@ -3973,7 +4135,7 @@ explanationLocked = false;
 updateTrainingProgress();
 
 document.getElementById('holdInfo').textContent = '';
-setTimeout(() => spawnNextValidNote(), 300);
+scheduleNextNote();
 
     } else {
         const heldBeats = heldTime / 1000 / secondsPerBeat;
@@ -4132,7 +4294,7 @@ canvas.addEventListener('touchend', (e) => {
             updateTrainingProgress();
 
             document.getElementById('holdInfo').textContent = '';
-            setTimeout(() => spawnNextValidNote(), 300);
+            scheduleNextNote();
 
         } else {
             const heldBeats = heldTime / 1000 / secondsPerBeat;
@@ -5500,7 +5662,7 @@ explanationLocked = false;
 updateTrainingProgress();
     document.getElementById('holdInfo').textContent = '';
 
-    setTimeout(() => spawnNextValidNote(), 300);
+    scheduleNextNote();
         } else {
             const heldBeats = heldTime / 1000 / secondsPerBeat;
 const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
