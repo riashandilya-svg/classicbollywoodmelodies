@@ -3420,161 +3420,147 @@ previewTimeouts.push(endTimeout);
 
 // ============================================================
 // PER-NOTE COUNT-IN
-// When beat / counting / subdivision is enabled, count one full
-// measure before every note so the user hears "1  2" (or "1 e & a
-// 2 e & a") and then the note preview, before being asked to play.
+// When beat / counting / subdivision is enabled:
+//   1. Play the note sound + counting simultaneously (teacher demo)
+//   2. After the note finishes, call spawnTrainingNote for THAT SAME
+//      note so the keyboard highlights and waits for user input.
+//   trainingIndex is NOT touched here — advanceChordIndex() already
+//   moved it before scheduleNextNote() was called.
 // ============================================================
 
-// Central entry point called after a correct note is accepted.
-// Replaces all raw `setTimeout(() => spawnNextValidNote(), 300)` calls.
+// Called after a correct note is accepted (all three input paths).
 function scheduleNextNote() {
     if (beatEnabled || countEnabled || subdivisionEnabled) {
+        // Short breath, then demo the next note with counting
         setTimeout(() => playNoteCountIn(), 300);
     } else {
         setTimeout(() => spawnNextValidNote(), 300);
     }
 }
 
-// Find the next playable note index (same tie / hand filtering as spawnNextValidNote)
-// WITHOUT actually spawning it.  Returns the index or -1 if none remains.
-function peekNextNoteIndex() {
-    for (let i = trainingIndex; i < practiceNotes.length; i++) {
-        const note = practiceNotes[i];
-        const isGraceMidi   = note.duration < 0.1;
-        const midiKey       = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
-        const shiftedKey    = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
-        const isTied        = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
-        if (isTied) continue;
-        const isTreble = note.track === TREBLE;
-        const isBass   = note.track === BASS;
-        if (clefMode === 'both' || (clefMode === 'treble' && isTreble) || (clefMode === 'bass' && isBass)) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 function playNoteCountIn() {
     if (!trainingActive) return;
 
-    const nextIdx = peekNextNoteIndex();
-    if (nextIdx === -1) {
+    // trainingIndex already points at the NEXT note (advanceChordIndex ran).
+    // Skip ties / wrong-hand notes exactly like spawnNextValidNote does,
+    // but DON'T change trainingIndex — spawnTrainingNote will use it as-is.
+    let targetIdx = -1;
+    for (let i = trainingIndex; i < practiceNotes.length; i++) {
+        const n = practiceNotes[i];
+        const isGrace  = n.duration < 0.1;
+        const mk       = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+        const sk       = `${(n.time - NOTE_GAP_TIME).toFixed(4)}|${n.midi}|${n.track}`;
+        const isTied   = !isGrace && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(sk));
+        if (isTied) continue;
+        const ok = clefMode === 'both'
+            || (clefMode === 'treble' && n.track === TREBLE)
+            || (clefMode === 'bass'   && n.track === BASS);
+        if (ok) { targetIdx = i; break; }
+    }
+
+    // No more notes — let spawnNextValidNote handle end-of-section / loop
+    if (targetIdx === -1) {
         spawnNextValidNote();
         return;
     }
 
-    const noteObj   = practiceNotes[nextIdx];
+    const noteObj   = practiceNotes[targetIdx];
     const noteName  = getNoteName(noteObj.midi);
     const beats     = noteObj.duration / secondsPerBeat;
     const beatLabel = beatsToNoteName(beats);
 
-    const bpm       = (60 / secondsPerBeat) * speedMultiplier;
-    const beatMs    = 60000 / bpm;          // ms per beat
-    const stepMs    = beatMs / 4;           // ms per 16th-note step
+    const bpm     = (60 / secondsPerBeat) * speedMultiplier;
+    const beatMs  = 60000 / bpm;
+    const stepMs  = beatMs / 4;
+    const noteMs  = (noteObj.duration * 1000) / speedMultiplier;
+    const nSteps  = Math.max(4, Math.ceil(noteMs / stepMs));
 
-    // How many beats does this note last? Round up to at least 1.
-    const noteMs    = (noteObj.duration * 1000) / speedMultiplier;
-    // Number of 16th-note steps that span the note's duration
-    const totalSteps = Math.max(4, Math.ceil(noteMs / stepMs));
-    // Total listening window = note duration + small tail before "Your turn"
-    const totalMs   = noteMs + 200;
-
-    // Show feedback while note + count play together
-    const feedback  = document.getElementById('feedback');
-    // Peek ahead to see if upcoming note is a chord (currentChordNotes is stale here,
-    // so rebuild from practiceNotes at nextIdx)
+    // Chord label for feedback
     const basePlayTime = noteObj.playTime ?? noteObj.time;
-    const chordMidis = practiceNotes
+    const chordNames = practiceNotes
         .filter(n => Math.abs((n.playTime ?? n.time) - basePlayTime) < 0.01)
         .map(n => getNoteName(n.midi));
-    const isChord = chordMidis.length > 1;
+    const label = chordNames.length > 1 ? chordNames.join(' + ') : noteName;
 
-    feedback.textContent = `Listen: ${isChord ? chordMidis.join(' + ') : noteName} (${beatLabel})`;
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = `Listen: ${label} (${beatLabel})`;
     feedback.classList.remove('correct', 'wrong', 'show');
     void feedback.offsetWidth;
     feedback.classList.add('show');
 
     _ensureCountAudioCtx().then(ctx => {
-        if (!ctx || !trainingActive) { spawnNextValidNote(); return; }
+        if (!ctx || !trainingActive) {
+            spawnNextValidNote();
+            return;
+        }
 
-        const wallStart = performance.now();
-        const ctxStart  = ctx.currentTime + 0.02;
+        const ctxStart = ctx.currentTime + 0.02;
 
-        // ── 1. Note sound — fires immediately (t = 0) ────────────────
+        // ── 1. Note sound fires immediately ──────────────────────────
         ensureSynth();
         synth.triggerAttackRelease(noteName, noteObj.duration / speedMultiplier);
 
-        // Score mode: highlight note while it sounds
+        // Score mode: flash highlight while note sounds
         if (scoreModeActive) {
-            const simultaneous = practiceNotes.filter(n =>
+            const sim = practiceNotes.filter(n =>
                 Math.abs((n.playTime ?? n.time) - basePlayTime) < 0.01
             );
-            const seen = new Set();
-            const allIndices = [];
-            for (const sn of simultaneous) {
+            const seen = new Set(), idxs = [];
+            for (const sn of sim) {
                 const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                 if (seen.has(k)) continue;
                 seen.add(k);
-                allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
+                idxs.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
-            if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
-            const clrT = setTimeout(() => clearScoreHighlight(), noteMs);
-            previewTimeouts.push(clrT);
+            if (idxs.length) _applyHighlight(idxs.map(i => _svgNoteElements[i].el));
+            previewTimeouts.push(setTimeout(() => clearScoreHighlight(), noteMs));
         }
 
-        // ── 2. Count words — start simultaneously with the note ───────
+        // ── 2. Counting words simultaneous with note ──────────────────
         if (countEnabled || subdivisionEnabled) {
-            for (let step = 0; step < totalSteps; step++) {
-                const slotInBeat = step % 4;
-                const beatIndex  = Math.floor(step / 4);
-                const isMainBeat = slotInBeat === 0;
-                const shouldSpeak = subdivisionEnabled || isMainBeat;
-                if (!shouldSpeak) continue;
-
-                const word = getCountWord(beatIndex, slotInBeat);
+            for (let step = 0; step < nSteps; step++) {
+                const slot = step % 4, beat = Math.floor(step / 4);
+                const isMain = slot === 0;
+                if (!subdivisionEnabled && !isMain) continue;
+                const word = getCountWord(beat, slot);
                 if (!word) continue;
-
-                const fireCtxTime = ctxStart + (step * stepMs) / 1000;
-                if (!_webAudioPlayAt(word, fireCtxTime, isMainBeat)) {
-                    const delayMs = step * stepMs;
-                    const t = setTimeout(() => {
+                const fireAt = ctxStart + (step * stepMs) / 1000;
+                if (!_webAudioPlayAt(word, fireAt, isMain)) {
+                    previewTimeouts.push(setTimeout(() => {
                         if (!trainingActive) return;
                         const u = new SpeechSynthesisUtterance(word);
-                        u.volume = isMainBeat ? 1 : 0.65;
-                        u.rate   = 1.6;
+                        u.volume = isMain ? 1 : 0.65;
+                        u.rate = 1.6;
                         if (window.__preferredVoice) u.voice = window.__preferredVoice;
                         speechSynth.speak(u);
-                    }, delayMs);
-                    previewTimeouts.push(t);
+                    }, step * stepMs));
                 }
             }
         }
 
-        // ── 3. Metronome clicks — one per beat for the note's duration ─
+        // ── 3. Metronome clicks for the note's duration ───────────────
         if (beatEnabled && metroSynth) {
-            const numBeats = Math.max(1, Math.ceil(noteMs / beatMs));
-            for (let b = 0; b < numBeats; b++) {
-                const delayMs = b * beatMs;
-                const t = setTimeout(() => {
+            const nBeats = Math.max(1, Math.ceil(noteMs / beatMs));
+            for (let b = 0; b < nBeats; b++) {
+                previewTimeouts.push(setTimeout(() => {
                     if (!trainingActive) return;
                     metroSynth.triggerAttackRelease('16n');
-                }, delayMs);
-                previewTimeouts.push(t);
+                }, b * beatMs));
             }
         }
 
-        // ── 4. After note finishes → show "Your turn" then spawn ──────
-        // spawnNextValidNote shows the falling note / highlights the key
-        // and then WAITS for user input — it does NOT auto-advance.
-        const endT = setTimeout(() => {
+        // ── 4. After note ends → spawn THE SAME note for user input ──
+        // spawnTrainingNote uses trainingIndex which still points at noteObj.
+        // It highlights the key / drops the falling note and then WAITS —
+        // it never auto-advances; only correct user input moves things on.
+        previewTimeouts.push(setTimeout(() => {
             if (!trainingActive) return;
             feedback.textContent = 'Your turn';
             feedback.classList.remove('correct', 'wrong', 'show');
             void feedback.offsetWidth;
             feedback.classList.add('show');
-            spawnNextValidNote();
-        }, noteMs + 80);
-        previewTimeouts.push(endT);
+            spawnTrainingNote(noteObj);   // ← same note, waits for input
+        }, noteMs + 80));
     });
 }
 
@@ -4685,16 +4671,17 @@ document.getElementById('feedback').textContent = 'Get ready…';
 
 startVisualCountdown(() => {
 
-// The MIDI audio fires after a visualPreroll delay (getFallTimeMs() ms).
-// Offset transportStartTime forward by that same amount so beat "1"
-// fires exactly when the first note sounds, not 2 s before it.
 transportStartTime = performance.now() + getFallTimeMs();
 
-if (beatEnabled || countEnabled) {
+if (beatEnabled || countEnabled || subdivisionEnabled) {
+    // Count-in mode: skip the full section preview.
+    // Play note + count together for each note, then wait for user input.
+    playNoteCountIn();
+} else {
+    // Normal mode: full section preview first, then ask for input.
     startMetronome(transportStartTime);
+    playMeasurePreview(sectionStartTime, clefMode);
 }
-
-playMeasurePreview(sectionStartTime, clefMode);
 });
 
 
