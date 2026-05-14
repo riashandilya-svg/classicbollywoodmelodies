@@ -2206,12 +2206,9 @@ function stopMetronome() {
 
     metroBeat = 0;
 
-    if (window._speechWindowInterval) {
-        clearInterval(window._speechWindowInterval);
-        window._speechWindowInterval = null;
+    if (speechSynth) {
+        speechSynth.cancel();
     }
-
-    _clearSpeechTimeouts();
 
     if (window._speechKeepAlive) {
         clearInterval(window._speechKeepAlive);
@@ -2246,40 +2243,29 @@ countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
 if (countEnabled) {
     // Unlock Chrome's speech synthesis on first user gesture and preload a voice.
-    const tryUnlock = () => {
-        const voices = speechSynthesis.getVoices();
-        console.log('[SPEECH] Available voices:', voices.map(v => `${v.name} (${v.lang}, local=${v.localService})`));
-        // Prefer a local/offline English voice for speed; fall back to any English.
-        const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
-                       || voices.find(v => v.lang.startsWith('en'))
-                       || voices[0];
-        window.__preferredVoice = preferred || null;
-        console.log('[SPEECH] Chosen voice:', preferred?.name || 'none (will use default)');
-        if (!window.__chromeSpeechUnlocked) {
-            const u = new SpeechSynthesisUtterance(".");
+    if (!window.__chromeSpeechUnlocked) {
+        const tryUnlock = () => {
+            const voices = speechSynthesis.getVoices();
+            const u = new SpeechSynthesisUtterance("");
+            // Prefer a local/offline English voice for speed; fall back to any English.
+            const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
+                           || voices.find(v => v.lang.startsWith('en'))
+                           || voices[0];
             if (preferred) u.voice = preferred;
             u.volume = 0;
-            u.rate = 2;
             speechSynthesis.speak(u);
             window.__chromeSpeechUnlocked = true;
-        }
-        // Chrome bug: speechSynthesis pauses silently after ~15s. Keep it alive.
-        if (window._speechKeepAlive) clearInterval(window._speechKeepAlive);
-        window._speechKeepAlive = setInterval(() => {
-            if (speechSynthesis.paused) speechSynthesis.resume();
-        }, 5000);
-
-        // Now start/wire-up the scheduler — voice is ready
-        if (!metronomeRunning) {
-            startMetronome();
+            window.__preferredVoice = preferred || null;
+        };
+        if (speechSynthesis.getVoices().length > 0) {
+            tryUnlock();
         } else {
-            _startSpeechScheduler();
+            speechSynthesis.addEventListener('voiceschanged', tryUnlock, { once: true });
         }
-    };
-    if (speechSynthesis.getVoices().length > 0) {
-        tryUnlock();
-    } else {
-        speechSynthesis.addEventListener('voiceschanged', tryUnlock, { once: true });
+    }
+
+    if (!metronomeRunning) {
+        startMetronome();
     }
 }
 });
@@ -2295,16 +2281,8 @@ subdivisionToggle.addEventListener('click', () => {
     if (subdivisionEnabled) {
         countEnabled = true;
         countToggle.textContent = "Counting ✓";
-        // Ensure keepalive is running
-        if (!window._speechKeepAlive) {
-            window._speechKeepAlive = setInterval(() => {
-                if (speechSynthesis.paused) speechSynthesis.resume();
-            }, 5000);
-        }
     }
 
-    // Restart speech scheduler with new mode (subdivision on/off)
-    _clearSpeechTimeouts();
     startMetronome(transportStartTime);
 });
 
@@ -3654,7 +3632,6 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
     const stepMs = (60000 / bpm) / 4;
     const startStep = Math.ceil(fromMs / stepMs);
     const endStep   = Math.floor((fromMs + windowMs) / stepMs);
-    let scheduledCount = 0;
 
     for (let step = startStep; step <= endStep; step++) {
         const slotInBeat = step % 4;
@@ -3668,60 +3645,25 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
         const fireAt = step * stepMs;
         const elapsed = performance.now() - transportStartTime;
         const delay   = Math.max(0, fireAt - elapsed);
-        scheduledCount++;
 
         const t = setTimeout(() => {
             if (!metronomeRunning || !countEnabled) return;
-            // Don't cancel if already speaking — let Chrome queue it naturally.
-            // Only force-cancel on main beats to keep timing crisp.
-            if (isMainBeat && speechSynth.speaking) speechSynth.cancel();
+            if (speechSynth.speaking) speechSynth.cancel();
             const u = new SpeechSynthesisUtterance(word);
             u.volume = isMainBeat ? 1 : 0.65;
             u.rate   = 1.6;
             u.pitch  = 1;
             if (window.__preferredVoice) u.voice = window.__preferredVoice;
-            console.log(`[SPEECH] Speaking: "${word}" (beat ${isMainBeat ? 'main' : 'sub'}) voice=${u.voice?.name || 'default'}`);
             speechSynth.speak(u);
         }, delay);
         _metroSpeechTimeouts.push(t);
     }
-    if (scheduledCount > 0) console.log(`[SPEECH] Scheduled ${scheduledCount} words for next ${windowMs}ms`);
 }
 
 function _clearSpeechTimeouts() {
     _metroSpeechTimeouts.forEach(t => clearTimeout(t));
     _metroSpeechTimeouts = [];
     if (speechSynth) speechSynth.cancel();
-}
-
-// ── Start speech scheduler independently (when metronome already running) ──
-function _startSpeechScheduler() {
-    if (!speechSynth || !transportStartTime) {
-        console.warn('[SPEECH] _startSpeechScheduler skipped — no speechSynth or no transportStartTime');
-        return;
-    }
-
-    // Clear any existing speech window interval
-    if (window._speechWindowInterval) {
-        clearInterval(window._speechWindowInterval);
-        window._speechWindowInterval = null;
-    }
-    _clearSpeechTimeouts();
-
-    const bpm = (60 / secondsPerBeat) * speedMultiplier;
-    const elapsed = performance.now() - transportStartTime;
-    console.log(`[SPEECH] Starting scheduler — bpm=${bpm.toFixed(1)}, elapsed=${elapsed.toFixed(0)}ms, subdivisionEnabled=${subdivisionEnabled}`);
-    _scheduleCountWords(elapsed, 3000, bpm);
-
-    window._speechWindowInterval = setInterval(() => {
-        if (!metronomeRunning || !countEnabled) {
-            clearInterval(window._speechWindowInterval);
-            window._speechWindowInterval = null;
-            return;
-        }
-        const el = performance.now() - transportStartTime;
-        _scheduleCountWords(el, 3000, bpm);
-    }, 2000);
 }
 
 function startMetronome(startTimeOverride = null) {
@@ -3766,19 +3708,31 @@ function startMetronome(startTimeOverride = null) {
                 metroSynth.triggerAttackRelease("16n");
             }
 
-            // Speech is handled by _scheduleCountWords (setTimeout-based) below.
-            // Do NOT also speak here — duplicate systems fight each other in Chrome.
+            if (countEnabled && speechSynth) {
+                const shouldSpeak = subdivisionEnabled || isMainBeat;
+                const word = shouldSpeak ? getCountWord(beatIndex, slotInBeat) : null;
+
+                if (word) {
+                    // Only cancel if currently speaking to avoid killing queued words.
+                    // For main beats (1, 2) we force-cancel so the word stays crisp;
+                    // for subdivision syllables we let them queue naturally.
+                    if (isMainBeat && speechSynth.speaking) {
+                        speechSynth.cancel();
+                    }
+                    const u = new SpeechSynthesisUtterance(word);
+                    u.volume = isMainBeat ? 1 : 0.6;
+                    u.rate = 1.4;
+                    u.pitch = 1;
+                    if (window.__preferredVoice) u.voice = window.__preferredVoice;
+                    speechSynth.speak(u);
+                }
+            }
         }
 
         metroInterval = requestAnimationFrame(tick);
     }
 
     tick();
-
-    // Schedule speech words using pre-scheduled setTimeouts (more reliable than rAF in Chrome).
-    if (countEnabled && speechSynth) {
-        _startSpeechScheduler();
-    }
 }
 
 // ================================
