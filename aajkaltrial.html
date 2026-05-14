@@ -1500,7 +1500,19 @@ body.score-mode #panelProgressWrap {
 </div>
 
 
-<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); this.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙'">🌙</button>
+<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); const dm=document.body.classList.contains('dark-mode'); this.textContent=dm?'☀️':'🌙'; localStorage.setItem('darkMode',dm)">🌙</button>
+<script>
+  // Restore dark mode preference before first paint to avoid a flash
+  (function(){
+    if(localStorage.getItem('darkMode')==='true'){
+      document.body.classList.add('dark-mode');
+      document.addEventListener('DOMContentLoaded',function(){
+        var btn=document.getElementById('darkModeToggle');
+        if(btn) btn.textContent='☀️';
+      });
+    }
+  })();
+</script>
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
@@ -1942,6 +1954,14 @@ async function loadSongMidi() {
     MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
 
     setControlsEnabled(true);
+
+    // Clamp panel measure inputs to the actual song length now that we know it.
+    // Without this, a user can type any number and only get an alert() at practice-start.
+    const _psm = document.getElementById('panelStartMeasure');
+    const _pem = document.getElementById('panelEndMeasure');
+    if (_psm) _psm.max = MAX_LOGICAL_MEASURE;
+    if (_pem) _pem.max = MAX_LOGICAL_MEASURE;
+
     showTrainingProgress();
     buildMeasureTimeline(SONG_CONFIG.measures);
     const bpmEl = document.getElementById('statBPM');
