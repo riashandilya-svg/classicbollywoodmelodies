@@ -3313,8 +3313,10 @@ visualsPlaying = true;
 fallingRectangles = [];
 previewMode = true;
 
-// Stop counting/beat during preview — it will restart when the user's turn begins
-stopMetronome();
+// Start counting/beat during preview so user hears the rhythm with the notes
+if (beatEnabled || countEnabled) {
+    startMetronome(performance.now() + getFallTimeMs());
+}
 
 const feedback = document.getElementById('feedback');
 feedback.textContent = 'Listen first…';
@@ -3404,19 +3406,16 @@ const previewLength =
 const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
-    // Note: speed buttons stay disabled — session is still active.
-    // They re-enable only when stopPlayback() or resetAll() is called.
 
     if (scoreModeActive) clearScoreHighlight();
+
+    // Kill beat/count/1&2& completely — preview is over, user's turn now
+    stopMetronome();
+    _cancelCountAudio();
 
     const feedback = document.getElementById('feedback');
     feedback.textContent = 'Your turn';
     feedback.classList.remove('correct', 'wrong', 'show');
-
-    // Restart counting/beat now that it's the user's turn
-    if (beatEnabled || countEnabled) {
-        startMetronome(performance.now() + getFallTimeMs());
-    }
 
     spawnNextValidNote();
 }, visualPreroll + previewLength + 400);
@@ -4534,10 +4533,7 @@ startVisualCountdown(() => {
 // fires exactly when the first note sounds, not 2 s before it.
 transportStartTime = performance.now() + getFallTimeMs();
 
-if (beatEnabled || countEnabled) {
-    startMetronome(transportStartTime);
-}
-
+// metronome is started inside playMeasurePreview and killed when preview ends
 playMeasurePreview(sectionStartTime, clefMode);
 });
 
