@@ -2727,10 +2727,6 @@ function processUserNoteOn(midiNote) {
 // making the hold timer restart and causing multiple spawnTrainingNote calls.
 if (!freeMode && midiPressedNotes.has(midiNote)) return;
 
-if (!freeMode) {
-    hardStopUserNote();
-}
-
 if (previewMode) return;
 
 
@@ -2823,6 +2819,9 @@ midiPressedNotes.add(midiNote);
 const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
 
 if (allPressed && noteHoldStartTime === null) {
+    // All chord notes now held — stop any previous synth and start the hold timer cleanly
+    hardStopUserNote();
+    midiPressedNotes.add(midiNote); // re-add since hardStopUserNote doesn't touch midiPressedNotes
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
