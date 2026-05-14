@@ -3933,7 +3933,9 @@ canvas.addEventListener('touchend', (e) => {
             }
 
             retryTimeout = setTimeout(() => {
-                spawnTrainingNote(practiceNotes[trainingIndex]);
+                if (trainingIndex < practiceNotes.length) {
+                    spawnTrainingNote(practiceNotes[trainingIndex]);
+                }
             }, 600);
         }
     }
@@ -5298,7 +5300,9 @@ holdEl.innerHTML =
 
     if (retryTimeout) clearTimeout(retryTimeout);
     retryTimeout = setTimeout(() => {
-        spawnTrainingNote(practiceNotes[trainingIndex]);
+        if (trainingIndex < practiceNotes.length) {
+            spawnTrainingNote(practiceNotes[trainingIndex]);
+        }
     }, 600);
         }
 
