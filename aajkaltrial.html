@@ -2880,6 +2880,16 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
 
 
 function spawnTrainingNote(noteObj) {
+    if (!noteObj) {
+        // trainingIndex walked off the end — treat as section complete
+        trainingActive = false;
+        const feedback = document.getElementById('feedback');
+        feedback.textContent = 'Excellent work! 🌟';
+        feedback.classList.remove('wrong');
+        feedback.classList.add('correct', 'show');
+        stopButton.disabled = true;
+        return;
+    }
     hardStopUserNote();
     trainingActive = true;
     visualsPlaying = true;
@@ -4163,6 +4173,8 @@ visualsPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
+
+if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 
 stopMetronome();
 
