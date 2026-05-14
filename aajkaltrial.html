@@ -2206,8 +2206,11 @@ function stopMetronome() {
 
     metroBeat = 0;
 
-    if (speechSynth) {
-        speechSynth.cancel();
+    _clearSpeechTimeouts();
+
+    if (window._speechSchedulerInterval) {
+        clearInterval(window._speechSchedulerInterval);
+        window._speechSchedulerInterval = null;
     }
 
     if (window._speechKeepAlive) {
@@ -3681,58 +3684,49 @@ function startMetronome(startTimeOverride = null) {
     }
 
     const bpm = (60 / secondsPerBeat) * speedMultiplier;
-
-    // Each beat divided into 4 sixteenth-note slots for "1 e & a" counting
     const stepMs = (60000 / bpm) / 4;
 
+    // ── CLICK TRACK via rAF (fine for noise synth, no speech here) ──────────
     let lastStep = -1;
 
     function tick() {
         if (!metronomeRunning) return;
 
         const elapsed = performance.now() - transportStartTime;
-        if (elapsed < 0) {
-            metroInterval = requestAnimationFrame(tick);
-            return;
-        }
-        const step = Math.floor(elapsed / stepMs);
+        if (elapsed < 0) { metroInterval = requestAnimationFrame(tick); return; }
 
+        const step = Math.floor(elapsed / stepMs);
         if (step !== lastStep) {
             lastStep = step;
-
-            const slotInBeat = step % 4;        // 0=beat, 1=e, 2=&, 3=a
-            const beatIndex  = Math.floor(step / 4);
+            const slotInBeat = step % 4;
             const isMainBeat = slotInBeat === 0;
-
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
-
-            if (countEnabled && speechSynth) {
-                const shouldSpeak = subdivisionEnabled || isMainBeat;
-                const word = shouldSpeak ? getCountWord(beatIndex, slotInBeat) : null;
-
-                if (word) {
-                    // Only cancel if currently speaking to avoid killing queued words.
-                    // For main beats (1, 2) we force-cancel so the word stays crisp;
-                    // for subdivision syllables we let them queue naturally.
-                    if (isMainBeat && speechSynth.speaking) {
-                        speechSynth.cancel();
-                    }
-                    const u = new SpeechSynthesisUtterance(word);
-                    u.volume = isMainBeat ? 1 : 0.6;
-                    u.rate = 1.4;
-                    u.pitch = 1;
-                    if (window.__preferredVoice) u.voice = window.__preferredVoice;
-                    speechSynth.speak(u);
-                }
-            }
         }
-
         metroInterval = requestAnimationFrame(tick);
     }
 
     tick();
+
+    // ── SPEECH COUNTING via pre-scheduled setTimeouts (Chrome-safe) ──────────
+    // Chrome throttles / cancels SpeechSynthesis when called from rAF.
+    // We pre-schedule each word with its own setTimeout in a rolling window
+    // that refreshes every 2 s so we never run out of queued words.
+    if (countEnabled && speechSynth) {
+        const elapsed0 = performance.now() - transportStartTime;
+        _scheduleCountWords(Math.max(0, elapsed0), 4000, bpm);
+
+        window._speechSchedulerInterval = setInterval(() => {
+            if (!metronomeRunning || !countEnabled) {
+                clearInterval(window._speechSchedulerInterval);
+                window._speechSchedulerInterval = null;
+                return;
+            }
+            const elapsed = performance.now() - transportStartTime;
+            _scheduleCountWords(elapsed + 1000, 3000, bpm);
+        }, 2000);
+    }
 }
 
 // ================================
