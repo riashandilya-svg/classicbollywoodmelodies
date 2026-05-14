@@ -5234,36 +5234,48 @@ syncHandBtns();
 <!-- 1) Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- 2) Your Supabase client -->
-<script src="/js/supabaseClient.js"></script>
+<!-- 2) Your Supabase client — graceful fallback if not on the production server -->
+<script src="/js/supabaseClient.js" onerror="window.__supabaseMissing=true"></script>
 
-<!-- 3) Paywall logic -->
-<script src="/js/paywall.js?v=20260203"></script>
+<!-- 3) Paywall logic — graceful fallback if not on the production server -->
+<script src="/js/paywall.js?v=20260203" onerror="window.__paywallMissing=true"></script>
 
-
-<!-- 4) Login check -->
+<!-- 4) Login check — skipped when Supabase client is unavailable -->
 <script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-window.location.replace("/login.html");
+  if (!window.__supabaseMissing && window.supabase) {
+    async function requireLogin() {
+      try {
+        const { data } = await window.supabase.auth.getSession();
+        if (!data.session) {
+          window.location.replace("/login.html");
+        }
+      } catch (e) {
+        console.warn("Auth check failed — running without login gate.", e);
+      }
     }
+    await requireLogin();
+    window.addEventListener("pageshow", requireLogin);
+  } else {
+    console.info("Supabase client not found — skipping login check (trial/local mode).");
   }
-
-  await requireLogin();
-  window.addEventListener("pageshow", requireLogin);
 </script>
 
-<!-- 5) Call paywall for THIS song -->
+<!-- 5) Call paywall for THIS song — falls back to direct reveal when paywall.js is absent -->
 <script>
-  window.showPaywall({
-    productId: "song:aajkal",
-    title: "This song is locked",
-    body: "Please buy to unlock this lesson.",
-    onSuccess: () => {
-      document.getElementById('app').style.display = 'block';
-    }
-  });
+  if (!window.__paywallMissing && typeof window.showPaywall === 'function') {
+    window.showPaywall({
+      productId: "song:aajkal",
+      title: "This song is locked",
+      body: "Please buy to unlock this lesson.",
+      onSuccess: () => {
+        document.getElementById('app').style.display = 'block';
+      }
+    });
+  } else {
+    // paywall.js didn't load (local / file:// / non-root deployment) — reveal app directly
+    console.info("Paywall script not found — revealing app directly (trial/local mode).");
+    document.getElementById('app').style.display = 'block';
+  }
 </script>
 
 </body>
