@@ -3563,7 +3563,9 @@ function playNoteCountIn() {
             }
         }
 
-        // ── 4. After note finishes → "Your turn" → spawn ──────────────
+        // ── 4. After note finishes → show "Your turn" then spawn ──────
+        // spawnNextValidNote shows the falling note / highlights the key
+        // and then WAITS for user input — it does NOT auto-advance.
         const endT = setTimeout(() => {
             if (!trainingActive) return;
             feedback.textContent = 'Your turn';
@@ -3571,7 +3573,7 @@ function playNoteCountIn() {
             void feedback.offsetWidth;
             feedback.classList.add('show');
             spawnNextValidNote();
-        }, totalMs);
+        }, noteMs + 80);
         previewTimeouts.push(endT);
     });
 }
