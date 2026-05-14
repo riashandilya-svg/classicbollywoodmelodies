@@ -2206,6 +2206,11 @@ function stopMetronome() {
 
     metroBeat = 0;
 
+    if (window._speechWindowInterval) {
+        clearInterval(window._speechWindowInterval);
+        window._speechWindowInterval = null;
+    }
+
     if (speechSynth) {
         speechSynth.cancel();
     }
@@ -2243,25 +2248,30 @@ countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
 if (countEnabled) {
     // Unlock Chrome's speech synthesis on first user gesture and preload a voice.
-    if (!window.__chromeSpeechUnlocked) {
-        const tryUnlock = () => {
-            const voices = speechSynthesis.getVoices();
+    const tryUnlock = () => {
+        const voices = speechSynthesis.getVoices();
+        // Prefer a local/offline English voice for speed; fall back to any English.
+        const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
+                       || voices.find(v => v.lang.startsWith('en'))
+                       || voices[0];
+        window.__preferredVoice = preferred || null;
+        if (!window.__chromeSpeechUnlocked) {
             const u = new SpeechSynthesisUtterance("");
-            // Prefer a local/offline English voice for speed; fall back to any English.
-            const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
-                           || voices.find(v => v.lang.startsWith('en'))
-                           || voices[0];
             if (preferred) u.voice = preferred;
             u.volume = 0;
             speechSynthesis.speak(u);
             window.__chromeSpeechUnlocked = true;
-            window.__preferredVoice = preferred || null;
-        };
-        if (speechSynthesis.getVoices().length > 0) {
-            tryUnlock();
-        } else {
-            speechSynthesis.addEventListener('voiceschanged', tryUnlock, { once: true });
         }
+        // Chrome bug: speechSynthesis pauses silently after ~15s. Keep it alive.
+        if (window._speechKeepAlive) clearInterval(window._speechKeepAlive);
+        window._speechKeepAlive = setInterval(() => {
+            if (speechSynthesis.paused) speechSynthesis.resume();
+        }, 5000);
+    };
+    if (speechSynthesis.getVoices().length > 0) {
+        tryUnlock();
+    } else {
+        speechSynthesis.addEventListener('voiceschanged', tryUnlock, { once: true });
     }
 
     if (!metronomeRunning) {
@@ -2281,6 +2291,12 @@ subdivisionToggle.addEventListener('click', () => {
     if (subdivisionEnabled) {
         countEnabled = true;
         countToggle.textContent = "Counting ✓";
+        // Ensure keepalive is running
+        if (!window._speechKeepAlive) {
+            window._speechKeepAlive = setInterval(() => {
+                if (speechSynthesis.paused) speechSynthesis.resume();
+            }, 5000);
+        }
     }
 
     startMetronome(transportStartTime);
@@ -3648,7 +3664,9 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
 
         const t = setTimeout(() => {
             if (!metronomeRunning || !countEnabled) return;
-            if (speechSynth.speaking) speechSynth.cancel();
+            // Don't cancel if already speaking — let Chrome queue it naturally.
+            // Only force-cancel on main beats to keep timing crisp.
+            if (isMainBeat && speechSynth.speaking) speechSynth.cancel();
             const u = new SpeechSynthesisUtterance(word);
             u.volume = isMainBeat ? 1 : 0.65;
             u.rate   = 1.6;
@@ -3708,31 +3726,29 @@ function startMetronome(startTimeOverride = null) {
                 metroSynth.triggerAttackRelease("16n");
             }
 
-            if (countEnabled && speechSynth) {
-                const shouldSpeak = subdivisionEnabled || isMainBeat;
-                const word = shouldSpeak ? getCountWord(beatIndex, slotInBeat) : null;
-
-                if (word) {
-                    // Only cancel if currently speaking to avoid killing queued words.
-                    // For main beats (1, 2) we force-cancel so the word stays crisp;
-                    // for subdivision syllables we let them queue naturally.
-                    if (isMainBeat && speechSynth.speaking) {
-                        speechSynth.cancel();
-                    }
-                    const u = new SpeechSynthesisUtterance(word);
-                    u.volume = isMainBeat ? 1 : 0.6;
-                    u.rate = 1.4;
-                    u.pitch = 1;
-                    if (window.__preferredVoice) u.voice = window.__preferredVoice;
-                    speechSynth.speak(u);
-                }
-            }
+            // Speech is handled by _scheduleCountWords (setTimeout-based) below.
+            // Do NOT also speak here — duplicate systems fight each other in Chrome.
         }
 
         metroInterval = requestAnimationFrame(tick);
     }
 
     tick();
+
+    // Schedule speech words using pre-scheduled setTimeouts (more reliable than rAF in Chrome).
+    // Refresh every 2 seconds so there's always a lookahead window of words queued up.
+    if (countEnabled && speechSynth) {
+        const elapsed = performance.now() - transportStartTime;
+        _scheduleCountWords(elapsed, 3000, bpm);
+        window._speechWindowInterval = setInterval(() => {
+            if (!metronomeRunning || !countEnabled) {
+                clearInterval(window._speechWindowInterval);
+                return;
+            }
+            const el = performance.now() - transportStartTime;
+            _scheduleCountWords(el, 3000, bpm);
+        }, 2000);
+    }
 }
 
 // ================================
