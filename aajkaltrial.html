@@ -3313,6 +3313,9 @@ visualsPlaying = true;
 fallingRectangles = [];
 previewMode = true;
 
+// Stop counting/beat during preview — it will restart when the user's turn begins
+stopMetronome();
+
 const feedback = document.getElementById('feedback');
 feedback.textContent = 'Listen first…';
 
@@ -3409,6 +3412,11 @@ const endTimeout = setTimeout(() => {
     const feedback = document.getElementById('feedback');
     feedback.textContent = 'Your turn';
     feedback.classList.remove('correct', 'wrong', 'show');
+
+    // Restart counting/beat now that it's the user's turn
+    if (beatEnabled || countEnabled) {
+        startMetronome(performance.now() + getFallTimeMs());
+    }
 
     spawnNextValidNote();
 }, visualPreroll + previewLength + 400);
