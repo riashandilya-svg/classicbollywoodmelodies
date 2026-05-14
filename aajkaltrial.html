@@ -3858,65 +3858,90 @@ canvas.addEventListener('touchend', (e) => {
         }
     }
 
+    // ── Multi-touch chord fix ────────────────────────────────────────────────
+    // Previously we only evaluated the hold when e.touches.length === 0, which
+    // breaks two-finger chords: the user typically lifts one finger a few ms
+    // before the other, so the first touchend sees e.touches.length === 1 and
+    // skips evaluation; by the time the second fires the browser sometimes
+    // reports length 0 but activeTouches is already clear.
+    //
+    // Instead, evaluate whenever ALL chord notes have been released
+    // (midiPressedNotes is empty and a hold was in progress).  We still use
+    // e.touches.length === 0 as the signal to fully tear down touch state.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const allChordNotesReleased = !freeMode
+        && noteHoldStartTime !== null
+        && midiPressedNotes.size === 0;
+
+    if (allChordNotesReleased) {
+        // Capture hold time before any state is cleared
+        const heldTime = performance.now() - noteHoldStartTime;
+
+        // Clear highlights immediately — spawnTrainingNote re-adds them
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+
+        noteHoldStartTime = null;
+        activeMidiNote = null;
+
+        if (heldTime >= expectedHoldDuration) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = 'Good!';
+
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('correct', 'show');
+            explanationLocked = false;
+
+            waitingForInput = false;
+            expectedMidiNote = null;
+
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+
+            advanceChordIndex();
+            updateTrainingProgress();
+
+            document.getElementById('holdInfo').textContent = '';
+            setTimeout(() => spawnNextValidNote(), 300);
+
+        } else {
+            const heldBeats = heldTime / 1000 / secondsPerBeat;
+            const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>. Let's try holding a little longer!`;
+
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('wrong', 'show');
+
+            const holdEl = document.getElementById('holdInfo');
+            holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+            if (retryTimeout) {
+                clearTimeout(retryTimeout);
+                retryTimeout = null;
+            }
+
+            retryTimeout = setTimeout(() => {
+                spawnTrainingNote(practiceNotes[trainingIndex]);
+            }, 600);
+        }
+    }
+
+    // Tear down touch tracking once all physical fingers have left the screen
     if (e.touches.length === 0) {
         touchActive = false;
         mouseDown = false;
         activeTouches.clear();
 
-        // Always clear highlights immediately — spawnTrainingNote re-adds them
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-
-        if (!freeMode && noteHoldStartTime !== null) {
-            const heldTime = performance.now() - noteHoldStartTime;
-
-            if (heldTime >= expectedHoldDuration) {
-                const feedback = document.getElementById('feedback');
-                feedback.textContent = 'Good!';
-
-                feedback.classList.remove('correct', 'wrong', 'show');
-                void feedback.offsetWidth;
-                feedback.classList.add('correct', 'show');
-                explanationLocked = false;
-
-                waitingForInput = false;
-                expectedMidiNote = null;
-
-                expectedMidiTreble.clear();
-                expectedMidiBass.clear();
-
-                advanceChordIndex();
-                updateTrainingProgress();
-
-                document.getElementById('holdInfo').textContent = '';
-                setTimeout(() => spawnNextValidNote(), 300);
-
-            } else {
-                const heldBeats = heldTime / 1000 / secondsPerBeat;
-                const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
-
-                const feedback = document.getElementById('feedback');
-                feedback.innerHTML = `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>. Let's try holding a little longer!`;
-
-                feedback.classList.remove('correct', 'wrong', 'show');
-                void feedback.offsetWidth;
-                feedback.classList.add('wrong', 'show');
-
-                const holdEl = document.getElementById('holdInfo');
-                holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-                if (retryTimeout) {
-                    clearTimeout(retryTimeout);
-                    retryTimeout = null;
-                }
-
-                retryTimeout = setTimeout(() => {
-                    spawnTrainingNote(practiceNotes[trainingIndex]);
-                }, 600);
-            }
-
-            noteHoldStartTime = null;
-            activeMidiNote = null;
+        // Safety-net clear in case allChordNotesReleased path didn't run
+        // (e.g. freeMode, or noteHoldStartTime was already null)
+        if (!allChordNotesReleased) {
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
         }
     }
 }, { passive: false });
