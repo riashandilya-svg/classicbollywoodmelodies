@@ -2211,9 +2211,7 @@ function stopMetronome() {
         window._speechWindowInterval = null;
     }
 
-    if (speechSynth) {
-        speechSynth.cancel();
-    }
+    _clearSpeechTimeouts();
 
     if (window._speechKeepAlive) {
         clearInterval(window._speechKeepAlive);
@@ -2276,6 +2274,9 @@ if (countEnabled) {
 
     if (!metronomeRunning) {
         startMetronome();
+    } else {
+        // Metronome already running — just wire up speech scheduling now
+        _startSpeechScheduler();
     }
 }
 });
@@ -2299,6 +2300,9 @@ subdivisionToggle.addEventListener('click', () => {
         }
     }
 
+    // Restart speech scheduler with new mode (subdivision on/off)
+    _clearSpeechTimeouts();
+    if (countEnabled) _startSpeechScheduler();
     startMetronome(transportStartTime);
 });
 
@@ -3648,6 +3652,7 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
     const stepMs = (60000 / bpm) / 4;
     const startStep = Math.ceil(fromMs / stepMs);
     const endStep   = Math.floor((fromMs + windowMs) / stepMs);
+    let scheduledCount = 0;
 
     for (let step = startStep; step <= endStep; step++) {
         const slotInBeat = step % 4;
@@ -3661,6 +3666,7 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
         const fireAt = step * stepMs;
         const elapsed = performance.now() - transportStartTime;
         const delay   = Math.max(0, fireAt - elapsed);
+        scheduledCount++;
 
         const t = setTimeout(() => {
             if (!metronomeRunning || !countEnabled) return;
@@ -3672,16 +3678,48 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
             u.rate   = 1.6;
             u.pitch  = 1;
             if (window.__preferredVoice) u.voice = window.__preferredVoice;
+            console.log(`[SPEECH] Speaking: "${word}" (beat ${isMainBeat ? 'main' : 'sub'}) voice=${u.voice?.name || 'default'}`);
             speechSynth.speak(u);
         }, delay);
         _metroSpeechTimeouts.push(t);
     }
+    if (scheduledCount > 0) console.log(`[SPEECH] Scheduled ${scheduledCount} words for next ${windowMs}ms`);
 }
 
 function _clearSpeechTimeouts() {
     _metroSpeechTimeouts.forEach(t => clearTimeout(t));
     _metroSpeechTimeouts = [];
     if (speechSynth) speechSynth.cancel();
+}
+
+// ── Start speech scheduler independently (when metronome already running) ──
+function _startSpeechScheduler() {
+    if (!speechSynth || !transportStartTime) {
+        console.warn('[SPEECH] _startSpeechScheduler skipped — no speechSynth or no transportStartTime');
+        return;
+    }
+
+    // Clear any existing speech window interval
+    if (window._speechWindowInterval) {
+        clearInterval(window._speechWindowInterval);
+        window._speechWindowInterval = null;
+    }
+    _clearSpeechTimeouts();
+
+    const bpm = (60 / secondsPerBeat) * speedMultiplier;
+    const elapsed = performance.now() - transportStartTime;
+    console.log(`[SPEECH] Starting scheduler — bpm=${bpm.toFixed(1)}, elapsed=${elapsed.toFixed(0)}ms, subdivisionEnabled=${subdivisionEnabled}`);
+    _scheduleCountWords(elapsed, 3000, bpm);
+
+    window._speechWindowInterval = setInterval(() => {
+        if (!metronomeRunning || !countEnabled) {
+            clearInterval(window._speechWindowInterval);
+            window._speechWindowInterval = null;
+            return;
+        }
+        const el = performance.now() - transportStartTime;
+        _scheduleCountWords(el, 3000, bpm);
+    }, 2000);
 }
 
 function startMetronome(startTimeOverride = null) {
@@ -3736,18 +3774,8 @@ function startMetronome(startTimeOverride = null) {
     tick();
 
     // Schedule speech words using pre-scheduled setTimeouts (more reliable than rAF in Chrome).
-    // Refresh every 2 seconds so there's always a lookahead window of words queued up.
     if (countEnabled && speechSynth) {
-        const elapsed = performance.now() - transportStartTime;
-        _scheduleCountWords(elapsed, 3000, bpm);
-        window._speechWindowInterval = setInterval(() => {
-            if (!metronomeRunning || !countEnabled) {
-                clearInterval(window._speechWindowInterval);
-                return;
-            }
-            const el = performance.now() - transportStartTime;
-            _scheduleCountWords(el, 3000, bpm);
-        }, 2000);
+        _startSpeechScheduler();
     }
 }
 
