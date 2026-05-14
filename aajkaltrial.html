@@ -2977,6 +2977,7 @@ function spawnTrainingNote(noteObj) {
     if (!noteObj) {
         // trainingIndex walked off the end — treat as section complete
         trainingActive = false;
+        setSpeedButtonsEnabled(true); // session over — speed can be adjusted again
         const feedback = document.getElementById('feedback');
         feedback.textContent = 'Excellent work! 🌟';
         feedback.classList.remove('wrong');
@@ -3188,7 +3189,6 @@ const visualStart =
 
 if (!sectionNotes.length) {
     speedLocked = false;
-    setSpeedButtonsEnabled(true);
     previewMode = false;
     spawnNextValidNote();
     return;
@@ -3202,7 +3202,8 @@ const previewLength =
 const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
-    setSpeedButtonsEnabled(true);
+    // Note: speed buttons stay disabled — session is still active.
+    // They re-enable only when stopPlayback() or resetAll() is called.
 
     if (scoreModeActive) clearScoreHighlight();
 
@@ -4256,6 +4257,7 @@ updateTrainingProgress();
 
     trainingActive = true;
     waitingForInput = false;
+    setSpeedButtonsEnabled(false); // locked for the whole session; unlocks on Stop or Reset
 
     stopButton.disabled = false;
     transportStartTime = performance.now();
