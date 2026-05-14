@@ -3112,6 +3112,27 @@ previewTimeouts.push(endTimeout);
 
 function spawnNextValidNote() {
 
+    // Guard: check up-front whether the current hand filter matches ANY note in
+    // practiceNotes. If not, show a clear message and bail — prevents an infinite
+    // async loop when loopEnabled is true and the hand has zero playable notes.
+    const handHasNotes = practiceNotes.some(n => {
+        if (clefMode === 'both') return true;
+        if (clefMode === 'treble') return n.track === TREBLE;
+        if (clefMode === 'bass')   return n.track === BASS;
+        return false;
+    });
+    if (!handHasNotes) {
+        const feedback = document.getElementById('feedback');
+        const handLabel = clefMode === 'treble' ? 'Right hand' : clefMode === 'bass' ? 'Left hand' : 'Selected hand';
+        feedback.textContent = `${handLabel} has no notes in this range — try a different section or hand.`;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('show');
+        trainingActive = false;
+        stopButton.disabled = true;
+        return;
+    }
+
     while (trainingIndex < practiceNotes.length) {
         const note = practiceNotes[trainingIndex];
 
