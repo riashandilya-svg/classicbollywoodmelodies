@@ -2977,12 +2977,15 @@ function spawnTrainingNote(noteObj) {
     if (!noteObj) {
         // trainingIndex walked off the end — treat as section complete
         trainingActive = false;
-        setSpeedButtonsEnabled(true); // session over — speed can be adjusted again
+        setSpeedButtonsEnabled(true);
+        startPracticeButton.disabled = false;
+        stopButton.disabled = true;
+        stopMetronome();
+        hideTrainingProgress();
         const feedback = document.getElementById('feedback');
         feedback.textContent = 'Excellent work! 🌟';
         feedback.classList.remove('wrong');
         feedback.classList.add('correct', 'show');
-        stopButton.disabled = true;
         return;
     }
     hardStopUserNote();
@@ -3292,6 +3295,10 @@ function spawnNextValidNote() {
 
     trainingActive = false;
     stopButton.disabled = true;
+    startPracticeButton.disabled = false;
+    setSpeedButtonsEnabled(true);
+    stopMetronome();
+    hideTrainingProgress();
 }
 
 // ── Shared chord-advance helper ──────────────────────────────────────────────
@@ -4323,9 +4330,6 @@ playSongButton.addEventListener('click', async () => {
     startFullSongPlayback();
 });
 
-stopButton.addEventListener('click', () => {
-    stopPlayback();
-});
 function stopPlayback(userInitiated = false) {
 
 isPlaying = false;
