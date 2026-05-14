@@ -3822,22 +3822,31 @@ function startMetronome(startTimeOverride = null) {
     tick();
 
     // Start the Web Audio lookahead scheduler for counting words.
-    // Waits for buffers to load before starting so no words fall back to
-    // SpeechSynthesis on the very first run due to a loading race.
+    // We must NOT fire it until transportStartTime has been reached:
+    // when transportStartTime is in the future (preroll offset), launching
+    // the scheduler immediately makes count words fire ~2 s early, out of
+    // sync with both the beat click and the falling notes.
+    // Poll via rAF until the transport clock >= 0, then anchor.
     if (countEnabled) {
         _loadCountBuffers().then(() => {
-            if (!metronomeRunning) return null;   // stopped while buffers were loading
+            if (!metronomeRunning) return null;
             return _ensureCountAudioCtx();
         }).then(ctx => {
             if (!ctx || !metronomeRunning) return;
-            // Capture the real wall-clock / AudioContext anchor RIGHT NOW.
-            // This is intentionally NOT transportStartTime — that value can be
-            // a future timestamp (preroll offset) and would make elapsedSec
-            // negative, breaking all the scheduling math.
-            _schedWallMs       = performance.now();
-            _schedCtxSec       = ctx.currentTime;
-            _lastScheduledStep = -1;
-            _runCountScheduler(bpm);
+
+            const waitForTransport = () => {
+                if (!metronomeRunning) return;
+                if (performance.now() < transportStartTime) {
+                    requestAnimationFrame(waitForTransport);
+                    return;
+                }
+                // Transport clock has reached zero — anchor the scheduler here.
+                _schedWallMs       = performance.now();
+                _schedCtxSec       = ctx.currentTime;
+                _lastScheduledStep = -1;
+                _runCountScheduler(bpm);
+            };
+            requestAnimationFrame(waitForTransport);
         });
     }
 }
