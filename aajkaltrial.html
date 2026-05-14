@@ -3657,6 +3657,7 @@ holdEl.innerHTML =
 
             if (retryTimeout) {
     clearTimeout(retryTimeout);
+    retryTimeout = null;
 }
 
 retryTimeout = setTimeout(() => {
@@ -3797,6 +3798,7 @@ canvas.addEventListener('touchend', (e) => {
 
                 if (retryTimeout) {
                     clearTimeout(retryTimeout);
+                    retryTimeout = null;
                 }
 
                 retryTimeout = setTimeout(() => {
@@ -5148,16 +5150,10 @@ holdEl.innerHTML =
     `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
 
-    setTimeout(() => {
+    if (retryTimeout) clearTimeout(retryTimeout);
+    retryTimeout = setTimeout(() => {
         spawnTrainingNote(practiceNotes[trainingIndex]);
     }, 600);
-}
-
-
-        noteHoldStartTime = null;
-        activeMidiNote = null;
-    }
-}
 
 </script>
 <!-- Stats toggle logic -->
