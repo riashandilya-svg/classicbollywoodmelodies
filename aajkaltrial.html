@@ -3471,7 +3471,7 @@ const shimmerPhase =
 const shimmerY =
     rect.y + shimmerPhase * rect.height;
 
-const isDownbeat = metronomeRunning && (metroBeat % 4 === 0);
+const isDownbeat = metronomeRunning && (metroBeat % SONG_CONFIG.timeSignature[0] === 0);
 
 ctx.save();
 ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
