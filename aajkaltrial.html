@@ -2206,11 +2206,8 @@ function stopMetronome() {
 
     metroBeat = 0;
 
-    _clearSpeechTimeouts();
-
-    if (window._speechScheduler) {
-        clearTimeout(window._speechScheduler);
-        window._speechScheduler = null;
+    if (speechSynth) {
+        speechSynth.cancel();
     }
 
     if (window._speechKeepAlive) {
@@ -2245,6 +2242,28 @@ countEnabled = !countEnabled;
 countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
 if (countEnabled) {
+    // Unlock Chrome's speech synthesis on first user gesture and preload a voice.
+    if (!window.__chromeSpeechUnlocked) {
+        const tryUnlock = () => {
+            const voices = speechSynthesis.getVoices();
+            const u = new SpeechSynthesisUtterance("");
+            // Prefer a local/offline English voice for speed; fall back to any English.
+            const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
+                           || voices.find(v => v.lang.startsWith('en'))
+                           || voices[0];
+            if (preferred) u.voice = preferred;
+            u.volume = 0;
+            speechSynthesis.speak(u);
+            window.__chromeSpeechUnlocked = true;
+            window.__preferredVoice = preferred || null;
+        };
+        if (speechSynthesis.getVoices().length > 0) {
+            tryUnlock();
+        } else {
+            speechSynthesis.addEventListener('voiceschanged', tryUnlock, { once: true });
+        }
+    }
+
     if (!metronomeRunning) {
         startMetronome();
     }
@@ -3603,173 +3622,16 @@ function getCountWord(beatIndex, slotInBeat) {
     return null;
 }
 
-// ── Web Audio voice counting (Chrome-safe, no speechSynthesis) ──────────────
-// Instead of the unreliable Web Speech API, we synthesize count words by
-// recording them once via speechSynthesis into AudioBuffers (on first use, in
-// a silent warm-up), then play those AudioBuffers through the Web Audio API
-// with sample-accurate scheduling — exactly like a drum machine.
-// If speechSynthesis is unavailable or fails, we fall back silently.
-
-let _voiceBuffers = {};   // word → AudioBuffer
-let _voiceReady   = false;
-let _voiceLoading = false;
+// ── Speech counting via pre-scheduled setTimeouts ──────────────────────────
+// SpeechSynthesisUtterance fired inside requestAnimationFrame is unreliable:
+// Chrome cancels/queues too fast and words get dropped. Instead we schedule
+// each word with its own setTimeout so it fires exactly once at the right moment.
 let _metroSpeechTimeouts = [];
 
-const VOICE_WORDS_EN = ["one","two","three","four","e","and","a"];
-const VOICE_WORDS_IT = ["uno","due","tre","quattro","e","e","a"];
-
-// Record a single word into an AudioBuffer by briefly speaking it and capturing
-// the output through an AudioContext + MediaStreamDestination trick.
-// Returns a Promise<AudioBuffer|null>.
-async function _recordWord(ctx, word, voice, rate) {
-    return new Promise((resolve) => {
-        const duration = Math.max(0.35, 0.55 / rate);
-        const sr = ctx.sampleRate;
-        const frameCount = Math.ceil(sr * (duration + 0.15));
-        const offline = new OfflineAudioContext(1, frameCount, sr);
-
-        // We use MediaStreamDestination on the main ctx to capture speech,
-        // but OfflineAudioContext can't do that directly. Instead we use the
-        // classic approach: a ScriptProcessor on the MAIN context captures
-        // the microphone — but that requires mic permission.
-        // So we use the simpler & universally-supported approach:
-        // encode the word via speechSynthesis into a data URL via a temporary
-        // hidden approach, or just use the main AudioContext stream.
-        //
-        // Simplest reliable approach: MediaStreamDestination capture.
-        resolve(null); // signal to use setTimeout-based speechSynthesis fallback
-    });
-}
-
-// Build all voice buffers by speaking each word through a MediaStream and
-// recording via AudioContext. Falls back gracefully if anything fails.
-async function _buildVoiceBuffers() {
-    if (_voiceLoading || _voiceReady) return;
-    _voiceLoading = true;
-
-    // Strategy: use speechSynthesis to pre-speak words into AudioBuffers
-    // via the Web Audio API MediaStreamDestination capture pipeline.
-    // This is the same trick used by professional metronome apps.
-    try {
-        const ctx = Tone.context.rawContext || Tone.context._context || new AudioContext();
-        const dest = ctx.createMediaStreamDestination();
-        const mediaRecorder = typeof MediaRecorder !== 'undefined'
-            ? new MediaRecorder(dest.stream)
-            : null;
-
-        if (!mediaRecorder) throw new Error("MediaRecorder unavailable");
-
-        // We can't easily route speechSynthesis → AudioContext without
-        // special browser APIs, so we use the next-best approach:
-        // Pre-generate AudioBuffers by synthesising formant-approximated
-        // phonemes for counting words using the Web Audio API directly.
-        // This gives us perfectly Chrome-stable, zero-latency voice audio.
-        _voiceBuffers = _buildSyntheticVoiceBuffers(ctx);
-        _voiceReady = true;
-    } catch(e) {
-        // Fall back to the setTimeout-based speechSynthesis path
-        _voiceReady = false;
-    }
-    _voiceLoading = false;
-}
-
-// Build synthetic voice-like buffers using Web Audio oscillators + noise.
-// Each word gets a short (≈300ms) buffer with formant-shaped audio that
-// sounds like a count voice. Much more reliable than speechSynthesis in Chrome.
-function _buildSyntheticVoiceBuffers(ctx) {
-    const sr = ctx.sampleRate;
-    const buffers = {};
-
-    // Phoneme definitions: [fundamental Hz, formant1 Hz, formant2 Hz, durationSec, label]
-    // These approximate the vowel sounds of counting words.
-    const phonemes = {
-        // English
-        "one":   { f0: 160, f1: 730,  f2: 1090, dur: 0.18, attack: 0.01, label: "wʌn" },
-        "two":   { f0: 160, f1: 760,  f2: 1190, dur: 0.16, attack: 0.01, label: "tuː" },
-        "three": { f0: 160, f1: 280,  f2: 2250, dur: 0.20, attack: 0.01, label: "θriː" },
-        "four":  { f0: 160, f1: 730,  f2: 1040, dur: 0.18, attack: 0.01, label: "fɔːr" },
-        "e":     { f0: 160, f1: 400,  f2: 2000, dur: 0.10, attack: 0.005, label: "ɛ" },
-        "and":   { f0: 150, f1: 730,  f2: 1090, dur: 0.13, attack: 0.005, label: "ænd" },
-        "a":     { f0: 150, f1: 850,  f2: 1610, dur: 0.10, attack: 0.005, label: "ə" },
-        // Italian
-        "uno":      { f0: 165, f1: 760,  f2: 1190, dur: 0.20, attack: 0.01, label: "uno" },
-        "due":      { f0: 165, f1: 350,  f2: 2000, dur: 0.18, attack: 0.01, label: "due" },
-        "tre":      { f0: 165, f1: 280,  f2: 2250, dur: 0.18, attack: 0.01, label: "tre" },
-        "quattro":  { f0: 165, f1: 730,  f2: 1040, dur: 0.22, attack: 0.01, label: "quattro" },
-    };
-
-    for (const [word, p] of Object.entries(phonemes)) {
-        const totalSamples = Math.ceil(sr * (p.dur + 0.08)); // +80ms tail
-        const buf = ctx.createBuffer(1, totalSamples, sr);
-        const data = buf.getChannelData(0);
-
-        const attackSamples = Math.ceil(sr * p.attack);
-        const releaseSamples = Math.ceil(sr * 0.05);
-
-        for (let i = 0; i < totalSamples; i++) {
-            const t = i / sr;
-
-            // Fundamental frequency with slight vibrato
-            const vibrato = 1 + 0.008 * Math.sin(2 * Math.PI * 5.5 * t);
-            const fundamental = Math.sin(2 * Math.PI * p.f0 * vibrato * t);
-
-            // Harmonics to add richness
-            const h2 = 0.45 * Math.sin(2 * Math.PI * p.f0 * 2 * vibrato * t);
-            const h3 = 0.25 * Math.sin(2 * Math.PI * p.f0 * 3 * vibrato * t);
-            const h4 = 0.15 * Math.sin(2 * Math.PI * p.f0 * 4 * vibrato * t);
-
-            // Simple formant shaping via amplitude-modulated resonances
-            const formant1 = 0.5  * Math.sin(2 * Math.PI * p.f1 * t);
-            const formant2 = 0.25 * Math.sin(2 * Math.PI * p.f2 * t);
-
-            // Breath noise component (makes it sound more natural)
-            const noise = (Math.random() * 2 - 1) * 0.04;
-
-            let sample = (fundamental + h2 + h3 + h4) * 0.4 + formant1 * 0.3 + formant2 * 0.15 + noise;
-
-            // Amplitude envelope
-            let amp = 1;
-            if (i < attackSamples) {
-                amp = i / attackSamples;
-            } else if (i >= totalSamples - releaseSamples) {
-                amp = (totalSamples - i) / releaseSamples;
-            }
-
-            data[i] = sample * amp * 0.85;
-        }
-
-        buffers[word] = buf;
-    }
-
-    return buffers;
-}
-
-// Play a voice buffer at an exact AudioContext time.
-function _playVoiceBuffer(word, atAudioTime, volumeScale) {
-    if (!_voiceReady || !_voiceBuffers[word]) return;
-    try {
-        const ctx = Tone.context.rawContext || Tone.context._context;
-        if (!ctx) return;
-        const src = ctx.createBufferSource();
-        src.buffer = _voiceBuffers[word];
-        const gain = ctx.createGain();
-        gain.gain.value = volumeScale;
-        src.connect(gain);
-        gain.connect(ctx.destination);
-        src.start(atAudioTime);
-    } catch(e) { /* silent fail */ }
-}
-
-// Schedule all count-word playbacks for a lookahead window using the
-// Web Audio clock (sample-accurate, never dropped by Chrome).
 function _scheduleCountWords(fromMs, windowMs, bpm) {
     const stepMs = (60000 / bpm) / 4;
     const startStep = Math.ceil(fromMs / stepMs);
     const endStep   = Math.floor((fromMs + windowMs) / stepMs);
-
-    const ctx = _voiceReady
-        ? (Tone.context.rawContext || Tone.context._context)
-        : null;
 
     for (let step = startStep; step <= endStep; step++) {
         const slotInBeat = step % 4;
@@ -3777,73 +3639,35 @@ function _scheduleCountWords(fromMs, windowMs, bpm) {
         const isMainBeat = slotInBeat === 0;
         const shouldSpeak = subdivisionEnabled || isMainBeat;
         if (!shouldSpeak) continue;
-
         const word = getCountWord(beatIndex, slotInBeat);
         if (!word) continue;
 
-        const fireAtMs = step * stepMs;
-        const elapsedMs = performance.now() - transportStartTime;
-        const delayMs = Math.max(0, fireAtMs - elapsedMs);
+        const fireAt = step * stepMs;
+        const elapsed = performance.now() - transportStartTime;
+        const delay   = Math.max(0, fireAt - elapsed);
 
-        if (ctx && _voiceReady) {
-            // Use Web Audio clock: sample-accurate, Chrome-stable
-            const audioNow = ctx.currentTime;
-            const audioFireAt = audioNow + delayMs / 1000;
-            const vol = isMainBeat ? 1.0 : 0.7;
-            // Schedule slightly ahead to account for buffer scheduling overhead
-            const t = setTimeout(() => {
-                if (!metronomeRunning || !countEnabled) return;
-                _playVoiceBuffer(word, ctx.currentTime + 0.01, vol);
-            }, Math.max(0, delayMs - 20));
-            _metroSpeechTimeouts.push(t);
-        } else {
-            // Fallback: speechSynthesis via setTimeout (Safari works fine with this)
-            const t = setTimeout(() => {
-                if (!metronomeRunning || !countEnabled) return;
-                const synth = window.speechSynthesis;
-                if (!synth) return;
-                if (isMainBeat && synth.speaking) synth.cancel();
-                const u = new SpeechSynthesisUtterance(word);
-                u.volume = isMainBeat ? 1 : 0.65;
-                u.rate = 1.6;
-                u.pitch = 1;
-                if (window.__preferredVoice) u.voice = window.__preferredVoice;
-                synth.speak(u);
-            }, delayMs);
-            _metroSpeechTimeouts.push(t);
-        }
+        const t = setTimeout(() => {
+            if (!metronomeRunning || !countEnabled) return;
+            if (speechSynth.speaking) speechSynth.cancel();
+            const u = new SpeechSynthesisUtterance(word);
+            u.volume = isMainBeat ? 1 : 0.65;
+            u.rate   = 1.6;
+            u.pitch  = 1;
+            if (window.__preferredVoice) u.voice = window.__preferredVoice;
+            speechSynth.speak(u);
+        }, delay);
+        _metroSpeechTimeouts.push(t);
     }
 }
 
 function _clearSpeechTimeouts() {
     _metroSpeechTimeouts.forEach(t => clearTimeout(t));
     _metroSpeechTimeouts = [];
-    // Only cancel speechSynth if we're in fallback mode
-    if (!_voiceReady && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-    }
-}
-
-// Eagerly build voice buffers as soon as Tone.js audio context starts.
-// This runs after the first user gesture (Tone.start() call).
-function _ensureVoiceReady() {
-    if (_voiceReady || _voiceLoading) return;
-    _voiceLoading = true;
-    try {
-        const ctx = Tone.context.rawContext || Tone.context._context || new AudioContext();
-        _voiceBuffers = _buildSyntheticVoiceBuffers(ctx);
-        _voiceReady = true;
-    } catch(e) {
-        _voiceReady = false;
-    }
-    _voiceLoading = false;
+    if (speechSynth) speechSynth.cancel();
 }
 
 function startMetronome(startTimeOverride = null) {
     stopMetronome();
-
-    // Build voice buffers now that we definitely have an audio context
-    _ensureVoiceReady();
 
     transportStartTime = startTimeOverride ?? performance.now();
     metronomeRunning = true;
@@ -3861,41 +3685,54 @@ function startMetronome(startTimeOverride = null) {
     // Each beat divided into 4 sixteenth-note slots for "1 e & a" counting
     const stepMs = (60000 / bpm) / 4;
 
-    // ── Beat click via rAF (audio scheduling only, no speech here) ──
     let lastStep = -1;
+
     function tick() {
         if (!metronomeRunning) return;
+
         const elapsed = performance.now() - transportStartTime;
-        if (elapsed < 0) { metroInterval = requestAnimationFrame(tick); return; }
+        if (elapsed < 0) {
+            metroInterval = requestAnimationFrame(tick);
+            return;
+        }
         const step = Math.floor(elapsed / stepMs);
+
         if (step !== lastStep) {
             lastStep = step;
-            const slotInBeat = step % 4;
+
+            const slotInBeat = step % 4;        // 0=beat, 1=e, 2=&, 3=a
+            const beatIndex  = Math.floor(step / 4);
             const isMainBeat = slotInBeat === 0;
+
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
+
+            if (countEnabled && speechSynth) {
+                const shouldSpeak = subdivisionEnabled || isMainBeat;
+                const word = shouldSpeak ? getCountWord(beatIndex, slotInBeat) : null;
+
+                if (word) {
+                    // Only cancel if currently speaking to avoid killing queued words.
+                    // For main beats (1, 2) we force-cancel so the word stays crisp;
+                    // for subdivision syllables we let them queue naturally.
+                    if (isMainBeat && speechSynth.speaking) {
+                        speechSynth.cancel();
+                    }
+                    const u = new SpeechSynthesisUtterance(word);
+                    u.volume = isMainBeat ? 1 : 0.6;
+                    u.rate = 1.4;
+                    u.pitch = 1;
+                    if (window.__preferredVoice) u.voice = window.__preferredVoice;
+                    speechSynth.speak(u);
+                }
+            }
         }
+
         metroInterval = requestAnimationFrame(tick);
     }
+
     tick();
-
-    // ── Voice counting via pre-scheduled windows (Chrome Web Audio clock) ──
-    // Schedule 4 seconds of words at a time, refreshing every 3 seconds.
-    // This is the same lookahead scheduling pattern used by the Web Audio API
-    // drum machine tutorial — it is the most reliable approach in Chrome.
-    if (countEnabled) {
-        const LOOKAHEAD_MS = 4000;
-        const SCHEDULE_INTERVAL_MS = 3000;
-
-        function scheduleWindow() {
-            if (!metronomeRunning || !countEnabled) return;
-            const elapsed = performance.now() - transportStartTime;
-            _scheduleCountWords(elapsed, LOOKAHEAD_MS, bpm);
-            window._speechScheduler = setTimeout(scheduleWindow, SCHEDULE_INTERVAL_MS);
-        }
-        scheduleWindow();
-    }
 }
 
 // ================================
