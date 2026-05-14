@@ -2721,6 +2721,12 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 function processUserNoteOn(midiNote) {
 
+// Guard: ignore repeated noteOn for a note that's already held.
+// MIDI keyboards send repeated noteOn while a key is held; without this,
+// hardStopUserNote() below resets noteHoldStartTime on every repeat,
+// making the hold timer restart and causing multiple spawnTrainingNote calls.
+if (!freeMode && midiPressedNotes.has(midiNote)) return;
+
 if (!freeMode) {
     hardStopUserNote();
 }
