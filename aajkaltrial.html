@@ -3622,6 +3622,50 @@ function getCountWord(beatIndex, slotInBeat) {
     return null;
 }
 
+// ── Speech counting via pre-scheduled setTimeouts ──────────────────────────
+// SpeechSynthesisUtterance fired inside requestAnimationFrame is unreliable:
+// Chrome cancels/queues too fast and words get dropped. Instead we schedule
+// each word with its own setTimeout so it fires exactly once at the right moment.
+let _metroSpeechTimeouts = [];
+
+function _scheduleCountWords(fromMs, windowMs, bpm) {
+    const stepMs = (60000 / bpm) / 4;
+    const startStep = Math.ceil(fromMs / stepMs);
+    const endStep   = Math.floor((fromMs + windowMs) / stepMs);
+
+    for (let step = startStep; step <= endStep; step++) {
+        const slotInBeat = step % 4;
+        const beatIndex  = Math.floor(step / 4);
+        const isMainBeat = slotInBeat === 0;
+        const shouldSpeak = subdivisionEnabled || isMainBeat;
+        if (!shouldSpeak) continue;
+        const word = getCountWord(beatIndex, slotInBeat);
+        if (!word) continue;
+
+        const fireAt = step * stepMs;
+        const elapsed = performance.now() - transportStartTime;
+        const delay   = Math.max(0, fireAt - elapsed);
+
+        const t = setTimeout(() => {
+            if (!metronomeRunning || !countEnabled) return;
+            if (speechSynth.speaking) speechSynth.cancel();
+            const u = new SpeechSynthesisUtterance(word);
+            u.volume = isMainBeat ? 1 : 0.65;
+            u.rate   = 1.6;
+            u.pitch  = 1;
+            if (window.__preferredVoice) u.voice = window.__preferredVoice;
+            speechSynth.speak(u);
+        }, delay);
+        _metroSpeechTimeouts.push(t);
+    }
+}
+
+function _clearSpeechTimeouts() {
+    _metroSpeechTimeouts.forEach(t => clearTimeout(t));
+    _metroSpeechTimeouts = [];
+    if (speechSynth) speechSynth.cancel();
+}
+
 function startMetronome(startTimeOverride = null) {
     stopMetronome();
 
@@ -3634,16 +3678,6 @@ function startMetronome(startTimeOverride = null) {
             envelope: { attack: 0.001, decay: 0.03, sustain: 0 },
             volume: -6
         }).toDestination();
-    }
-
-    // Chrome bug: speechSynthesis silently stops after ~15s unless we resume it.
-    // We ping it every 10 seconds while the metronome is running.
-    if (countEnabled && speechSynth) {
-        if (window._speechKeepAlive) clearInterval(window._speechKeepAlive);
-        window._speechKeepAlive = setInterval(() => {
-            if (!metronomeRunning) { clearInterval(window._speechKeepAlive); return; }
-            if (speechSynth.paused) speechSynth.resume();
-        }, 10000);
     }
 
     const bpm = (60 / secondsPerBeat) * speedMultiplier;
