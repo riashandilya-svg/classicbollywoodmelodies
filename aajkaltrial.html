@@ -1940,13 +1940,18 @@ async function loadSongMidi() {
 
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
+    // For all time signatures (including 2/2 cut time), read BPM from the MIDI
+    // header. The old code hard-coded 100 for 2/2, which caused the metronome
+    // to drift whenever the song's actual tempo differed from 100 BPM.
+    const midiTempos = currentMidi.header.tempos;
     let bpm;
     if (SONG_CONFIG.timeSignature[0] === 2 && SONG_CONFIG.timeSignature[1] === 2) {
-        bpm = 100;
+        // In 2/2 the MIDI quarter-note BPM counts half-notes as the beat.
+        // Multiply by 2 so one half-note beat = one metronome click.
+        const rawBpm = midiTempos.length ? midiTempos[0].bpm : 100;
+        bpm = rawBpm * 2;
     } else {
-        bpm = currentMidi.header.tempos.length
-            ? currentMidi.header.tempos[0].bpm
-            : 120;
+        bpm = midiTempos.length ? midiTempos[0].bpm : 120;
     }
 
     secondsPerBeat = 60 / bpm;
