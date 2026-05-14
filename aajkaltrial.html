@@ -3958,6 +3958,10 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 }
 
 startPracticeButton.addEventListener('click', async () => {
+    // Prevent double-click / re-entry while countdown or preview is running
+    if (startPracticeButton.disabled) return;
+    startPracticeButton.disabled = true;
+
     await Tone.start();
     
     if (midiInputs.length === 0) {
@@ -4235,6 +4239,7 @@ feedback.classList.add('show');
 
 document.getElementById('countdownOverlay').style.display = 'none';
 stopButton.disabled = true;
+startPracticeButton.disabled = false;
 }
 
 function resetAll() {
