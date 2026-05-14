@@ -1647,10 +1647,10 @@ body.score-mode #panelProgressWrap {
       <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
     </div>
     <div class="ctrl-speed-row">
-      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
+      <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
       <span style="font-size:13px;color:#666;">Speed</span>
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
-      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
+      <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
   </div>
 
@@ -2078,6 +2078,12 @@ const playbackControls = document.getElementById('playbackControls');
         if (el.id === 'freeModeButton') return;
         el.disabled = !enabled;
     });
+
+    // Panel speed buttons live outside #playbackControls — handle them explicitly
+    const panelDown = document.getElementById('panelSpeedDown');
+    const panelUp   = document.getElementById('panelSpeedUp');
+    if (panelDown) panelDown.disabled = !enabled;
+    if (panelUp)   panelUp.disabled   = !enabled;
 }
 
 const startMeasureInput = document.getElementById('startMeasureInput');
@@ -2132,9 +2138,8 @@ function updateSpeed(delta) {
 
 speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
-
-speedDownButton.disabled = false;
-speedUpButton.disabled = false;
+// Note: speedDown/speedUp enabled state is managed entirely by setControlsEnabled()
+// and setSpeedButtonsEnabled(). Do NOT add unconditional .disabled = false here.
 
 
 
@@ -3086,8 +3091,20 @@ function spawnTrainingNote(noteObj) {
     }
 }
 
+// Enables or disables all speed controls (hidden originals + visible panel mirrors).
+// Called at preview start/end so buttons grey out while the preview is playing.
+function setSpeedButtonsEnabled(enabled) {
+    speedDownButton.disabled = !enabled;
+    speedUpButton.disabled   = !enabled;
+    const panelDown = document.getElementById('panelSpeedDown');
+    const panelUp   = document.getElementById('panelSpeedUp');
+    if (panelDown) panelDown.disabled = !enabled;
+    if (panelUp)   panelUp.disabled   = !enabled;
+}
+
 function playMeasurePreview(startTime, clef) {
     speedLocked = true;
+    setSpeedButtonsEnabled(false); // grey out speed buttons for the duration of the preview
     ensureSynth();
     hardStopUserNote();
 
@@ -3171,6 +3188,7 @@ const visualStart =
 
 if (!sectionNotes.length) {
     speedLocked = false;
+    setSpeedButtonsEnabled(true);
     previewMode = false;
     spawnNextValidNote();
     return;
@@ -3184,6 +3202,7 @@ const previewLength =
 const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
+    setSpeedButtonsEnabled(true);
 
     if (scoreModeActive) clearScoreHighlight();
 
@@ -4289,6 +4308,7 @@ visualsPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
+setSpeedButtonsEnabled(true);
 
 if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 
@@ -4346,6 +4366,7 @@ function resetAll() {
     visualsPlaying   = false;
     speedLocked      = false;
     countdownActive  = false;
+    setSpeedButtonsEnabled(true);
 
     // ── 4. Exit Free Mode if it is on ────────────────────────────────────
     if (freeMode) {
