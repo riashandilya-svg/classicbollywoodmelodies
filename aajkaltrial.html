@@ -2202,13 +2202,19 @@ let countLanguage = "en";
 // Uses AudioContext.currentTime-based lookahead scheduling for sample-accurate,
 // Chrome-reliable playback. Falls back to SpeechSynthesis for any word whose
 // audio file hasn't loaded yet (e.g. before you drop the .mp3 files in).
-let _countAudioCtx = null;
-let _countBuffers  = {};      // key → AudioBuffer
-let _countSources  = [];      // live nodes, kept for cancellation
-let _countSchedTimer = null;
+let _countAudioCtx    = null;
+let _countBuffers     = {};      // key → AudioBuffer
+let _countSources     = [];      // live nodes, kept for cancellation
+let _countSchedTimer  = null;
 let _lastScheduledStep = -1;
 
-const SCHEDULE_LOOKAHEAD_SEC = 0.25;  // schedule this far ahead
+// These are set at the moment the scheduler actually starts running,
+// anchored to real wall-clock / ctx time — NOT to transportStartTime
+// (which may be a future timestamp used by the note-fall animation).
+let _schedWallMs  = 0;   // performance.now() at scheduler-start
+let _schedCtxSec  = 0;   // audioCtx.currentTime at scheduler-start
+
+const SCHEDULE_LOOKAHEAD_SEC = 0.30;  // schedule this far ahead
 const SCHEDULE_INTERVAL_MS   = 100;   // re-run scheduler every 100ms
 
 // ↓ Edit these paths to wherever you put the .mp3 files on your server.
@@ -2237,21 +2243,27 @@ async function _ensureCountAudioCtx() {
 }
 
 // Call once on the first user gesture that enables counting.
-async function _loadCountBuffers() {
-    const ctx = await _ensureCountAudioCtx();
-    const results = await Promise.allSettled(
-        Object.entries(COUNT_AUDIO_PATHS).map(async ([key, url]) => {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`${res.status} ${url}`);
-            const ab  = await res.arrayBuffer();
-            const buf = await ctx.decodeAudioData(ab);
-            _countBuffers[key] = buf;
-        })
-    );
-    const loaded  = Object.keys(_countBuffers);
-    const missing = Object.keys(COUNT_AUDIO_PATHS).filter(k => !_countBuffers[k]);
-    if (loaded.length)  console.log('[Count Audio] Loaded:', loaded.join(', '));
-    if (missing.length) console.warn('[Count Audio] Missing (will use SpeechSynthesis fallback):', missing.join(', '));
+// Returns a promise that resolves when all buffers are loaded.
+function _loadCountBuffers() {
+    if (!window.__countBuffersPromise) {
+        window.__countBuffersPromise = _ensureCountAudioCtx().then(ctx =>
+            Promise.allSettled(
+                Object.entries(COUNT_AUDIO_PATHS).map(async ([key, url]) => {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`${res.status} ${url}`);
+                    const ab  = await res.arrayBuffer();
+                    const buf = await ctx.decodeAudioData(ab);
+                    _countBuffers[key] = buf;
+                })
+            ).then(() => {
+                const loaded  = Object.keys(_countBuffers);
+                const missing = Object.keys(COUNT_AUDIO_PATHS).filter(k => !_countBuffers[k]);
+                if (loaded.length)  console.log('[Count Audio] Loaded:', loaded.join(', '));
+                if (missing.length) console.warn('[Count Audio] Missing (will use SpeechSynthesis fallback):', missing.join(', '));
+            })
+        );
+    }
+    return window.__countBuffersPromise;
 }
 
 // Schedule one word at a precise AudioContext time. Returns true if done via WebAudio.
@@ -2263,6 +2275,7 @@ function _webAudioPlayAt(word, ctxTime, isMainBeat) {
     gain.gain.value = isMainBeat ? 1.0 : 0.65;
     src.connect(gain);
     gain.connect(_countAudioCtx.destination);
+    // Never schedule in the past — clamp to at least 5 ms from now
     src.start(Math.max(ctxTime, _countAudioCtx.currentTime + 0.005));
     _countSources.push(src);
     return true;
@@ -2272,22 +2285,27 @@ function _webAudioPlayAt(word, ctxTime, isMainBeat) {
 function _cancelCountAudio() {
     if (_countSchedTimer) { clearTimeout(_countSchedTimer); _countSchedTimer = null; }
     _countSources.forEach(src => { try { src.stop(0); } catch(e) {} });
-    _countSources = [];
+    _countSources     = [];
     _lastScheduledStep = -1;
+    _schedWallMs      = 0;
+    _schedCtxSec      = 0;
 }
 
 // The lookahead scheduler: called every SCHEDULE_INTERVAL_MS.
 // Schedules every syllable whose fire-time falls in [now, now + LOOKAHEAD].
+// _schedWallMs / _schedCtxSec are the real-time anchors captured at start —
+// completely independent of transportStartTime (which may be in the future).
 function _runCountScheduler(bpm) {
     if (!metronomeRunning || !countEnabled || !_countAudioCtx) return;
 
-    const stepSec   = (60 / bpm) / 4;                       // 16th-note duration
-    const elapsedSec = (performance.now() - transportStartTime) / 1000;
-    // Relationship: ctx.currentTime ≈ elapsedSec + ctxBase
-    const ctxBase   = _countAudioCtx.currentTime - elapsedSec;
+    const stepSec    = (60 / bpm) / 4;   // 16th-note duration in seconds
+    // How many seconds of counting have elapsed since beat-1 fired
+    const elapsedSec = (performance.now() - _schedWallMs) / 1000;
+    // Corresponding AudioContext time for elapsedSec = 0
+    const ctxBase    = _schedCtxSec;
 
-    const fromStep  = Math.max(Math.floor(elapsedSec / stepSec), _lastScheduledStep + 1);
-    const toStep    = Math.ceil((elapsedSec + SCHEDULE_LOOKAHEAD_SEC) / stepSec);
+    const fromStep = Math.max(Math.floor(elapsedSec / stepSec), _lastScheduledStep + 1);
+    const toStep   = Math.ceil((elapsedSec + SCHEDULE_LOOKAHEAD_SEC) / stepSec);
 
     for (let step = fromStep; step <= toStep; step++) {
         const slotInBeat = step % 4;
@@ -2299,8 +2317,8 @@ function _runCountScheduler(bpm) {
         const word = getCountWord(beatIndex, slotInBeat);
         if (!word) continue;
 
-        const fireAtSec  = step * stepSec;
-        const ctxFireAt  = ctxBase + fireAtSec;
+        const fireAtSec = step * stepSec;
+        const ctxFireAt = ctxBase + fireAtSec;
 
         if (!_webAudioPlayAt(word, ctxFireAt, isMainBeat)) {
             // Fallback: SpeechSynthesis with a matching setTimeout
@@ -2373,13 +2391,8 @@ countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
 if (countEnabled) {
     // On first enable: initialise AudioContext (must happen on a user gesture)
-    // and load the count audio buffers. Also prime SpeechSynthesis as fallback.
-    _ensureCountAudioCtx().then(() => {
-        if (!window.__countAudioLoaded) {
-            window.__countAudioLoaded = true;
-            _loadCountBuffers();
-        }
-    });
+    // and kick off buffer loading (de-duped — safe to call multiple times).
+    _loadCountBuffers();
 
     if (!window.__chromeSpeechUnlocked) {
         const tryUnlock = () => {
@@ -3813,9 +3826,20 @@ function startMetronome(startTimeOverride = null) {
     tick();
 
     // Start the Web Audio lookahead scheduler for counting words.
-    // This runs independently of rAF for Chrome-reliable timing.
+    // Waits for buffers to load before starting so no words fall back to
+    // SpeechSynthesis on the very first run due to a loading race.
     if (countEnabled) {
-        _ensureCountAudioCtx().then(() => {
+        _loadCountBuffers().then(() => {
+            if (!metronomeRunning) return null;   // stopped while buffers were loading
+            return _ensureCountAudioCtx();
+        }).then(ctx => {
+            if (!ctx || !metronomeRunning) return;
+            // Capture the real wall-clock / AudioContext anchor RIGHT NOW.
+            // This is intentionally NOT transportStartTime — that value can be
+            // a future timestamp (preroll offset) and would make elapsedSec
+            // negative, breaking all the scheduling math.
+            _schedWallMs       = performance.now();
+            _schedCtxSec       = ctx.currentTime;
             _lastScheduledStep = -1;
             _runCountScheduler(bpm);
         });
