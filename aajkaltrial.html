@@ -3574,28 +3574,31 @@ animate();
 // ================================
 // SIMPLE METRONOME (BUTTON ONLY)
 // ================================
-function getCountWord(beatIndex, subdivision = false) {
+// Returns the spoken syllable for a given 16th-note slot within a beat.
+// slotInBeat: 0="one/two", 1="e", 2="and", 3="a"
+function getCountWord(beatIndex, slotInBeat) {
     const beatsPerMeasure = SONG_CONFIG.timeSignature[0];
     const beat = (beatIndex % beatsPerMeasure) + 1;
 
-    const words = {
-        en: {
-            numbers: ["one", "two", "three", "four"],
-            and: "and"
-        },
-        it: {
-            numbers: ["uno", "due", "tre", "quattro"],
-            and: "e"
-        }
+    const beatNames = {
+        en: ["one", "two", "three", "four"],
+        it: ["uno",  "due", "tre",   "quattro"]
     };
-
-    const lang = words[countLanguage] || words.en;
+    const lang = beatNames[countLanguage] || beatNames.en;
 
     if (countMode === "subdivision") {
-        return subdivision ? lang.and : String(beat);
+        // "1 e & a" syllables for each 16th-note slot
+        switch (slotInBeat) {
+            case 0: return lang[beat - 1];   // "one" / "two"
+            case 1: return "e";
+            case 2: return "and";
+            case 3: return "a";
+        }
     }
 
-    return lang.numbers[beat - 1];
+    // Normal mode: only speak on the downbeat of each beat
+    if (slotInBeat === 0) return lang[beat - 1];
+    return null;
 }
 
 function startMetronome(startTimeOverride = null) {
@@ -3614,7 +3617,8 @@ function startMetronome(startTimeOverride = null) {
 
     const bpm = (60 / secondsPerBeat) * speedMultiplier;
 
-    const stepMs = (60000 / bpm) / 2;
+    // Each beat divided into 4 sixteenth-note slots for "1 e & a" counting
+    const stepMs = (60000 / bpm) / 4;
 
     let lastStep = -1;
 
@@ -3631,27 +3635,23 @@ function startMetronome(startTimeOverride = null) {
         if (step !== lastStep) {
             lastStep = step;
 
-            const isMainBeat = step % 2 === 0;
-            const beatIndex = Math.floor(step / 2);
+            const slotInBeat = step % 4;        // 0=beat, 1=e, 2=&, 3=a
+            const beatIndex  = Math.floor(step / 4);
+            const isMainBeat = slotInBeat === 0;
 
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
 
             if (countEnabled && speechSynth) {
-                let word = null;
-
-                if (isMainBeat) {
-                    word = getCountWord(beatIndex, false);
-                } else if (subdivisionEnabled) {
-                    word = getCountWord(beatIndex, true);
-                }
+                const shouldSpeak = subdivisionEnabled || isMainBeat;
+                const word = shouldSpeak ? getCountWord(beatIndex, slotInBeat) : null;
 
                 if (word) {
                     speechSynth.cancel();
                     const u = new SpeechSynthesisUtterance(word);
                     u.volume = isMainBeat ? 1 : 0.6;
-                    u.rate = 1;
+                    u.rate = 1.1;
                     speechSynth.speak(u);
                 }
             }
