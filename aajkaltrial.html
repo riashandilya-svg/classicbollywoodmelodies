@@ -3622,6 +3622,10 @@ function startMetronome(startTimeOverride = null) {
         if (!metronomeRunning) return;
 
         const elapsed = performance.now() - transportStartTime;
+        if (elapsed < 0) {
+            metroInterval = requestAnimationFrame(tick);
+            return;
+        }
         const step = Math.floor(elapsed / stepMs);
 
         if (step !== lastStep) {
