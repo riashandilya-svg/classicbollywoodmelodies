@@ -1856,12 +1856,19 @@ function showMidiLoadError(message) {
     if (!banner) return;
     banner.innerHTML =
         `⚠️ Could not load the song file: <em>${message}</em>` +
-        `<button onclick="(async()=>{` +
-            `this.closest('#midiLoadError').classList.remove('visible');` +
-            `try{await loadSongMidi();}catch(e){showMidiLoadError(e.message||String(e));}` +
-        `})()">Retry</button>`;
+        `<button onclick="window._retryMidiLoad()">Retry</button>`;
     banner.classList.add('visible');
 }
+
+// Exposed on window so the Retry button's inline onclick can reach it
+// (the main script runs as type="module" — module scope is not global).
+window._retryMidiLoad = async function() {
+    try {
+        await loadSongMidi();
+    } catch (err) {
+        showMidiLoadError(err.message || String(err));
+    }
+};
 
 async function loadSongMidi() {
     // Hide any previous error
