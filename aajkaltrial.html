@@ -1946,10 +1946,12 @@ async function loadSongMidi() {
     const midiTempos = currentMidi.header.tempos;
     let bpm;
     if (SONG_CONFIG.timeSignature[0] === 2 && SONG_CONFIG.timeSignature[1] === 2) {
-        // In 2/2 the MIDI quarter-note BPM counts half-notes as the beat.
-        // Multiply by 2 so one half-note beat = one metronome click.
+        // MIDI tempo is always expressed in quarter-note BPM. In 2/2 the beat
+        // unit is a half note (= 2 quarter notes), so the metronome should
+        // click at half the quarter-note rate.
+        // e.g. MIDI header says 100 BPM → 50 half-note beats per minute.
         const rawBpm = midiTempos.length ? midiTempos[0].bpm : 100;
-        bpm = rawBpm * 2;
+        bpm = rawBpm / 2;
     } else {
         bpm = midiTempos.length ? midiTempos[0].bpm : 120;
     }
@@ -3571,7 +3573,8 @@ animate();
 // SIMPLE METRONOME (BUTTON ONLY)
 // ================================
 function getCountWord(beatIndex, subdivision = false) {
-    const beat = (beatIndex % 4) + 1;
+    const beatsPerMeasure = SONG_CONFIG.timeSignature[0];
+    const beat = (beatIndex % beatsPerMeasure) + 1;
 
     const words = {
         en: {
