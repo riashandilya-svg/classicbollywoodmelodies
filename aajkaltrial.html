@@ -420,6 +420,42 @@ body.dark-mode #statsBar {
 }
 body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
 
+/* MIDI load error banner */
+#midiLoadError {
+    display: none;
+    width: min(900px, 96%);
+    margin: 10px auto 0 auto;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.35);
+    animation: fadeUp 0.4s ease both;
+    z-index: 10;
+    position: relative;
+}
+#midiLoadError.visible { display: block; }
+#midiLoadError button {
+    margin-left: 14px;
+    padding: 5px 14px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.25);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    vertical-align: middle;
+}
+#midiLoadError button:hover:not(:disabled) {
+    background: rgba(255,255,255,0.38);
+    transform: none;
+    box-shadow: none;
+}
+
 /* Measure timeline */
 #measureTimeline {
     width: min(900px, 96%);
@@ -1537,6 +1573,9 @@ body.score-mode #panelProgressWrap {
 <!-- Measure Timeline -->
 <div id="measureTimeline"></div>
 
+<!-- MIDI load error banner (hidden until fetch fails) -->
+<div id="midiLoadError" role="alert" aria-live="assertive"></div>
+
 <!-- Feedback right below stats box -->
 <div id="feedbackArea">
     <div id="feedback"></div>
@@ -1808,8 +1847,39 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
 }
 
 
+// Displays a visible error banner and disables all controls when the MIDI
+// file cannot be loaded. Provides a Retry button so the user doesn't need
+// to reload the page manually.
+function showMidiLoadError(message) {
+    setControlsEnabled(false);
+    const banner = document.getElementById('midiLoadError');
+    if (!banner) return;
+    banner.innerHTML =
+        `⚠️ Could not load the song file: <em>${message}</em>` +
+        `<button onclick="(async()=>{` +
+            `this.closest('#midiLoadError').classList.remove('visible');` +
+            `try{await loadSongMidi();}catch(e){showMidiLoadError(e.message||String(e));}` +
+        `})()">Retry</button>`;
+    banner.classList.add('visible');
+}
+
 async function loadSongMidi() {
-    const response = await fetch("aajkal.mid");
+    // Hide any previous error
+    const errorBanner = document.getElementById('midiLoadError');
+    if (errorBanner) errorBanner.classList.remove('visible');
+
+    let response;
+    try {
+        response = await fetch("aajkal.mid");
+    } catch (networkErr) {
+        // Network error (offline, DNS failure, CORS, etc.)
+        throw new Error(`Network error — ${networkErr.message}`);
+    }
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText} for "aajkal.mid" — check the file path`);
+    }
+
     const arrayBuffer = await response.arrayBuffer();
 
     currentMidi = new Midi(arrayBuffer);
@@ -2024,9 +2094,16 @@ const playSongButton = document.getElementById('playSongButton');
 const loopCheckbox = document.getElementById('loopCheckbox');
 const freeModeButton = document.getElementById('freeModeButton');
 freeModeButton.classList.add('side-floating');
-setControlsEnabled(true);
+// Controls stay disabled until loadSongMidi() finishes successfully.
+// (loadSongMidi calls setControlsEnabled(true) at the end on success.)
+setControlsEnabled(false);
 (async () => {
-    await loadSongMidi();
+    try {
+        await loadSongMidi();
+    } catch (err) {
+        console.error('[FATAL] loadSongMidi failed:', err);
+        showMidiLoadError(err.message || String(err));
+    }
 })();
 
 
