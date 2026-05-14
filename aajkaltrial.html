@@ -3779,8 +3779,7 @@ setTimeout(() => spawnNextValidNote(), 300);
 
         const feedback = document.getElementById('feedback');
 feedback.innerHTML =
-    `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>.
-Let's try holding a little longer!`;
+    `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
      feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -3938,7 +3937,7 @@ canvas.addEventListener('touchend', (e) => {
             const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
 
             const feedback = document.getElementById('feedback');
-            feedback.innerHTML = `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>. Let's try holding a little longer!`;
+            feedback.innerHTML = `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
             feedback.classList.remove('correct', 'wrong', 'show');
             void feedback.offsetWidth;
@@ -4511,12 +4510,7 @@ function resetAll() {
     showNoteNames = true;
     toggleNamesButton.textContent = 'Hide Note Names';
 
-    // ── 13. Turn off Score Mode if it is on ──────────────────────────────
-    const smToggle = document.getElementById('scoreModeToggle');
-    if (smToggle && smToggle.checked) {
-        smToggle.checked = false;
-        smToggle.dispatchEvent(new Event('change'));
-    }
+    // ── 13. Score Mode — left as-is; user’s view choice persists across resets ──
 
     // ── 14. Confirm ──────────────────────────────────────────────────────
     statsCombo         = 0;
