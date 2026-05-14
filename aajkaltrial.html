@@ -3490,15 +3490,26 @@ function playNoteCountIn() {
 
     _ensureCountAudioCtx().then(ctx => {
         if (!ctx || !trainingActive) {
-            spawnNextValidNote();
+            // AudioContext unavailable — still play the note if sampler is ready
+            ensureSynth();
+            Tone.loaded().then(() => {
+                if (!trainingActive) return;
+                try { synth.triggerAttackRelease(noteName, noteObj.duration / speedMultiplier); }
+                catch(e) {}
+                setTimeout(() => { if (trainingActive) spawnTrainingNote(noteObj); }, noteMs + 80);
+            });
             return;
         }
 
         const ctxStart = ctx.currentTime + 0.02;
 
-        // ── 1. Note sound fires immediately ──────────────────────────
+        // ── 1. Note sound — wait for sampler buffers then play ────────
         ensureSynth();
-        synth.triggerAttackRelease(noteName, noteObj.duration / speedMultiplier);
+        Tone.loaded().then(() => {
+            if (!trainingActive) return;
+            try { synth.triggerAttackRelease(noteName, noteObj.duration / speedMultiplier); }
+            catch(e) { console.warn('playNoteCountIn: synth play failed', e); }
+        });
 
         // Score mode: flash highlight while note sounds
         if (scoreModeActive) {
