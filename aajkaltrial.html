@@ -2429,7 +2429,11 @@ subdivisionToggle.addEventListener('click', () => {
         countToggle.textContent = "Counting ✓";
     }
 
-    startMetronome(transportStartTime);
+    // Only restart the metronome if playback is active; use the correct anchor.
+    if (metronomeRunning || fullSongPlaying || previewMode) {
+        const anchor = fullSongPlaying ? songStartTime : transportStartTime;
+        startMetronome(anchor);
+    }
 });
 
 
@@ -4594,20 +4598,8 @@ playMeasurePreview(sectionStartTime, clefMode);
 playSongButton.addEventListener('click', async () => {
     await Tone.start();
 
-    fullSongPlaying = true;
-
     stopPlayback(false);
     ensureSynth();
-    transportStartTime = performance.now();
-
-    countEnabled = false;
-    countToggle.textContent = "Counting";
-    _cancelCountAudio();
-    if (speechSynth) speechSynth.cancel();
-
-    if ((beatEnabled || countEnabled) && !metronomeRunning) {
-        startMetronome();
-    }
 
     startFullSongPlayback();
 });
@@ -4793,21 +4785,26 @@ window.resetAll = resetAll;
     
 function startFullSongPlayback() {
     
-    const visualBaseline = performance.now() + 16;
-    const now = performance.now();
-    
     if (!allMidiNotes.length) return;
-    songStartTime = performance.now();
-    visualClockStart = songStartTime;
-    if (beatEnabled || countEnabled) {
-    startMetronome(songStartTime);
-}
+
+    // Single authoritative start timestamp — used for both audio timeouts
+    // and the metronome anchor so counting stays perfectly in sync.
+    const now = performance.now();
+    songStartTime = now;
+    visualClockStart = now;
+    transportStartTime = now;
 
     fullSongPlaying = true;
     visualsPlaying = true;
 
+    if (beatEnabled || countEnabled) {
+        startMetronome(now);
+    }
+
     fallingRectangles = [];
     playbackTimeouts = [];
+
+    const visualBaseline = now + 16;
 
 
     // For score mode: group notes by time so we highlight all simultaneous notes together
