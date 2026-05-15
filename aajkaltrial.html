@@ -3341,9 +3341,16 @@ visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
 fallingRectangles = [];
 previewMode = true;
 
+// Single authoritative timestamp — metronome anchor and visual clock
+// must share the same origin so counting stays in sync with the notes.
+const previewStart = performance.now();
+const visualPreroll = getFallTimeMs();
+
+visualClockStart = previewStart + visualPreroll;
+
 // Start counting/beat during preview so user hears the rhythm with the notes
 if (beatEnabled || countEnabled) {
-    startMetronome(performance.now() + getFallTimeMs());
+    startMetronome(previewStart + visualPreroll);
 }
 
 const feedback = document.getElementById('feedback');
@@ -3363,12 +3370,6 @@ const sectionNotes = practiceNotes.filter(note => {
         (clef === 'bass' && isBass)
     );
 });
-
-
-const previewStart = performance.now();
-const visualPreroll = getFallTimeMs();
-
-visualClockStart = previewStart + visualPreroll;
 
 sectionNotes.forEach(note => {
     const t0 = (note.playTime ?? note.time);
