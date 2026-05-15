@@ -3372,15 +3372,11 @@ const visualStart =
         const highlightDelay = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
         const th = setTimeout(() => {
             if (!previewMode) return;
-            // Collect all notes at the same playTime so both clefs highlight together.
-            // BUGFIX: exclude grace notes when the current note is normal and vice-versa,
-            // preventing a cross-measure grace note from overwriting the tied quaver highlight.
-            const noteIsGrace = note.duration < 0.1;
+            // Collect all notes at the same playTime so both clefs highlight together
             const notePlayTime = note.playTime ?? note.time;
-            const simultaneous = sectionNotes.filter(n => {
-                if (Math.abs((n.playTime ?? n.time) - notePlayTime) >= 0.01) return false;
-                return (n.duration < 0.1) === noteIsGrace;
-            });
+            const simultaneous = sectionNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            );
             const seen = new Set();
             const allIndices = [];
             for (const sn of simultaneous) {
@@ -5181,11 +5177,7 @@ function _buildSvgMidiMap() {
             // On the second repeat pass used >= 2*cap already, so we leave it alone
             // and let the rawRank % bucketSize wrapping handle alignment.
             // Skip if grace pre-correction already bumped this note forward.
-            // BUGFIX: use === cap (not >= cap) so only the very first genuinely-overflowing note
-            // is bumped forward. On the repeat pass used > cap already, so >= would incorrectly
-            // bump ALL repeat-pass notes to the next measure instead of letting rawRank % bucketSize
-            // wrap them back to the correct SVG noteheads.
-            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used === cap && used < 2 * cap))) {
+            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
@@ -5330,17 +5322,10 @@ function onTrainingNoteSpawned(noteObj) {
     const allIndices = [];
     const notePlayTime = noteObj.playTime ?? noteObj.time;
 
-    // Collect all practiceNotes at the same playTime (covers both treble + bass in "both" mode).
-    // BUGFIX: do NOT mix grace notes (duration < 0.1s) with normal notes in the same group.
-    // The grace note at the start of m36 can fall within 0.01s of the tie-start quaver at the
-    // end of m35, causing the grace note's highlight to overwrite the quaver's (the grace note
-    // highlight fires last and "wins", making the display jump back to the grace notehead).
-    const isNoteGrace = noteObj.duration < 0.1;
-    const simultaneousNotes = practiceNotes.filter(n => {
-        if (Math.abs((n.playTime ?? n.time) - notePlayTime) >= 0.01) return false;
-        // Keep only notes of the same type (both grace or both normal)
-        return (n.duration < 0.1) === isNoteGrace;
-    });
+    // Collect all practiceNotes at the same playTime (covers both treble + bass in "both" mode)
+    const simultaneousNotes = practiceNotes.filter(n =>
+        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+    );
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
 
     // Deduplicate by time+midi+track so we don't double-lookup
