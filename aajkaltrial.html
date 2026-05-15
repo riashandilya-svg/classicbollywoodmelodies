@@ -2429,7 +2429,8 @@ subdivisionToggle.addEventListener('click', () => {
         countToggle.textContent = "Counting ✓";
     }
 
-    // Only restart the metronome if playback is active; use the correct anchor.
+    // Use the correct anchor: songStartTime during full-song playback,
+    // transportStartTime otherwise (preview / practice).
     if (metronomeRunning || fullSongPlaying || previewMode) {
         const anchor = fullSongPlaying ? songStartTime : transportStartTime;
         startMetronome(anchor);
@@ -2566,9 +2567,6 @@ let trainingActive = false;
 let trainingIndex = 0;
 let waitingForInput = false;
 let previewMode = false;
-Object.defineProperty(window, 'trainingIndex', { get: () => trainingIndex, configurable: true, enumerable: true });
-Object.defineProperty(window, 'expectedHoldDuration', { get: () => expectedHoldDuration, configurable: true, enumerable: true });
-Object.defineProperty(window, 'waitingForInput', { get: () => waitingForInput, configurable: true, enumerable: true });
 let previewTimeouts = [];
 let retryTimeout = null; 
 let fullSongPlaying = false;
@@ -2731,28 +2729,6 @@ let practiceNotes = [];
 let visualsPlaying = false;
 let speedMultiplier = 1.0;
 let speedLocked = false;
-
-// ── Test instrumentation: expose module state on window ──────────────────────
-// (Object.defineProperty keeps window refs live even when the module let is reassigned)
-Object.defineProperty(window, 'fallingRectangles', {
-  get: () => fallingRectangles,
-  set: v => { fallingRectangles = v; },
-  configurable: true, enumerable: true,
-});
-Object.defineProperty(window, 'speedMultiplier', {
-  get: () => speedMultiplier,
-  set: v => { speedMultiplier = v; },
-  configurable: true, enumerable: true,
-});
-Object.defineProperty(window, 'practiceNotes', {
-  get: () => practiceNotes,
-  configurable: true, enumerable: true,
-});
-Object.defineProperty(window, 'visualsPlaying', {
-  get: () => visualsPlaying,
-  configurable: true, enumerable: true,
-});
-// ─────────────────────────────────────────────────────────────────────────────
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
@@ -3343,10 +3319,9 @@ previewMode = true;
 
 // Single authoritative timestamp — metronome anchor and visual clock
 // must share the same origin so counting stays in sync with the notes.
-const previewStart = performance.now();
-const visualPreroll = getFallTimeMs();
-
-visualClockStart = previewStart + visualPreroll;
+const previewStart   = performance.now();
+const visualPreroll  = getFallTimeMs();
+visualClockStart     = previewStart + visualPreroll;
 
 // Start counting/beat during preview so user hears the rhythm with the notes
 if (beatEnabled || countEnabled) {
@@ -3370,6 +3345,7 @@ const sectionNotes = practiceNotes.filter(note => {
         (clef === 'bass' && isBass)
     );
 });
+
 
 sectionNotes.forEach(note => {
     const t0 = (note.playTime ?? note.time);
@@ -4788,24 +4764,24 @@ function startFullSongPlayback() {
     
     if (!allMidiNotes.length) return;
 
-    // Single authoritative start timestamp — used for both audio timeouts
-    // and the metronome anchor so counting stays perfectly in sync.
+    // Single authoritative timestamp — metronome anchor, songStartTime,
+    // transportStartTime, and visualBaseline all derive from the same value
+    // so counting stays perfectly in sync with the falling notes.
     const now = performance.now();
-    songStartTime = now;
-    visualClockStart = now;
+    songStartTime      = now;
+    visualClockStart   = now;
     transportStartTime = now;
-
-    fullSongPlaying = true;
-    visualsPlaying = true;
+    const visualBaseline = now + 16;
 
     if (beatEnabled || countEnabled) {
         startMetronome(now);
     }
 
-    fallingRectangles = [];
-    playbackTimeouts = [];
+    fullSongPlaying = true;
+    visualsPlaying  = true;
 
-    const visualBaseline = now + 16;
+    fallingRectangles = [];
+    playbackTimeouts  = [];
 
 
     // For score mode: group notes by time so we highlight all simultaneous notes together
@@ -5587,11 +5563,6 @@ holdEl.innerHTML =
         activeMidiNote = null;
     }
 }
-
-// Expose for Playwright tests (module scope is not window scope)
-window.handleMIDIMessage = handleMIDIMessage;
-window.spawnNextValidNote = spawnNextValidNote;
-window.ensureSynth = ensureSynth;
 
 </script>
 <!-- Stats toggle logic -->
