@@ -1652,11 +1652,11 @@ body.score-mode #panelProgressWrap {
     <div class="ctrl-card-title">PLAYBACK</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
-      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click()">♩ Beat</button>
-      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click()">Counting</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
     </div>
     <div class="ctrl-row">
-      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click()">1 &amp; 2 &amp;</button>
+      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
     </div>
     <div class="ctrl-speed-row">
       <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
@@ -2375,14 +2375,8 @@ beatToggle.addEventListener('click', () => {
     beatEnabled = !beatEnabled;
     beatToggle.textContent = beatEnabled ? "Beat ✓" : "Beat";
 
-    // Keep beatBtn active class in sync
-    const beatBtnEl = document.getElementById('beatBtn');
-    if (beatBtnEl) beatBtnEl.classList.toggle('active', beatEnabled);
-
     if (beatEnabled && !metronomeRunning) {
-        // If training is active, anchor to transportStartTime for sync
-        const anchor = (trainingActive && transportStartTime) ? transportStartTime : undefined;
-        startMetronome(anchor);
+        startMetronome();
     }
 });
 
@@ -2390,10 +2384,6 @@ countToggle.addEventListener('click', () => {
 
 countEnabled = !countEnabled;
 countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
-
-// Keep countBtn active class in sync
-const countBtnEl = document.getElementById('countBtn');
-if (countBtnEl) countBtnEl.classList.toggle('active', countEnabled);
 
 if (countEnabled) {
     // On first enable: initialise AudioContext (must happen on a user gesture)
@@ -2421,9 +2411,7 @@ if (countEnabled) {
     }
 
     if (!metronomeRunning) {
-        // If training is active, anchor to transportStartTime for sync
-        const anchor = (trainingActive && transportStartTime) ? transportStartTime : undefined;
-        startMetronome(anchor);
+        startMetronome();
     }
 }
 });
@@ -2436,27 +2424,12 @@ subdivisionToggle.addEventListener('click', () => {
     subdivisionToggle.textContent =
         subdivisionEnabled ? "1 & 2 & ✓" : "1 & 2 &";
 
-    // Keep subdivBtn active class in sync with actual state
-    const subdivBtnEl = document.getElementById('subdivBtn');
-    if (subdivBtnEl) subdivBtnEl.classList.toggle('active', subdivisionEnabled);
-
     if (subdivisionEnabled) {
         countEnabled = true;
         countToggle.textContent = "Counting ✓";
-        _loadCountBuffers();
     }
 
-    // Use the correct anchor: songStartTime during full-song playback,
-    // transportStartTime otherwise (preview / practice / active training).
-    if (metronomeRunning || fullSongPlaying || previewMode) {
-        const anchor = fullSongPlaying ? songStartTime : transportStartTime;
-        startMetronome(anchor);
-    } else if (subdivisionEnabled && trainingActive && transportStartTime) {
-        // Metronome was stopped after preview but training is active —
-        // restart it anchored to the original transportStartTime so
-        // counting stays in sync with the note timing.
-        startMetronome(transportStartTime);
-    }
+    startMetronome(transportStartTime);
 });
 
 
