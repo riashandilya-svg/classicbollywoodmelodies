@@ -2568,6 +2568,7 @@ let fullSongPlaying = false;
 
 let currentTrainingNote = null;
 let noteHoldStartTime = null;
+let holdEvaluated = false;   // guards against double-advance from simultaneous mouseup + MIDI noteOff
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
@@ -3243,6 +3244,7 @@ function spawnTrainingNote(noteObj) {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
     }
     noteHoldStartTime = null;
+    holdEvaluated = false;
     setTargetNote(noteName);
     
     if (scoreModeActive) {
@@ -3965,6 +3967,10 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     // Always clear highlights immediately on release — spawnTrainingNote re-adds them
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
+
+    // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
+    if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
+    holdEvaluated = true;
 
     if (heldTime >= expectedHoldDuration) {
 const feedback = document.getElementById('feedback');
@@ -5489,6 +5495,10 @@ if (freeMode && note === freeModeActiveNote) {
         expectedMidiBass.clear();
 
         const heldTime = performance.now() - noteHoldStartTime;
+
+        // Guard: if mouseup already evaluated this hold, don't double-advance
+        if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
+        holdEvaluated = true;
 
         if (heldTime >= expectedHoldDuration) {
    feedback.textContent = 'Good!';
