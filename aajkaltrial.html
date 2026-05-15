@@ -4371,10 +4371,12 @@ if (
     endMeasure < startMeasure
 ) {
     alert("Invalid measure range");
+    startPracticeButton.disabled = false;
     return;
 }
 if (endMeasure > MAX_LOGICAL_MEASURE) {
     alert(`Max sheet measure is ${MAX_LOGICAL_MEASURE}`);
+    startPracticeButton.disabled = false;
     return;
 }
 
@@ -4384,6 +4386,7 @@ const endLogical   = endMeasure;
 const built = buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipSheetRepeats);
 if (!built) {
     alert("Could not map that sheet range to the MIDI timeline.");
+    startPracticeButton.disabled = false;
     return;
 }
 
@@ -4519,6 +4522,7 @@ if (emptyBars.length) {
 
     if (practiceNotes.length === 0) {
         alert("No notes found for this selection");
+        startPracticeButton.disabled = false;
         return;
     }
 
