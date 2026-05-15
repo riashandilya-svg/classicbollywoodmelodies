@@ -3187,7 +3187,7 @@ function spawnTrainingNote(noteObj) {
     }
     hardStopUserNote();
     trainingActive = true;
-    visualsPlaying = true;
+    visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
     fallingRectangles = [];
 
     previewTimeouts.forEach(t => clearTimeout(t));
@@ -3311,7 +3311,7 @@ function playMeasurePreview(startTime, clef) {
     hardStopUserNote();
 
 trainingActive = false;
-visualsPlaying = true;
+visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
 fallingRectangles = [];
 previewMode = true;
 
@@ -5655,7 +5655,7 @@ syncHandBtns();
 <!-- 3) Paywall logic -->
 <script src="/js/paywall.js?v=20260203" onerror="console.error('[FATAL] /js/paywall.js failed to load. The app will not unlock. Check the deployment path.')"></script>
 
-<!-- 4) Login check -->
+<!-- 4+5) Login check — paywall only runs AFTER auth confirms session -->
 <script type="module">
   if (!window.supabase) {
     console.error('[FATAL] window.supabase is undefined — supabaseClient.js did not load correctly.');
@@ -5665,29 +5665,36 @@ syncHandBtns();
         const { data } = await window.supabase.auth.getSession();
         if (!data.session) {
           window.location.replace("/login.html");
+          return false;   // not logged in — stop here, do not show paywall
         }
+        return true;      // logged in — safe to proceed
       } catch (e) {
         console.error("Auth check failed.", e);
+        return false;
       }
     }
-    await requireLogin();
-    window.addEventListener("pageshow", requireLogin);
-  }
-</script>
 
-<!-- 5) Call paywall for THIS song -->
-<script>
-  if (typeof window.showPaywall !== 'function') {
-    console.error('[FATAL] window.showPaywall is not defined — paywall.js did not load correctly.');
-  } else {
-    window.showPaywall({
-      productId: "song:aajkal",
-      title: "This song is locked",
-      body: "Please buy to unlock this lesson.",
-      onSuccess: () => {
-        document.getElementById('app').style.display = 'block';
+    const loggedIn = await requireLogin();
+
+    // Only call showPaywall once auth has resolved and confirmed a session exists.
+    // Previously script 5 ran synchronously before this await finished, causing
+    // the paywall to fire before auth completed on slow connections.
+    if (loggedIn) {
+      if (typeof window.showPaywall !== 'function') {
+        console.error('[FATAL] window.showPaywall is not defined — paywall.js did not load correctly.');
+      } else {
+        window.showPaywall({
+          productId: "song:aajkal",
+          title: "This song is locked",
+          body: "Please buy to unlock this lesson.",
+          onSuccess: () => {
+            document.getElementById('app').style.display = 'block';
+          }
+        });
       }
-    });
+    }
+
+    window.addEventListener("pageshow", requireLogin);
   }
 </script>
 
