@@ -5103,10 +5103,14 @@ function _buildSvgMidiMap() {
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
+            // Also check the pre-splitRepeatedNotes timestamp (shifted back by NOTE_GAP_TIME)
+            // because _tiedNoteKeys was built before splitRepeatedNotes ran and some
+            // tied-continuation notes had their .time shifted forward by 0.02s.
+            const mkShifted = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
 
             // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
             // noteheads, so counting them here shifts every subsequent rank by +1.
-            if (_tiedNoteKeys.has(mk)) continue;
+            if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -5114,8 +5118,8 @@ function _buildSvgMidiMap() {
 
             // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
             // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
-            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
-            // Bump them all forward to the correct SVG bucket.
+            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0 or
+            // bucket-full from first pass). Bump them all forward to the correct SVG bucket.
             // IMPORTANT: set gracePreCorrected=true here so the overflow check below
             // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
@@ -5124,8 +5128,10 @@ function _buildSvgMidiMap() {
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
                 } else if (sheetMeasure === 36) {
-                    // Repeat pass: grace note for logical 29 lands in logical 36 (empty bucket).
-                    // The next SVG bucket is logical 29 (physical 37), not logical 37.
+                    // Repeat pass: grace note for logical 29 lands in logical 36.
+                    // This fires on both passes when the grace note's MIDI time
+                    // maps to physical 36 (first pass) or physical 44 (second pass,
+                    // also logical 36). Always redirect to logical 29.
                     sheetMeasure = 29;
                     hardcodedGraceCorrected = true;
                 }
