@@ -2562,6 +2562,8 @@ let trainingActive = false;
 let trainingIndex = 0;
 let waitingForInput = false;
 let previewMode = false;
+Object.defineProperty(window, 'trainingIndex', { get: () => trainingIndex, configurable: true, enumerable: true });
+Object.defineProperty(window, 'expectedHoldDuration', { get: () => expectedHoldDuration, configurable: true, enumerable: true });
 let previewTimeouts = [];
 let retryTimeout = null; 
 let fullSongPlaying = false;
@@ -2724,6 +2726,28 @@ let practiceNotes = [];
 let visualsPlaying = false;
 let speedMultiplier = 1.0;
 let speedLocked = false;
+
+// ── Test instrumentation: expose module state on window ──────────────────────
+// (Object.defineProperty keeps window refs live even when the module let is reassigned)
+Object.defineProperty(window, 'fallingRectangles', {
+  get: () => fallingRectangles,
+  set: v => { fallingRectangles = v; },
+  configurable: true, enumerable: true,
+});
+Object.defineProperty(window, 'speedMultiplier', {
+  get: () => speedMultiplier,
+  set: v => { speedMultiplier = v; },
+  configurable: true, enumerable: true,
+});
+Object.defineProperty(window, 'practiceNotes', {
+  get: () => practiceNotes,
+  configurable: true, enumerable: true,
+});
+Object.defineProperty(window, 'visualsPlaying', {
+  get: () => visualsPlaying,
+  configurable: true, enumerable: true,
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
@@ -5564,6 +5588,9 @@ holdEl.innerHTML =
         activeMidiNote = null;
     }
 }
+
+// Expose for Playwright tests (module scope is not window scope)
+window.handleMIDIMessage = handleMIDIMessage;
 
 </script>
 <!-- Stats toggle logic -->
