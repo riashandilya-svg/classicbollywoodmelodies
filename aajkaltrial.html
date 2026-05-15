@@ -3019,23 +3019,20 @@ if (previewMode) return;
 if (freeMode) {
     ensureSynth();
 
+    // Guard: if this exact note is already sounding, don't retrigger — prevents
+    // audio pops from touchpad jitter or repeated mousedown events on the same key.
+    if (midiNote === freeModeActiveNote) return;
+
+    // Release previous note cleanly before attacking the new one (key glide)
+    if (freeModeActiveNote !== null) {
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+    }
+
     freeModeSynth.triggerAttack(getNoteName(midiNote));
     freeModeActiveNote = midiNote;
-        expectedMidiTreble.clear();
+    expectedMidiTreble.clear();
     expectedMidiBass.clear();
     expectedMidiTreble.add(midiNote);
-
-    canvas.addEventListener('mouseleave', () => {
-    mouseDown = false;
-
-    if (freeMode && freeModeActiveNote !== null) {
-        freeModeSynth.triggerRelease(
-            getNoteName(freeModeActiveNote)
-        );
-        freeModeActiveNote = null;
-        expectedMidiNote = null;
-    }
-});
 
     document.getElementById('pressedNoteCircle').textContent =
         getNoteName(midiNote);
@@ -3395,6 +3392,7 @@ const visualStart =
 
 if (!sectionNotes.length) {
     speedLocked = false;
+    setSpeedButtonsEnabled(true);
     previewMode = false;
     spawnNextValidNote();
     return;
@@ -3408,6 +3406,7 @@ const previewLength =
 const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
+    setSpeedButtonsEnabled(true);
 
     // Clear any keyboard keys left highlighted by landing preview notes
     expectedMidiTreble.clear();
@@ -3900,7 +3899,20 @@ function getMidiFromMouse(x, y) {
     }
     return xToMidi(x);
 }
-    
+
+// Registered once here (not inside processUserNoteOn) to avoid stacking
+// duplicate listeners every time a free-mode key is pressed.
+canvas.addEventListener('mouseleave', () => {
+    mouseDown = false;
+    if (freeMode && freeModeActiveNote !== null) {
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+        freeModeActiveNote = null;
+        expectedMidiNote = null;
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+    }
+});
+
 canvas.addEventListener('mousedown', async (e) => {
     if (previewMode) return;
     await Tone.start();
