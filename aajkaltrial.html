@@ -5043,7 +5043,12 @@ function _buildSvgNoteIndex() {
                 const dist = Math.abs(raw[i].tx - ex) + Math.abs(raw[i].ty - ey) * 0.3;
                 if (dist < bestDist) { bestDist = dist; bestIdx = i; }
             }
-            if (bestIdx >= 0 && bestDist < 60) tiedNoteheadSet.add(bestIdx);
+            // Threshold of 40 (not 60): all legitimate same-page ties have dist ≤ 21;
+            // the only case that reaches ~58 is a cross-page tie whose arc endpoint
+            // overshoots the last notehead on the page (e.g. m35 quaver tied into m36).
+            // Using 40 correctly excludes the continuation noteheads while leaving the
+            // parent note (the quaver) in its bucket so it can be highlighted.
+            if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
         totalTied += tiedNoteheadSet.size;
 
