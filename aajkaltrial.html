@@ -2107,19 +2107,10 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
-
-    // Only add the repeat pass (physical 37-44, logical 29-36) when the
-    // selection genuinely starts before the repeat section (i.e. startLogical < REPEAT_START).
-    // If the user starts at measure 36 (or anywhere inside 29-36) and selects
-    // forward, they do NOT want the full repeat replayed — they just want the
-    // linear run from their start point through to the end.
-    // Exception: if startLogical is strictly before REPEAT_START (29), the full
-    // repeat is part of the piece and must be included.
-    if (startLogical <= REPEAT_START) {
-      for (let l = 29; l <= 36; l++) {
-        logicalSeq.push(l);
-        seq.push(logicalToPhysicalSecond(l));
-      }
+    
+    for (let l = 29; l <= 36; l++) {
+      logicalSeq.push(l);
+      seq.push(logicalToPhysicalSecond(l));
     }
 
     if (endLogical > 36) {
@@ -5113,6 +5104,29 @@ function _buildSvgNoteIndex() {
             // parent note (the quaver) in its bucket so it can be highlighted.
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
+
+        // Special case — measure 36 treble, page 2:
+        // The tied whole note that continues from m35 is correctly identified as a
+        // tied continuation and would normally be excluded. But the user wants it
+        // highlighted (it's visually prominent on the score). Un-exclude it here so
+        // it ends up in _svgBucketsPage2[36][treble] and can be highlighted.
+        // We identify it as: page 2, within the page-2 m36 treble staff bounds,
+        // within the m36 x-range (bls[0]=215 to bls[1]=696 for that system).
+        if (pageNum === 2) {
+            const sys36p2 = SVG_PAGE_SYSTEMS[1]?.find(s => s.start_measure === 36);
+            if (sys36p2) {
+                for (const ri of tiedNoteheadSet) {
+                    const rn = raw[ri];
+                    const inTreble = rn.ty >= sys36p2.treble_top - 50 && rn.ty <= sys36p2.treble_bot + 50;
+                    const inM36x   = rn.tx >= sys36p2.barline_xs[0] && rn.tx < sys36p2.barline_xs[1];
+                    if (inTreble && inM36x) {
+                        tiedNoteheadSet.delete(ri);
+                        break; // only one tied whole note to un-exclude
+                    }
+                }
+            }
+        }
+
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
@@ -5247,7 +5261,17 @@ function _buildSvgMidiMap() {
 
             // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
             // noteheads, so counting them here shifts every subsequent rank by +1.
-            if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
+            // Exception: treble measure 36's tied whole note is intentionally kept in
+            // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
+            // get a rank entry (rank 0) rather than being skipped.
+            const isTiedM36Treble = (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))
+                && clef === 'treble'
+                && (() => {
+                    const pm = getMeasureFromTime(note.time);
+                    const sm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
+                    return sm === 36;
+                })();
+            if (!isTiedM36Treble && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -5261,12 +5285,12 @@ function _buildSvgMidiMap() {
             // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
 
-            // Measure 36 bass: _svgBuckets[36][bass] is empty because the page-1 SVG
-            // only has a tied whole note (excluded as a tied continuation). The actual
-            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass]).
-            // Suppress the overflow→37 so all bass notes stay at sheetMeasure=36 and
+            // Measure 36 bass AND treble: _svgBuckets[36][bass|treble] is empty because the
+            // page-1 SVG only has a tied whole note (excluded as a tied continuation). The actual
+            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass|treble]).
+            // Suppress the overflow→37 so all m36 notes stay at sheetMeasure=36 and
             // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
-            if (sheetMeasure === 36 && clef === 'bass') {
+            if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
                 hardcodedGraceCorrected = true;
             }
 
@@ -5275,16 +5299,14 @@ function _buildSvgMidiMap() {
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
                 } else if (sheetMeasure === 36 && clef === 'treble') {
-                    // Repeat pass only: treble grace note for logical 29 lands in logical 36
-                    // on the SECOND pass (physical 44). On the FIRST pass (physical 36)
-                    // this is a genuine m36 grace note that belongs in m36's SVG bucket.
-                    // Only redirect to m29 when we're on the repeat pass (physMeasure > 36).
-                    if (physMeasure > 36) {
-                        sheetMeasure = 29;
-                        hardcodedGraceCorrected = true;
-                    }
-                    // First pass (physMeasure === 36): leave sheetMeasure as 36 so it
-                    // highlights correctly in measure 36's treble SVG bucket.
+                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
+                    // This fires on both passes when the grace note's MIDI time
+                    // maps to physical 36 (first pass) or physical 44 (second pass,
+                    // also logical 36). Always redirect to logical 29.
+                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
+                    // genuine short notes that must NOT be redirected to measure 29.
+                    sheetMeasure = 29;
+                    hardcodedGraceCorrected = true;
                 }
             }
 
@@ -5421,9 +5443,10 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
-    // Measure 36 bass: _svgBuckets[36][bass] is empty (tied whole note excluded from page 1).
-    // Both first-pass and repeat-pass bass notes must use _svgBucketsPage2[36][bass].
-    const bucketSource = (isRepeatPass || (entry.sheet_measure === REPEAT_END && entry.clef === 'bass'))
+    // Measure 36 treble AND bass: _svgBuckets[36][treble|bass] is empty on page 1
+    // (only a tied whole note which is excluded from the bucket).
+    // Both first-pass and repeat-pass notes must use _svgBucketsPage2[36][treble|bass].
+    const bucketSource = (isRepeatPass || entry.sheet_measure === REPEAT_END)
         ? _svgBucketsPage2
         : _svgBuckets;
 
