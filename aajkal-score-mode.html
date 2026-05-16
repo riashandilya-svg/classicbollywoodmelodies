@@ -3628,8 +3628,11 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
-    // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
-    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null) {
+    // Safety net: if nothing is actively waiting for input AND practice is fully stopped,
+    // clear any stuck highlights. The !trainingActive guard is critical — without it,
+    // the 300ms gap between a correct note and spawnNextValidNote (where waitingForInput=false
+    // but trainingActive=true) causes this to wipe the next note's keyboard highlight in score mode.
+    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null && !trainingActive) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
     }
