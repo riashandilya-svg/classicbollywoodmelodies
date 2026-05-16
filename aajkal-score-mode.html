@@ -3249,17 +3249,31 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
+    // Grace notes (very short duration) must NEVER group with cross-clef notes.
+    // A grace note is always a solo event — only the very next same-track note
+    // could theoretically share its playTime, but cross-clef bass notes that
+    // happen to share the same collapsed playTime (due to grace-note rescue
+    // clamping) must not be dragged into the chord.
+    const isGraceNote = noteObj.duration < 0.1;
+
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
+    // EXCEPTION: grace notes only group with same-track notes, never cross-clef
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
 
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
-            // In 'both' mode: include all simultaneous notes regardless of track
-            // In single-hand mode: only same track
-            if (clefMode === 'both' || nextNote.track === noteObj.track) {
+            // Grace notes: same-track only, never cross-clef
+            // Normal notes: both tracks in 'both' mode, same track in single-hand
+            const sameTrack = nextNote.track === noteObj.track;
+            if (isGraceNote) {
+                if (sameTrack) {
+                    currentChordNotes.add(nextNote.midi);
+                    noteTrackMap.set(nextNote.midi, nextNote.track);
+                }
+            } else if (clefMode === 'both' || sameTrack) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
             }
