@@ -3230,7 +3230,11 @@ function spawnTrainingNote(noteObj) {
     waitingForInput = true;
     failureCount = 0;
 
-    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
+    // Short notes (16th notes, grace notes) only need a quick tap — require just 50ms.
+    // For longer notes (quarter note and above), keep a reasonable hold requirement
+    // but cap it at 600ms so very long notes don't feel sluggish.
+    const rawDuration = (noteObj.duration * 1000) / speedMultiplier;
+    expectedHoldDuration = rawDuration < 200 ? 50 : Math.min(rawDuration * 0.5, 600);
 
     currentChordNotes.clear();
     chordNotesCompleted.clear();
@@ -3398,8 +3402,19 @@ const visualStart =
         const highlightDelay = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
         const th = setTimeout(() => {
             if (!previewMode) return;
-            // Collect all notes at the same playTime so both clefs highlight together
+            // Also highlight the piano keys so user sees what to press
             const notePlayTime = note.playTime ?? note.time;
+            const simultaneousForKeys = sectionNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            );
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+            simultaneousForKeys.forEach(n => {
+                if (n.track === TREBLE) expectedMidiTreble.add(n.midi);
+                else if (n.track === BASS) expectedMidiBass.add(n.midi);
+            });
+            // Collect all notes at the same playTime so both clefs highlight together
+            // (notePlayTime already defined above for keyboard highlights)
 
             // If this preview note is from the repeat pass, mirror to first-pass SVG elements
             const physMeasure = getMeasureFromTime(note.time);
@@ -4243,8 +4258,10 @@ canvas.addEventListener('touchend', (e) => {
         activeTouches.clear();
 
         // Safety-net clear in case allChordNotesReleased path didn't run
-        // (e.g. freeMode, or noteHoldStartTime was already null)
-        if (!allChordNotesReleased) {
+        // (e.g. freeMode, or noteHoldStartTime was already null).
+        // BUT: during active practice (waitingForInput), never wipe the highlights —
+        // the user needs to see which keys to press next even after wrong notes.
+        if (!allChordNotesReleased && !waitingForInput) {
             expectedMidiTreble.clear();
             expectedMidiBass.clear();
         }
@@ -4270,8 +4287,12 @@ canvas.addEventListener('touchcancel', (e) => {
         touchActive = false;
         mouseDown = false;
         activeTouches.clear();
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        // Only wipe highlights if practice isn't waiting for a note — otherwise
+        // the target keys disappear and the user doesn't know what to press.
+        if (!waitingForInput) {
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+        }
         noteHoldStartTime = null;
         activeMidiNote = null;
     }
