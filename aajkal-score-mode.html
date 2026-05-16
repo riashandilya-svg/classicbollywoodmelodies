@@ -3251,16 +3251,15 @@ function spawnTrainingNote(noteObj) {
 
     // Grace notes must NEVER group with cross-clef notes.
     // Two cases:
-    //   1. overflow-corrected grace notes (flagged by isOverflowGrace — e.g. dur=0.149
-    //      notes rescued from the preceding measure by the rank-map overflow correction)
-    //   2. short MIDI grace notes (duration < 0.1s)
-    // Both are always solo treble events; cross-clef bass notes that happen to share
-    // the same collapsed playTime must not be dragged into the chord.
+    //   1. isOverflowGrace — rescued from preceding measure by rank-map overflow (dur≈0.149)
+    //   2. Short MIDI grace notes — duration < 0.1s
+    // Both are always solo treble events; bass notes sharing the same collapsed playTime
+    // must not be dragged into the chord.
     const isGraceNote = noteObj.isOverflowGrace || noteObj.duration < 0.1;
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
-    // EXCEPTION: grace notes only group with same-track notes, never cross-clef
+    // EXCEPTION: grace notes only ever group with same-track notes, never cross-clef
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
@@ -3269,7 +3268,6 @@ function spawnTrainingNote(noteObj) {
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
             const sameTrack = nextNote.track === noteObj.track;
             if (isGraceNote) {
-                // Grace notes: same-track only, never cross-clef
                 if (sameTrack) {
                     currentChordNotes.add(nextNote.midi);
                     noteTrackMap.set(nextNote.midi, nextNote.track);
@@ -5322,6 +5320,19 @@ function _buildSvgMidiMap() {
                     // NOTE: bass clef is intentionally excluded — bass measure 36 has
                     // genuine short notes that must NOT be redirected to measure 29.
                     sheetMeasure = 29;
+                    hardcodedGraceCorrected = true;
+                }
+            }
+            // Also redirect longer overflow grace notes (dur≈0.1–0.2) that land in
+            // m30/32/34 treble — these measures have empty SVG buckets (tied continuation
+            // excluded) so both passes must be redirected to m31/33/35.
+            // The first pass is handled by the overflow mechanism, but overflowFired
+            // blocks re-triggering on the repeat pass. This hardcoded check catches both.
+            if (!hardcodedGraceCorrected && clef === 'treble' &&
+                    (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34)) {
+                const emptyBucket = (bucketCapacity[`${sheetMeasure}|${clef}`] ?? 0) === 0;
+                if (emptyBucket) {
+                    sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
                 }
             }
