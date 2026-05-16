@@ -3250,16 +3250,10 @@ function spawnTrainingNote(noteObj) {
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
     // Grace notes must NEVER group with cross-clef notes.
-    // Two cases:
-    //   1. isOverflowGrace — rescued from preceding measure by rank-map overflow (dur≈0.149)
-    //   2. Short MIDI grace notes — duration < 0.1s
-    // Both are always solo treble events; bass notes sharing the same collapsed playTime
-    // must not be dragged into the chord.
+    // Two cases: isOverflowGrace (rescued pickup, dur≈0.149) or short MIDI grace (dur<0.1)
     const isGraceNote = noteObj.isOverflowGrace || noteObj.duration < 0.1;
 
     // Look ahead for simultaneous notes (within 10ms)
-    // When clefMode === 'both', include notes from BOTH tracks at the same time
-    // EXCEPTION: grace notes only ever group with same-track notes, never cross-clef
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
@@ -3268,6 +3262,7 @@ function spawnTrainingNote(noteObj) {
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
             const sameTrack = nextNote.track === noteObj.track;
             if (isGraceNote) {
+                // Grace notes: same-track only, never cross-clef
                 if (sameTrack) {
                     currentChordNotes.add(nextNote.midi);
                     noteTrackMap.set(nextNote.midi, nextNote.track);
@@ -5119,28 +5114,6 @@ function _buildSvgNoteIndex() {
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
 
-        // Special case — measure 36 treble, page 2:
-        // The tied whole note that continues from m35 is correctly identified as a
-        // tied continuation and would normally be excluded. But the user wants it
-        // highlighted (it's visually prominent on the score). Un-exclude it here so
-        // it ends up in _svgBucketsPage2[36][treble] and can be highlighted.
-        // We identify it as: page 2, within the page-2 m36 treble staff bounds,
-        // within the m36 x-range (bls[0]=215 to bls[1]=696 for that system).
-        if (pageNum === 2) {
-            const sys36p2 = SVG_PAGE_SYSTEMS[1]?.find(s => s.start_measure === 36);
-            if (sys36p2) {
-                for (const ri of tiedNoteheadSet) {
-                    const rn = raw[ri];
-                    const inTreble = rn.ty >= sys36p2.treble_top - 50 && rn.ty <= sys36p2.treble_bot + 50;
-                    const inM36x   = rn.tx >= sys36p2.barline_xs[0] && rn.tx < sys36p2.barline_xs[1];
-                    if (inTreble && inM36x) {
-                        tiedNoteheadSet.delete(ri);
-                        break; // only one tied whole note to un-exclude
-                    }
-                }
-            }
-        }
-
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
@@ -5273,19 +5246,10 @@ function _buildSvgMidiMap() {
             // tied-continuation notes had their .time shifted forward by 0.02s.
             const mkShifted = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
 
-            // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
-            // noteheads, so counting them here shifts every subsequent rank by +1.
-            // Exception: treble measure 36's tied whole note is intentionally kept in
-            // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
-            // get a rank entry (rank 0) rather than being skipped.
-            const isTiedM36Treble = (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))
-                && clef === 'treble'
-                && (() => {
-                    const pm = getMeasureFromTime(note.time);
-                    const sm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
-                    return sm === 36;
-                })();
-            if (!isTiedM36Treble && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))) continue;
+            // Skip all tied-continuation MIDI notes: the SVG buckets exclude their
+            // noteheads, so counting them here would shift every subsequent rank by +1.
+            // The m36 treble tied whole note is now correctly excluded (no special case).
+            if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -5299,12 +5263,20 @@ function _buildSvgMidiMap() {
             // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
 
-            // Measure 36 bass AND treble: _svgBuckets[36][bass|treble] is empty because the
+            // Measure 36 bass: _svgBuckets[36][bass] is empty because the
             // page-1 SVG only has a tied whole note (excluded as a tied continuation). The actual
-            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass|treble]).
-            // Suppress the overflow→37 so all m36 notes stay at sheetMeasure=36 and
+            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass]).
+            // Suppress the overflow→37 so all m36 bass notes stay at sheetMeasure=36 and
             // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
-            if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
+            // Treble m36: the tied whole note is excluded and the bucket is empty.
+            // Any treble note landing in m36 is the pickup grace note that belongs to m29.
+            if (sheetMeasure === 36 && clef === 'bass') {
+                hardcodedGraceCorrected = true;
+            }
+            // Treble grace pickup note in m36: redirect to m29 where its SVG notehead lives.
+            // This covers both the short grace (dur<0.1) and the longer pickup (dur≈0.149).
+            if (sheetMeasure === 36 && clef === 'treble') {
+                sheetMeasure = 29;
                 hardcodedGraceCorrected = true;
             }
 
@@ -5312,22 +5284,11 @@ function _buildSvgMidiMap() {
                 if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
-                } else if (sheetMeasure === 36 && clef === 'treble') {
-                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
-                    // This fires on both passes when the grace note's MIDI time
-                    // maps to physical 36 (first pass) or physical 44 (second pass,
-                    // also logical 36). Always redirect to logical 29.
-                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
-                    // genuine short notes that must NOT be redirected to measure 29.
-                    sheetMeasure = 29;
-                    hardcodedGraceCorrected = true;
                 }
             }
             // Also redirect longer overflow grace notes (dur≈0.1–0.2) that land in
             // m30/32/34 treble — these measures have empty SVG buckets (tied continuation
             // excluded) so both passes must be redirected to m31/33/35.
-            // The first pass is handled by the overflow mechanism, but overflowFired
-            // blocks re-triggering on the repeat pass. This hardcoded check catches both.
             if (!hardcodedGraceCorrected && clef === 'treble' &&
                     (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34)) {
                 const emptyBucket = (bucketCapacity[`${sheetMeasure}|${clef}`] ?? 0) === 0;
@@ -5336,8 +5297,6 @@ function _buildSvgMidiMap() {
                     hardcodedGraceCorrected = true;
                 }
             }
-
-            // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
             // landed fractionally before the barline while the SVG places it in
