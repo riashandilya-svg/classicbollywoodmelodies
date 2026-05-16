@@ -4645,6 +4645,11 @@ Tone.Transport.cancel();
 playbackTimeouts.forEach(t => clearTimeout(t));
 playbackTimeouts = [];
 
+_scrollLocked = false;
+clearTimeout(_scrollLockTimer);
+_scrollLockTimer = null;
+_lastScrolledDocY = -9999;
+
 previewTimeouts.forEach(t => clearTimeout(t));
 previewTimeouts = [];
 
@@ -5228,7 +5233,7 @@ function _buildSvgMidiMap() {
             // allow the correction on the very first encounter (used===0), and again
             // on the second repeat pass (used===1 etc.) by using used < max(2*cap, 2).
             const allowGraceCorrect = (cap === 0)
-                ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
+                ? (used === 0)                 // empty bucket: allow first pass only
                 : (used < 2 * cap);            // normal bucket: within first pass
             let gracePreCorrected = hardcodedGraceCorrected; // inherit hardcoded guard
             if (!hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
@@ -5250,7 +5255,7 @@ function _buildSvgMidiMap() {
             // only on repeat bug).
             const overflowKey = `${sheetMeasure}|${clef}`;
             if (!gracePreCorrected && !overflowFired.has(overflowKey) &&
-                    (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
+                    (cap === 0 ? used === 0 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
@@ -5353,12 +5358,15 @@ function _applyHighlight(els) {
 // ============================================================
 // AUTO-SCROLL: only scroll when note leaves the visible band
 // ============================================================
-let _lastScrolledDocY = -9999;
-let _scrollLocked     = false;
+let _lastScrolledDocY  = -9999;
+let _scrollLocked      = false;
+let _scrollLockTimer   = null;
+// Minimum doc-Y change (px) before we trigger another scroll.
+// Prevents re-firing on tiny within-measure note advances.
+const SCROLL_DEADZONE = 80;
 
 function scrollToHighlight() {
     if (!scoreModeActive || !_currentHighlightEls.length) return;
-    if (_scrollLocked) return;
 
     const el   = _currentHighlightEls[0];
     const rect = el.getBoundingClientRect();
@@ -5370,17 +5378,38 @@ function scrollToHighlight() {
     const topBound    = BRAND_BAR_H + 10;
     const bottomBound = window.innerHeight - BOTTOM_BAR_H - 10;
 
-    // Note is already visible — do nothing
-    if (rect.top >= topBound && rect.bottom <= bottomBound) return;
+    // Note is already fully visible — nothing to do
+    if (rect.top >= topBound && rect.bottom <= bottomBound) {
+        // Note came back into view — release the lock immediately
+        if (_scrollLocked) {
+            _scrollLocked = false;
+            clearTimeout(_scrollLockTimer);
+            _scrollLockTimer = null;
+        }
+        return;
+    }
 
-    const docY     = rect.top + window.scrollY;
-    const visibleH = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
+    // Compute where we want to scroll
+    const docY      = rect.top + window.scrollY;
+    const visibleH  = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
     const targetTop = BRAND_BAR_H + visibleH * 0.30;
+    const targetScrollY = docY - targetTop;
 
-    window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
+    // If a scroll is already in flight toward roughly the same position, skip
+    if (_scrollLocked && Math.abs(docY - _lastScrolledDocY) < SCROLL_DEADZONE) return;
 
+    _lastScrolledDocY = docY;
+    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+
+    // Lock just long enough for the smooth scroll to land (~400 ms is plenty
+    // for a single-system jump; the visibility check above releases it early
+    // once the note is on screen).
     _scrollLocked = true;
-    setTimeout(() => { _scrollLocked = false; }, 1000);
+    clearTimeout(_scrollLockTimer);
+    _scrollLockTimer = setTimeout(() => {
+        _scrollLocked  = false;
+        _scrollLockTimer = null;
+    }, 420);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
@@ -5541,6 +5570,8 @@ scoreModeToggle.addEventListener('change', async () => {
         document.body.classList.remove('score-mode');
         _lastScrolledDocY = -9999;
         _scrollLocked = false;
+        clearTimeout(_scrollLockTimer);
+        _scrollLockTimer = null;
         scoreView.classList.remove('active');
         scoreNoteDisplay.classList.remove('active');
         clearScoreHighlight();
