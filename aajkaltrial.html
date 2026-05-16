@@ -2107,10 +2107,15 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
-    
-    for (let l = 29; l <= 36; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalSecond(l));
+
+    // Only add the repeat pass if the selection starts at or before the beginning
+    // of the repeat section. Selecting only measure 36 (or any range that starts
+    // after REPEAT_START) should not pull in the full repeat pass.
+    if (startLogical <= REPEAT_START) {
+      for (let l = 29; l <= 36; l++) {
+        logicalSeq.push(l);
+        seq.push(logicalToPhysicalSecond(l));
+      }
     }
 
     if (endLogical > 36) {
