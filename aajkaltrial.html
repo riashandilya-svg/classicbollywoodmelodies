@@ -4645,11 +4645,6 @@ Tone.Transport.cancel();
 playbackTimeouts.forEach(t => clearTimeout(t));
 playbackTimeouts = [];
 
-_scrollLocked = false;
-clearTimeout(_scrollLockTimer);
-_scrollLockTimer = null;
-_lastScrolledDocY = -9999;
-
 previewTimeouts.forEach(t => clearTimeout(t));
 previewTimeouts = [];
 
@@ -5358,15 +5353,12 @@ function _applyHighlight(els) {
 // ============================================================
 // AUTO-SCROLL: only scroll when note leaves the visible band
 // ============================================================
-let _lastScrolledDocY  = -9999;
-let _scrollLocked      = false;
-let _scrollLockTimer   = null;
-// Minimum doc-Y change (px) before we trigger another scroll.
-// Prevents re-firing on tiny within-measure note advances.
-const SCROLL_DEADZONE = 80;
+let _lastScrolledDocY = -9999;
+let _scrollLocked     = false;
 
 function scrollToHighlight() {
     if (!scoreModeActive || !_currentHighlightEls.length) return;
+    if (_scrollLocked) return;
 
     const el   = _currentHighlightEls[0];
     const rect = el.getBoundingClientRect();
@@ -5378,38 +5370,17 @@ function scrollToHighlight() {
     const topBound    = BRAND_BAR_H + 10;
     const bottomBound = window.innerHeight - BOTTOM_BAR_H - 10;
 
-    // Note is already fully visible — nothing to do
-    if (rect.top >= topBound && rect.bottom <= bottomBound) {
-        // Note came back into view — release the lock immediately
-        if (_scrollLocked) {
-            _scrollLocked = false;
-            clearTimeout(_scrollLockTimer);
-            _scrollLockTimer = null;
-        }
-        return;
-    }
+    // Note is already visible — do nothing
+    if (rect.top >= topBound && rect.bottom <= bottomBound) return;
 
-    // Compute where we want to scroll
-    const docY      = rect.top + window.scrollY;
-    const visibleH  = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
+    const docY     = rect.top + window.scrollY;
+    const visibleH = window.innerHeight - BRAND_BAR_H - BOTTOM_BAR_H;
     const targetTop = BRAND_BAR_H + visibleH * 0.30;
-    const targetScrollY = docY - targetTop;
 
-    // If a scroll is already in flight toward roughly the same position, skip
-    if (_scrollLocked && Math.abs(docY - _lastScrolledDocY) < SCROLL_DEADZONE) return;
+    window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
 
-    _lastScrolledDocY = docY;
-    window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-
-    // Lock just long enough for the smooth scroll to land (~400 ms is plenty
-    // for a single-system jump; the visibility check above releases it early
-    // once the note is on screen).
     _scrollLocked = true;
-    clearTimeout(_scrollLockTimer);
-    _scrollLockTimer = setTimeout(() => {
-        _scrollLocked  = false;
-        _scrollLockTimer = null;
-    }, 420);
+    setTimeout(() => { _scrollLocked = false; }, 1000);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
@@ -5502,6 +5473,154 @@ window._debug = function() {
 };
 
 // ============================================================
+// DEBUG PANEL — measures 29-36 rank verification
+// ============================================================
+(function() {
+    // Inject button + panel styles
+    const style = document.createElement('style');
+    style.textContent = `
+        #debugToggleBtn {
+            position: fixed;
+            bottom: 14px;
+            left: 14px;
+            z-index: 99999;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            background: rgba(30,34,48,0.92);
+            color: #ff6b81;
+            border: 1px solid rgba(255,107,129,0.35);
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: background 0.2s;
+            letter-spacing: 0.04em;
+        }
+        #debugToggleBtn:hover { background: rgba(50,54,70,0.97); }
+        #debugPanel {
+            display: none;
+            position: fixed;
+            bottom: 52px;
+            left: 14px;
+            z-index: 99998;
+            width: min(560px, 96vw);
+            max-height: 70vh;
+            overflow-y: auto;
+            background: rgba(15,17,23,0.97);
+            border: 1px solid rgba(255,107,129,0.3);
+            border-radius: 16px;
+            padding: 16px 18px;
+            font-family: 'Inter', monospace;
+            font-size: 12px;
+            color: #f0f0f5;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        #debugPanel.open { display: block; }
+        #debugPanel h3 {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            color: #ff6b81;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .dbg-measure {
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            border-left: 3px solid rgba(255,107,129,0.4);
+        }
+        .dbg-measure-title {
+            font-weight: 700;
+            color: #ff9eb5;
+            margin-bottom: 4px;
+        }
+        .dbg-clef { margin: 2px 0; color: #aaa; }
+        .dbg-clef span.clef-label { color: #7dd3fc; font-weight: 600; min-width: 52px; display: inline-block; }
+        .dbg-rank { display: inline-block; margin-right: 6px; padding: 1px 6px;
+                    background: rgba(255,107,129,0.15); border-radius: 4px; color: #ffd6e0; font-size: 11px; }
+        .dbg-ok { color: #4ade80; font-weight: 700; }
+        .dbg-warn { color: #facc15; font-weight: 700; }
+        .dbg-empty { color: #555; font-style: italic; }
+        .dbg-midi-count { font-size: 11px; color: #888; margin-top: 6px; }
+        .dbg-refresh { float: right; font-size: 11px; padding: 3px 10px; background: rgba(255,107,129,0.18);
+                       border: none; border-radius: 999px; color: #ff6b81; cursor: pointer; font-family: inherit; }
+    `;
+    document.head.appendChild(style);
+
+    // Button
+    const btn = document.createElement('button');
+    btn.id = 'debugToggleBtn';
+    btn.textContent = '🔍 Debug m29–36';
+    document.body.appendChild(btn);
+
+    // Panel
+    const panel = document.createElement('div');
+    panel.id = 'debugPanel';
+    document.body.appendChild(panel);
+
+    function renderDebugPanel() {
+        const TARGET_MEASURES = [29,30,31,32,33,34,35,36];
+
+        // Count how many MIDI notes from _midiRankMap land in each measure|clef
+        const midiCounts = {};
+        if (window._midiRankMap) {
+            for (const [, entry] of window._midiRankMap) {
+                const k = `${entry.sheet_measure}|${entry.clef}`;
+                midiCounts[k] = (midiCounts[k] ?? 0) + 1;
+            }
+        }
+
+        let html = `<h3>SVG Bucket Ranks — measures 29–36
+            <button class="dbg-refresh" onclick="window._debugRefresh()">↻ Refresh</button>
+        </h3>`;
+
+        if (!window._svgBuckets || !Object.keys(window._svgBuckets).length) {
+            html += `<div class="dbg-empty">SVG map not built yet — enable Score Mode first, then refresh.</div>`;
+            panel.innerHTML = html;
+            return;
+        }
+
+        for (const m of TARGET_MEASURES) {
+            html += `<div class="dbg-measure"><div class="dbg-measure-title">Measure ${m}</div>`;
+            for (const clef of ['treble', 'bass']) {
+                const bucket = window._svgBuckets[m]?.[clef] || [];
+                const midiN  = midiCounts[`${m}|${clef}`] ?? 0;
+                const svgN   = bucket.length;
+
+                if (svgN === 0 && midiN === 0) {
+                    html += `<div class="dbg-clef"><span class="clef-label">${clef}</span> <span class="dbg-empty">empty (no notes)</span></div>`;
+                    continue;
+                }
+
+                const ranks = bucket.map((idx, r) => {
+                    const n = window._svgNoteElements[idx];
+                    return `<span class="dbg-rank">r${r} tx=${n.tx.toFixed(0)}${n.isGrace ? '♩' : ''}</span>`;
+                }).join('');
+
+                const status = (midiN === svgN || midiN === 2 * svgN)
+                    ? `<span class="dbg-ok">✓ midi=${midiN} svg=${svgN}</span>`
+                    : `<span class="dbg-warn">⚠ midi=${midiN} svg=${svgN}</span>`;
+
+                html += `<div class="dbg-clef"><span class="clef-label">${clef}</span> ${status} &nbsp; ${ranks || '<span class="dbg-empty">no SVG ranks</span>'}</div>`;
+            }
+            html += `</div>`;
+        }
+
+        html += `<div class="dbg-midi-count">_midiRankMap total: ${window._midiRankMap?.size ?? '?'} entries</div>`;
+        panel.innerHTML = html;
+    }
+
+    window._debugRefresh = renderDebugPanel;
+
+    btn.addEventListener('click', () => {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) renderDebugPanel();
+    });
+})();
+
+// ============================================================
 // SCORE VIEW — ALL 3 PAGES LOADED & STACKED
 // ============================================================
 async function initScoreMode() {
@@ -5570,8 +5689,6 @@ scoreModeToggle.addEventListener('change', async () => {
         document.body.classList.remove('score-mode');
         _lastScrolledDocY = -9999;
         _scrollLocked = false;
-        clearTimeout(_scrollLockTimer);
-        _scrollLockTimer = null;
         scoreView.classList.remove('active');
         scoreNoteDisplay.classList.remove('active');
         clearScoreHighlight();
