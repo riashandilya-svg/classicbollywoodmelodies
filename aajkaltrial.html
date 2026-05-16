@@ -5152,6 +5152,16 @@ function _buildSvgMidiMap() {
     // to the next measure (classic grace-note-before-barline case).
     const assignedCount = {};
 
+    // overflowFired tracks which (sheetMeasure|clef) buckets have already had
+    // the barline-straddle overflow applied. Overflow should fire at most once
+    // per bucket: the very first time a boundary note pushes a bucket past cap.
+    // Without this guard the repeat-pass notes (e.g. physical m37-44 → logical
+    // m29-36) arrive with assignedCount already === cap from the first pass, so
+    // "used >= cap && used < 2*cap" would fire for every single repeat note,
+    // redirecting all of m29's repeat notes into m30's bucket, m31's into m32,
+    // etc. — producing the "bass plays only even measures on repeat" bug.
+    const overflowFired = new Set();
+
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
@@ -5230,15 +5240,21 @@ function _buildSvgMidiMap() {
                 }
             }
 
-            // Overflow only on the TRUE first pass: bucket is at capacity (used >= cap)
-            // but hasn't yet received second-pass notes (used < 2*cap).
-            // On the second repeat pass used >= 2*cap already, so we leave it alone
-            // and let the rawRank % bucketSize wrapping handle alignment.
-            // Skip if grace pre-correction already bumped this note forward.
-            if (!gracePreCorrected && (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
+            // Overflow only for genuine barline-straddle notes: a note whose MIDI
+            // timestamp lands fractionally before the barline while the SVG places it
+            // in the next measure. This should fire AT MOST ONCE per bucket — the very
+            // first time a note finds the bucket already at capacity.
+            // overflowFired prevents re-triggering on repeat-pass notes, which arrive
+            // with assignedCount already === cap from the first pass (making "used >= cap"
+            // true for every repeat-pass note — the root cause of the bass even-measures
+            // only on repeat bug).
+            const overflowKey = `${sheetMeasure}|${clef}`;
+            if (!gracePreCorrected && !overflowFired.has(overflowKey) &&
+                    (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
-if (nextCap > 0) {
+                if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
+                    overflowFired.add(overflowKey);
                     sheetMeasure = sheetMeasure + 1;
                 }
             }
