@@ -5359,8 +5359,16 @@ function _buildSvgMidiMap() {
             // with assignedCount already === cap from the first pass (making "used >= cap"
             // true for every repeat-pass note — the root cause of the bass even-measures
             // only on repeat bug).
+            //
+            // Additionally, notes whose physical measure falls in the repeat-pass range
+            // (physical 37-44, logical 29-36) must NEVER trigger overflow — they are
+            // genuine second-pass notes, not barline-straddle notes. Without this guard,
+            // the FIRST repeat-pass note for each bass measure (29, 31, 33, 35) fires
+            // overflow (because overflowFired doesn't have the key yet) and gets
+            // mis-routed to the next sheet measure, causing incorrect bass highlighting.
+            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN;
             const overflowKey = `${sheetMeasure}|${clef}`;
-            if (!gracePreCorrected && !overflowFired.has(overflowKey) &&
+            if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
                     (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
