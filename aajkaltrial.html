@@ -3410,12 +3410,33 @@ const visualStart =
             if (!previewMode) return;
             // Collect all notes at the same playTime so both clefs highlight together
             const notePlayTime = note.playTime ?? note.time;
-            const simultaneous = sectionNotes.filter(n =>
-                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
-            );
+
+            // If this preview note is from the repeat pass, mirror to first-pass SVG elements
+            const physMeasure = getMeasureFromTime(note.time);
+            const isRepeatPass = physMeasure !== null &&
+                physMeasure >= REPEAT_START + REPEAT_LEN &&
+                physMeasure <= REPEAT_END + REPEAT_LEN;
+
+            let notesToHighlight;
+            if (isRepeatPass) {
+                const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+                notesToHighlight = sectionNotes.filter(n =>
+                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+                );
+                if (!notesToHighlight.length) {
+                    notesToHighlight = sectionNotes.filter(n =>
+                        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                    );
+                }
+            } else {
+                notesToHighlight = sectionNotes.filter(n =>
+                    Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                );
+            }
+
             const seen = new Set();
             const allIndices = [];
-            for (const sn of simultaneous) {
+            for (const sn of notesToHighlight) {
                 const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                 if (seen.has(k)) continue;
                 seen.add(k);
@@ -4865,12 +4886,37 @@ addMidiFallingRectangle(
                 seenHighlightTimes.add(timeKey);
                 const ht = setTimeout(() => {
                     if (!fullSongPlaying) return;
-                    const simultaneous = allMidiNotes.filter(n =>
-                        Math.abs(n.time - note.time) < 0.01
-                    );
+
+                    // Determine whether this timestamp falls in the repeat pass
+                    // (physical measures 37-44 → logical 29-36).
+                    const physMeasure = getMeasureFromTime(note.time);
+                    const isRepeatPass = physMeasure !== null &&
+                        physMeasure >= REPEAT_START + REPEAT_LEN &&
+                        physMeasure <= REPEAT_END + REPEAT_LEN;
+
+                    let notesToHighlight;
+                    if (isRepeatPass) {
+                        // Mirror: find the first-pass notes at the equivalent time
+                        // (subtract exactly one repeat-section length in seconds).
+                        const firstPassTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                        notesToHighlight = allMidiNotes.filter(n =>
+                            Math.abs(n.time - firstPassTime) < 0.01
+                        );
+                        // Fallback: if nothing found (timing drift), use repeat-pass notes directly
+                        if (!notesToHighlight.length) {
+                            notesToHighlight = allMidiNotes.filter(n =>
+                                Math.abs(n.time - note.time) < 0.01
+                            );
+                        }
+                    } else {
+                        notesToHighlight = allMidiNotes.filter(n =>
+                            Math.abs(n.time - note.time) < 0.01
+                        );
+                    }
+
                     const seen = new Set();
                     const allIndices = [];
-                    for (const sn of simultaneous) {
+                    for (const sn of notesToHighlight) {
                         const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                         if (seen.has(k)) continue;
                         seen.add(k);
@@ -5433,11 +5479,30 @@ function onTrainingNoteSpawned(noteObj) {
     const allIndices = [];
     const notePlayTime = noteObj.playTime ?? noteObj.time;
 
-    // Collect all practiceNotes at the same playTime (covers both treble + bass in "both" mode)
-    const simultaneousNotes = practiceNotes.filter(n =>
-        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
-    );
-    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
+    // If this note is from the repeat pass, mirror to the first-pass equivalent notes
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = physMeasure !== null &&
+        physMeasure >= REPEAT_START + REPEAT_LEN &&
+        physMeasure <= REPEAT_END + REPEAT_LEN;
+
+    let simultaneousNotes;
+    if (isRepeatPass) {
+        const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+        simultaneousNotes = practiceNotes.filter(n =>
+            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+        );
+        if (!simultaneousNotes.length) {
+            simultaneousNotes = practiceNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            );
+        }
+    } else {
+        simultaneousNotes = practiceNotes.filter(n =>
+            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+        );
+    }
+
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
@@ -5446,7 +5511,6 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
-        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
