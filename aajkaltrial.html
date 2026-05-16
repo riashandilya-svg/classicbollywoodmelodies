@@ -5251,6 +5251,16 @@ function _buildSvgMidiMap() {
             // IMPORTANT: set gracePreCorrected=true here so the overflow check below
             // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
+
+            // Measure 36 bass: _svgBuckets[36][bass] is empty because the page-1 SVG
+            // only has a tied whole note (excluded as a tied continuation). The actual
+            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass]).
+            // Suppress the overflow→37 so all bass notes stay at sheetMeasure=36 and
+            // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
+            if (sheetMeasure === 36 && clef === 'bass') {
+                hardcodedGraceCorrected = true;
+            }
+
             if (note.duration < 0.1) {
                 if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
                     sheetMeasure += 1;
@@ -5392,7 +5402,11 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
-    const bucketSource = isRepeatPass ? _svgBucketsPage2 : _svgBuckets;
+    // Measure 36 bass: _svgBuckets[36][bass] is empty (tied whole note excluded from page 1).
+    // Both first-pass and repeat-pass bass notes must use _svgBucketsPage2[36][bass].
+    const bucketSource = (isRepeatPass || (entry.sheet_measure === REPEAT_END && entry.clef === 'bass'))
+        ? _svgBucketsPage2
+        : _svgBuckets;
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
