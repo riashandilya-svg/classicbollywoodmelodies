@@ -3307,17 +3307,15 @@ function spawnTrainingNote(noteObj) {
             );
         });
 
-        // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
+        // 🎹 In falling-notes mode, do NOT pre-highlight the keyboard here.
+        // The animate() loop adds midi to expectedMidiTreble/Bass when each
+        // falling note *lands* on the keyboard — pre-setting them here causes
+        // an immediate flash that then gets wiped by the safety-net before the
+        // note even lands, leaving the user confused about which key to press.
+        // The landing handler already checks isPartOfCurrentChord and only
+        // keeps notes in the sets that belong to the current chord.
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
-        currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            if (trackForMidi === TREBLE) {
-                expectedMidiTreble.add(midi);
-            } else if (trackForMidi === BASS) {
-                expectedMidiBass.add(midi);
-            }
-        });
     }
 
     console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
@@ -3625,8 +3623,12 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
-    // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
-    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null) {
+    // Safety net: if nothing is actively waiting for input AND practice is not running,
+    // ensure no keys are stuck highlighted.
+    // IMPORTANT: do NOT clear when trainingActive is true — in score mode visualsPlaying
+    // is always false, so without the trainingActive guard the highlights would be wiped
+    // on every single animation frame the moment waitingForInput briefly goes false.
+    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null && !trainingActive) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
     }
@@ -4045,9 +4047,13 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
 
     synth.triggerRelease(getNoteName(note));
 
-    // Always clear highlights immediately on release — spawnTrainingNote re-adds them
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
+    // NOTE: Do NOT clear expectedMidiTreble/Bass here unconditionally.
+    // On success (heldTime >= expectedHoldDuration), we keep the current key
+    // highlighted for the 300ms gap before spawnNextValidNote runs — this way
+    // the user always sees a highlighted key. spawnTrainingNote will clear and
+    // re-set the highlights atomically when the next note spawns.
+    // On failure (too short), spawnTrainingNote is called after 600ms and also
+    // handles the highlight reset, so we clear here only on failure below.
 
     // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
     if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
@@ -4064,8 +4070,10 @@ explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
         
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        // Do NOT clear expectedMidiTreble/Bass here — spawnTrainingNote (called below
+        // via spawnNextValidNote) clears and re-populates them atomically.
+        // Clearing here causes a 300ms window where the keyboard shows no highlight,
+        // leaving the user confused about what to play next.
         
         advanceChordIndex();
 updateTrainingProgress();
@@ -4223,8 +4231,8 @@ canvas.addEventListener('touchend', (e) => {
             waitingForInput = false;
             expectedMidiNote = null;
 
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
+            // Do NOT clear expectedMidiTreble/Bass here — spawnTrainingNote handles it
+            // atomically so keyboard stays highlighted during the 300ms transition gap.
 
             advanceChordIndex();
             updateTrainingProgress();
@@ -5447,9 +5455,20 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    const bucket = _svgBuckets[entry.sheet_measure]?.[clef];
+    // For REPEAT_END (measure 36): first-pass notes (physical ≤ REPEAT_END) use page 1 bucket,
+    // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
+    // Measure 36 treble AND bass: _svgBuckets[36][treble|bass] is empty on page 1
+    // (only a tied whole note which is excluded from the bucket).
+    // Both first-pass and repeat-pass notes must use _svgBucketsPage2[36][treble|bass].
+    const bucketSource = (isRepeatPass || entry.sheet_measure === REPEAT_END)
+        ? _svgBucketsPage2
+        : _svgBuckets;
+
+    const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing (repeatPass=${isRepeatPass})`);
         return [];
     }
 
@@ -5534,11 +5553,30 @@ function onTrainingNoteSpawned(noteObj) {
     const allIndices = [];
     const notePlayTime = noteObj.playTime ?? noteObj.time;
 
-    // Collect all practiceNotes at the same playTime (covers both treble + bass in "both" mode)
-    const simultaneousNotes = practiceNotes.filter(n =>
-        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
-    );
-    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
+    // If this note is from the repeat pass, mirror to the first-pass equivalent notes
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = physMeasure !== null &&
+        physMeasure >= REPEAT_START + REPEAT_LEN &&
+        physMeasure <= REPEAT_END + REPEAT_LEN;
+
+    let simultaneousNotes;
+    if (isRepeatPass) {
+        const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+        simultaneousNotes = practiceNotes.filter(n =>
+            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+        );
+        if (!simultaneousNotes.length) {
+            simultaneousNotes = practiceNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            );
+        }
+    } else {
+        simultaneousNotes = practiceNotes.filter(n =>
+            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+        );
+    }
+
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
@@ -5547,7 +5585,6 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
-        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
@@ -5712,9 +5749,9 @@ if (freeMode && note === freeModeActiveNote) {
         
         if (noteHoldStartTime === null) return;
 
-        // Always clear highlights immediately on release — spawnTrainingNote re-adds them
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        // NOTE: Do NOT clear expectedMidiTreble/Bass here unconditionally.
+        // On success, keep keys highlighted during the 300ms gap before spawnNextValidNote.
+        // spawnTrainingNote handles the clear-and-refill atomically.
 
         const heldTime = performance.now() - noteHoldStartTime;
 
@@ -5732,8 +5769,7 @@ explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
     
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
+    // Do NOT clear expectedMidiTreble/Bass here — spawnTrainingNote handles it atomically
     
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
     advanceChordIndex();
