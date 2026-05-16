@@ -420,6 +420,42 @@ body.dark-mode #statsBar {
 }
 body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
 
+/* MIDI load error banner */
+#midiLoadError {
+    display: none;
+    width: min(900px, 96%);
+    margin: 10px auto 0 auto;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.35);
+    animation: fadeUp 0.4s ease both;
+    z-index: 10;
+    position: relative;
+}
+#midiLoadError.visible { display: block; }
+#midiLoadError button {
+    margin-left: 14px;
+    padding: 5px 14px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.25);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    vertical-align: middle;
+}
+#midiLoadError button:hover:not(:disabled) {
+    background: rgba(255,255,255,0.38);
+    transform: none;
+    box-shadow: none;
+}
+
 /* Measure timeline */
 #measureTimeline {
     width: min(900px, 96%);
@@ -1464,7 +1500,19 @@ body.score-mode #panelProgressWrap {
 </div>
 
 
-<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); this.textContent=document.body.classList.contains('dark-mode')?'☀️':'🌙'">🌙</button>
+<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); const dm=document.body.classList.contains('dark-mode'); this.textContent=dm?'☀️':'🌙'; localStorage.setItem('darkMode',dm)">🌙</button>
+<script>
+  // Restore dark mode preference before first paint to avoid a flash
+  (function(){
+    if(localStorage.getItem('darkMode')==='true'){
+      document.body.classList.add('dark-mode');
+      document.addEventListener('DOMContentLoaded',function(){
+        var btn=document.getElementById('darkModeToggle');
+        if(btn) btn.textContent='☀️';
+      });
+    }
+  })();
+</script>
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
@@ -1537,6 +1585,9 @@ body.score-mode #panelProgressWrap {
 <!-- Measure Timeline -->
 <div id="measureTimeline"></div>
 
+<!-- MIDI load error banner (hidden until fetch fails) -->
+<div id="midiLoadError" role="alert" aria-live="assertive"></div>
+
 <!-- Feedback right below stats box -->
 <div id="feedbackArea">
     <div id="feedback"></div>
@@ -1608,10 +1659,10 @@ body.score-mode #panelProgressWrap {
       <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
     </div>
     <div class="ctrl-speed-row">
-      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
+      <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
       <span style="font-size:13px;color:#666;">Speed</span>
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
-      <button class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
+      <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
   </div>
 
@@ -1808,8 +1859,46 @@ for (let p = 1; p <= SONG_CONFIG.measures; p++) {
 }
 
 
+// Displays a visible error banner and disables all controls when the MIDI
+// file cannot be loaded. Provides a Retry button so the user doesn't need
+// to reload the page manually.
+function showMidiLoadError(message) {
+    setControlsEnabled(false);
+    const banner = document.getElementById('midiLoadError');
+    if (!banner) return;
+    banner.innerHTML =
+        `⚠️ Could not load the song file: <em>${message}</em>` +
+        `<button onclick="window._retryMidiLoad()">Retry</button>`;
+    banner.classList.add('visible');
+}
+
+// Exposed on window so the Retry button's inline onclick can reach it
+// (the main script runs as type="module" — module scope is not global).
+window._retryMidiLoad = async function() {
+    try {
+        await loadSongMidi();
+    } catch (err) {
+        showMidiLoadError(err.message || String(err));
+    }
+};
+
 async function loadSongMidi() {
-    const response = await fetch("aajkal.mid");
+    // Hide any previous error
+    const errorBanner = document.getElementById('midiLoadError');
+    if (errorBanner) errorBanner.classList.remove('visible');
+
+    let response;
+    try {
+        response = await fetch("aajkal.mid");
+    } catch (networkErr) {
+        // Network error (offline, DNS failure, CORS, etc.)
+        throw new Error(`Network error — ${networkErr.message}`);
+    }
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText} for "aajkal.mid" — check the file path`);
+    }
+
     const arrayBuffer = await response.arrayBuffer();
 
     currentMidi = new Midi(arrayBuffer);
@@ -1829,42 +1918,95 @@ async function loadSongMidi() {
     });
 
     allMidiNotes.sort((a, b) => a.time - b.time);
-    _tiedNoteKeys = new Set();
-    const tieSeenRaw = new Map();
-    for (const note of allMidiNotes) {
-        const k = `${note.track}|${note.midi}`;
-        const prev = tieSeenRaw.get(k);
-        if (prev) {
-            const gap = note.time - (prev.time + prev.duration);
-            // Only flag as a tied continuation if:
-            //   1. The gap is near-zero (genuine tie), AND
-            //   2. The previous note is NOT a grace note (grace notes have duration < 0.1s).
-            //      A main note immediately after a grace note must NOT be treated as a tie.
-            const prevIsGrace = prev.duration < 0.1;
-            if (Math.abs(gap) < 0.005 && !prevIsGrace) {
-                _tiedNoteKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+
+    // Build tie keys BEFORE splitRepeatedNotes to detect raw ties, then rebuild
+    // AFTER so that keys match the post-split timestamps used everywhere else.
+    const _preSplitTieKeys = new Set();
+    {
+        const tieSeenRaw = new Map();
+        for (const note of allMidiNotes) {
+            const k = `${note.track}|${note.midi}`;
+            const prev = tieSeenRaw.get(k);
+            if (prev) {
+                const gap = note.time - (prev.time + prev.duration);
+                // Only flag as a tied continuation if:
+                //   1. The gap is near-zero (genuine tie), AND
+                //   2. The previous note is NOT a grace note (grace notes have duration < 0.1s).
+                //      A main note immediately after a grace note must NOT be treated as a tie.
+                const prevIsGrace = prev.duration < 0.1;
+                if (Math.abs(gap) < 0.005 && !prevIsGrace) {
+                    _preSplitTieKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+                }
             }
+            tieSeenRaw.set(k, note);
         }
-        tieSeenRaw.set(k, note);
     }
-    console.log(`🔗 Raw ties detected: ${_tiedNoteKeys.size}`);
+    console.log(`🔗 Raw ties detected (pre-split): ${_preSplitTieKeys.size}`);
 
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
 
-    let bpm;
-    if (SONG_CONFIG.timeSignature[0] === 2 && SONG_CONFIG.timeSignature[1] === 2) {
-        bpm = 100;
+    // Rebuild _tiedNoteKeys using POST-split timestamps so that the keys in
+    // spawnNextValidNote (which uses note.time from post-split allMidiNotes) match exactly.
+    _tiedNoteKeys = new Set();
+    {
+        const tieSeenPost = new Map();
+        for (const note of allMidiNotes) {
+            const k = `${note.track}|${note.midi}`;
+            const prev = tieSeenPost.get(k);
+            if (prev) {
+                // A note is a tied continuation post-split if it was flagged pre-split
+                // OR if the gap is still near-zero after split (handles same-pitch ties
+                // where splitRepeatedNotes opened a 0.02s gap — those are re-attacks, NOT ties).
+                // We rely on the pre-split detection to identify true ties, then
+                // map them to the post-split timestamp.
+                // Key trick: splitRepeatedNotes only shifts the SECOND of two consecutive
+                // same-pitch notes by +NOTE_GAP_TIME. So the post-split time of a truly
+                // tied note is either unchanged OR shifted. We check both possibilities.
+                const origKey  = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+                const shiftedBackKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
+                if (_preSplitTieKeys.has(origKey) || _preSplitTieKeys.has(shiftedBackKey)) {
+                    const prevIsGrace = prev.duration < 0.1;
+                    if (!prevIsGrace) {
+                        _tiedNoteKeys.add(origKey);
+                    }
+                }
+            }
+            tieSeenPost.set(k, note);
+        }
+    }
+    console.log(`🔗 Tied note keys (post-split): ${_tiedNoteKeys.size}`);
+
+    // @tonejs/midi always expresses note times/durations in seconds based on
+    // quarter-note BPM. We read the raw quarter-note BPM from the header and
+    // use it directly so that note durations and the beat grid stay in sync.
+    //
+    // For 2/2 (cut time) the *metronome beat unit* is a half note, so
+    // secondsPerBeat = 2 quarter notes = 2 × (60 / quarterBpm).
+    // beatsPerMeasure is already 2, so secondsPerMeasure = 2 × secondsPerBeat
+    // correctly equals one full 2/2 measure.
+    const midiTempos = currentMidi.header.tempos;
+    const quarterBpm = midiTempos.length ? midiTempos[0].bpm : 120;
+
+    if (SONG_CONFIG.timeSignature[1] === 2) {
+        // 2/2 cut time: beat = half note = 2 quarter notes
+        secondsPerBeat = (60 / quarterBpm) * 2;
     } else {
-        bpm = currentMidi.header.tempos.length
-            ? currentMidi.header.tempos[0].bpm
-            : 120;
+        // 4/4 or other quarter-note-beat signatures
+        secondsPerBeat = 60 / quarterBpm;
     }
 
-    secondsPerBeat = 60 / bpm;
     secondsPerMeasure = secondsPerBeat * SONG_CONFIG.timeSignature[0];
     MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
 
     setControlsEnabled(true);
+
+    // Clamp panel measure inputs to the actual song length now that we know it.
+    // Without this, a user can type any number and only get an alert() at practice-start.
+    const _psm = document.getElementById('panelStartMeasure');
+    const _pem = document.getElementById('panelEndMeasure');
+    if (_psm) _psm.max = MAX_LOGICAL_MEASURE;
+    if (_pem) _pem.max = MAX_LOGICAL_MEASURE;
+
     showTrainingProgress();
     buildMeasureTimeline(SONG_CONFIG.measures);
     const bpmEl = document.getElementById('statBPM');
@@ -2001,6 +2143,12 @@ const playbackControls = document.getElementById('playbackControls');
         if (el.id === 'freeModeButton') return;
         el.disabled = !enabled;
     });
+
+    // Panel speed buttons live outside #playbackControls — handle them explicitly
+    const panelDown = document.getElementById('panelSpeedDown');
+    const panelUp   = document.getElementById('panelSpeedUp');
+    if (panelDown) panelDown.disabled = !enabled;
+    if (panelUp)   panelUp.disabled   = !enabled;
 }
 
 const startMeasureInput = document.getElementById('startMeasureInput');
@@ -2024,9 +2172,16 @@ const playSongButton = document.getElementById('playSongButton');
 const loopCheckbox = document.getElementById('loopCheckbox');
 const freeModeButton = document.getElementById('freeModeButton');
 freeModeButton.classList.add('side-floating');
-setControlsEnabled(true);
+// Controls stay disabled until loadSongMidi() finishes successfully.
+// (loadSongMidi calls setControlsEnabled(true) at the end on success.)
+setControlsEnabled(false);
 (async () => {
-    await loadSongMidi();
+    try {
+        await loadSongMidi();
+    } catch (err) {
+        console.error('[FATAL] loadSongMidi failed:', err);
+        showMidiLoadError(err.message || String(err));
+    }
 })();
 
 
@@ -2048,9 +2203,8 @@ function updateSpeed(delta) {
 
 speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
-
-speedDownButton.disabled = false;
-speedUpButton.disabled = false;
+// Note: speedDown/speedUp enabled state is managed entirely by setControlsEnabled()
+// and setSpeedButtonsEnabled(). Do NOT add unconditional .disabled = false here.
 
 
 
@@ -2073,12 +2227,157 @@ let metronomeRunning = false;
 let transportStartTime = null;
 let countdownActive = false;
 
+// ── SpeechSynthesis kept ONLY as last-resort fallback ──────────────────────
 const speechSynth = window.speechSynthesis;
 
-let countMode = "normal"; 
+let countMode = "normal";
 let subdivisionEnabled = false;
-
 let countLanguage = "en";
+
+// ── Web Audio counting engine ───────────────────────────────────────────────
+// Uses AudioContext.currentTime-based lookahead scheduling for sample-accurate,
+// Chrome-reliable playback. Falls back to SpeechSynthesis for any word whose
+// audio file hasn't loaded yet (e.g. before you drop the .mp3 files in).
+let _countAudioCtx    = null;
+let _countBuffers     = {};      // key → AudioBuffer
+let _countSources     = [];      // live nodes, kept for cancellation
+let _countSchedTimer  = null;
+let _lastScheduledStep = -1;
+
+// These are set at the moment the scheduler actually starts running,
+// anchored to real wall-clock / ctx time — NOT to transportStartTime
+// (which may be a future timestamp used by the note-fall animation).
+let _schedWallMs  = 0;   // performance.now() at scheduler-start
+let _schedCtxSec  = 0;   // audioCtx.currentTime at scheduler-start
+
+const SCHEDULE_LOOKAHEAD_SEC = 0.30;  // schedule this far ahead
+const SCHEDULE_INTERVAL_MS   = 100;   // re-run scheduler every 100ms
+
+// ↓ Edit these paths to wherever you put the .mp3 files on your server.
+const COUNT_AUDIO_PATHS = {
+    'one':   '/audio/count_one.mp3',
+    'two':   '/audio/count_two.mp3',
+    'three': '/audio/count_three.mp3',
+    'four':  '/audio/count_four.mp3',
+    'e':     '/audio/count_e.mp3',
+    'and':   '/audio/count_and.mp3',
+    'a':     '/audio/count_a.mp3',
+};
+
+async function _ensureCountAudioCtx() {
+    if (!_countAudioCtx) {
+        _countAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (_countAudioCtx.state === 'suspended') {
+        await _countAudioCtx.resume();
+    }
+    return _countAudioCtx;
+}
+
+// Call once on the first user gesture that enables counting.
+// Returns a promise that resolves when all buffers are loaded.
+function _loadCountBuffers() {
+    if (!window.__countBuffersPromise) {
+        window.__countBuffersPromise = _ensureCountAudioCtx().then(ctx =>
+            Promise.allSettled(
+                Object.entries(COUNT_AUDIO_PATHS).map(async ([key, url]) => {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`${res.status} ${url}`);
+                    const ab  = await res.arrayBuffer();
+                    const buf = await ctx.decodeAudioData(ab);
+                    _countBuffers[key] = buf;
+                })
+            ).then(() => {
+                const loaded  = Object.keys(_countBuffers);
+                const missing = Object.keys(COUNT_AUDIO_PATHS).filter(k => !_countBuffers[k]);
+                if (loaded.length)  console.log('[Count Audio] Loaded:', loaded.join(', '));
+                if (missing.length) console.warn('[Count Audio] Missing (will use SpeechSynthesis fallback):', missing.join(', '));
+            })
+        );
+    }
+    return window.__countBuffersPromise;
+}
+
+// Schedule one word at a precise AudioContext time. Returns true if done via WebAudio.
+function _webAudioPlayAt(word, ctxTime, isMainBeat) {
+    if (!_countAudioCtx || !_countBuffers[word]) return false;
+    const src  = _countAudioCtx.createBufferSource();
+    src.buffer = _countBuffers[word];
+    const gain = _countAudioCtx.createGain();
+    gain.gain.value = isMainBeat ? 1.0 : 0.65;
+    src.connect(gain);
+    gain.connect(_countAudioCtx.destination);
+    // Never schedule in the past — clamp to at least 5 ms from now
+    src.start(Math.max(ctxTime, _countAudioCtx.currentTime + 0.005));
+    _countSources.push(src);
+    return true;
+}
+
+// Stop all scheduled Web Audio nodes and clear the re-schedule timer.
+function _cancelCountAudio() {
+    if (_countSchedTimer) { clearTimeout(_countSchedTimer); _countSchedTimer = null; }
+    _countSources.forEach(src => { try { src.stop(0); } catch(e) {} });
+    _countSources     = [];
+    _lastScheduledStep = -1;
+    _schedWallMs      = 0;
+    _schedCtxSec      = 0;
+}
+
+// The lookahead scheduler: called every SCHEDULE_INTERVAL_MS.
+// Schedules every syllable whose fire-time falls in [now, now + LOOKAHEAD].
+// _schedWallMs / _schedCtxSec are the real-time anchors captured at start —
+// completely independent of transportStartTime (which may be in the future).
+function _runCountScheduler(bpm) {
+    if (!metronomeRunning || !countEnabled || !_countAudioCtx) return;
+
+    const stepSec    = (60 / bpm) / 4;   // 16th-note duration in seconds
+    // How many seconds of counting have elapsed since beat-1 fired
+    const elapsedSec = (performance.now() - _schedWallMs) / 1000;
+    // Corresponding AudioContext time for elapsedSec = 0
+    const ctxBase    = _schedCtxSec;
+
+    const fromStep = Math.max(Math.floor(elapsedSec / stepSec), _lastScheduledStep + 1);
+    const toStep   = Math.ceil((elapsedSec + SCHEDULE_LOOKAHEAD_SEC) / stepSec);
+
+    for (let step = fromStep; step <= toStep; step++) {
+        const slotInBeat = step % 4;
+        const beatIndex  = Math.floor(step / 4);
+        const isMainBeat = slotInBeat === 0;
+        const shouldPlay = subdivisionEnabled || isMainBeat;
+        if (!shouldPlay) continue;
+
+        const word = getCountWord(beatIndex, slotInBeat);
+        if (!word) continue;
+
+        const fireAtSec = step * stepSec;
+        const ctxFireAt = ctxBase + fireAtSec;
+
+        if (!_webAudioPlayAt(word, ctxFireAt, isMainBeat)) {
+            // Fallback: SpeechSynthesis with a matching setTimeout
+            const delayMs = Math.max(0, (fireAtSec - elapsedSec) * 1000);
+            setTimeout(() => {
+                if (!metronomeRunning || !countEnabled) return;
+                if (isMainBeat && speechSynth.speaking) speechSynth.cancel();
+                const u = new SpeechSynthesisUtterance(word);
+                u.volume = isMainBeat ? 1 : 0.65;
+                u.rate   = 1.6;
+                u.pitch  = 1;
+                if (window.__preferredVoice) u.voice = window.__preferredVoice;
+                speechSynth.speak(u);
+            }, delayMs);
+        }
+
+        _lastScheduledStep = step;
+    }
+
+    // Prune finished sources to avoid unbounded array growth
+    _countSources = _countSources.filter(s => {
+        try { return s.playbackState !== undefined ? s.playbackState < 3 : true; }
+        catch(e) { return false; }
+    });
+
+    _countSchedTimer = setTimeout(() => _runCountScheduler(bpm), SCHEDULE_INTERVAL_MS);
+}
 
 function stopMetronome() {
     if (metroInterval) {
@@ -2087,9 +2386,13 @@ function stopMetronome() {
     }
 
     metroBeat = 0;
+    _cancelCountAudio();
 
-    if (speechSynth) {
-        speechSynth.cancel();
+    if (speechSynth) speechSynth.cancel();
+
+    if (window._speechKeepAlive) {
+        clearInterval(window._speechKeepAlive);
+        window._speechKeepAlive = null;
     }
 
     metronomeRunning = false;
@@ -2115,19 +2418,37 @@ beatToggle.addEventListener('click', () => {
 
 countToggle.addEventListener('click', () => {
 
-if (!window.__chromeSpeechUnlocked) {
-    const u = new SpeechSynthesisUtterance("one");
-    u.volume = 1;
-    u.rate = 1;
-    speechSynthesis.speak(u);
-    window.__chromeSpeechUnlocked = true;
-}
-
 countEnabled = !countEnabled;
 countToggle.textContent = countEnabled ? "Counting ✓" : "Counting";
 
-if (countEnabled && !metronomeRunning) {
-    startMetronome();
+if (countEnabled) {
+    // On first enable: initialise AudioContext (must happen on a user gesture)
+    // and kick off buffer loading (de-duped — safe to call multiple times).
+    _loadCountBuffers();
+
+    if (!window.__chromeSpeechUnlocked) {
+        const tryUnlock = () => {
+            const voices = speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.localService && v.lang.startsWith('en'))
+                           || voices.find(v => v.lang.startsWith('en'))
+                           || voices[0];
+            const u = new SpeechSynthesisUtterance("");
+            if (preferred) u.voice = preferred;
+            u.volume = 0;
+            speechSynthesis.speak(u);
+            window.__chromeSpeechUnlocked = true;
+            window.__preferredVoice = preferred || null;
+        };
+        if (speechSynthesis.getVoices().length > 0) {
+            tryUnlock();
+        } else {
+            speechSynthesis.addEventListener('voiceschanged', tryUnlock, { once: true });
+        }
+    }
+
+    if (!metronomeRunning) {
+        startMetronome();
+    }
 }
 });
 
@@ -2283,6 +2604,7 @@ let fullSongPlaying = false;
 
 let currentTrainingNote = null;
 let noteHoldStartTime = null;
+let holdEvaluated = false;   // guards against double-advance from simultaneous mouseup + MIDI noteOff
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
@@ -2721,9 +3043,11 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 function processUserNoteOn(midiNote) {
 
-if (!freeMode) {
-    hardStopUserNote();
-}
+// Guard: ignore repeated noteOn for a note that's already held.
+// MIDI keyboards send repeated noteOn while a key is held; without this,
+// hardStopUserNote() below resets noteHoldStartTime on every repeat,
+// making the hold timer restart and causing multiple spawnTrainingNote calls.
+if (!freeMode && midiPressedNotes.has(midiNote)) return;
 
 if (previewMode) return;
 
@@ -2731,23 +3055,20 @@ if (previewMode) return;
 if (freeMode) {
     ensureSynth();
 
+    // Guard: if this exact note is already sounding, don't retrigger — prevents
+    // audio pops from touchpad jitter or repeated mousedown events on the same key.
+    if (midiNote === freeModeActiveNote) return;
+
+    // Release previous note cleanly before attacking the new one (key glide)
+    if (freeModeActiveNote !== null) {
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+    }
+
     freeModeSynth.triggerAttack(getNoteName(midiNote));
     freeModeActiveNote = midiNote;
-        expectedMidiTreble.clear();
+    expectedMidiTreble.clear();
     expectedMidiBass.clear();
     expectedMidiTreble.add(midiNote);
-
-    canvas.addEventListener('mouseleave', () => {
-    mouseDown = false;
-
-    if (freeMode && freeModeActiveNote !== null) {
-        freeModeSynth.triggerRelease(
-            getNoteName(freeModeActiveNote)
-        );
-        freeModeActiveNote = null;
-        expectedMidiNote = null;
-    }
-});
 
     document.getElementById('pressedNoteCircle').textContent =
         getNoteName(midiNote);
@@ -2817,6 +3138,9 @@ midiPressedNotes.add(midiNote);
 const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
 
 if (allPressed && noteHoldStartTime === null) {
+    // All chord notes now held — stop any previous synth and start the hold timer cleanly
+    hardStopUserNote();
+    midiPressedNotes.add(midiNote); // re-add since hardStopUserNote doesn't touch midiPressedNotes
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
@@ -2880,9 +3204,23 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
 
 
 function spawnTrainingNote(noteObj) {
+    if (!noteObj) {
+        // trainingIndex walked off the end — treat as section complete
+        trainingActive = false;
+        setSpeedButtonsEnabled(true);
+        startPracticeButton.disabled = false;
+        stopButton.disabled = true;
+        stopMetronome();
+        hideTrainingProgress();
+        const feedback = document.getElementById('feedback');
+        feedback.textContent = 'Excellent work! 🌟';
+        feedback.classList.remove('wrong');
+        feedback.classList.add('correct', 'show');
+        return;
+    }
     hardStopUserNote();
     trainingActive = true;
-    visualsPlaying = true;
+    visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
     fallingRectangles = [];
 
     previewTimeouts.forEach(t => clearTimeout(t));
@@ -2939,6 +3277,7 @@ function spawnTrainingNote(noteObj) {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
     }
     noteHoldStartTime = null;
+    holdEvaluated = false;
     setTargetNote(noteName);
     
     if (scoreModeActive) {
@@ -2987,15 +3326,38 @@ function spawnTrainingNote(noteObj) {
     }
 }
 
+// Enables or disables all speed controls (hidden originals + visible panel mirrors).
+// Called at preview start/end so buttons grey out while the preview is playing.
+function setSpeedButtonsEnabled(enabled) {
+    speedDownButton.disabled = !enabled;
+    speedUpButton.disabled   = !enabled;
+    const panelDown = document.getElementById('panelSpeedDown');
+    const panelUp   = document.getElementById('panelSpeedUp');
+    if (panelDown) panelDown.disabled = !enabled;
+    if (panelUp)   panelUp.disabled   = !enabled;
+}
+
 function playMeasurePreview(startTime, clef) {
     speedLocked = true;
+    setSpeedButtonsEnabled(false); // grey out speed buttons for the duration of the preview
     ensureSynth();
     hardStopUserNote();
 
 trainingActive = false;
-visualsPlaying = true;
+visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
 fallingRectangles = [];
 previewMode = true;
+
+// Single authoritative timestamp — metronome anchor and visual clock
+// must share the same origin so counting stays in sync with the notes.
+const previewStart   = performance.now();
+const visualPreroll  = getFallTimeMs();
+visualClockStart     = previewStart + visualPreroll;
+
+// Start counting/beat during preview so user hears the rhythm with the notes
+if (beatEnabled || countEnabled) {
+    startMetronome(previewStart + visualPreroll);
+}
 
 const feedback = document.getElementById('feedback');
 feedback.textContent = 'Listen first…';
@@ -3015,11 +3377,6 @@ const sectionNotes = practiceNotes.filter(note => {
     );
 });
 
-
-const previewStart = performance.now();
-const visualPreroll = getFallTimeMs();
-
-visualClockStart = previewStart + visualPreroll;
 
 sectionNotes.forEach(note => {
     const t0 = (note.playTime ?? note.time);
@@ -3053,12 +3410,33 @@ const visualStart =
             if (!previewMode) return;
             // Collect all notes at the same playTime so both clefs highlight together
             const notePlayTime = note.playTime ?? note.time;
-            const simultaneous = sectionNotes.filter(n =>
-                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
-            );
+
+            // If this preview note is from the repeat pass, mirror to first-pass SVG elements
+            const physMeasure = getMeasureFromTime(note.time);
+            const isRepeatPass = physMeasure !== null &&
+                physMeasure >= REPEAT_START + REPEAT_LEN &&
+                physMeasure <= REPEAT_END + REPEAT_LEN;
+
+            let notesToHighlight;
+            if (isRepeatPass) {
+                const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+                notesToHighlight = sectionNotes.filter(n =>
+                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+                );
+                if (!notesToHighlight.length) {
+                    notesToHighlight = sectionNotes.filter(n =>
+                        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                    );
+                }
+            } else {
+                notesToHighlight = sectionNotes.filter(n =>
+                    Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                );
+            }
+
             const seen = new Set();
             const allIndices = [];
-            for (const sn of simultaneous) {
+            for (const sn of notesToHighlight) {
                 const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                 if (seen.has(k)) continue;
                 seen.add(k);
@@ -3072,6 +3450,7 @@ const visualStart =
 
 if (!sectionNotes.length) {
     speedLocked = false;
+    setSpeedButtonsEnabled(true);
     previewMode = false;
     spawnNextValidNote();
     return;
@@ -3085,8 +3464,17 @@ const previewLength =
 const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
+    setSpeedButtonsEnabled(true);
+
+    // Clear any keyboard keys left highlighted by landing preview notes
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
 
     if (scoreModeActive) clearScoreHighlight();
+
+    // Kill beat/count/1&2& completely — preview is over, user's turn now
+    stopMetronome();
+    _cancelCountAudio();
 
     const feedback = document.getElementById('feedback');
     feedback.textContent = 'Your turn';
@@ -3102,14 +3490,39 @@ previewTimeouts.push(endTimeout);
 
 function spawnNextValidNote() {
 
+    // Guard: check up-front whether the current hand filter matches ANY note in
+    // practiceNotes. If not, show a clear message and bail — prevents an infinite
+    // async loop when loopEnabled is true and the hand has zero playable notes.
+    const handHasNotes = practiceNotes.some(n => {
+        if (clefMode === 'both') return true;
+        if (clefMode === 'treble') return n.track === TREBLE;
+        if (clefMode === 'bass')   return n.track === BASS;
+        return false;
+    });
+    if (!handHasNotes) {
+        const feedback = document.getElementById('feedback');
+        const handLabel = clefMode === 'treble' ? 'Right hand' : clefMode === 'bass' ? 'Left hand' : 'Selected hand';
+        feedback.textContent = `${handLabel} has no notes in this range — try a different section or hand.`;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('show');
+        trainingActive = false;
+        stopButton.disabled = true;
+        return;
+    }
+
     while (trainingIndex < practiceNotes.length) {
         const note = practiceNotes[trainingIndex];
 
         // Check if this note is a tied continuation using _tiedNoteKeys directly
-        // (populated in loadSongMidi — works regardless of score mode).
+        // (populated in loadSongMidi using post-split timestamps — works regardless of score mode).
         // Grace notes (duration < 0.1s) are NEVER tied continuations — skip the check for them.
         const isGraceMidi = note.duration < 0.1;
         const midiKey = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
+        // Also check the pre-split timestamp as a safety net: splitRepeatedNotes shifts
+        // consecutive same-pitch re-attacks by +NOTE_GAP_TIME, and _tiedNoteKeys is built
+        // post-split, so the direct key should always match. The shifted fallback handles
+        // any remaining floating-point edge cases.
         const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
         const isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
 
@@ -3152,7 +3565,35 @@ function spawnNextValidNote() {
 
     trainingActive = false;
     stopButton.disabled = true;
+    startPracticeButton.disabled = false;
+    setSpeedButtonsEnabled(true);
+    stopMetronome();
+    hideTrainingProgress();
 }
+
+// ── Shared chord-advance helper ──────────────────────────────────────────────
+// Counts how many practiceNotes share the same playTime as practiceNotes[trainingIndex]
+// and advances by that exact count.
+//
+// FIX: Do NOT use Math.max(skip, currentChordNotes.size).
+// currentChordNotes can be stale near measure boundaries: a grace note at
+// playTime = idx*spm - 0.02 and the first beat at idx*spm + 0 are 0.02s apart
+// (outside the 0.01s chord window), so skip=1 is correct. But if currentChordNotes
+// still holds notes from an earlier chord with size > 1, the Math.max overshoot
+// would jump trainingIndex into a later or repeated measure, re-presenting the
+// grace note as if the section had looped.
+function advanceChordIndex() {
+    if (!practiceNotes[trainingIndex]) return;
+    const baseTime = practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time;
+    let skip = 0;
+    for (let i = trainingIndex; i < practiceNotes.length; i++) {
+        const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+        if (Math.abs(t - baseTime) < 0.01) skip++;
+        else break;
+    }
+    trainingIndex += Math.max(skip, 1);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function startVisualCountdown(onComplete) {
     const overlay = document.getElementById('countdownOverlay');
@@ -3211,15 +3652,6 @@ if (
         expectedMidiTreble.add(rect.midi);
     } else if (rect.track === BASS) {
         expectedMidiBass.add(rect.midi);
-    }
-
-    const isPartOfCurrentChord = currentChordNotes.has(rect.midi);
-    
-    if (!isPartOfCurrentChord) {
-        setTimeout(() => {
-            expectedMidiTreble.delete(rect.midi);
-            expectedMidiBass.delete(rect.midi);
-        }, 100);
     }
 }
 if (rect.y > canvas.height) {
@@ -3280,7 +3712,7 @@ const shimmerPhase =
 const shimmerY =
     rect.y + shimmerPhase * rect.height;
 
-const isDownbeat = metronomeRunning && (metroBeat % 4 === 0);
+const isDownbeat = metronomeRunning && (metroBeat % SONG_CONFIG.timeSignature[0] === 0);
 
 ctx.save();
 ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
@@ -3381,28 +3813,35 @@ animate();
 // ================================
 // SIMPLE METRONOME (BUTTON ONLY)
 // ================================
-function getCountWord(beatIndex, subdivision = false) {
-    const beat = (beatIndex % 4) + 1;
+// Returns the spoken syllable for a given 16th-note slot within a beat.
+// slotInBeat: 0="one/two", 1="e", 2="and", 3="a"
+function getCountWord(beatIndex, slotInBeat) {
+    const beatsPerMeasure = SONG_CONFIG.timeSignature[0];
+    const beat = (beatIndex % beatsPerMeasure) + 1;
 
-    const words = {
-        en: {
-            numbers: ["one", "two", "three", "four"],
-            and: "and"
-        },
-        it: {
-            numbers: ["uno", "due", "tre", "quattro"],
-            and: "e"
-        }
+    const beatNames = {
+        en: ["one", "two", "three", "four"],
+        it: ["one", "two", "three", "four"]   // Italian mp3s not available; use English audio
     };
-
-    const lang = words[countLanguage] || words.en;
+    const lang = beatNames[countLanguage] || beatNames.en;
 
     if (countMode === "subdivision") {
-        return subdivision ? lang.and : String(beat);
+        // "1 e & a" syllables for each 16th-note slot
+        switch (slotInBeat) {
+            case 0: return lang[beat - 1];   // "one" / "two"
+            case 1: return "e";
+            case 2: return "and";
+            case 3: return "a";
+        }
     }
 
-    return lang.numbers[beat - 1];
+    // Normal mode: only speak on the downbeat of each beat
+    if (slotInBeat === 0) return lang[beat - 1];
+    return null;
 }
+
+// (Old _scheduleCountWords / _clearSpeechTimeouts removed — replaced by
+//  the Web Audio lookahead scheduler: _runCountScheduler / _cancelCountAudio)
 
 function startMetronome(startTimeOverride = null) {
     stopMetronome();
@@ -3420,7 +3859,8 @@ function startMetronome(startTimeOverride = null) {
 
     const bpm = (60 / secondsPerBeat) * speedMultiplier;
 
-    const stepMs = (60000 / bpm) / 2;
+    // Each beat divided into 4 sixteenth-note slots for "1 e & a" counting
+    const stepMs = (60000 / bpm) / 4;
 
     let lastStep = -1;
 
@@ -3428,41 +3868,59 @@ function startMetronome(startTimeOverride = null) {
         if (!metronomeRunning) return;
 
         const elapsed = performance.now() - transportStartTime;
+        if (elapsed < 0) {
+            metroInterval = requestAnimationFrame(tick);
+            return;
+        }
         const step = Math.floor(elapsed / stepMs);
 
         if (step !== lastStep) {
             lastStep = step;
 
-            const isMainBeat = step % 2 === 0;
-            const beatIndex = Math.floor(step / 2);
+            const slotInBeat = step % 4;
+            const isMainBeat = slotInBeat === 0;
 
+            // Beat click sound only
             if (beatEnabled && isMainBeat) {
                 metroSynth.triggerAttackRelease("16n");
             }
-
-            if (countEnabled && speechSynth) {
-                let word = null;
-
-                if (isMainBeat) {
-                    word = getCountWord(beatIndex, false);
-                } else if (subdivisionEnabled) {
-                    word = getCountWord(beatIndex, true);
-                }
-
-                if (word) {
-                    speechSynth.cancel();
-                    const u = new SpeechSynthesisUtterance(word);
-                    u.volume = isMainBeat ? 1 : 0.6;
-                    u.rate = 1;
-                    speechSynth.speak(u);
-                }
-            }
+            // NOTE: counting words are now handled by the Web Audio lookahead
+            // scheduler (_runCountScheduler) started below — NOT in this rAF loop.
         }
 
         metroInterval = requestAnimationFrame(tick);
     }
 
     tick();
+
+    // Start the Web Audio lookahead scheduler for counting words.
+    // We must NOT fire it until transportStartTime has been reached:
+    // when transportStartTime is in the future (preroll offset), launching
+    // the scheduler immediately makes count words fire ~2 s early, out of
+    // sync with both the beat click and the falling notes.
+    // Poll via rAF until the transport clock >= 0, then anchor.
+    if (countEnabled) {
+        _loadCountBuffers().then(() => {
+            if (!metronomeRunning) return null;
+            return _ensureCountAudioCtx();
+        }).then(ctx => {
+            if (!ctx || !metronomeRunning) return;
+
+            const waitForTransport = () => {
+                if (!metronomeRunning) return;
+                if (performance.now() < transportStartTime) {
+                    requestAnimationFrame(waitForTransport);
+                    return;
+                }
+                // Transport clock has reached zero — anchor the scheduler here.
+                _schedWallMs       = performance.now();
+                _schedCtxSec       = ctx.currentTime;
+                _lastScheduledStep = -1;
+                _runCountScheduler(bpm);
+            };
+            requestAnimationFrame(waitForTransport);
+        });
+    }
 }
 
 // ================================
@@ -3501,7 +3959,20 @@ function getMidiFromMouse(x, y) {
     }
     return xToMidi(x);
 }
-    
+
+// Registered once here (not inside processUserNoteOn) to avoid stacking
+// duplicate listeners every time a free-mode key is pressed.
+canvas.addEventListener('mouseleave', () => {
+    mouseDown = false;
+    if (freeMode && freeModeActiveNote !== null) {
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+        freeModeActiveNote = null;
+        expectedMidiNote = null;
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+    }
+});
+
 canvas.addEventListener('mousedown', async (e) => {
     if (previewMode) return;
     await Tone.start();
@@ -3569,6 +4040,10 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
 
+    // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
+    if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
+    holdEvaluated = true;
+
     if (heldTime >= expectedHoldDuration) {
 const feedback = document.getElementById('feedback');
 feedback.textContent = 'Good!';
@@ -3583,7 +4058,7 @@ explanationLocked = false;
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
         
-        trainingIndex += currentChordNotes.size;
+        advanceChordIndex();
 updateTrainingProgress();
 
 document.getElementById('holdInfo').textContent = '';
@@ -3595,8 +4070,7 @@ setTimeout(() => spawnNextValidNote(), 300);
 
         const feedback = document.getElementById('feedback');
 feedback.innerHTML =
-    `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>.
-Let's try holding a little longer!`;
+    `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
      feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -3609,6 +4083,7 @@ holdEl.innerHTML =
 
             if (retryTimeout) {
     clearTimeout(retryTimeout);
+    retryTimeout = null;
 }
 
 retryTimeout = setTimeout(() => {
@@ -3700,64 +4175,92 @@ canvas.addEventListener('touchend', (e) => {
         }
     }
 
+    // ── Multi-touch chord fix ────────────────────────────────────────────────
+    // Previously we only evaluated the hold when e.touches.length === 0, which
+    // breaks two-finger chords: the user typically lifts one finger a few ms
+    // before the other, so the first touchend sees e.touches.length === 1 and
+    // skips evaluation; by the time the second fires the browser sometimes
+    // reports length 0 but activeTouches is already clear.
+    //
+    // Instead, evaluate whenever ALL chord notes have been released
+    // (midiPressedNotes is empty and a hold was in progress).  We still use
+    // e.touches.length === 0 as the signal to fully tear down touch state.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const allChordNotesReleased = !freeMode
+        && noteHoldStartTime !== null
+        && midiPressedNotes.size === 0;
+
+    if (allChordNotesReleased) {
+        // Capture hold time before any state is cleared
+        const heldTime = performance.now() - noteHoldStartTime;
+
+        // Clear highlights immediately — spawnTrainingNote re-adds them
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+
+        noteHoldStartTime = null;
+        activeMidiNote = null;
+
+        if (heldTime >= expectedHoldDuration) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = 'Good!';
+
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('correct', 'show');
+            explanationLocked = false;
+
+            waitingForInput = false;
+            expectedMidiNote = null;
+
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+
+            advanceChordIndex();
+            updateTrainingProgress();
+
+            document.getElementById('holdInfo').textContent = '';
+            setTimeout(() => spawnNextValidNote(), 300);
+
+        } else {
+            const heldBeats = heldTime / 1000 / secondsPerBeat;
+            const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('wrong', 'show');
+
+            const holdEl = document.getElementById('holdInfo');
+            holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+            if (retryTimeout) {
+                clearTimeout(retryTimeout);
+                retryTimeout = null;
+            }
+
+            retryTimeout = setTimeout(() => {
+                if (trainingIndex < practiceNotes.length) {
+                    spawnTrainingNote(practiceNotes[trainingIndex]);
+                }
+            }, 600);
+        }
+    }
+
+    // Tear down touch tracking once all physical fingers have left the screen
     if (e.touches.length === 0) {
         touchActive = false;
         mouseDown = false;
         activeTouches.clear();
 
-        // Always clear highlights immediately — spawnTrainingNote re-adds them
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-
-        if (!freeMode && noteHoldStartTime !== null) {
-            const heldTime = performance.now() - noteHoldStartTime;
-
-            if (heldTime >= expectedHoldDuration) {
-                const feedback = document.getElementById('feedback');
-                feedback.textContent = 'Good!';
-
-                feedback.classList.remove('correct', 'wrong', 'show');
-                void feedback.offsetWidth;
-                feedback.classList.add('correct', 'show');
-                explanationLocked = false;
-
-                waitingForInput = false;
-                expectedMidiNote = null;
-
-                expectedMidiTreble.clear();
-                expectedMidiBass.clear();
-
-                trainingIndex += currentChordNotes.size;
-                updateTrainingProgress();
-
-                document.getElementById('holdInfo').textContent = '';
-                setTimeout(() => spawnNextValidNote(), 300);
-
-            } else {
-                const heldBeats = heldTime / 1000 / secondsPerBeat;
-                const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
-
-                const feedback = document.getElementById('feedback');
-                feedback.innerHTML = `You held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>. Let's try holding a little longer!`;
-
-                feedback.classList.remove('correct', 'wrong', 'show');
-                void feedback.offsetWidth;
-                feedback.classList.add('wrong', 'show');
-
-                const holdEl = document.getElementById('holdInfo');
-                holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-                if (retryTimeout) {
-                    clearTimeout(retryTimeout);
-                }
-
-                retryTimeout = setTimeout(() => {
-                    spawnTrainingNote(practiceNotes[trainingIndex]);
-                }, 600);
-            }
-
-            noteHoldStartTime = null;
-            activeMidiNote = null;
+        // Safety-net clear in case allChordNotesReleased path didn't run
+        // (e.g. freeMode, or noteHoldStartTime was already null)
+        if (!allChordNotesReleased) {
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
         }
     }
 }, { passive: false });
@@ -3903,6 +4406,10 @@ function reportEmptyLogicalMeasures(startLogical, endLogical, notes) {
 }
 
 startPracticeButton.addEventListener('click', async () => {
+    // Prevent double-click / re-entry while countdown or preview is running
+    if (startPracticeButton.disabled) return;
+    startPracticeButton.disabled = true;
+
     await Tone.start();
     
     if (midiInputs.length === 0) {
@@ -3936,10 +4443,12 @@ if (
     endMeasure < startMeasure
 ) {
     alert("Invalid measure range");
+    startPracticeButton.disabled = false;
     return;
 }
 if (endMeasure > MAX_LOGICAL_MEASURE) {
     alert(`Max sheet measure is ${MAX_LOGICAL_MEASURE}`);
+    startPracticeButton.disabled = false;
     return;
 }
 
@@ -3949,6 +4458,7 @@ const endLogical   = endMeasure;
 const built = buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipSheetRepeats);
 if (!built) {
     alert("Could not map that sheet range to the MIDI timeline.");
+    startPracticeButton.disabled = false;
     return;
 }
 
@@ -4084,6 +4594,7 @@ if (emptyBars.length) {
 
     if (practiceNotes.length === 0) {
         alert("No notes found for this selection");
+        startPracticeButton.disabled = false;
         return;
     }
 
@@ -4094,6 +4605,7 @@ updateTrainingProgress();
 
     trainingActive = true;
     waitingForInput = false;
+    setSpeedButtonsEnabled(false); // locked for the whole session; unlocks on Stop or Reset
 
     stopButton.disabled = false;
     transportStartTime = performance.now();
@@ -4102,12 +4614,12 @@ document.getElementById('feedback').textContent = 'Get ready…';
 
 startVisualCountdown(() => {
 
-transportStartTime = performance.now();
+// The MIDI audio fires after a visualPreroll delay (getFallTimeMs() ms).
+// Offset transportStartTime forward by that same amount so beat "1"
+// fires exactly when the first note sounds, not 2 s before it.
+transportStartTime = performance.now() + getFallTimeMs();
 
-if (beatEnabled || countEnabled) {
-    startMetronome();
-}
-
+// metronome is started inside playMeasurePreview and killed when preview ends
 playMeasurePreview(sectionStartTime, clefMode);
 });
 
@@ -4117,26 +4629,12 @@ playMeasurePreview(sectionStartTime, clefMode);
 playSongButton.addEventListener('click', async () => {
     await Tone.start();
 
-    fullSongPlaying = true;
-
     stopPlayback(false);
     ensureSynth();
-    transportStartTime = performance.now();
-
-    countEnabled = false;
-    countToggle.textContent = "Counting";
-    speechSynth.cancel();
-
-    if ((beatEnabled || countEnabled) && !metronomeRunning) {
-        startMetronome();
-    }
 
     startFullSongPlayback();
 });
 
-stopButton.addEventListener('click', () => {
-    stopPlayback();
-});
 function stopPlayback(userInitiated = false) {
 
 isPlaying = false;
@@ -4146,6 +4644,9 @@ visualsPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
+setSpeedButtonsEnabled(true);
+
+if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 
 stopMetronome();
 
@@ -4178,6 +4679,7 @@ feedback.classList.add('show');
 
 document.getElementById('countdownOverlay').style.display = 'none';
 stopButton.disabled = true;
+startPracticeButton.disabled = false;
 }
 
 function resetAll() {
@@ -4200,6 +4702,7 @@ function resetAll() {
     visualsPlaying   = false;
     speedLocked      = false;
     countdownActive  = false;
+    setSpeedButtonsEnabled(true);
 
     // ── 4. Exit Free Mode if it is on ────────────────────────────────────
     if (freeMode) {
@@ -4291,7 +4794,7 @@ function resetAll() {
     showNoteNames = true;
     toggleNamesButton.textContent = 'Hide Note Names';
 
-    // ── 13. (Score Mode and Dark Mode toggles are intentionally preserved) ─
+    // ── 13. Score Mode — left as-is; user’s view choice persists across resets ──
 
     // ── 14. Confirm ──────────────────────────────────────────────────────
     statsCombo         = 0;
@@ -4313,21 +4816,26 @@ window.resetAll = resetAll;
     
 function startFullSongPlayback() {
     
-    const visualBaseline = performance.now() + 16;
-    const now = performance.now();
-    
     if (!allMidiNotes.length) return;
-    songStartTime = performance.now();
-    visualClockStart = songStartTime;
+
+    // Single authoritative timestamp — metronome anchor, songStartTime,
+    // transportStartTime, and visualBaseline all derive from the same value
+    // so counting stays perfectly in sync with the falling notes.
+    const now = performance.now();
+    songStartTime      = now;
+    visualClockStart   = now;
+    transportStartTime = now;
+    const visualBaseline = now + 16;
+
     if (beatEnabled || countEnabled) {
-    startMetronome(songStartTime);
-}
+        startMetronome(now);
+    }
 
     fullSongPlaying = true;
-    visualsPlaying = true;
+    visualsPlaying  = true;
 
     fallingRectangles = [];
-    playbackTimeouts = [];
+    playbackTimeouts  = [];
 
 
     // For score mode: group notes by time so we highlight all simultaneous notes together
@@ -4369,12 +4877,37 @@ addMidiFallingRectangle(
                 seenHighlightTimes.add(timeKey);
                 const ht = setTimeout(() => {
                     if (!fullSongPlaying) return;
-                    const simultaneous = allMidiNotes.filter(n =>
-                        Math.abs(n.time - note.time) < 0.01
-                    );
+
+                    // Determine whether this timestamp falls in the repeat pass
+                    // (physical measures 37-44 → logical 29-36).
+                    const physMeasure = getMeasureFromTime(note.time);
+                    const isRepeatPass = physMeasure !== null &&
+                        physMeasure >= REPEAT_START + REPEAT_LEN &&
+                        physMeasure <= REPEAT_END + REPEAT_LEN;
+
+                    let notesToHighlight;
+                    if (isRepeatPass) {
+                        // Mirror: find the first-pass notes at the equivalent time
+                        // (subtract exactly one repeat-section length in seconds).
+                        const firstPassTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                        notesToHighlight = allMidiNotes.filter(n =>
+                            Math.abs(n.time - firstPassTime) < 0.01
+                        );
+                        // Fallback: if nothing found (timing drift), use repeat-pass notes directly
+                        if (!notesToHighlight.length) {
+                            notesToHighlight = allMidiNotes.filter(n =>
+                                Math.abs(n.time - note.time) < 0.01
+                            );
+                        }
+                    } else {
+                        notesToHighlight = allMidiNotes.filter(n =>
+                            Math.abs(n.time - note.time) < 0.01
+                        );
+                    }
+
                     const seen = new Set();
                     const allIndices = [];
-                    for (const sn of simultaneous) {
+                    for (const sn of notesToHighlight) {
                         const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                         if (seen.has(k)) continue;
                         seen.add(k);
@@ -4422,12 +4955,19 @@ addMidiFallingRectangle(
 // ============================================================
 
 // ---- State ----
-let _svgNoteElements    = [];   // annotated noteheads: {el, tx, ty, clef, sheet_measure}
+let _svgNoteElements    = [];   // annotated noteheads: {el, tx, ty, clef, sheet_measure, pageNum}
 let _currentHighlightEl = null;
 let _lastPannedMeasure  = -1;
 
 // _svgBuckets[sheet_measure][clef] = ordered array of indices into _svgNoteElements
+// For measures that appear on multiple pages (e.g. measure 36 on page 1 and page 2),
+// this contains ONLY page 1 noteheads. Page 2+ noteheads are in _svgBucketsPage2.
 let _svgBuckets = {};
+
+// _svgBucketsPage2[sheet_measure][clef] = page-2 noteheads for measures that appear on
+// both page 1 (end of repeat) and page 2 (start of post-repeat section).
+// Currently only measure REPEAT_END (36) is affected.
+let _svgBucketsPage2 = {};
 
 // _bucketFirstIsGrace[`${measure}|${clef}`] = true if that bucket's first (lowest-tx) note is a grace note.
 // Used in assignRanks to detect MIDI grace notes placed by the MIDI file in the preceding measure
@@ -4479,6 +5019,7 @@ const SVG_PAGE_SYSTEMS = [
 function _buildSvgNoteIndex() {
     _svgNoteElements    = [];
     _svgBuckets         = {};
+    _svgBucketsPage2    = {};
     _bucketFirstIsGrace = {};
     _midiRankMap        = new Map();
     _currentHighlightEl = null;
@@ -4547,8 +5088,36 @@ function _buildSvgNoteIndex() {
                 const dist = Math.abs(raw[i].tx - ex) + Math.abs(raw[i].ty - ey) * 0.3;
                 if (dist < bestDist) { bestDist = dist; bestIdx = i; }
             }
-            if (bestIdx >= 0 && bestDist < 60) tiedNoteheadSet.add(bestIdx);
+            // Threshold of 40 (not 60): all legitimate same-page ties have dist ≤ 21;
+            // the only case that reaches ~58 is a cross-page tie whose arc endpoint
+            // overshoots the last notehead on the page (e.g. m35 quaver tied into m36).
+            // Using 40 correctly excludes the continuation noteheads while leaving the
+            // parent note (the quaver) in its bucket so it can be highlighted.
+            if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
+
+        // Special case — measure 36 treble, page 2:
+        // The tied whole note that continues from m35 is correctly identified as a
+        // tied continuation and would normally be excluded. But the user wants it
+        // highlighted (it's visually prominent on the score). Un-exclude it here so
+        // it ends up in _svgBucketsPage2[36][treble] and can be highlighted.
+        // We identify it as: page 2, within the page-2 m36 treble staff bounds,
+        // within the m36 x-range (bls[0]=215 to bls[1]=696 for that system).
+        if (pageNum === 2) {
+            const sys36p2 = SVG_PAGE_SYSTEMS[1]?.find(s => s.start_measure === 36);
+            if (sys36p2) {
+                for (const ri of tiedNoteheadSet) {
+                    const rn = raw[ri];
+                    const inTreble = rn.ty >= sys36p2.treble_top - 50 && rn.ty <= sys36p2.treble_bot + 50;
+                    const inM36x   = rn.tx >= sys36p2.barline_xs[0] && rn.tx < sys36p2.barline_xs[1];
+                    if (inTreble && inM36x) {
+                        tiedNoteheadSet.delete(ri);
+                        break; // only one tied whole note to un-exclude
+                    }
+                }
+            }
+        }
+
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
@@ -4575,9 +5144,16 @@ function _buildSvgNoteIndex() {
                         // Grace notes stay in their visual measure (same as MIDI measure)
                         const sheet_measure = svgMeasure;
                         const idx = _svgNoteElements.length;
-                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace });
-                        if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
-                        _svgBuckets[sheet_measure][clef].push(idx);
+                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
+
+                        // Measure REPEAT_END (36) appears on both page 1 (end of repeat)
+                        // and page 2 (start of post-repeat section). Route page 2+ copies
+                        // to _svgBucketsPage2 so the first-pass highlights use page 1 noteheads
+                        // and the repeat-pass highlights use page 2 noteheads.
+                        const isRepeatPassPage = (pageNum >= 2 && sheet_measure === REPEAT_END);
+                        const targetBuckets = isRepeatPassPage ? _svgBucketsPage2 : _svgBuckets;
+                        if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
+                        targetBuckets[sheet_measure][clef].push(idx);
                         break;
                     }
                 }
@@ -4590,6 +5166,11 @@ function _buildSvgNoteIndex() {
     for (const m of Object.keys(_svgBuckets)) {
         for (const clef of ['treble', 'bass']) {
             _svgBuckets[m][clef].sort((a, b) => _svgNoteElements[a].tx - _svgNoteElements[b].tx);
+        }
+    }
+    for (const m of Object.keys(_svgBucketsPage2)) {
+        for (const clef of ['treble', 'bass']) {
+            _svgBucketsPage2[m][clef].sort((a, b) => _svgNoteElements[a].tx - _svgNoteElements[b].tx);
         }
     }
 
@@ -4651,75 +5232,108 @@ function _buildSvgMidiMap() {
     // to the next measure (classic grace-note-before-barline case).
     const assignedCount = {};
 
-    // firstPassDone[`${logicalMeasure}|${clef}`] = true once the first-pass notes
-    // for that logical measure have all been assigned. Set when physMeasure transitions
-    // from the first-pass physical range (≤ REPEAT_END) to the second-pass range (> REPEAT_END).
-    // This replaces the fragile assignedCount heuristic for repeat-pass detection.
-    const firstPassDone = {};
+    // overflowFired tracks which (sheetMeasure|clef) buckets have already had
+    // the barline-straddle overflow applied. Overflow should fire at most once
+    // per bucket: the very first time a boundary note pushes a bucket past cap.
+    // Without this guard the repeat-pass notes (e.g. physical m37-44 → logical
+    // m29-36) arrive with assignedCount already === cap from the first pass, so
+    // "used >= cap && used < 2*cap" would fire for every single repeat note,
+    // redirecting all of m29's repeat notes into m30's bucket, m31's into m32,
+    // etc. — producing the "bass plays only even measures on repeat" bug.
+    const overflowFired = new Set();
 
     function assignRanks(notes, clef) {
         for (const note of notes) {
             const mk = midiKeyFor(note);
+            // Also check the pre-splitRepeatedNotes timestamp (shifted back by NOTE_GAP_TIME)
+            // because _tiedNoteKeys was built before splitRepeatedNotes ran and some
+            // tied-continuation notes had their .time shifted forward by 0.02s.
+            const mkShifted = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
 
             // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
             // noteheads, so counting them here shifts every subsequent rank by +1.
-            if (_tiedNoteKeys.has(mk)) continue;
+            // Exception: treble measure 36's tied whole note is intentionally kept in
+            // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
+            // get a rank entry (rank 0) rather than being skipped.
+            const isTiedM36Treble = (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))
+                && clef === 'treble'
+                && (() => {
+                    const pm = getMeasureFromTime(note.time);
+                    const sm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
+                    return sm === 36;
+                })();
+            if (!isTiedM36Treble && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
 
-            // Determine if this note is on the second pass of the repeated section.
-            // Second pass = physical measure is in the repeat clone range (REPEAT_END+1 to REPEAT_END+REPEAT_LEN).
-            const isRepeatPass = (physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN);
-
-            // Mark first pass as done when we encounter the second pass for this logical measure.
-            const passKey = `${sheetMeasure}|${clef}`;
-            if (isRepeatPass && !firstPassDone[passKey]) {
-                firstPassDone[passKey] = true;
-            }
-            const onFirstPass = !isRepeatPass;
-
             // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
             // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
-            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0).
-            // Bump them all forward to the correct SVG bucket.
+            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0 or
+            // bucket-full from first pass). Bump them all forward to the correct SVG bucket.
+            // IMPORTANT: set gracePreCorrected=true here so the overflow check below
+            // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
+
+            // Measure 36 bass AND treble: _svgBuckets[36][bass|treble] is empty because the
+            // page-1 SVG only has a tied whole note (excluded as a tied continuation). The actual
+            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass|treble]).
+            // Suppress the overflow→37 so all m36 notes stay at sheetMeasure=36 and
+            // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
+            if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
+                hardcodedGraceCorrected = true;
+            }
+
             if (note.duration < 0.1) {
                 if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
-                } else if (isRepeatPass && sheetMeasure === 29) {
-                    // Repeat pass: grace note for logical 29 that was in physical 36 area.
-                    // sheetMeasure is already 29 (correct), just mark as corrected so
-                    // overflow doesn't nudge it further.
-                    hardcodedGraceCorrected = true;
-                } else if (!isRepeatPass && sheetMeasure === 36) {
-                    // First pass: grace note timestamped in logical 36 (empty bucket) → push to 29
-                    // This is the grace-note-before-barline case at the repeat boundary.
+                } else if (sheetMeasure === 36 && clef === 'treble') {
+                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
+                    // This fires on both passes when the grace note's MIDI time
+                    // maps to physical 36 (first pass) or physical 44 (second pass,
+                    // also logical 36). Always redirect to logical 29.
+                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
+                    // genuine short notes that must NOT be redirected to measure 29.
                     sheetMeasure = 29;
                     hardcodedGraceCorrected = true;
                 }
             }
 
-            // Measure-boundary overflow correction (FIRST PASS ONLY):
-            // If the current measure's SVG bucket is already at capacity, this MIDI note
-            // landed fractionally before the barline while the SVG places it in the next
-            // measure. Nudge sheetMeasure forward. Never apply on the repeat pass — the
-            // repeat pass notes correctly belong to their logical measure.
+            // Measure-boundary overflow correction:
+            // If the current measure's SVG bucket is already at capacity (all its
+            // noteheads have been claimed), this MIDI note's timestamp must have
+            // landed fractionally before the barline while the SVG places it in
+            // the next measure. Nudge sheetMeasure forward so ranks stay aligned.
+            // Only apply during the first pass (assignedCount < 2× capacity would
+            // fire on the second repeat pass too — cap at exactly bucketCapacity).
             const capKey = `${sheetMeasure}|${clef}`;
             const cap    = bucketCapacity[capKey] ?? 0;
             const used   = assignedCount[capKey] ?? 0;
 
-            // Grace-note pre-correction (first pass only):
-            // MIDI grace notes in measure M-1 whose SVG notehead starts measure M.
-            const isMidiGrace     = note.duration < 0.1;
+            // Grace-note pre-correction (handles measures 29, 31, 33, 35, etc.):
+            // The MIDI file timestamps some grace notes in measure M-1, but their
+            // SVG notehead sits at the very beginning of measure M (the bucket for
+            // measure M starts with a grace note). In that case the current bucket
+            // does NOT start with a grace note, so assigning here would misalign
+            // every subsequent rank. Detect this and bump forward immediately,
+            // before the bucket-full overflow check runs.
+            const isMidiGrace   = note.duration < 0.1;
             const thisStartsGrace = !!_bucketFirstIsGrace[capKey];
             const nextKey         = `${sheetMeasure + 1}|${clef}`;
             const nextStartsGrace = !!_bucketFirstIsGrace[nextKey];
-
-            let gracePreCorrected = hardcodedGraceCorrected;
-            if (onFirstPass && !hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace) {
+            // Grace-note pre-correction pass-guard:
+            // cap===0 means the current bucket is EMPTY for this clef (e.g. measure 30
+            // treble has zero SVG notes — all bass chords). used < 2*cap would be 0 < 0
+            // = false and the correction would never fire. Handle cap===0 specially:
+            // allow the correction on the very first encounter (used===0), and again
+            // on the second repeat pass (used===1 etc.) by using used < max(2*cap, 2).
+            const allowGraceCorrect = (cap === 0)
+                ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
+                : (used < 2 * cap);            // normal bucket: within first pass
+            let gracePreCorrected = hardcodedGraceCorrected; // inherit hardcoded guard
+            if (!hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
                 const nextCap = bucketCapacity[nextKey] ?? 0;
                 if (nextCap > 0) {
                     console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
@@ -4728,32 +5342,63 @@ function _buildSvgMidiMap() {
                 }
             }
 
-            // Overflow: only on first pass, only when bucket is full.
-            if (onFirstPass && !gracePreCorrected && used >= cap && cap > 0) {
+            // Overflow only for genuine barline-straddle notes: a note whose MIDI
+            // timestamp lands fractionally before the barline while the SVG places it
+            // in the next measure. This should fire AT MOST ONCE per bucket — the very
+            // first time a note finds the bucket already at capacity.
+            // overflowFired prevents re-triggering on repeat-pass notes, which arrive
+            // with assignedCount already === cap from the first pass (making "used >= cap"
+            // true for every repeat-pass note — the root cause of the bass even-measures
+            // only on repeat bug).
+            //
+            // Additionally, notes whose physical measure falls in the repeat-pass range
+            // (physical 37-44, logical 29-36) must NEVER trigger overflow — they are
+            // genuine second-pass notes, not barline-straddle notes. Without this guard,
+            // the FIRST repeat-pass note for each bass measure (29, 31, 33, 35) fires
+            // overflow (because overflowFired doesn't have the key yet) and gets
+            // mis-routed to the next sheet measure, causing incorrect bass highlighting.
+            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN;
+            const overflowKey = `${sheetMeasure}|${clef}`;
+            if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
+                    (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
+                    overflowFired.add(overflowKey);
                     sheetMeasure = sheetMeasure + 1;
                 }
             }
-
-            // Increment assignedCount for first-pass overflow tracking.
-            if (onFirstPass) {
-                const newCapKey = `${sheetMeasure}|${clef}`;
-                assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
-            }
+            // Always increment assignedCount so second-pass detection works correctly.
+            const newCapKey = `${sheetMeasure}|${clef}`;
+            assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
 
             const bucketKey = `${sheetMeasure}|${clef}`;
             if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
 
             // Raw rank keeps incrementing across both passes of a repeated section.
-            // Wrap it by the SVG bucket size so that repeat-pass notes resolve to the
-            // same ranks (0, 1, 2, …) as the first pass — highlighting the same noteheads.
+            // Wrap it by the SVG bucket size so that repeat-pass notes (e.g. physical
+            // measures 37-44 which map to the same logical measures 29-36 as the first
+            // pass) resolve to rank 0, 1, 2, … again — i.e. they highlight the same
+            // SVG noteheads as the first pass.  For measures that are never repeated
+            // the bucket size is never exceeded so % has no effect.
             const rawRank    = rankCounters[bucketKey]++;
-            const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
+            // For measure 36 bass the noteheads live in _svgBucketsPage2 (page-1 bucket is empty).
+            // Fall back to page2 so the % wrap uses the correct size (6), not 0.
+            const bucketSize = ((_svgBuckets[sheetMeasure]?.[clef] || []).length)
+                || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
+            // DEBUG: log all assignments to sheet 35 treble
+            if (sheetMeasure === 35 && clef === 'treble') {
+                console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
+            }
+
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
+
+            // DEBUG measure 36 bass
+            if (sheetMeasure === 36 && clef === 'bass') {
+                console.log(`🎯 m36 bass: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank}`);
+            }
         }
     }
 
@@ -4765,6 +5410,17 @@ function _buildSvgMidiMap() {
         .sort((a, b) => a.time - b.time || a.midi - b.midi);
 
     assignRanks(trebleMidi, 'treble');
+
+    // Reset assignedCount between clef passes so that the pass-guard logic
+    // (used >= cap && used < 2*cap) is evaluated independently for each clef.
+    // Without this, treble-clef assigned-count values leak into the bass pass
+    // (they share the same object keyed by measure|clef, but the clef suffix
+    // makes them distinct — so in practice there is no cross-contamination).
+    // We reset anyway as a defensive measure to ensure clean state.
+    for (const key of Object.keys(assignedCount)) {
+        if (key.endsWith('|bass')) delete assignedCount[key];
+    }
+
     assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
@@ -4782,9 +5438,20 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    const bucket = _svgBuckets[entry.sheet_measure]?.[clef];
+    // For REPEAT_END (measure 36): first-pass notes (physical ≤ REPEAT_END) use page 1 bucket,
+    // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
+    // Measure 36 treble AND bass: _svgBuckets[36][treble|bass] is empty on page 1
+    // (only a tied whole note which is excluded from the bucket).
+    // Both first-pass and repeat-pass notes must use _svgBucketsPage2[36][treble|bass].
+    const bucketSource = (isRepeatPass || entry.sheet_measure === REPEAT_END)
+        ? _svgBucketsPage2
+        : _svgBuckets;
+
+    const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing (repeatPass=${isRepeatPass})`);
         return [];
     }
 
@@ -4869,11 +5536,30 @@ function onTrainingNoteSpawned(noteObj) {
     const allIndices = [];
     const notePlayTime = noteObj.playTime ?? noteObj.time;
 
-    // Collect all practiceNotes at the same playTime (covers both treble + bass in "both" mode)
-    const simultaneousNotes = practiceNotes.filter(n =>
-        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
-    );
-    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} simultaneousNotes=${simultaneousNotes.length}`, simultaneousNotes.map(n => `midi=${n.midi} t=${n.time.toFixed(4)} pt=${(n.playTime??n.time).toFixed(4)}`));
+    // If this note is from the repeat pass, mirror to the first-pass equivalent notes
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = physMeasure !== null &&
+        physMeasure >= REPEAT_START + REPEAT_LEN &&
+        physMeasure <= REPEAT_END + REPEAT_LEN;
+
+    let simultaneousNotes;
+    if (isRepeatPass) {
+        const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+        simultaneousNotes = practiceNotes.filter(n =>
+            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+        );
+        if (!simultaneousNotes.length) {
+            simultaneousNotes = practiceNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            );
+        }
+    } else {
+        simultaneousNotes = practiceNotes.filter(n =>
+            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+        );
+    }
+
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
@@ -4882,7 +5568,6 @@ function onTrainingNoteSpawned(noteObj) {
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
-        console.log(`  → midi=${n.midi} t=${n.time.toFixed(4)} svgIndices=[${indices.join(',')}] ranks=${JSON.stringify(indices.map(i=>({tx:_svgNoteElements[i].tx.toFixed(0),sheet:_svgNoteElements[i].sheet_measure,isGrace:_svgNoteElements[i].isGrace})))}`);
         allIndices.push(...indices);
     }
 
@@ -5053,6 +5738,10 @@ if (freeMode && note === freeModeActiveNote) {
 
         const heldTime = performance.now() - noteHoldStartTime;
 
+        // Guard: if mouseup already evaluated this hold, don't double-advance
+        if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
+        holdEvaluated = true;
+
         if (heldTime >= expectedHoldDuration) {
    feedback.textContent = 'Good!';
 
@@ -5067,16 +5756,7 @@ explanationLocked = false;
     expectedMidiBass.clear();
     
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
-    {
-        const baseTime = practiceNotes[trainingIndex] ? (practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time) : 0;
-        let skip = 0;
-        for (let i = trainingIndex; i < practiceNotes.length; i++) {
-            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
-            if (Math.abs(t - baseTime) < 0.01) skip++;
-            else break;
-        }
-        trainingIndex += Math.max(skip, currentChordNotes.size);
-    }
+    advanceChordIndex();
 updateTrainingProgress();
     document.getElementById('holdInfo').textContent = '';
 
@@ -5098,11 +5778,13 @@ holdEl.innerHTML =
     `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
 
-    setTimeout(() => {
-        spawnTrainingNote(practiceNotes[trainingIndex]);
+    if (retryTimeout) clearTimeout(retryTimeout);
+    retryTimeout = setTimeout(() => {
+        if (trainingIndex < practiceNotes.length) {
+            spawnTrainingNote(practiceNotes[trainingIndex]);
+        }
     }, 600);
-}
-
+        }
 
         noteHoldStartTime = null;
         activeMidiNote = null;
@@ -5205,36 +5887,997 @@ syncHandBtns();
 <!-- 1) Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- 2) Your Supabase client -->
-<script src="/js/supabaseClient.js"></script>
+<!-- 2) Supabase client — inlined (was /js/supabaseClient.js) -->
+<script>
+// classicbollywoodmelodies/js/supabaseClient.js
+(function () {
+  // If we already created a client (has .auth AND .from), skip
+  if (window._supabaseInitialized) {
+    console.log("Supabase client already initialized. Skipping.");
+    return;
+  }
 
-<!-- 3) Paywall logic -->
-<script src="/js/paywall.js?v=20260203"></script>
+  if (!window.supabase || typeof window.supabase.createClient !== "function") {
+    console.error("Supabase CDN not loaded. Make sure the CDN script tag is above this file.");
+    return;
+  }
 
+  const SUPABASE_URL = "https://lyqpxcilniqzurevetae.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NDAyMTQsImV4cCI6MjA4NTExNjIxNH0.40ZbAatkMBFHacQGCpiNYpjcKQoZik-Xvqx3bG46x7c";
 
-<!-- 4) Login check -->
-<script type="module">
-  async function requireLogin() {
-    const { data } = await window.supabase.auth.getSession();
-    if (!data.session) {
-window.location.replace("/login.html");
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Overwrite window.supabase with the client instance
+  window.supabase = client;
+  window._supabaseInitialized = true;
+
+  console.log("Supabase client ready");
+})();
+
+</script>
+
+<!-- 3) Paywall logic — inlined (was /js/paywall.js) -->
+<script>
+// 🚨🚨🚨 EMERGENCY COMPLETE FIX - paywall.js 🚨🚨🚨
+// This version COMPLETELY REMOVES the bundle unlimited access bug
+// Credits system will work CORRECTLY
+
+(() => {
+  const SUPABASE_FUNCTIONS_BASE = "https://lyqpxcilniqzurevetae.supabase.co/functions/v1";
+  async function fetchSheetMusicUrl(songSlug) {
+  const session = await getSessionOrThrow();
+
+  const url = `${SUPABASE_FUNCTIONS_BASE}/get-sheet-music-url`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ songSlug }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "Failed to fetch sheet music URL");
+  return data.url;
+}
+
+function tryOpenPdf(url) {
+  // open in new tab; mobile Safari sometimes needs this in user gesture,
+  // but this is still the best default behavior.
+  window.open(url, "_blank");
+}
+
+  const OWNER_EMAILS = ["riaomshandilya@gmail.com"];
+  const BUNDLE_PRODUCT_ID = "pack:5";
+const CURRENCY_SYMBOLS = {
+  'INR': '₹',
+  'USD': '$',
+  'GBP': '£',
+  'EUR': '€',
+  'CAD': 'CA$',
+  'AUD': 'A$',
+  'NZD': 'NZ$',
+  'SGD': 'S$',
+  'MYR': 'RM',
+  'AED': 'د.إ',
+  'SAR': '﷼',
+  'JPY': '¥',
+  'CNY': '¥',
+  'BRL': 'R$',
+  'MXN': 'MX$',
+  'ZAR': 'R',
+  'CHF': 'CHF',
+  'SEK': 'kr',
+  'NOK': 'kr',
+  'DKK': 'kr',
+  'PLN': 'zł',
+  'TRY': '₺',
+  'RUB': '₽',
+  'KRW': '₩',
+  'THB': '฿',
+  'IDR': 'Rp',
+  'PHP': '₱',
+  'VND': '₫',
+  'BDT': '৳',
+  'PKR': '₨',
+  'LKR': '₨',
+  'NPR': '₨',
+  'HKD': 'HK$',
+  'TWD': 'NT$'
+};
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cXB4Y2lsbmlxenVyZXZldGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMTYxNzcsImV4cCI6MjA1MjY5MjE3N30.P7vYO7s8fLqG6EkB9_SfqRQPKXFLAaI_LGQbYaXqWis';
+
+  function normalizeEmail(email) {
+    return (email || "").trim().toLowerCase();
+  }
+
+  function assertSupabase() {
+    if (!window.supabase || !window.supabase.auth || !window.supabase.from) {
+      throw new Error("Supabase client missing");
     }
   }
 
-  await requireLogin();
-  window.addEventListener("pageshow", requireLogin);
+async function detectCurrency() {
+  // Map of country codes to currencies
+  const currencyMap = {
+    'US': 'USD',
+    'IN': 'INR',
+    'GB': 'GBP',
+    'EU': 'EUR',
+    'DE': 'EUR',
+    'FR': 'EUR',
+    'IT': 'EUR',
+    'ES': 'EUR',
+    'NL': 'EUR',
+    'CA': 'CAD',
+    'AU': 'AUD',
+    'NZ': 'NZD',
+    'SG': 'SGD',
+    'MY': 'MYR',
+    'AE': 'AED',
+    'SA': 'SAR',
+    'JP': 'JPY',
+    'CN': 'CNY',
+    'BR': 'BRL',
+    'MX': 'MXN',
+    'ZA': 'ZAR',
+    'CH': 'CHF',
+    'SE': 'SEK',
+    'NO': 'NOK',
+    'DK': 'DKK',
+    'PL': 'PLN',
+    'TR': 'TRY',
+    'RU': 'RUB',
+    'KR': 'KRW',
+    'TH': 'THB',
+    'ID': 'IDR',
+    'PH': 'PHP',
+    'VN': 'VND',
+    'BD': 'BDT',
+    'PK': 'PKR',
+    'LK': 'LKR',
+    'NP': 'NPR',
+    'HK': 'HKD',
+    'TW': 'TWD'
+  };
+
+  try {
+    // Check timezone first for US
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timezone && (timezone.includes('America') || timezone.includes('US'))) {
+      return 'USD';
+    }
+    
+    // Mobile-friendly: longer timeout + better error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    try {
+      const response = await fetch('https://ipapi.co/json/', {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const countryCode = data.country_code;
+      
+      // Return currency for country, or INR as fallback
+      return currencyMap[countryCode] || 'INR';
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
+  } catch (error) {
+    console.warn('Currency detection failed, defaulting to INR:', error);
+    return 'INR';
+  }
+}
+  async function loadRazorpay() {
+    if (window.Razorpay) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("Failed to load Razorpay Checkout"));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function getSessionOrThrow() {
+    const { data, error } = await window.supabase.auth.getSession();
+    if (error) throw error;
+    if (!data?.session) throw new Error("Not logged in");
+    return data.session;
+  }
+
+  // 🚨🚨🚨 THIS IS THE CRITICAL FUNCTION - COMPLETELY REWRITTEN 🚨🚨🚨
+  async function userHasAccess(productId, session) {
+    console.log(`[PAYWALL] 🔍 Checking access for: ${productId}`);
+    
+    productId = (productId || "").trim();
+    if (!productId) {
+      console.log("[PAYWALL] ❌ No productId provided");
+      return false;
+    }
+    
+    if (!session?.user) {
+      console.log("[PAYWALL] ❌ No session");
+      return false;
+    }
+  
+// Check if owner
+    const email = normalizeEmail(session.user.email);
+    if (OWNER_EMAILS.includes(email)) {
+      console.log("[PAYWALL] ✅ User is owner - granting access");
+      return true;
+    }
+  // Replace your existing subscription block with this:
+const { data: sub, error: subError } = await window.supabase
+.from('subscriptions')
+.select('status, current_period_end')
+.eq('user_id', session.user.id)
+.eq('status', 'active')
+.gte('current_period_end', new Date().toISOString())
+.order('current_period_end', { ascending: false })
+.limit(1)
+.maybeSingle();
+
+console.log('[PAYWALL] 🔍 Sub query result:', JSON.stringify(sub), 'Error:', JSON.stringify(subError));
+
+if (sub) {
+console.log("[PAYWALL] ✅ User has active subscription - granting access");
+return true;
+}
+
+    const userId = session.user.id;  // ← this line was already there;
+    const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+  
+    console.log(`[PAYWALL] 🔍 Checking ownership for song_slug: ${songSlug}`);
+    console.log(`[PAYWALL] 👤 User ID: ${userId}`);
+    
+    try {
+      // 🚨 FIX: Check ENTITLEMENTS table instead of purchases
+      const { data: entitlementData, error: entitlementError } = await window.supabase
+        .from("entitlements")
+        .select("id, product_id")
+        .eq("user_id", userId)
+        .eq("product_id", productId) 
+        .maybeSingle();
+  
+      console.log("[PAYWALL] 🔍 Entitlement check result:", { entitlementData, entitlementError });
+  
+      if (entitlementError) {
+        console.warn("[PAYWALL] ⚠️ Error checking entitlement:", entitlementError);
+        return false;
+      }
+  
+      if (entitlementData) {
+        console.log(`[PAYWALL] ✅ User has entitlement for this song`);
+        return true;
+      }
+  
+      // Also check purchases table as fallback (for old purchases)
+      const { data: purchaseData, error: purchaseError } = await window.supabase
+        .from("purchases")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("song_id", productId) 
+        .maybeSingle();
+  
+      if (purchaseData) {
+        console.log(`[PAYWALL] ✅ User owns this song (via purchases table)`);
+        return true;
+      }
+  
+      console.log("[PAYWALL] ❌ User does NOT own this song");
+      return false;
+      
+    } catch (e) {
+      console.error("[PAYWALL] ❌ Exception checking ownership:", e);
+      return false;
+    }
+  }
+
+  async function checkAllCredits() {
+    try {
+      const session = await getSessionOrThrow();
+      const userId = session.user.id;
+
+      let bundleCredits = 0;
+      let bookCredits = 0;
+
+      // Check bundle credits
+      try {
+        const { data: bundleData, error } = await window.supabase
+          .from("purchases")
+          .select("credits_remaining")
+          .eq("user_id", userId)
+          .eq("status", "paid")
+          .eq("song_id", BUNDLE_PRODUCT_ID)
+          .not("credits_remaining", "is", null)
+          .gt("credits_remaining", 0)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (bundleData && !error) {
+          bundleCredits = bundleData.credits_remaining || 0;
+          console.log(`[PAYWALL] 🎁 Bundle credits: ${bundleCredits}`);
+        }
+      } catch (e) {
+        console.warn('[PAYWALL] Bundle credits check error:', e);
+      }
+
+      // Check book credits
+      try {
+        const { data: bookData, error } = await window.supabase
+          .from('user_credits')
+          .select('balance')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (bookData && !error) {
+          // 🚨 Hard cap: book bonus is max 1 credit, ever
+          bookCredits = Math.min(bookData.balance || 0, 1);
+          console.log(`[PAYWALL] 📚 Book credits: ${bookCredits} (raw: ${bookData.balance})`);
+        }
+      } catch (e) {
+        console.warn('[PAYWALL] Book credits check error:', e);
+      }
+
+      console.log(`[PAYWALL] 💰 Total credits: ${bundleCredits + bookCredits}`);
+      
+      return {
+        bundleCredits,
+        bookCredits,
+        total: bundleCredits + bookCredits
+      };
+    } catch (error) {
+      console.error('[PAYWALL] Error checking credits:', error);
+      return { bundleCredits: 0, bookCredits: 0, total: 0 };
+    }
+  }
+
+  // ✅ FIXED: Use raw fetch instead of supabase.functions.invoke
+  // invoke() has two problems on mobile:
+  //   1. It conflicts when you manually set Authorization (double-auth)
+  //   2. It doesn't reliably throw on HTTP error statuses - error can be null
+  //      while data contains the error payload, so the caller never sees it
+  // Raw fetch gives us full control over headers and proper status checking.
+  async function fetchPricing(productId, currency) {
+    const session = await getSessionOrThrow();
+
+    console.log("[PAYWALL] 📡 Calling get-pricing via raw fetch...");
+
+    const url = `${SUPABASE_FUNCTIONS_BASE}/get-pricing`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ productId, currency }),
+    });
+
+    const data = await res.json();
+    console.log("[PAYWALL] 📦 get-pricing raw response:", res.status, data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || `get-pricing failed with status ${res.status}`);
+    }
+
+    return data;
+  }
+
+  // ✅ FIXED: Same raw fetch treatment for createOrder
+  async function createOrder({ productId, currency = "INR" }) {
+    const session = await getSessionOrThrow();
+
+    console.log("[PAYWALL] 📡 Calling create-razorpay-order via raw fetch...");
+
+    const url = `${SUPABASE_FUNCTIONS_BASE}/create-razorpay-order`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ productId, currency }),
+    });
+
+    const data = await res.json();
+    console.log("[PAYWALL] 📦 create-razorpay-order raw response:", res.status, data);
+
+    if (!res.ok) {
+      throw new Error(data?.error || `create-razorpay-order failed with status ${res.status}`);
+    }
+
+    return data;
+  }
+
+  function extractOrderId(orderData) {
+    const orderId = orderData.razorpay_order_id || 
+                    orderData.order_id || 
+                    orderData.orderId || 
+                    orderData.id ||
+                    orderData.razorpayOrderId;
+    
+    console.log("[PAYWALL] 🔍 Extracted order ID:", orderId);
+    return orderId;
+  }
+
+  // ✅ FIXED: Same raw fetch treatment for verifyPayment
+  async function verifyPayment({ productId, response, orderData }) {
+    try {
+      const session = await getSessionOrThrow();
+      const razorpayOrderId = extractOrderId(orderData);
+      
+      if (!razorpayOrderId) {
+        console.error("[PAYWALL] ❌ No order ID found!");
+        throw new Error("Missing order ID from payment");
+      }
+  
+      const verifyParams = {
+        productId: productId,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_order_id: razorpayOrderId,
+        razorpay_signature: response.razorpay_signature,
+        currency: orderData.currency,  // ✅ ADD THIS
+        amount: orderData.amount        // ✅ ADD THIS
+      };
+  
+      console.log('[PAYWALL] ✅ Verifying payment:', verifyParams);
+  
+      const url = `${SUPABASE_FUNCTIONS_BASE}/verify-razorpay-payment`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify(verifyParams),
+      });
+  
+      const data = await res.json();
+      console.log('[PAYWALL] 📦 verify-razorpay-payment raw response:', res.status, data);
+  
+      if (!res.ok) {
+        throw new Error(data?.error || `verify-razorpay-payment failed with status ${res.status}`);
+      }
+  
+      console.log('[PAYWALL] ✅ Payment verified!', data);
+      return data;
+    } catch (error) {
+      console.error('[PAYWALL] ❌ Verify payment error:', error);
+      throw error;
+    }
+  }
+
+  async function startRazorpayCheckout({ productId, currency = "INR" }) {
+    assertSupabase();
+    await loadRazorpay();
+    const session = await getSessionOrThrow();
+    const orderData = await createOrder({ productId, currency });
+
+    const isBundle = productId === BUNDLE_PRODUCT_ID;
+    const description = isBundle 
+      ? "5-Song Bundle Pack" 
+      : `Unlock: ${productId.replace('song:', '')}`;
+
+    const razorpayOrderId = extractOrderId(orderData);
+    
+    if (!razorpayOrderId) {
+      console.error("[PAYWALL] ❌ Cannot start checkout - no order ID!");
+      alert("Error: Could not create order. Please try again.");
+      return;
+    }
+
+    console.log("[PAYWALL] 🚀 Starting Razorpay checkout:", razorpayOrderId);
+
+    const rzp = new window.Razorpay({
+      key: orderData.key_id,
+      order_id: razorpayOrderId,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "Classic Bollywood Melodies",
+      description: description,
+      prefill: { email: session.user?.email || "" },
+      handler: async (response) => {
+        try {
+          console.log("[PAYWALL] 💳 Payment completed, verifying...");
+     await verifyPayment({ 
+  productId, 
+  response,
+  orderData: orderData
+});
+
+// ✅ If this was a song purchase, open its PDF
+if (productId && productId !== BUNDLE_PRODUCT_ID) {
+  const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+
+  try {
+    const pdfUrl = await fetchSheetMusicUrl(songSlug);
+    tryOpenPdf(pdfUrl);
+  } catch (e) {
+    console.warn("[PAYWALL] PDF open failed:", e);
+  }
+}
+
+console.log("[PAYWALL] ✅ SUCCESS! Reloading...");
+window.location.reload();
+
+        } catch (e) {
+          console.error("[PAYWALL] ❌ Verification failed:", e);
+          alert(e?.message || "Verification error");
+        }
+      },
+    });
+    rzp.open();
+  }
+
+  // ✅ FIXED: Same raw fetch treatment for redeem functions
+  async function redeemAnyCredit(productId) {
+    const session = await getSessionOrThrow();
+    const credits = await checkAllCredits();
+
+    console.log(`[PAYWALL] 🎁 Redeeming credit for: ${productId}`);
+    console.log(`[PAYWALL] 💰 Available - Bundle: ${credits.bundleCredits}, Book: ${credits.bookCredits}`);
+
+    // Try book credits first
+    if (credits.bookCredits > 0) {
+      try {
+        console.log("[PAYWALL] 🎁 Trying book credit...");
+        const url = `${SUPABASE_FUNCTIONS_BASE}/redeem-book-credit`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ productId }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || `redeem-book-credit failed: ${res.status}`);
+        console.log("[PAYWALL] ✅ Book credit redeemed!");
+        return { success: true, source: 'book_bonus' };
+      } catch (e) {
+        console.warn('[PAYWALL] Book credit failed:', e);
+      }
+    }
+
+    // Try bundle credits
+    if (credits.bundleCredits > 0) {
+      console.log("[PAYWALL] 🎁 Trying bundle credit...");
+      const url = `${SUPABASE_FUNCTIONS_BASE}/redeem-credit`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ productId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("[PAYWALL] ❌ Bundle credit error:", data);
+        throw new Error(data?.error || `redeem-credit failed: ${res.status}`);
+      }
+      console.log("[PAYWALL] ✅ Bundle credit redeemed!");
+      return { success: true, source: 'bundle' };
+    }
+
+    throw new Error("No credits available");
+  }
+
+  async function showPaywall({ productId, title, body }) {
+    assertSupabase();
+    const paywallEl = document.getElementById("paywall");
+    const appEl = document.getElementById("app");
+    if (!paywallEl || !appEl) return;
+
+    console.log(`[PAYWALL] 🎬 Starting paywall for: ${productId}`);
+
+    appEl.style.display = "none";
+    paywallEl.style.display = "block";
+    paywallEl.innerHTML = `<h3>Checking access...</h3><p>Please wait...</p>`;
+
+    try {
+      const { data } = await window.supabase.auth.getSession();
+      const session = data?.session;
+      
+      console.log("[PAYWALL] 🔐 Session:", session ? "Found" : "Not found");
+      
+      const allowed = await userHasAccess(productId, session);
+      
+    if (allowed) {
+    console.log("[PAYWALL] ✅ ACCESS GRANTED - Showing content");
+    paywallEl.style.display = "none";
+    appEl.style.display = "block";
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    return;
+}
+
+      console.log("[PAYWALL] 🚫 ACCESS DENIED - Showing paywall");
+      
+      const currency = await detectCurrency();
+      const currencySymbol = CURRENCY_SYMBOLS[currency];
+      
+      const [pricingData, credits] = await Promise.all([
+        fetchPricing(productId, currency),
+        checkAllCredits()
+      ]);
+
+      const { price, hasBooks, songsOwned, canUseCredits, bundleAvailable, bundlePrice } = pricingData;
+      
+    // Currencies that don't use decimals
+const noDecimalCurrencies = ['JPY', 'KRW', 'VND', 'IDR', 'CLP'];
+const useDecimals = !noDecimalCurrencies.includes(currency);
+
+const priceDisplay = useDecimals
+  ? `${currencySymbol}${(price / 100).toFixed(2)}`
+  : `${currencySymbol}${(price / 100).toFixed(0)}`;
+
+const bundlePriceDisplay = bundlePrice 
+  ? (useDecimals 
+      ? `${currencySymbol}${(bundlePrice / 100).toFixed(2)}`
+      : `${currencySymbol}${(bundlePrice / 100).toFixed(0)}`)
+  : null;
+
+  let paywallHTML = `
+        <div style="max-width: 500px; margin: 0 auto; padding: 20px;">
+          <h3>${title || "Unlock This Song"}</h3>
+          <p>${body || "Purchase to access this exclusive content"}</p>
+          
+          <div style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+            <p style="margin: 0 0 5px 0;"><strong>Your Price:</strong> ${priceDisplay}</p>
+            <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #666;">
+              ${hasBooks ? `📚 Book owner pricing (${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned)` : `${songsOwned} song${songsOwned !== 1 ? 's' : ''} owned`}
+            </p>
+            <p style="margin: 0; padding-top: 10px; border-top: 1px solid #ddd; font-size: 0.85em; color: #444; line-height: 1.4;">
+              💡 <strong>What's included:</strong><br>
+              • Falling notes learning video<br>
+              • Sheet music PDF (watermarked with your name)<br>
+              • Access both in your <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="color: #3b82f6; text-decoration: underline;">DASHBOARD</a>
+            </p>
+          </div>
+      `;
+
+      // Credits button — only if user has credits
+      if (canUseCredits && credits.total > 0) {
+        let creditSummary = "";
+        if (credits.bundleCredits > 0 && credits.bookCredits > 0) {
+          creditSummary = `1 Bundle = 5 credits + ${credits.bookCredits} book bonus`;
+        } else if (credits.bundleCredits > 0) {
+          creditSummary = `1 Bundle = 5 credits`;
+        } else {
+          creditSummary = `${credits.bookCredits} book bonus`;
+        }
+        console.log(`[PAYWALL] 🎁 Showing credit button — ${creditSummary} (total: ${credits.total})`);
+        paywallHTML += `
+          <div style="margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #444;">
+              🎁 Your credits: <strong>${creditSummary}</strong>
+            </p>
+            <button id="redeemBtn" type="button" style="
+              width: 100%;
+              padding: 12px;
+              background: #10b981;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 16px;
+              cursor: pointer;
+              margin-bottom: 10px;
+            ">
+              Unlock with 1 Credit (${credits.total} available)
+            </button>
+          </div>
+        `;
+      } else {
+        console.log("[PAYWALL] ℹ️ No credits available for redemption");
+      }
+
+      // Bundle option — only if available
+      if (bundleAvailable && bundlePrice) {
+        const perSongPrice = bundlePrice / 5;
+        const perSongDisplay = useDecimals
+          ? `${currencySymbol}${(perSongPrice / 100).toFixed(2)}`
+          : `${currencySymbol}${(perSongPrice / 100).toFixed(0)}`;
+        const totalIfBoughtSeparately = price * 5;
+        const savings = totalIfBoughtSeparately - bundlePrice;
+        const savingsDisplay = useDecimals
+          ? `${currencySymbol}${(savings / 100).toFixed(2)}`
+          : `${currencySymbol}${(savings / 100).toFixed(0)}`;
+        paywallHTML += `
+          <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+            <h4 style="margin: 0 0 10px 0;">💎 Better Deal: 5-Song Bundle</h4>
+            <p style="margin: 0 0 8px 0; font-size: 0.9em;">Get 5 songs for ${bundlePriceDisplay}</p>
+            <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #92400e;">
+              <strong>${perSongDisplay} per song</strong> — Save ${savingsDisplay}!
+            </p>
+            <button id="bundleBtn" type="button" style="
+              width: 100%;
+              padding: 12px;
+              background: #f59e0b;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 16px;
+              cursor: pointer;
+            ">
+              Buy 5-Song Bundle ${bundlePriceDisplay}
+            </button>
+          </div>
+        `;
+      }
+
+      // Subscription — always shown
+      paywallHTML += `
+        <div style="margin: 20px 0; padding: 15px; background: #ede9fe; border: 2px solid #7c3aed; border-radius: 8px;">
+          <h4 style="margin: 0 0 6px 0; color: #5b21b6;">🎵 Unlock All Songs</h4>
+          <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #4c1d95;">
+            Access every song, cancel anytime.
+          </p>
+          <div style="display: flex; gap: 8px;">
+            <button id="subscribeBtn" type="button" style="
+              flex: 1;
+              padding: 12px 8px;
+              background: #7c3aed;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 15px;
+              cursor: pointer;
+            ">
+              ₹249/month
+            </button>
+            <button id="subscribeAnnualBtn" type="button" style="
+              flex: 1;
+              padding: 12px 8px;
+              background: #5b21b6;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 15px;
+              cursor: pointer;
+              position: relative;
+            ">
+              ₹2,499/year
+              <span style="
+                display: block;
+                font-size: 11px;
+                opacity: 0.85;
+                margin-top: 2px;
+              ">Save ~17%</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Buy single song — always shown
+      paywallHTML += `
+        <button id="buyBtn" type="button" style="
+          width: 100%;
+          padding: 12px;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+        ">
+          Buy This Song ${priceDisplay}
+        </button>
+        </div>
+      `;
+
+      paywallEl.innerHTML = paywallHTML;
+
+      // Attach event listeners
+      const buyBtn = document.getElementById("buyBtn");
+      buyBtn.onclick = () => {
+        console.log("[PAYWALL] 💳 User clicked: Buy This Song");
+        startRazorpayCheckout({ productId, currency });
+      };
+
+      const bundleBtn = document.getElementById("bundleBtn");
+      if (bundleBtn) {
+        bundleBtn.onclick = () => {
+          console.log("[PAYWALL] 💳 User clicked: Buy Bundle");
+          startRazorpayCheckout({ productId: BUNDLE_PRODUCT_ID, currency });
+        };
+      }
+const subscribeBtn = document.getElementById("subscribeBtn");
+      if (subscribeBtn) {
+        subscribeBtn.onclick = () => {
+          console.log("[PAYWALL] 💳 User clicked: Subscribe Monthly");
+          startSubscription('monthly');
+        };
+      }
+
+      const subscribeAnnualBtn = document.getElementById("subscribeAnnualBtn");
+      if (subscribeAnnualBtn) {
+        subscribeAnnualBtn.onclick = () => {
+          console.log("[PAYWALL] 💳 User clicked: Subscribe Annual");
+          startSubscription('annual');
+        };
+      }
+      const redeemBtn = document.getElementById("redeemBtn");
+      if (redeemBtn) {
+        redeemBtn.onclick = async () => {
+          try {
+            console.log("[PAYWALL] 🎁 User clicked: Redeem Credit");
+            redeemBtn.disabled = true;
+            redeemBtn.textContent = "Redeeming...";
+       await redeemAnyCredit(productId);
+
+// ✅ After credit unlock, open PDF for this song
+if (productId && productId !== BUNDLE_PRODUCT_ID) {
+  const songSlug = productId.startsWith("song:") ? productId.slice(5) : productId;
+
+  try {
+    const pdfUrl = await fetchSheetMusicUrl(songSlug);
+    tryOpenPdf(pdfUrl);
+  } catch (e) {
+    console.warn("[PAYWALL] PDF open failed:", e);
+  }
+}
+
+console.log("[PAYWALL] ✅ Credit redeemed, reloading...");
+window.location.reload();
+
+          } catch (e) {
+            console.error("[PAYWALL] ❌ Redeem failed:", e);
+            alert(e?.message || "Failed to redeem credit");
+            redeemBtn.disabled = false;
+            redeemBtn.textContent = `🎁 Unlock with 1 Credit`;
+          }
+        };
+      }
+
+    } catch (err) {
+      console.error("[PAYWALL] ❌ Critical error:", err);
+      paywallEl.innerHTML = `
+        <h3>Error</h3>
+        <p>Failed to load pricing. Please refresh the page.</p>
+        <p style="font-size: 0.8em; color: #666;">${err.message}</p>
+      `;
+    }
+  }
+
+  console.log("[PAYWALL] ✅ Paywall system loaded");
+  window.showPaywall = showPaywall;
+  window.startRazorpayCheckout = startRazorpayCheckout;
+async function startSubscription(planType) {
+  await loadRazorpay();
+  const { data: { session } } = await window.supabase.auth.getSession();
+  if (!session) { alert("Please log in first"); return; }
+
+const res = await fetch(
+    `${SUPABASE_FUNCTIONS_BASE}/create-subscription`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+        "apikey": SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ plan_type: planType }),
+    }
+  );
+const data = await res.json();
+
+  if (!res.ok) {
+    console.error("[PAYWALL] ❌ create-subscription failed:", data);
+    alert("Subscription error: " + (data?.error || JSON.stringify(data)));
+    return;
+  }
+
+  const options = {
+    key: data.key_id,
+    name: "riaaz",
+description: planType === "monthly" ? "Monthly Subscription" : planType === "annual" ? "Annual Subscription" : "Lifetime Access",
+    image: "https://app.riaomshandilya.com/favicon.ico",
+
+    handler: async function(response) {
+      const verifyRes = await fetch(
+    `${SUPABASE_FUNCTIONS_BASE}/verify-subscription`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            plan_type: planType,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            razorpay_subscription_id: response.razorpay_subscription_id || null,
+            razorpay_order_id: response.razorpay_order_id || null,
+          }),
+        }
+      );
+      const verifyData = await verifyRes.json();
+      if (verifyData.success) {
+        alert("🎉 You're subscribed! Enjoy all songs.");
+        window.location.reload();
+      } else {
+        alert("Payment verification failed. Please contact us.");
+      }
+    },
+
+    prefill: { email: session.user.email },
+    theme: { color: "#6c47ff" },
+  };
+
+if (planType === "monthly" || planType === "annual") {
+    options.subscription_id = data.subscription_id;
+  } else {
+    options.order_id = data.order_id;
+    options.amount = data.amount;
+    options.currency = data.currency;
+  }
+
+const rzp = new Razorpay(options);
+    rzp.open();
+  }
+
+  window.startSubscription = startSubscription;
+}
+)();
+
 </script>
 
-<!-- 5) Call paywall for THIS song -->
-<script>
-  window.showPaywall({
-    productId: "song:aajkal",
-    title: "This song is locked",
-    body: "Please buy to unlock this lesson.",
-    onSuccess: () => {
-      document.getElementById('app').style.display = 'block';
+<!-- 4+5) Login check — paywall only runs AFTER auth confirms session -->
+<script type="module">
+  if (!window.supabase) {
+    console.error('[FATAL] window.supabase is undefined — supabaseClient.js did not initialize correctly.');
+  } else {
+    async function requireLogin() {
+      try {
+        const { data } = await window.supabase.auth.getSession();
+        if (!data.session) {
+          window.location.replace("/login.html");
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("Auth check failed.", e);
+        return false;
+      }
     }
-  });
+
+    const loggedIn = await requireLogin();
+
+    if (loggedIn) {
+      if (typeof window.showPaywall !== 'function') {
+        console.error('[FATAL] window.showPaywall is not defined — paywall.js did not initialize correctly.');
+      } else {
+        window.showPaywall({
+          productId: "song:aajkal",
+          title: "This song is locked",
+          body: "Please buy to unlock this lesson.",
+          onSuccess: () => {
+            document.getElementById('app').style.display = 'block';
+          }
+        });
+      }
+    }
+
+    window.addEventListener("pageshow", requireLogin);
+  }
 </script>
 
 </body>
