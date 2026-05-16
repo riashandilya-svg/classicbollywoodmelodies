@@ -3470,7 +3470,10 @@ const endTimeout = setTimeout(() => {
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
 
-    if (scoreModeActive) clearScoreHighlight();
+    // NOTE: do NOT call clearScoreHighlight() here — spawnNextValidNote → onTrainingNoteSpawned
+    // calls _applyHighlight() which clears the previous highlight and sets the correct one atomically.
+    // Calling clearScoreHighlight() first causes a visible blank flash on the score between preview
+    // end and user turn start.
 
     // Kill beat/count/1&2& completely — preview is over, user's turn now
     stopMetronome();
