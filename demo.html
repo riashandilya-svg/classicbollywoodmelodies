@@ -318,11 +318,20 @@
     </div>
     <div style="position:absolute;bottom:10px;right:12px;font-size:0.7rem;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:100px;">Click to watch</div>
   </div>
+  <div id="ytThumbMeasures" style="display:none;margin:10px 0 12px;cursor:pointer;border-radius:14px;overflow:hidden;border:1px solid rgba(155,110,255,0.2);position:relative;" onclick="openLightbox('FaJh5yr51iw')">
+    <img src="https://img.youtube.com/vi/FaJh5yr51iw/hqdefault.jpg" alt="What are measures?" style="width:100%;display:block;" />
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);">
+      <div style="width:56px;height:56px;background:#ff0000;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+    </div>
+    <div style="position:absolute;bottom:10px;right:12px;font-size:0.7rem;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:100px;">🎵 What are measures?</div>
+  </div>
   <div id="demoControls">
     <button class="cbtn cbtn-ghost" id="backBtn">← Back</button>
     <span id="demoStep"></span>
     <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-      <a class="measures-link" id="measuresLink" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
+      <button class="measures-link" id="measuresLink" onclick="openLightbox('FaJh5yr51iw')">🎵 What are measures?</button>
       <button class="cbtn cbtn-dark" id="skipBtn">Skip</button>
       <button class="cbtn cbtn-primary" id="nextBtn">Next →</button>
     </div>
@@ -484,6 +493,8 @@ function stopVideo() {
   // hide yt thumb
   const ytThumb = document.getElementById("ytThumb");
   if (ytThumb) ytThumb.style.display = "none";
+  const ytThumbMeasures = document.getElementById("ytThumbMeasures");
+  if (ytThumbMeasures) ytThumbMeasures.style.display = "none";
   closeLightbox();
 }
 function playVideo(src) {
@@ -700,7 +711,9 @@ function render() {
   stopVideo(); stopImage();
 
   const measuresLink = document.getElementById("measuresLink");
-  measuresLink.style.display = step.showMeasuresLink ? "inline-flex" : "none";
+  measuresLink.style.display = "none";
+  const ytThumbMeasures = document.getElementById("ytThumbMeasures");
+  ytThumbMeasures.style.display = step.showMeasuresLink ? "block" : "none";
 
   const rect = highlight(step.selector);
   if (!step.selector) hi.style.display = "none";
