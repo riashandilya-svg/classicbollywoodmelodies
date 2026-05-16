@@ -4918,12 +4918,19 @@ addMidiFallingRectangle(
 // ============================================================
 
 // ---- State ----
-let _svgNoteElements    = [];   // annotated noteheads: {el, tx, ty, clef, sheet_measure}
+let _svgNoteElements    = [];   // annotated noteheads: {el, tx, ty, clef, sheet_measure, pageNum}
 let _currentHighlightEl = null;
 let _lastPannedMeasure  = -1;
 
 // _svgBuckets[sheet_measure][clef] = ordered array of indices into _svgNoteElements
+// For measures that appear on multiple pages (e.g. measure 36 on page 1 and page 2),
+// this contains ONLY page 1 noteheads. Page 2+ noteheads are in _svgBucketsPage2.
 let _svgBuckets = {};
+
+// _svgBucketsPage2[sheet_measure][clef] = page-2 noteheads for measures that appear on
+// both page 1 (end of repeat) and page 2 (start of post-repeat section).
+// Currently only measure REPEAT_END (36) is affected.
+let _svgBucketsPage2 = {};
 
 // _bucketFirstIsGrace[`${measure}|${clef}`] = true if that bucket's first (lowest-tx) note is a grace note.
 // Used in assignRanks to detect MIDI grace notes placed by the MIDI file in the preceding measure
@@ -4975,6 +4982,7 @@ const SVG_PAGE_SYSTEMS = [
 function _buildSvgNoteIndex() {
     _svgNoteElements    = [];
     _svgBuckets         = {};
+    _svgBucketsPage2    = {};
     _bucketFirstIsGrace = {};
     _midiRankMap        = new Map();
     _currentHighlightEl = null;
@@ -5076,9 +5084,16 @@ function _buildSvgNoteIndex() {
                         // Grace notes stay in their visual measure (same as MIDI measure)
                         const sheet_measure = svgMeasure;
                         const idx = _svgNoteElements.length;
-                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace });
-                        if (!_svgBuckets[sheet_measure]) _svgBuckets[sheet_measure] = { treble: [], bass: [] };
-                        _svgBuckets[sheet_measure][clef].push(idx);
+                        _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
+
+                        // Measure REPEAT_END (36) appears on both page 1 (end of repeat)
+                        // and page 2 (start of post-repeat section). Route page 2+ copies
+                        // to _svgBucketsPage2 so the first-pass highlights use page 1 noteheads
+                        // and the repeat-pass highlights use page 2 noteheads.
+                        const isRepeatPassPage = (pageNum >= 2 && sheet_measure === REPEAT_END);
+                        const targetBuckets = isRepeatPassPage ? _svgBucketsPage2 : _svgBuckets;
+                        if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
+                        targetBuckets[sheet_measure][clef].push(idx);
                         break;
                     }
                 }
@@ -5091,6 +5106,11 @@ function _buildSvgNoteIndex() {
     for (const m of Object.keys(_svgBuckets)) {
         for (const clef of ['treble', 'bass']) {
             _svgBuckets[m][clef].sort((a, b) => _svgNoteElements[a].tx - _svgNoteElements[b].tx);
+        }
+    }
+    for (const m of Object.keys(_svgBucketsPage2)) {
+        for (const clef of ['treble', 'bass']) {
+            _svgBucketsPage2[m][clef].sort((a, b) => _svgNoteElements[a].tx - _svgNoteElements[b].tx);
         }
     }
 
@@ -5228,7 +5248,7 @@ function _buildSvgMidiMap() {
             // allow the correction on the very first encounter (used===0), and again
             // on the second repeat pass (used===1 etc.) by using used < max(2*cap, 2).
             const allowGraceCorrect = (cap === 0)
-                ? (used === 0)                 // empty bucket: allow first pass only
+                ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
                 : (used < 2 * cap);            // normal bucket: within first pass
             let gracePreCorrected = hardcodedGraceCorrected; // inherit hardcoded guard
             if (!hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
@@ -5250,7 +5270,7 @@ function _buildSvgMidiMap() {
             // only on repeat bug).
             const overflowKey = `${sheetMeasure}|${clef}`;
             if (!gracePreCorrected && !overflowFired.has(overflowKey) &&
-                    (cap === 0 ? used === 0 : (used >= cap && used < 2 * cap))) {
+                    (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
                 const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
                 if (nextCap > 0) {
                     console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
@@ -5293,17 +5313,15 @@ function _buildSvgMidiMap() {
 
     assignRanks(trebleMidi, 'treble');
 
-    // Do NOT reset assignedCount before the bass pass.
-    // Keys are "measure|clef" so treble and bass are fully independent —
-    // no cross-contamination. Resetting bass keys zeroes out 'used', which
-    // means overflow never fires during first-pass bass processing (used never
-    // reaches cap), so overflowFired never gets e.g. "30|bass". When the
-    // repeat-pass notes arrive, used climbs from 0 to cap, overflow fires for
-    // the first time on a repeat-pass note — one note leaks into the wrong
-    // measure before overflowFired can block it. Keeping the counts intact
-    // means used === cap when the repeat pass starts, so the very first
-    // repeat-pass note triggers overflow, overflowFired immediately blocks it,
-    // and all repeat notes stay in the correct bucket.
+    // Reset assignedCount between clef passes so that the pass-guard logic
+    // (used >= cap && used < 2*cap) is evaluated independently for each clef.
+    // Without this, treble-clef assigned-count values leak into the bass pass
+    // (they share the same object keyed by measure|clef, but the clef suffix
+    // makes them distinct — so in practice there is no cross-contamination).
+    // We reset anyway as a defensive measure to ensure clean state.
+    for (const key of Object.keys(assignedCount)) {
+        if (key.endsWith('|bass')) delete assignedCount[key];
+    }
 
     assignRanks(bassMidi, 'bass');
 
@@ -5322,9 +5340,15 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    const bucket = _svgBuckets[entry.sheet_measure]?.[clef];
+    // For REPEAT_END (measure 36): first-pass notes (physical ≤ REPEAT_END) use page 1 bucket,
+    // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
+    const bucketSource = isRepeatPass ? _svgBucketsPage2 : _svgBuckets;
+
+    const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing (repeatPass=${isRepeatPass})`);
         return [];
     }
 
@@ -5473,111 +5497,6 @@ window._debug = function() {
     console.log(`_midiRankMap has ${_midiRankMap.size} entries`);
     console.groupEnd();
 };
-
-// ============================================================
-// DEBUG PANEL — measures 29-36 rank verification
-// ============================================================
-(function() {
-    const style = document.createElement('style');
-    style.textContent = `
-        #debugToggleBtn {
-            position: fixed; bottom: 14px; left: 14px; z-index: 99999;
-            padding: 7px 14px; font-size: 12px; font-family: 'Inter', sans-serif;
-            font-weight: 700; background: rgba(30,34,48,0.92); color: #ff6b81;
-            border: 1px solid rgba(255,107,129,0.35); border-radius: 999px;
-            cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            transition: background 0.2s; letter-spacing: 0.04em;
-        }
-        #debugToggleBtn:hover { background: rgba(50,54,70,0.97); }
-        #debugPanel {
-            display: none; position: fixed; bottom: 52px; left: 14px;
-            z-index: 99998; width: min(560px, 96vw); max-height: 70vh;
-            overflow-y: auto; background: rgba(15,17,23,0.97);
-            border: 1px solid rgba(255,107,129,0.3); border-radius: 16px;
-            padding: 16px 18px; font-family: monospace; font-size: 12px;
-            color: #f0f0f5; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        #debugPanel.open { display: block; }
-        #debugPanel h3 { margin: 0 0 12px 0; font-size: 13px; color: #ff6b81;
-            letter-spacing: 0.06em; text-transform: uppercase; font-family: 'Inter', sans-serif; }
-        .dbg-measure { margin-bottom: 10px; padding: 8px 10px;
-            background: rgba(255,255,255,0.04); border-radius: 8px;
-            border-left: 3px solid rgba(255,107,129,0.4); }
-        .dbg-m-title { font-weight: 700; color: #ff9eb5; margin-bottom: 4px;
-            font-family: 'Inter', sans-serif; }
-        .dbg-clef { margin: 2px 0; color: #aaa; }
-        .dbg-label { color: #7dd3fc; font-weight: 600; min-width: 52px; display: inline-block; }
-        .dbg-rank { display: inline-block; margin-right: 5px; padding: 1px 5px;
-            background: rgba(255,107,129,0.15); border-radius: 4px; color: #ffd6e0; font-size: 11px; }
-        .dbg-ok   { color: #4ade80; font-weight: 700; }
-        .dbg-warn { color: #facc15; font-weight: 700; }
-        .dbg-empty { color: #555; font-style: italic; }
-        .dbg-footer { font-size: 11px; color: #666; margin-top: 8px; font-family: 'Inter', sans-serif; }
-        .dbg-refresh { float: right; font-size: 11px; padding: 3px 10px;
-            background: rgba(255,107,129,0.18); border: none; border-radius: 999px;
-            color: #ff6b81; cursor: pointer; font-family: 'Inter', sans-serif; }
-    `;
-    document.head.appendChild(style);
-
-    const btn = document.createElement('button');
-    btn.id = 'debugToggleBtn';
-    btn.textContent = '🔍 Debug m29-36';
-    document.body.appendChild(btn);
-
-    const panel = document.createElement('div');
-    panel.id = 'debugPanel';
-    document.body.appendChild(panel);
-
-    function renderDebugPanel() {
-        const TARGET = [29,30,31,32,33,34,35,36];
-        const midiCounts = {};
-        if (window._midiRankMap) {
-            for (const [, e] of window._midiRankMap) {
-                const k = e.sheet_measure + '|' + e.clef;
-                midiCounts[k] = (midiCounts[k] ?? 0) + 1;
-            }
-        }
-
-        let html = '<h3>SVG Buckets m29-36 <button class="dbg-refresh" onclick="window._debugRefresh()">&#8635; Refresh</button></h3>';
-
-        if (!window._svgBuckets || !Object.keys(window._svgBuckets).length) {
-            html += '<div class="dbg-empty">SVG map not built yet — enable Score Mode first, then refresh.</div>';
-            panel.innerHTML = html;
-            return;
-        }
-
-        for (const m of TARGET) {
-            html += '<div class="dbg-measure"><div class="dbg-m-title">Measure ' + m + '</div>';
-            for (const clef of ['treble','bass']) {
-                const bucket = (window._svgBuckets[m] || {})[clef] || [];
-                const midiN  = midiCounts[m + '|' + clef] ?? 0;
-                const svgN   = bucket.length;
-                if (svgN === 0 && midiN === 0) {
-                    html += '<div class="dbg-clef"><span class="dbg-label">' + clef + '</span> <span class="dbg-empty">empty</span></div>';
-                    continue;
-                }
-                const rankHtml = bucket.map(function(idx, r) {
-                    const n = window._svgNoteElements[idx];
-                    return '<span class="dbg-rank">r' + r + ' tx=' + n.tx.toFixed(0) + (n.isGrace ? '&#9833;' : '') + '</span>';
-                }).join('');
-                const ok = (midiN === svgN || midiN === 2 * svgN);
-                const statusHtml = ok
-                    ? '<span class="dbg-ok">&#10003; midi=' + midiN + ' svg=' + svgN + '</span>'
-                    : '<span class="dbg-warn">&#9888; midi=' + midiN + ' svg=' + svgN + '</span>';
-                html += '<div class="dbg-clef"><span class="dbg-label">' + clef + '</span> ' + statusHtml + ' &nbsp; ' + (rankHtml || '<span class="dbg-empty">no ranks</span>') + '</div>';
-            }
-            html += '</div>';
-        }
-        html += '<div class="dbg-footer">_midiRankMap total: ' + (window._midiRankMap ? window._midiRankMap.size : '?') + ' entries</div>';
-        panel.innerHTML = html;
-    }
-
-    window._debugRefresh = renderDebugPanel;
-    btn.addEventListener('click', function() {
-        panel.classList.toggle('open');
-        if (panel.classList.contains('open')) renderDebugPanel();
-    });
-})();
 
 // ============================================================
 // SCORE VIEW — ALL 3 PAGES LOADED & STACKED
