@@ -4052,7 +4052,7 @@ canvas.addEventListener('mouseup', () => {
 }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
-if (getNoteName(activeMidiNote) !== currentTrainingNote) {
+if (!currentChordNotes.has(activeMidiNote)) {
     activeMidiNote = null;
     noteHoldStartTime = null;
     expectedMidiTreble.clear();
