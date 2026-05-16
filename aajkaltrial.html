@@ -4578,6 +4578,23 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
 
 practiceNotes.sort((a, b) => a.playTime - b.playTime);
 
+// Filter out notes whose rank-map sheet_measure doesn't match their logical measure.
+// This catches grace notes that overflow into the next sheet measure (e.g. the pickup
+// grace note at the end of physical measure 36 that gets assigned to svgSheet=37).
+// Exception: repeat-pass notes legitimately remap (e.g. physical 37-44 → logical 29-36).
+practiceNotes = practiceNotes.filter(n => {
+    const mk = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+    const entry = _midiRankMap.get(mk);
+    if (!entry) return true; // no rank entry — keep it, will warn later
+    if (entry.sheet_measure === n.logicalMeasure) return true; // matches — keep
+    // Allow repeat-pass notes: their physicalMeasure > REPEAT_END
+    const physM = getMeasureFromTime(n.time);
+    if (physM !== null && physM > REPEAT_END) return true;
+    // Mismatch on first pass — this note belongs to a different sheet measure, drop it
+    console.log(`🚫 Dropping note: midi=${n.midi} track=${n.track} time=${n.time.toFixed(4)} logMeasure=${n.logicalMeasure} svgSheet=${entry.sheet_measure} (sheet mismatch)`);
+    return false;
+});
+
 // DEBUG: log every practiceNote for measure 35 analysis
 console.group('🔬 practiceNotes dump (all notes):');
 practiceNotes.forEach((n, i) => {
@@ -5350,7 +5367,10 @@ function _buildSvgMidiMap() {
             // SVG noteheads as the first pass.  For measures that are never repeated
             // the bucket size is never exceeded so % has no effect.
             const rawRank    = rankCounters[bucketKey]++;
-            const bucketSize = (_svgBuckets[sheetMeasure]?.[clef] || []).length;
+            // For measure 36 bass the noteheads live in _svgBucketsPage2 (page-1 bucket is empty).
+            // Fall back to page2 so the % wrap uses the correct size (6), not 0.
+            const bucketSize = ((_svgBuckets[sheetMeasure]?.[clef] || []).length)
+                || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
             const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
             // DEBUG: log all assignments to sheet 35 treble
