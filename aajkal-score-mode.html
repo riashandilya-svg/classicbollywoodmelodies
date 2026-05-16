@@ -2877,7 +2877,12 @@ function drawKeyboard() {
     const keyHeight = KEYBOARD_HEIGHT;
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
 
-    // ---- WHITE KEYS ----
+    // 🔍 DEBUG — remove after confirming highlights work
+    if ((expectedMidiTreble.size > 0 || expectedMidiBass.size > 0) && !drawKeyboard._logged) {
+        drawKeyboard._logged = true;
+        console.log('🎹 drawKeyboard sees: treble=' + JSON.stringify([...expectedMidiTreble]) + ' bass=' + JSON.stringify([...expectedMidiBass]) + ' canvasW=' + canvas.width + ' canvasH=' + canvas.height + ' keyboardTop=' + keyboardTop);
+        setTimeout(() => { drawKeyboard._logged = false; }, 2000);
+    }
     let whiteIndex = 0;
 
     for (let midi = START_NOTE; midi <= END_NOTE; midi++) {
