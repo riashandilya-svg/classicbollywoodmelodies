@@ -5255,11 +5255,13 @@ function _buildSvgMidiMap() {
                 if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
-                } else if (sheetMeasure === 36) {
-                    // Repeat pass: grace note for logical 29 lands in logical 36.
+                } else if (sheetMeasure === 36 && clef === 'treble') {
+                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
                     // This fires on both passes when the grace note's MIDI time
                     // maps to physical 36 (first pass) or physical 44 (second pass,
                     // also logical 36). Always redirect to logical 29.
+                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
+                    // genuine short notes that must NOT be redirected to measure 29.
                     sheetMeasure = 29;
                     hardcodedGraceCorrected = true;
                 }
