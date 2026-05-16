@@ -2898,8 +2898,8 @@ function drawKeyboard() {
             wGrad.addColorStop(0, '#FFCDD2');
             wGrad.addColorStop(1, '#EF9A9A');
         } else if (isBass) {
-            wGrad.addColorStop(0, '#9E9E9E');
-            wGrad.addColorStop(1, '#616161');
+            wGrad.addColorStop(0, '#B3E5FC');
+            wGrad.addColorStop(1, '#4FC3F7');
         } else {
             wGrad.addColorStop(0, '#ffffff');
             wGrad.addColorStop(0.7, '#f5f5f5');
@@ -2929,8 +2929,17 @@ function drawKeyboard() {
             ctx.shadowBlur = 0;
         }
 
+        // Glow for active bass key
+        if (isBass) {
+            ctx.shadowColor = '#29b6f6';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(41,182,246,0.18)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
         if (showNoteNames) {
-            ctx.fillStyle = isBass ? '#fff' : '#555';
+            ctx.fillStyle = isBass ? '#01579b' : '#555';
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -2966,8 +2975,8 @@ function drawKeyboard() {
             bGrad.addColorStop(0, '#EF9A9A');
             bGrad.addColorStop(1, '#E57373');
         } else if (isBass) {
-            bGrad.addColorStop(0, '#555');
-            bGrad.addColorStop(1, '#222');
+            bGrad.addColorStop(0, '#29B6F6');
+            bGrad.addColorStop(1, '#0277BD');
         } else {
             bGrad.addColorStop(0, '#333');
             bGrad.addColorStop(0.5, '#111');
@@ -2988,6 +2997,15 @@ function drawKeyboard() {
             ctx.shadowColor = '#ff6b6b';
             ctx.shadowBlur = 20;
             ctx.fillStyle = 'rgba(255,107,107,0.4)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
+
+        // Glow for active bass
+        if (isBass) {
+            ctx.shadowColor = '#29b6f6';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(41,182,246,0.45)';
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
             ctx.shadowBlur = 0;
         }
