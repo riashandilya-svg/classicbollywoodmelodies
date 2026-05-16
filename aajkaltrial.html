@@ -4506,11 +4506,25 @@ practiceNotes = allMidiNotes
             // allowed measure (classic grace-note-before-barline case).
             //
             // IMPORTANT: only rescue notes that are physically adjacent (within 1
-            // measure) to an allowed physical measure. This prevents repeat-pass
-            // notes (e.g. physical 42-43 which also map to logical 35 via the rank
-            // map) from being pulled into a single-measure skip-repeats selection.
+            // measure) AND whose MIDI time is genuinely close to the barline of an
+            // allowed physical measure (i.e. true grace notes). This prevents
+            // repeat-pass notes (e.g. physical 35 notes whose MIDI times are well
+            // inside measure 35) from being rescued when starting at measure 36,
+            // just because physical 36 is adjacent to physical 35.
             const isPhysicallyAdjacent = physicalSeq.some(q => Math.abs(q - p) <= 1);
             if (!isPhysicallyAdjacent) return null;
+
+            // Extra guard: the note's MIDI time must be within 0.3 s of the boundary
+            // between the out-of-range measure (p) and an adjacent allowed measure.
+            // Real grace notes sit fractionally before a barline; regular notes from
+            // a different repeat pass do not.
+            const GRACE_RESCUE_WINDOW = 0.3; // seconds
+            const nearAllowedBoundary = physicalSeq.some(q => {
+                if (Math.abs(q - p) !== 1) return false;
+                const boundary = (q < p) ? MEASURE_TIME_MAP[q]?.end : MEASURE_TIME_MAP[p]?.end;
+                return boundary !== undefined && Math.abs(note.time - boundary) <= GRACE_RESCUE_WINDOW;
+            });
+            if (!nearAllowedBoundary) return null;
 
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
