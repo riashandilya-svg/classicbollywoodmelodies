@@ -3249,14 +3249,14 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Look ahead for simultaneous notes (within 10ms)
+    // Look ahead for simultaneous notes (within 15ms — safe: grace-note gap is 20ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
 
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.015) {
             // In 'both' mode: include all simultaneous notes regardless of track
             // In single-hand mode: only same track
             if (clefMode === 'both' || nextNote.track === noteObj.track) {
@@ -3421,16 +3421,16 @@ const visualStart =
             if (isRepeatPass) {
                 const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
                 notesToHighlight = sectionNotes.filter(n =>
-                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.015
                 );
                 if (!notesToHighlight.length) {
                     notesToHighlight = sectionNotes.filter(n =>
-                        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
                     );
                 }
             } else {
                 notesToHighlight = sectionNotes.filter(n =>
-                    Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                    Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
                 );
             }
 
@@ -3603,7 +3603,7 @@ function advanceChordIndex() {
     let skip = 0;
     for (let i = trainingIndex; i < practiceNotes.length; i++) {
         const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
-        if (Math.abs(t - baseTime) < 0.01) skip++;
+        if (Math.abs(t - baseTime) < 0.015) skip++;
         else break;
     }
     trainingIndex += Math.max(skip, 1);
@@ -5575,16 +5575,16 @@ function onTrainingNoteSpawned(noteObj) {
     if (isRepeatPass) {
         const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
         simultaneousNotes = practiceNotes.filter(n =>
-            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
+            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.015
         );
         if (!simultaneousNotes.length) {
             simultaneousNotes = practiceNotes.filter(n =>
-                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
             );
         }
     } else {
         simultaneousNotes = practiceNotes.filter(n =>
-            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
+            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
         );
     }
 
@@ -5598,6 +5598,20 @@ function onTrainingNoteSpawned(noteObj) {
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
         allIndices.push(...indices);
+    }
+
+    // Broader scan: also pick up chord-mates within 15ms not found by the
+    // simultaneousNotes filter (e.g. bass & treble with slightly different MIDI
+    // timestamps). 15ms is safe — the grace-note / main-note gap is 20ms.
+    for (const n of practiceNotes) {
+        const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+        if (seen.has(k)) continue;
+        const npt = n.playTime ?? n.time;
+        if (Math.abs(npt - notePlayTime) < 0.015) {
+            seen.add(k);
+            const indices = _svgIndicesForMidiNote(n, 'both');
+            allIndices.push(...indices);
+        }
     }
 
     // Fallback: just use the primary noteObj
