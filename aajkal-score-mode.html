@@ -2887,14 +2887,12 @@ function drawKeyboard() {
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
 
-        // Premium gradient white key
+        // Premium gradient white key — both treble AND bass get the same bright highlight
+        // so the user always sees a clear "press this key" signal regardless of hand
         const wGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
-        if (isTreble) {
+        if (isTreble || isBass) {
             wGrad.addColorStop(0, '#FFCDD2');
             wGrad.addColorStop(1, '#EF9A9A');
-        } else if (isBass) {
-            wGrad.addColorStop(0, '#9E9E9E');
-            wGrad.addColorStop(1, '#616161');
         } else {
             wGrad.addColorStop(0, '#ffffff');
             wGrad.addColorStop(0.7, '#f5f5f5');
@@ -2915,8 +2913,8 @@ function drawKeyboard() {
         ctx.fillStyle = innerGrad;
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), 14);
 
-        // Glow for active treble key
-        if (isTreble) {
+        // Glow for any active key (treble OR bass)
+        if (isTreble || isBass) {
             ctx.shadowColor = '#ff6b6b';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(255,107,107,0.15)';
@@ -2925,7 +2923,7 @@ function drawKeyboard() {
         }
 
         if (showNoteNames) {
-            ctx.fillStyle = isBass ? '#fff' : '#555';
+            ctx.fillStyle = (isTreble || isBass) ? '#c0392b' : '#555';
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -2955,14 +2953,11 @@ function drawKeyboard() {
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
 
-        // Premium gradient black key
+        // Premium gradient black key — both treble AND bass get bright pink highlight
         const bGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + blackKeyHeight);
-        if (isTreble) {
+        if (isTreble || isBass) {
             bGrad.addColorStop(0, '#EF9A9A');
             bGrad.addColorStop(1, '#E57373');
-        } else if (isBass) {
-            bGrad.addColorStop(0, '#555');
-            bGrad.addColorStop(1, '#222');
         } else {
             bGrad.addColorStop(0, '#333');
             bGrad.addColorStop(0.5, '#111');
@@ -2978,8 +2973,8 @@ function drawKeyboard() {
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
 
-        // Glow for active treble
-        if (isTreble) {
+        // Glow for any active key (treble OR bass)
+        if (isTreble || isBass) {
             ctx.shadowColor = '#ff6b6b';
             ctx.shadowBlur = 20;
             ctx.fillStyle = 'rgba(255,107,107,0.4)';
@@ -3307,13 +3302,10 @@ function spawnTrainingNote(noteObj) {
             );
         });
 
-        // 🎹 In falling-notes mode, do NOT pre-highlight the keyboard here.
-        // The animate() loop adds midi to expectedMidiTreble/Bass when each
-        // falling note *lands* on the keyboard — pre-setting them here causes
-        // an immediate flash that then gets wiped by the safety-net before the
-        // note even lands, leaving the user confused about which key to press.
-        // The landing handler already checks isPartOfCurrentChord and only
-        // keeps notes in the sets that belong to the current chord.
+        // 🎹 In falling-notes mode the animate() landing handler adds notes to
+        // expectedMidiTreble/Bass when they physically reach the keyboard.
+        // Pre-setting them here causes a flash that the safety-net wipes before landing.
+        // Just clear so there are no stale keys from the previous note.
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
     }
@@ -3623,11 +3615,9 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
-    // Safety net: if nothing is actively waiting for input AND practice is not running,
-    // ensure no keys are stuck highlighted.
-    // IMPORTANT: do NOT clear when trainingActive is true — in score mode visualsPlaying
-    // is always false, so without the trainingActive guard the highlights would be wiped
-    // on every single animation frame the moment waitingForInput briefly goes false.
+    // Safety net: only wipe stuck highlights when practice has fully stopped.
+    // Do NOT clear while trainingActive — in score mode visualsPlaying is always false,
+    // so without the trainingActive guard this fires every frame and kills bass highlights.
     if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null && !trainingActive) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
@@ -4047,13 +4037,10 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
 
     synth.triggerRelease(getNoteName(note));
 
-    // NOTE: Do NOT clear expectedMidiTreble/Bass here unconditionally.
-    // On success (heldTime >= expectedHoldDuration), we keep the current key
-    // highlighted for the 300ms gap before spawnNextValidNote runs — this way
-    // the user always sees a highlighted key. spawnTrainingNote will clear and
-    // re-set the highlights atomically when the next note spawns.
-    // On failure (too short), spawnTrainingNote is called after 600ms and also
-    // handles the highlight reset, so we clear here only on failure below.
+    // Do NOT clear expectedMidiTreble/Bass unconditionally here.
+    // On success we keep the current key lit during the 300ms gap before
+    // spawnTrainingNote fires — spawnTrainingNote does the atomic clear+refill.
+    // On failure we DO clear below so the key stops glowing while user retries.
 
     // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
     if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
@@ -4070,11 +4057,7 @@ explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
         
-        // Do NOT clear expectedMidiTreble/Bass here — spawnTrainingNote (called below
-        // via spawnNextValidNote) clears and re-populates them atomically.
-        // Clearing here causes a 300ms window where the keyboard shows no highlight,
-        // leaving the user confused about what to play next.
-        
+        // Keep highlights visible during 300ms gap — spawnTrainingNote will reset them
         advanceChordIndex();
 updateTrainingProgress();
 
@@ -4212,10 +4195,6 @@ canvas.addEventListener('touchend', (e) => {
         // Capture hold time before any state is cleared
         const heldTime = performance.now() - noteHoldStartTime;
 
-        // Clear highlights immediately — spawnTrainingNote re-adds them
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-
         noteHoldStartTime = null;
         activeMidiNote = null;
 
@@ -4231,9 +4210,7 @@ canvas.addEventListener('touchend', (e) => {
             waitingForInput = false;
             expectedMidiNote = null;
 
-            // Do NOT clear expectedMidiTreble/Bass here — spawnTrainingNote handles it
-            // atomically so keyboard stays highlighted during the 300ms transition gap.
-
+            // Keep highlights lit during 300ms gap — spawnTrainingNote resets them atomically
             advanceChordIndex();
             updateTrainingProgress();
 
@@ -5749,9 +5726,8 @@ if (freeMode && note === freeModeActiveNote) {
         
         if (noteHoldStartTime === null) return;
 
-        // NOTE: Do NOT clear expectedMidiTreble/Bass here unconditionally.
-        // On success, keep keys highlighted during the 300ms gap before spawnNextValidNote.
-        // spawnTrainingNote handles the clear-and-refill atomically.
+        // Do NOT clear highlights here unconditionally — on success keep them lit
+        // during the 300ms gap before spawnNextValidNote. spawnTrainingNote resets atomically.
 
         const heldTime = performance.now() - noteHoldStartTime;
 
@@ -5769,8 +5745,7 @@ explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
     
-    // Do NOT clear expectedMidiTreble/Bass here — spawnTrainingNote handles it atomically
-    
+    // Keep highlights visible during 300ms gap — spawnTrainingNote handles the reset
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
     advanceChordIndex();
 updateTrainingProgress();
