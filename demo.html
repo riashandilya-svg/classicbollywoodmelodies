@@ -338,17 +338,6 @@
   </div>
 </div>
 
-<!-- YouTube thumbnail — outside card so lightbox z-index isn't clipped -->
-<div id="ytThumb" style="display:none;position:fixed;z-index:1000002;cursor:pointer;border-radius:14px;overflow:hidden;border:1px solid rgba(155,110,255,0.2);">
-  <img id="ytThumbImg" src="" alt="Watch video" style="width:100%;display:block;" />
-  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);">
-    <div style="width:56px;height:56px;background:#ff0000;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-    </div>
-  </div>
-  <div style="position:absolute;bottom:10px;right:12px;font-size:0.7rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:100px;">Click to watch</div>
-</div>
-
 <!-- YouTube lightbox -->
 <div id="ytLightbox" style="display:none;position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
   <button id="ytClose" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:1.1rem;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;">✕</button>
@@ -493,8 +482,6 @@ function stopVideo() {
   // hide yt thumb
   const ytThumb = document.getElementById("ytThumb");
   if (ytThumb) ytThumb.style.display = "none";
-  const ytThumbMeasures = document.getElementById("ytThumbMeasures");
-  if (ytThumbMeasures) ytThumbMeasures.style.display = "none";
   closeLightbox();
 }
 function playVideo(src) {
