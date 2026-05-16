@@ -3249,30 +3249,22 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Grace notes fire alone — never bundle chord mates.
-    // A grace note (duration < 0.1s) is its own beat-step; the main note
-    // that follows it (treble quaver + bass crotchets) will form the chord
-    // on the NEXT call to spawnTrainingNote.
-    const isGraceNote = noteObj.duration < 0.1;
-
-    // Look ahead for simultaneous notes (within 10ms) — skip when grace
+    // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
-    if (!isGraceNote) {
-        for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
-            const nextNote = practiceNotes[i];
-            const currentPlayTime = noteObj.playTime ?? noteObj.time;
-            const nextPlayTime = nextNote.playTime ?? nextNote.time;
+    for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+        const nextNote = practiceNotes[i];
+        const currentPlayTime = noteObj.playTime ?? noteObj.time;
+        const nextPlayTime = nextNote.playTime ?? nextNote.time;
 
-            if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
-                // In 'both' mode: include all simultaneous notes regardless of track
-                // In single-hand mode: only same track
-                if (clefMode === 'both' || nextNote.track === noteObj.track) {
-                    currentChordNotes.add(nextNote.midi);
-                    noteTrackMap.set(nextNote.midi, nextNote.track);
-                }
-            } else {
-                break;
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
+            // In 'both' mode: include all simultaneous notes regardless of track
+            // In single-hand mode: only same track
+            if (clefMode === 'both' || nextNote.track === noteObj.track) {
+                currentChordNotes.add(nextNote.midi);
+                noteTrackMap.set(nextNote.midi, nextNote.track);
             }
+        } else {
+            break;
         }
     }
 
@@ -3532,24 +3524,24 @@ function spawnNextValidNote() {
         // post-split, so the direct key should always match. The shifted fallback handles
         // any remaining floating-point edge cases.
         const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
-        let isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
+        const isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
 
-        // Hardcoded tie override: the treble whole note at the START of sheet measure 36
-        // is tied from the quaver at the end of measure 35. The SVG marks it as tied,
-        // and the score highlights it visually (for context), but the user must NOT be
-        // asked to play it — it is a continuation, not a new attack.
-        // We detect it as: treble clef, logical sheet measure 36, long duration (whole note ≈ ≥ 1.5 beats worth of seconds).
-        if (!isTiedContinuation && !isGraceMidi && note.track === TREBLE) {
-            const logicalM = getLogicalSheetMeasureFromTime(note.time);
-            // Whole note in cut time occupies the full measure (secondsPerMeasure ≈ 2× secondsPerBeat)
-            // A half note would be ≥ secondsPerBeat. Whole note ≥ 1.9 × secondsPerBeat.
-            const isLongNote = note.duration >= secondsPerBeat * 1.9;
-            if (logicalM === 36 && isLongNote) {
-                isTiedContinuation = true;
-            }
-        }
+        // Special case: measure 36 treble tied whole note.
+        // The MIDI gap between m35 quaver end and m36 whole note start may be > 0.005s,
+        // so _tiedNoteKeys misses it. Detect it via the SVG rank map: the note has a
+        // rank entry assigned by isTiedM36Treble logic in assignRanks, but musically
+        // it is a tied continuation and must NOT be played.
+        // We identify it as: treble, logical measure 36, long duration (whole note ≥ 2 beats).
+        const isMeasure36TrebleTied = !isGraceMidi
+            && note.track === TREBLE
+            && (() => {
+                const pm = getMeasureFromTime(note.time);
+                const lm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
+                return lm === REPEAT_END; // logical measure 36
+            })()
+            && note.duration >= (secondsPerBeat * 1.5); // whole/half note = tied continuation
 
-        if (isTiedContinuation) {
+        if (isTiedContinuation || isMeasure36TrebleTied) {
             // Tied continuation — skip silently (user already played the parent note)
             trainingIndex++;
             updateTrainingProgress();
@@ -3649,7 +3641,8 @@ function animate() {
     const now = performance.now();
 
     // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
-    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null) {
+    // Only clear if not in an active training session (trainingActive guards the 300ms transition gap)
+    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null && !trainingActive) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
     }
@@ -4055,13 +4048,6 @@ canvas.addEventListener('mouseup', () => {
 }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
-if (getNoteName(activeMidiNote) !== currentTrainingNote) {
-    activeMidiNote = null;
-    noteHoldStartTime = null;
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    return;
-}
 
     const note = activeMidiNote;
     const heldTime = performance.now() - noteHoldStartTime;
@@ -4075,6 +4061,12 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
     // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
     if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
     holdEvaluated = true;
+
+    // Safety: ensure the released note is part of the current chord
+    // (fixes multi-note chords where activeMidiNote ≠ currentTrainingNote)
+    if (!currentChordNotes.has(note) && currentChordNotes.size > 0) {
+        noteHoldStartTime = null; activeMidiNote = null; return;
+    }
 
     if (heldTime >= expectedHoldDuration) {
 const feedback = document.getElementById('feedback');
@@ -4577,10 +4569,15 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Give them a tiny pre-measure offset (-0.001s) so they sort just before
         // the measure's main notes and are always a separate step.
         const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
-        // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
-        // so they sort before the main notes AND are outside the 0.01s chord-grouping
-        // window used in spawnTrainingNote's lookahead.
-        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
+        // Grace notes (duration < 0.1s) must ALWAYS fire before the measure's beat-1 notes
+        // so they appear as a separate step and don't group with bass crotchets.
+        // Give them -0.02s so they sort before the main notes AND are outside the
+        // 0.01s chord-grouping window used in spawnTrainingNote's lookahead.
+        // Overflow-corrected grace notes also use -0.02 (rawOffset is negative for them).
+        const isGraceNote = note.duration < 0.1;
+        const offsetInMeasure = (isGraceNote || (overflowCorrected && rawOffset < 0))
+            ? -0.02
+            : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -5593,15 +5590,9 @@ function onTrainingNoteSpawned(noteObj) {
 
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
-    // Grace notes fire alone — only highlight the grace notehead itself.
-    // All other simultaneous-note lookups are skipped so that the keyboard
-    // and SVG score show ONLY the grace key, not the main beat chord.
-    const isGraceSpawn = noteObj.duration < 0.1;
-
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
-    const notesToHighlight = isGraceSpawn ? [noteObj] : simultaneousNotes;
-    for (const n of notesToHighlight) {
+    for (const n of simultaneousNotes) {
         const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
         if (seen.has(k)) continue;
         seen.add(k);
