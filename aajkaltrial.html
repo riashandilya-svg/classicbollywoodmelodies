@@ -4506,25 +4506,11 @@ practiceNotes = allMidiNotes
             // allowed measure (classic grace-note-before-barline case).
             //
             // IMPORTANT: only rescue notes that are physically adjacent (within 1
-            // measure) AND whose MIDI time is genuinely close to the barline of an
-            // allowed physical measure (i.e. true grace notes). This prevents
-            // repeat-pass notes (e.g. physical 35 notes whose MIDI times are well
-            // inside measure 35) from being rescued when starting at measure 36,
-            // just because physical 36 is adjacent to physical 35.
+            // measure) to an allowed physical measure. This prevents repeat-pass
+            // notes (e.g. physical 42-43 which also map to logical 35 via the rank
+            // map) from being pulled into a single-measure skip-repeats selection.
             const isPhysicallyAdjacent = physicalSeq.some(q => Math.abs(q - p) <= 1);
             if (!isPhysicallyAdjacent) return null;
-
-            // Extra guard: the note's MIDI time must be within 0.3 s of the boundary
-            // between the out-of-range measure (p) and an adjacent allowed measure.
-            // Real grace notes sit fractionally before a barline; regular notes from
-            // a different repeat pass do not.
-            const GRACE_RESCUE_WINDOW = 0.3; // seconds
-            const nearAllowedBoundary = physicalSeq.some(q => {
-                if (Math.abs(q - p) !== 1) return false;
-                const boundary = (q < p) ? MEASURE_TIME_MAP[q]?.end : MEASURE_TIME_MAP[p]?.end;
-                return boundary !== undefined && Math.abs(note.time - boundary) <= GRACE_RESCUE_WINDOW;
-            });
-            if (!nearAllowedBoundary) return null;
 
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
@@ -4541,45 +4527,6 @@ practiceNotes = allMidiNotes
                 }
             } else {
                 return null;
-            }
-        }
-
-        // ── Sheet-measure mismatch correction ────────────────────────────────
-        // A note's MIDI time may fall inside an allowed physical measure (p),
-        // but the rank map may have assigned it to a DIFFERENT sheet measure
-        // (e.g. the grace note at 43.05s lands in physical 36, but the rank map
-        // overflowed it to sheet 37 because physical-36 treble bucket is empty
-        // — the tied whole note there was excluded as a tied continuation).
-        // In that case we should re-assign p to the physical measure that actually
-        // contains the ranked notehead, so playTime and highlighting stay aligned.
-        // Only do this when the note's MIDI time is close to the barline (i.e. it
-        // is genuinely a grace/overflow note, not a mid-measure note).
-        if (!overflowCorrected) {
-            const mk2 = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
-            const entry2 = _midiRankMap.get(mk2);
-            if (entry2) {
-                const entryLogical = entry2.sheet_measure;
-                const currentLogical = PHYSICAL_TO_LOGICAL[p] ?? p;
-                if (entryLogical !== currentLogical) {
-                    // The rank map placed this note in a different logical measure.
-                    // Find the physical measure in our sequence that maps to that logical.
-                    const correctedPhys = physicalSeq.find(
-                        q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entryLogical
-                    );
-                    if (correctedPhys !== undefined) {
-                        // Only re-assign if the note's MIDI time is near the barline
-                        // between p and correctedPhys (true overflow/grace note).
-                        const boundary = MEASURE_TIME_MAP[p]?.end;
-                        const OVERFLOW_WINDOW = 0.3;
-                        if (boundary !== undefined && Math.abs(note.time - boundary) <= OVERFLOW_WINDOW) {
-                            p = correctedPhys;
-                            overflowCorrected = true;
-                        }
-                    } else {
-                        // The ranked sheet measure is not in our selection — exclude note.
-                        return null;
-                    }
-                }
             }
         }
 
