@@ -127,13 +127,12 @@
       position: fixed;
       width: min(680px, calc(100vw - 28px));
       max-height: calc(100vh - 80px);
-      background: rgba(253,248,255,0.97);
+      background: rgba(253,248,255,0.99);
       border: 1px solid rgba(155,110,255,0.2);
       border-radius: 24px;
       padding: 22px 22px 16px;
       color: var(--text);
       box-shadow: 0 28px 80px rgba(22,10,35,0.14), inset 0 1px 0 rgba(255,255,255,0.95);
-      backdrop-filter: blur(24px) saturate(160%);
       z-index: 1000001; display: none;
       overflow-y: auto;
       overflow-x: hidden;
@@ -310,24 +309,14 @@
   <div id="demoActionStatus"></div>
   <div id="demoImage"><img id="demoImageEl" alt="" /></div>
   <div id="demoVideo"><video id="demoVideoEl" controls playsinline></video></div>
-  <div id="ytThumb" style="display:none;margin:10px auto 12px;max-width:480px;cursor:pointer;border-radius:14px;overflow:hidden;border:1px solid rgba(155,110,255,0.2);position:relative;">
+  <div id="ytThumb" style="display:none;margin:10px 0 12px;cursor:pointer;border-radius:14px;overflow:hidden;border:1px solid rgba(155,110,255,0.2);position:relative;">
     <img id="ytThumbImg" src="" alt="Watch video" style="width:100%;display:block;" />
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.28);">
       <div style="width:56px;height:56px;background:#ff0000;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8 5v14l11-7z"/></svg>
       </div>
     </div>
-    <div style="position:absolute;bottom:10px;right:12px;font-size:0.7rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:100px;">Click to watch</div>
-  </div>
-
-  <!-- YouTube lightbox -->
-  <div id="ytLightbox" style="display:none;position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
-    <div style="position:relative;width:min(900px,95vw);">
-      <button id="ytClose" style="position:absolute;top:-42px;right:0;background:none;border:none;color:#fff;font-size:1.6rem;cursor:pointer;line-height:1;opacity:0.8;">✕</button>
-      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;">
-        <iframe id="ytLightboxFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:12px;"></iframe>
-      </div>
-    </div>
+    <div style="position:absolute;bottom:10px;right:12px;font-size:0.7rem;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:100px;">Click to watch</div>
   </div>
   <div id="demoControls">
     <button class="cbtn cbtn-ghost" id="backBtn">← Back</button>
@@ -336,6 +325,27 @@
       <a class="measures-link" id="measuresLink" href="https://www.youtube.com/watch?v=FaJh5yr51iw" target="_blank" rel="noopener">🎵 What are measures?</a>
       <button class="cbtn cbtn-dark" id="skipBtn">Skip</button>
       <button class="cbtn cbtn-primary" id="nextBtn">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- YouTube thumbnail — outside card so lightbox z-index isn't clipped -->
+<div id="ytThumb" style="display:none;position:fixed;z-index:1000002;cursor:pointer;border-radius:14px;overflow:hidden;border:1px solid rgba(155,110,255,0.2);">
+  <img id="ytThumbImg" src="" alt="Watch video" style="width:100%;display:block;" />
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);">
+    <div style="width:56px;height:56px;background:#ff0000;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:10px;right:12px;font-size:0.7rem;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:2px 8px;border-radius:100px;">Click to watch</div>
+</div>
+
+<!-- YouTube lightbox -->
+<div id="ytLightbox" style="display:none;position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+  <button id="ytClose" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:1.1rem;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;">✕</button>
+  <div id="ytVideoWrap" style="width:min(900px,95vw);">
+    <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:12px;overflow:hidden;">
+      <iframe id="ytLightboxFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe>
     </div>
   </div>
 </div>
@@ -496,6 +506,19 @@ function playYoutube(videoId) {
 }
 function openLightbox(videoId) {
   const lb = document.getElementById("ytLightbox");
+  const lbFrame = document.getElementById("ytLightboxFrame");
+  lbFrame.src = `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1`;
+  lb.style.display = "flex";
+}
+function closeLightbox() {
+  const lb = document.getElementById("ytLightbox");
+  const lbFrame = document.getElementById("ytLightboxFrame");
+  if (lb) lb.style.display = "none";
+  if (lbFrame) lbFrame.src = "";
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+function openLightbox(videoId) {
+  const lb = document.getElementById("ytLightbox");
   const frame = document.getElementById("ytLightboxFrame");
   frame.src = `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1`;
   lb.style.display = "flex";
@@ -509,6 +532,16 @@ function closeLightbox() {
 document.getElementById("ytClose").addEventListener("click", closeLightbox);
 document.getElementById("ytLightbox").addEventListener("click", function(e) {
   if (e.target === this) closeLightbox();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeLightbox();
+});
+// When YouTube requests fullscreen inside the iframe, promote the whole lightbox
+document.addEventListener("fullscreenchange", () => {
+  const lb = document.getElementById("ytLightbox");
+  if (!document.fullscreenElement && lb && lb.style.display === "flex") {
+    // fullscreen was exited but lightbox still open — that's fine, do nothing
+  }
 });
 function setStatus(msg, done = false) {
   statusEl.textContent = msg || "";
