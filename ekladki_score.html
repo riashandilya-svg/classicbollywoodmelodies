@@ -1834,7 +1834,10 @@ const SONG_CONFIG = {
     id: "ekladki",
     title: "Ekladki",
     timeSignature: [4, 4], // 4/4
-    measures: 32,
+    // Physical measure count = logical measures (32) + REPEAT_LEN (7) = 39.
+    // The MIDI contains physical measures 1-39: measures 1-14 (first pass),
+    // 15-21 (repeat of logical 7-13), then 22-39 (logical 15-32).
+    measures: 39,
     repeats: [],
     pickupBeats: 0
 };
@@ -3454,7 +3457,7 @@ const visualStart =
             const physMeasure = getMeasureFromTime(note.time);
             const isRepeatPass = physMeasure !== null &&
                 physMeasure >= REPEAT_START + REPEAT_LEN &&
-                physMeasure <= REPEAT_END + REPEAT_LEN;
+                physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
             let notesToHighlight;
             if (isRepeatPass) {
@@ -4966,11 +4969,11 @@ addMidiFallingRectangle(
                     if (!fullSongPlaying) return;
 
                     // Determine whether this timestamp falls in the repeat pass
-                    // (physical measures 37-44 → logical 29-36).
+                    // (physical measures 15-21 → logical 7-13).
                     const physMeasure = getMeasureFromTime(note.time);
                     const isRepeatPass = physMeasure !== null &&
                         physMeasure >= REPEAT_START + REPEAT_LEN &&
-                        physMeasure <= REPEAT_END + REPEAT_LEN;
+                        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
                     let notesToHighlight;
                     if (isRepeatPass) {
@@ -5437,12 +5440,12 @@ function _buildSvgMidiMap() {
             // only on repeat bug).
             //
             // Additionally, notes whose physical measure falls in the repeat-pass range
-            // (physical 37-44, logical 29-36) must NEVER trigger overflow — they are
+            // (physical 15-21, logical 7-13) must NEVER trigger overflow — they are
             // genuine second-pass notes, not barline-straddle notes. Without this guard,
-            // the FIRST repeat-pass note for each bass measure (29, 31, 33, 35) fires
-            // overflow (because overflowFired doesn't have the key yet) and gets
-            // mis-routed to the next sheet measure, causing incorrect bass highlighting.
-            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN;
+            // the FIRST repeat-pass note for each measure fires overflow (because overflowFired
+            // doesn't have the key yet) and gets mis-routed to the next sheet measure.
+            // Upper bound is REPEAT_END + REPEAT_LEN + 1 (=21) to include physical 21 → logical 13.
+            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
             const overflowKey = `${sheetMeasure}|${clef}`;
             if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
                     (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
@@ -5625,7 +5628,7 @@ function onTrainingNoteSpawned(noteObj) {
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = physMeasure !== null &&
         physMeasure >= REPEAT_START + REPEAT_LEN &&
-        physMeasure <= REPEAT_END + REPEAT_LEN;
+        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
     let simultaneousNotes;
     if (isRepeatPass) {
