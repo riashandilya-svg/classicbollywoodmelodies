@@ -774,6 +774,150 @@ body.dark-mode #panelFeedbackBubble.wrong   { box-shadow: 0 8px 28px rgba(239,68
     border-radius: 14px;
     filter: drop-shadow(0 6px 14px rgba(229,115,115,0.35));
 }
+/* ====== RECORD BUTTON ====== */
+#recordBtn {
+  width: 100%;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #ff4444, #cc0000) !important;
+  color: #fff !important;
+  border-color: #ff4444 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+#recordBtn.recording {
+  background: linear-gradient(135deg, #ff8800, #cc5500) !important;
+  border-color: #ff8800 !important;
+  animation: recPulse 1.2s ease-in-out infinite;
+}
+@keyframes recPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(255,68,68,0); }
+}
+.rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+}
+#recordBtn.recording .rec-dot {
+  background: #ffe066;
+  animation: recDot 0.8s step-start infinite;
+}
+@keyframes recDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ====== RECORDING POPUP ====== */
+#recordingModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease both;
+}
+#recordingModal.open {
+  display: flex;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+#recordingModalInner {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px 28px 24px 28px;
+  max-width: 520px;
+  width: 92%;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  position: relative;
+}
+@keyframes popIn {
+  from { transform: scale(0.88) translateY(20px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+body.dark-mode #recordingModalInner {
+  background: #181c25;
+  color: #f0f0f5;
+}
+#recordingModalInner h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a1f;
+  letter-spacing: -0.03em;
+}
+body.dark-mode #recordingModalInner h2 { color: #f0f0f5; }
+#recordingModalInner video {
+  width: 100%;
+  border-radius: 14px;
+  background: #000;
+  max-height: 300px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+}
+#recordingModalClose {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.07);
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  padding: 0;
+  box-shadow: none;
+  transition: background 0.15s;
+}
+#recordingModalClose:hover {
+  background: rgba(0,0,0,0.14);
+  transform: none;
+  box-shadow: none;
+}
+body.dark-mode #recordingModalClose { background: rgba(255,255,255,0.1); color: #ccc; }
+#recordingDownloadBtn {
+  width: 100%;
+  padding: 13px 0;
+  background: linear-gradient(135deg, #ff7b7b, #ff5c8a);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,92,138,0.3);
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+#recordingDownloadBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(255,92,138,0.4);
+}
+#recordingTimer {
+  font-size: 13px;
+  font-weight: 600;
+  color: #E57373;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
 /* 🔒 Paywall card */
 #paywall{
   display: none;
@@ -1682,6 +1826,10 @@ body.score-mode #panelProgressWrap {
       </label>
       <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
     </div>
+    <button id="recordBtn" class="ctrl-btn" onclick="toggleRecording()">
+      <span class="rec-dot"></span>
+      <span id="recordBtnLabel">Record</span>
+    </button>
   </div>
 
   <!-- FEEDBACK card — fills gap under Playback + Utility via grid placement -->
@@ -2758,6 +2906,7 @@ let visualClockStart = null;
 let allMidiNotes = [];
 let practiceNotes = [];
 let visualsPlaying = false;
+let scoreKeysPlaying = false; // true while listen-first key highlights are active in score mode
 let speedMultiplier = 1.0;
 let speedLocked = false;
 
@@ -2893,8 +3042,8 @@ function drawKeyboard() {
             wGrad.addColorStop(0, '#FFCDD2');
             wGrad.addColorStop(1, '#EF9A9A');
         } else if (isBass) {
-            wGrad.addColorStop(0, '#9E9E9E');
-            wGrad.addColorStop(1, '#616161');
+            wGrad.addColorStop(0, '#DDD6FE');
+            wGrad.addColorStop(1, '#A78BFA');
         } else {
             wGrad.addColorStop(0, '#ffffff');
             wGrad.addColorStop(0.7, '#f5f5f5');
@@ -2924,8 +3073,17 @@ function drawKeyboard() {
             ctx.shadowBlur = 0;
         }
 
+        // Glow for active bass key
+        if (isBass) {
+            ctx.shadowColor = '#7C3AED';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(167,139,250,0.18)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
         if (showNoteNames) {
-            ctx.fillStyle = isBass ? '#fff' : '#555';
+            ctx.fillStyle = isBass ? '#4C1D95' : '#555';
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -2961,8 +3119,8 @@ function drawKeyboard() {
             bGrad.addColorStop(0, '#EF9A9A');
             bGrad.addColorStop(1, '#E57373');
         } else if (isBass) {
-            bGrad.addColorStop(0, '#555');
-            bGrad.addColorStop(1, '#222');
+            bGrad.addColorStop(0, '#A78BFA');
+            bGrad.addColorStop(1, '#7C3AED');
         } else {
             bGrad.addColorStop(0, '#333');
             bGrad.addColorStop(0.5, '#111');
@@ -3177,10 +3335,10 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         gradient.addColorStop(0.65, "rgba(229,115,115,0.90)");
         gradient.addColorStop(1.00, "rgba(239,83,80,0.94)");
     } else if (track === BASS) {
-        gradient.addColorStop(0.00, "rgba(120,120,140,0.88)");
-        gradient.addColorStop(0.25, "rgba(80,80,100,0.85)");
-        gradient.addColorStop(0.65, "rgba(45,45,65,0.90)");
-        gradient.addColorStop(1.00, "rgba(15,15,30,0.94)");
+        gradient.addColorStop(0.00, "rgba(221,214,254,0.92)");
+        gradient.addColorStop(0.25, "rgba(196,181,253,0.88)");
+        gradient.addColorStop(0.65, "rgba(167,139,250,0.90)");
+        gradient.addColorStop(1.00, "rgba(124,58,237,0.94)");
     }
 
     fallingRectangles.push({
@@ -3249,14 +3407,14 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Look ahead for simultaneous notes (within 15ms — safe: grace-note gap is 20ms)
+    // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
 
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.015) {
+        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
             // In 'both' mode: include all simultaneous notes regardless of track
             // In single-hand mode: only same track
             if (clefMode === 'both' || nextNote.track === noteObj.track) {
@@ -3403,6 +3561,28 @@ const visualStart =
 
     previewTimeouts.push(t);
 
+    // Score mode: highlight keyboard keys as each note sounds during preview
+    if (scoreModeActive) {
+        const keyOnDelay  = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
+        const keyOffDelay = keyOnDelay + (note.duration * 1000) / speedMultiplier;
+        const midi = note.midi;
+        const track = note.track;
+
+        const kOn = setTimeout(() => {
+            if (!previewMode) return;
+            scoreKeysPlaying = true;
+            if (track === TREBLE) expectedMidiTreble.add(midi);
+            else if (track === BASS) expectedMidiBass.add(midi);
+        }, keyOnDelay);
+
+        const kOff = setTimeout(() => {
+            if (track === TREBLE) expectedMidiTreble.delete(midi);
+            else if (track === BASS) expectedMidiBass.delete(midi);
+        }, keyOffDelay);
+
+        previewTimeouts.push(kOn, kOff);
+    }
+
     // Score mode: highlight each note as it sounds during preview
     if (scoreModeActive) {
         const highlightDelay = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
@@ -3421,16 +3601,16 @@ const visualStart =
             if (isRepeatPass) {
                 const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
                 notesToHighlight = sectionNotes.filter(n =>
-                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.015
+                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
                 );
                 if (!notesToHighlight.length) {
                     notesToHighlight = sectionNotes.filter(n =>
-                        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
+                        Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
                     );
                 }
             } else {
                 notesToHighlight = sectionNotes.filter(n =>
-                    Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
+                    Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
                 );
             }
 
@@ -3465,6 +3645,7 @@ const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
     setSpeedButtonsEnabled(true);
+    scoreKeysPlaying = false;
 
     // Clear any keyboard keys left highlighted by landing preview notes
     expectedMidiTreble.clear();
@@ -3526,22 +3707,7 @@ function spawnNextValidNote() {
         const shiftedKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
         const isTiedContinuation = !isGraceMidi && (_tiedNoteKeys.has(midiKey) || _tiedNoteKeys.has(shiftedKey));
 
-        // Special case: measure 36 treble tied whole note.
-        // The MIDI gap between m35 quaver end and m36 whole note start may be > 0.005s,
-        // so _tiedNoteKeys misses it. Detect it via the SVG rank map: the note has a
-        // rank entry assigned by isTiedM36Treble logic in assignRanks, but musically
-        // it is a tied continuation and must NOT be played.
-        // We identify it as: treble, logical measure 36, long duration (whole note ≥ 2 beats).
-        const isMeasure36TrebleTied = !isGraceMidi
-            && note.track === TREBLE
-            && (() => {
-                const pm = getMeasureFromTime(note.time);
-                const lm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
-                return lm === REPEAT_END; // logical measure 36
-            })()
-            && note.duration >= (secondsPerBeat * 1.5); // whole/half note = tied continuation
-
-        if (isTiedContinuation || isMeasure36TrebleTied) {
+        if (isTiedContinuation) {
             // Tied continuation — skip silently (user already played the parent note)
             trainingIndex++;
             updateTrainingProgress();
@@ -3603,7 +3769,7 @@ function advanceChordIndex() {
     let skip = 0;
     for (let i = trainingIndex; i < practiceNotes.length; i++) {
         const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
-        if (Math.abs(t - baseTime) < 0.015) skip++;
+        if (Math.abs(t - baseTime) < 0.01) skip++;
         else break;
     }
     trainingIndex += Math.max(skip, 1);
@@ -3641,8 +3807,7 @@ function animate() {
     const now = performance.now();
 
     // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
-    // Only clear if not in an active training session (trainingActive guards the 300ms transition gap)
-    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null && !trainingActive) {
+    if (!waitingForInput && !visualsPlaying && !scoreKeysPlaying && noteHoldStartTime === null) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
     }
@@ -3690,7 +3855,7 @@ if (rect.track === TREBLE) {
     ctx.shadowColor = 'rgba(255,107,107,0.55)';
     ctx.shadowBlur = 18;
 } else {
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowColor = 'rgba(124,58,237,0.4)';
     ctx.shadowBlur = 10;
 }
 
@@ -4048,6 +4213,13 @@ canvas.addEventListener('mouseup', () => {
 }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
+if (getNoteName(activeMidiNote) !== currentTrainingNote) {
+    activeMidiNote = null;
+    noteHoldStartTime = null;
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    return;
+}
 
     const note = activeMidiNote;
     const heldTime = performance.now() - noteHoldStartTime;
@@ -4061,12 +4233,6 @@ canvas.addEventListener('mouseup', () => {
     // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
     if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
     holdEvaluated = true;
-
-    // Safety: ensure the released note is part of the current chord
-    // (fixes multi-note chords where activeMidiNote ≠ currentTrainingNote)
-    if (!currentChordNotes.has(note) && currentChordNotes.size > 0) {
-        noteHoldStartTime = null; activeMidiNote = null; return;
-    }
 
     if (heldTime >= expectedHoldDuration) {
 const feedback = document.getElementById('feedback');
@@ -4569,15 +4735,10 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Give them a tiny pre-measure offset (-0.001s) so they sort just before
         // the measure's main notes and are always a separate step.
         const rawOffset = note.time - MEASURE_TIME_MAP[p].start;
-        // Grace notes (duration < 0.1s) must ALWAYS fire before the measure's beat-1 notes
-        // so they appear as a separate step and don't group with bass crotchets.
-        // Give them -0.02s so they sort before the main notes AND are outside the
-        // 0.01s chord-grouping window used in spawnTrainingNote's lookahead.
-        // Overflow-corrected grace notes also use -0.02 (rawOffset is negative for them).
-        const isGraceNote = note.duration < 0.1;
-        const offsetInMeasure = (isGraceNote || (overflowCorrected && rawOffset < 0))
-            ? -0.02
-            : Math.max(0, rawOffset);
+        // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
+        // so they sort before the main notes AND are outside the 0.01s chord-grouping
+        // window used in spawnTrainingNote's lookahead.
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -4670,6 +4831,7 @@ isPlaying = false;
 trainingActive = false;
 previewMode = false;
 visualsPlaying = false;
+scoreKeysPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
@@ -4729,6 +4891,7 @@ function resetAll() {
     previewMode      = false;
     waitingForInput  = false;
     visualsPlaying   = false;
+    scoreKeysPlaying = false;
     speedLocked      = false;
     countdownActive  = false;
     setSpeedButtonsEnabled(true);
@@ -4898,6 +5061,28 @@ addMidiFallingRectangle(
 }, (note.time * 1000) / speedMultiplier);
 
         playbackTimeouts.push(t);
+
+        // Score mode: highlight keyboard keys in sync with playback
+        if (scoreModeActive) {
+            const keyOnDelay  = (note.time * 1000) / speedMultiplier;
+            const keyOffDelay = ((note.time + note.duration) * 1000) / speedMultiplier;
+            const midi = note.midi;
+            const track = note.track;
+
+            const kOn = setTimeout(() => {
+                if (!fullSongPlaying) return;
+                scoreKeysPlaying = true;
+                if (track === TREBLE) expectedMidiTreble.add(midi);
+                else if (track === BASS) expectedMidiBass.add(midi);
+            }, keyOnDelay);
+
+            const kOff = setTimeout(() => {
+                if (track === TREBLE) expectedMidiTreble.delete(midi);
+                else if (track === BASS) expectedMidiBass.delete(midi);
+            }, keyOffDelay);
+
+            playbackTimeouts.push(kOn, kOff);
+        }
 
         // Score mode highlight: fire once per unique timestamp
         if (scoreModeActive) {
@@ -5575,16 +5760,16 @@ function onTrainingNoteSpawned(noteObj) {
     if (isRepeatPass) {
         const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
         simultaneousNotes = practiceNotes.filter(n =>
-            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.015
+            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
         );
         if (!simultaneousNotes.length) {
             simultaneousNotes = practiceNotes.filter(n =>
-                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
             );
         }
     } else {
         simultaneousNotes = practiceNotes.filter(n =>
-            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.015
+            Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
         );
     }
 
@@ -5598,20 +5783,6 @@ function onTrainingNoteSpawned(noteObj) {
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
         allIndices.push(...indices);
-    }
-
-    // Broader scan: also pick up chord-mates within 15ms not found by the
-    // simultaneousNotes filter (e.g. bass & treble with slightly different MIDI
-    // timestamps). 15ms is safe — the grace-note / main-note gap is 20ms.
-    for (const n of practiceNotes) {
-        const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
-        if (seen.has(k)) continue;
-        const npt = n.playTime ?? n.time;
-        if (Math.abs(npt - notePlayTime) < 0.015) {
-            seen.add(k);
-            const indices = _svgIndicesForMidiNote(n, 'both');
-            allIndices.push(...indices);
-        }
     }
 
     // Fallback: just use the primary noteObj
@@ -6881,6 +7052,129 @@ const rzp = new Razorpay(options);
 }
 )();
 
+</script>
+
+<!-- ====== RECORDING MODAL ====== -->
+<div id="recordingModal">
+  <div id="recordingModalInner">
+    <button id="recordingModalClose" onclick="document.getElementById('recordingModal').classList.remove('open')" title="Close">✕</button>
+    <h2>🎬 Your Recording</h2>
+    <video id="recordingPreview" controls playsinline></video>
+    <div id="recordingTimer"></div>
+    <a id="recordingDownloadBtn" download="riaaz-recording.webm">⬇ Download Recording</a>
+  </div>
+</div>
+
+<!-- ====== RECORDING SCRIPT ====== -->
+<script>
+(function() {
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordingStream = null;
+  let timerInterval = null;
+  let recordingStart = 0;
+
+  function formatTime(ms) {
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    return String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
+  }
+
+  window.toggleRecording = function() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  async function startRecording() {
+    try {
+      // Capture the full page as a video stream
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: 'always', frameRate: 30 },
+        audio: true,
+        preferCurrentTab: true
+      });
+
+      // Try to also capture system/mic audio
+      let audioStream = null;
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      } catch(e) { /* audio not available */ }
+
+      // Merge tracks
+      const tracks = [...displayStream.getTracks()];
+      if (audioStream) {
+        audioStream.getAudioTracks().forEach(t => tracks.push(t));
+      }
+      recordingStream = new MediaStream(tracks);
+
+      // Pick best supported format
+      const mimeType = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4']
+        .find(m => MediaRecorder.isTypeSupported(m)) || '';
+
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(recordingStream, mimeType ? { mimeType } : {});
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: mimeType || 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const video = document.getElementById('recordingPreview');
+        const dlBtn = document.getElementById('recordingDownloadBtn');
+        video.src = url;
+        dlBtn.href = url;
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        dlBtn.download = 'riaaz-recording.' + ext;
+        document.getElementById('recordingModal').classList.add('open');
+        const dur = Date.now() - recordingStart;
+        document.getElementById('recordingTimer').textContent = 'Duration: ' + formatTime(dur);
+      };
+
+      // Stop recording if the user ends the screen share
+      displayStream.getVideoTracks()[0].onended = () => stopRecording();
+
+      mediaRecorder.start(250);
+      recordingStart = Date.now();
+
+      // UI feedback
+      const btn = document.getElementById('recordBtn');
+      const lbl = document.getElementById('recordBtnLabel');
+      btn.classList.add('recording');
+      lbl.textContent = 'Stop Recording';
+
+      // Live timer in button
+      timerInterval = setInterval(() => {
+        lbl.textContent = 'Stop  ' + formatTime(Date.now() - recordingStart);
+      }, 1000);
+
+    } catch(err) {
+      if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
+        alert('Could not start recording: ' + err.message);
+      }
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    if (recordingStream) {
+      recordingStream.getTracks().forEach(t => t.stop());
+      recordingStream = null;
+    }
+    clearInterval(timerInterval);
+
+    const btn = document.getElementById('recordBtn');
+    const lbl = document.getElementById('recordBtnLabel');
+    btn.classList.remove('recording');
+    lbl.textContent = 'Record';
+  }
+})();
 </script>
 
 <!-- 4+5) Login check — paywall only runs AFTER auth confirms session -->
