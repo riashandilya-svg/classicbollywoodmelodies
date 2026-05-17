@@ -3909,12 +3909,12 @@ function getCountWord(beatIndex, slotInBeat) {
     const lang = beatNames[countLanguage] || beatNames.en;
 
     if (countMode === "subdivision") {
-        // "1 e & a" syllables for each 16th-note slot
+        // "1 & 2 & 3 & 4 &" — speak on beat (slot 0) and "and" (slot 2) only
         switch (slotInBeat) {
-            case 0: return lang[beat - 1];   // "one" / "two"
-            case 1: return "e";
-            case 2: return "and";
-            case 3: return "a";
+            case 0: return lang[beat - 1];   // "one" / "two" / "three" / "four"
+            case 1: return null;             // skip "e"
+            case 2: return "and";            // "&"
+            case 3: return null;             // skip "a"
         }
     }
 
