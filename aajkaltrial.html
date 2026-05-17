@@ -4879,6 +4879,27 @@ addMidiFallingRectangle(
 
         playbackTimeouts.push(t);
 
+        // Score mode: highlight keyboard keys in sync with playback
+        if (scoreModeActive) {
+            const keyOnDelay  = (note.time * 1000) / speedMultiplier;
+            const keyOffDelay = ((note.time + note.duration) * 1000) / speedMultiplier;
+            const midi = note.midi;
+            const track = note.track;
+
+            const kOn = setTimeout(() => {
+                if (!fullSongPlaying) return;
+                if (track === TREBLE) expectedMidiTreble.add(midi);
+                else if (track === BASS) expectedMidiBass.add(midi);
+            }, keyOnDelay);
+
+            const kOff = setTimeout(() => {
+                if (track === TREBLE) expectedMidiTreble.delete(midi);
+                else if (track === BASS) expectedMidiBass.delete(midi);
+            }, keyOffDelay);
+
+            playbackTimeouts.push(kOn, kOff);
+        }
+
         // Score mode highlight: fire once per unique timestamp
         if (scoreModeActive) {
             const timeKey = note.time.toFixed(4);
