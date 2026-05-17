@@ -3456,6 +3456,14 @@ const visualStart =
                     Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
                 );
                 if (!notesToHighlight.length) {
+                    // First-pass measures are not in the current range (e.g. range 36→37).
+                    // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
+                    const firstPassRawTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                    notesToHighlight = allMidiNotes.filter(n =>
+                        Math.abs(n.time - firstPassRawTime) < 0.01
+                    );
+                }
+                if (!notesToHighlight.length) {
                     notesToHighlight = sectionNotes.filter(n =>
                         Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
                     );
@@ -4065,7 +4073,8 @@ canvas.addEventListener('mouseup', () => {
 }
 
     if (activeMidiNote === null || noteHoldStartTime === null) return;
-if (getNoteName(activeMidiNote) !== currentTrainingNote) {
+// Allow release if the active note is the training note OR is part of the current chord
+if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.has(activeMidiNote)) {
     activeMidiNote = null;
     noteHoldStartTime = null;
     expectedMidiTreble.clear();
@@ -4078,7 +4087,7 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote) {
 
     synth.triggerRelease(getNoteName(note));
 
-    // Always clear highlights immediately on release — spawnTrainingNote re-adds them
+    // Only clear highlights on release — spawnTrainingNote re-adds them for next note
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
 
@@ -4538,20 +4547,19 @@ practiceNotes = allMidiNotes
             // Check whether the rank-map overflow correction moved it into an
             // allowed measure (classic grace-note-before-barline case).
             //
-            // IMPORTANT: only rescue notes that are physically adjacent (within 1
-            // measure) to an allowed physical measure. This prevents repeat-pass
-            // notes (e.g. physical 42-43 which also map to logical 35 via the rank
-            // map) from being pulled into a single-measure skip-repeats selection.
-            const isPhysicallyAdjacent = physicalSeq.some(q => Math.abs(q - p) <= 1);
-            if (!isPhysicallyAdjacent) return null;
-
+            // IMPORTANT: adjacency is checked against the specific correctedPhys
+            // this note would be rescued into, NOT against all physicalSeq members.
+            // This prevents first-pass notes (e.g. physical 35, sheet 35) from being
+            // incorrectly rescued into a range like 36→37 whose physicalSeq happens
+            // to contain physical 36 (adjacent to 35), even though the intended
+            // correctedPhys is physical 43 (not adjacent to 35).
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
             if (entry && allowedLogical.has(entry.sheet_measure)) {
                 const correctedPhys = physicalSeq.find(
                     q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
                 );
-                if (correctedPhys !== undefined) {
+                if (correctedPhys !== undefined && Math.abs(correctedPhys - p) <= 1) {
                     console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
                     p = correctedPhys;
                     overflowCorrected = true;
@@ -5614,6 +5622,14 @@ function onTrainingNoteSpawned(noteObj) {
         simultaneousNotes = practiceNotes.filter(n =>
             Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
         );
+        if (!simultaneousNotes.length) {
+            // First-pass measures are not in the current range (e.g. range 36→37).
+            // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
+            const firstPassRawTime = noteObj.time - REPEAT_LEN * secondsPerMeasure;
+            simultaneousNotes = allMidiNotes.filter(n =>
+                Math.abs(n.time - firstPassRawTime) < 0.01
+            );
+        }
         if (!simultaneousNotes.length) {
             simultaneousNotes = practiceNotes.filter(n =>
                 Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
