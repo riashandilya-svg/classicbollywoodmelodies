@@ -1843,24 +1843,27 @@ const SONG_CONFIG = {
 };
 // ================================
 const REPEAT_START = 7;
-const REPEAT_END   = 13;   // last measure of the repeated section (volta 1 = m14 is NOT repeated)
-const REPEAT_LEN   = REPEAT_END - REPEAT_START + 1; // = 7  (measures 7-13)
-
+const REPEAT_END = 13;
+const REPEAT_LEN = REPEAT_END - REPEAT_START + 1;
+// Physical measure offset from first-pass to repeat-pass.
+// Physical measures: 7–13 (first pass), 14 (1st ending, NOT repeated), 15–21 (repeat pass).
+// So the repeat pass starts at physical REPEAT_END+2 = 15, giving an offset of 8, not 7.
+const REPEAT_PHYSICAL_OFFSET = REPEAT_END + 2 - REPEAT_START;  // = 8
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
   for (let p = 1; p <= config.measures; p++) {
     let logical;
 
-    // Physical 1..14  -> logical 1..14  (first pass, includes volta-1 bar 14)
+    // 1..14 -> 1..14 (first occurrence, includes bar 14)
     if (p <= 14) {
       logical = p;
     }
-    // Physical 15..21 -> logical 7..13  (second pass, skips bar 14)
+    // 15..21 -> 7..13 (repeated copy, bar 14 is NOT here)
     else if (p <= 14 + REPEAT_LEN) {
       logical = REPEAT_START + (p - 15);
     }
-    // Physical 22+    -> logical 15+    (continuation after repeat)
+    // 22+ -> 15+ (after repeat)
     else {
       logical = p - REPEAT_LEN;
     }
@@ -2045,45 +2048,36 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
     return { seq, logicalSeq };
   }
 
-  // Case 1: Selection entirely before the repeat zone (measures 1-6 only)
-  if (endLogical < REPEAT_START) {
+  // Case 1: Selection is entirely before measure 15 (measures 1-14)
+  if (endLogical <= 14) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 2: Selection starts after measure 14 (post-repeat only)
+  // Case 2: Selection starts after measure 14 (measures 15+)
   else if (startLogical > 14) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 3: Selection touches the repeat zone (m7-14).
-  // First pass:  startLogical -> min(endLogical, 14)  [includes m14 = volta 1]
-  // Second pass: max(startLogical,7) -> 13             [m14 skipped = volta 2]
-  // Continuation: 15 -> endLogical  (only if selection extends past 14)
+  // Case 3: Selection spans across the repeat boundary
   else {
-    // First pass up to m14 (volta 1 ending, played once)
-    const firstPassEnd = Math.min(endLogical, 14);
-    for (let l = startLogical; l <= firstPassEnd; l++) {
+    // Play from start to 14
+    for (let l = startLogical; l <= 14; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
-
-    // Second pass: repeat m7-13, skipping m14 (volta 2 goes straight to m15)
-    const repeatFrom = Math.max(startLogical, REPEAT_START);
-    for (let l = repeatFrom; l <= REPEAT_END; l++) {
+    // Play repeat: 7 to 13
+    for (let l = 7; l <= 13; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalSecond(l));
     }
-
-    // Continue from m15 onwards if selection extends past the repeat
-    if (endLogical >= 15) {
-      for (let l = 15; l <= endLogical; l++) {
-        logicalSeq.push(l);
-        seq.push(logicalToPhysicalFirst(l));
-      }
+    // Continue from 15 onwards
+    for (let l = 15; l <= endLogical; l++) {
+      logicalSeq.push(l);
+      seq.push(logicalToPhysicalFirst(l));
     }
   }
 
@@ -3466,19 +3460,19 @@ const visualStart =
             // If this preview note is from the repeat pass, mirror to first-pass SVG elements
             const physMeasure = getMeasureFromTime(note.time);
             const isRepeatPass = physMeasure !== null &&
-                physMeasure >= REPEAT_START + REPEAT_LEN &&
+                physMeasure > REPEAT_END + 1 &&
                 physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
             let notesToHighlight;
             if (isRepeatPass) {
-                const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+                const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                 notesToHighlight = sectionNotes.filter(n =>
                     Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
                 );
                 if (!notesToHighlight.length) {
                     // First-pass measures are not in the current range (e.g. range 36→37).
                     // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
-                    const firstPassRawTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                    const firstPassRawTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                     notesToHighlight = allMidiNotes.filter(n =>
                         Math.abs(n.time - firstPassRawTime) < 0.01
                     );
@@ -4982,14 +4976,14 @@ addMidiFallingRectangle(
                     // (physical measures 15-21 → logical 7-13).
                     const physMeasure = getMeasureFromTime(note.time);
                     const isRepeatPass = physMeasure !== null &&
-                        physMeasure >= REPEAT_START + REPEAT_LEN &&
+                        physMeasure > REPEAT_END + 1 &&
                         physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
                     let notesToHighlight;
                     if (isRepeatPass) {
                         // Mirror: find the first-pass notes at the equivalent time
-                        // (subtract exactly one repeat-section length in seconds).
-                        const firstPassTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                        // (subtract the physical offset between repeat pass and first pass).
+                        const firstPassTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                         notesToHighlight = allMidiNotes.filter(n =>
                             Math.abs(n.time - firstPassTime) < 0.01
                         );
@@ -5454,8 +5448,9 @@ function _buildSvgMidiMap() {
             // genuine second-pass notes, not barline-straddle notes. Without this guard,
             // the FIRST repeat-pass note for each measure fires overflow (because overflowFired
             // doesn't have the key yet) and gets mis-routed to the next sheet measure.
-            // Upper bound is REPEAT_END + REPEAT_LEN + 1 (=21) to include physical 21 → logical 13.
-            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+            // Physical measure 14 is the 1st ending (NOT part of the repeat pass).
+            // The repeat pass occupies physical REPEAT_END+2 .. REPEAT_END+REPEAT_LEN+1 = 15..21.
+            const isRepeatPassNote = physMeasure > REPEAT_END + 1 && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
             const overflowKey = `${sheetMeasure}|${clef}`;
             if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
                     (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
@@ -5539,13 +5534,14 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     // For REPEAT_END (measure 36): first-pass notes (physical ≤ REPEAT_END) use page 1 bucket,
     // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
     const physMeasure = getMeasureFromTime(noteObj.time);
-    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
-    // Measure 36 treble AND bass: _svgBuckets[36][treble|bass] is empty on page 1
-    // (only a tied whole note which is excluded from the bucket).
-    // Both first-pass and repeat-pass notes must use _svgBucketsPage2[36][treble|bass].
-    const bucketSource = (isRepeatPass || entry.sheet_measure === REPEAT_END)
-        ? _svgBucketsPage2
-        : _svgBuckets;
+    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END + 1;
+    // Prefer _svgBucketsPage2 for the repeat-end measure when page-2 actually has
+    // noteheads there (e.g. a song where REPEAT_END falls on a page boundary).
+    // For this song REPEAT_END=13 is entirely on page 1, so _svgBucketsPage2[13] is
+    // empty and we must fall back to _svgBuckets[13].
+    const wantPage2 = isRepeatPass || entry.sheet_measure === REPEAT_END;
+    const page2bucket = _svgBucketsPage2[entry.sheet_measure]?.[clef];
+    const bucketSource = (wantPage2 && page2bucket?.length) ? _svgBucketsPage2 : _svgBuckets;
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
@@ -5637,19 +5633,19 @@ function onTrainingNoteSpawned(noteObj) {
     // If this note is from the repeat pass, mirror to the first-pass equivalent notes
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = physMeasure !== null &&
-        physMeasure >= REPEAT_START + REPEAT_LEN &&
+        physMeasure > REPEAT_END + 1 &&
         physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
     let simultaneousNotes;
     if (isRepeatPass) {
-        const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+        const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
         simultaneousNotes = practiceNotes.filter(n =>
             Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
         );
         if (!simultaneousNotes.length) {
             // First-pass measures are not in the current range (e.g. range 36→37).
             // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
-            const firstPassRawTime = noteObj.time - REPEAT_LEN * secondsPerMeasure;
+            const firstPassRawTime = noteObj.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
             simultaneousNotes = allMidiNotes.filter(n =>
                 Math.abs(n.time - firstPassRawTime) < 0.01
             );
