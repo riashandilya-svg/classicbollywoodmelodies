@@ -1843,23 +1843,24 @@ const SONG_CONFIG = {
 };
 // ================================
 const REPEAT_START = 7;
-const REPEAT_END = 13;
-const REPEAT_LEN = REPEAT_END - REPEAT_START + 1;
+const REPEAT_END   = 13;   // last measure of the repeated section (volta 1 = m14 is NOT repeated)
+const REPEAT_LEN   = REPEAT_END - REPEAT_START + 1; // = 7  (measures 7-13)
+
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
   for (let p = 1; p <= config.measures; p++) {
     let logical;
 
-    // 1..14 -> 1..14 (first occurrence, includes bar 14)
+    // Physical 1..14  -> logical 1..14  (first pass, includes volta-1 bar 14)
     if (p <= 14) {
       logical = p;
     }
-    // 15..21 -> 7..13 (repeated copy, bar 14 is NOT here)
+    // Physical 15..21 -> logical 7..13  (second pass, skips bar 14)
     else if (p <= 14 + REPEAT_LEN) {
       logical = REPEAT_START + (p - 15);
     }
-    // 22+ -> 15+ (after repeat)
+    // Physical 22+    -> logical 15+    (continuation after repeat)
     else {
       logical = p - REPEAT_LEN;
     }
@@ -2044,36 +2045,45 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
     return { seq, logicalSeq };
   }
 
-  // Case 1: Selection is entirely before measure 15 (measures 1-14)
-  if (endLogical <= 14) {
+  // Case 1: Selection entirely before the repeat zone (measures 1-6 only)
+  if (endLogical < REPEAT_START) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 2: Selection starts after measure 14 (measures 15+)
+  // Case 2: Selection starts after measure 14 (post-repeat only)
   else if (startLogical > 14) {
     for (let l = startLogical; l <= endLogical; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
   }
-  // Case 3: Selection spans across the repeat boundary
+  // Case 3: Selection touches the repeat zone (m7-14).
+  // First pass:  startLogical -> min(endLogical, 14)  [includes m14 = volta 1]
+  // Second pass: max(startLogical,7) -> 13             [m14 skipped = volta 2]
+  // Continuation: 15 -> endLogical  (only if selection extends past 14)
   else {
-    // Play from start to 14
-    for (let l = startLogical; l <= 14; l++) {
+    // First pass up to m14 (volta 1 ending, played once)
+    const firstPassEnd = Math.min(endLogical, 14);
+    for (let l = startLogical; l <= firstPassEnd; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalFirst(l));
     }
-    // Play repeat: 7 to 13
-    for (let l = 7; l <= 13; l++) {
+
+    // Second pass: repeat m7-13, skipping m14 (volta 2 goes straight to m15)
+    const repeatFrom = Math.max(startLogical, REPEAT_START);
+    for (let l = repeatFrom; l <= REPEAT_END; l++) {
       logicalSeq.push(l);
       seq.push(logicalToPhysicalSecond(l));
     }
-    // Continue from 15 onwards
-    for (let l = 15; l <= endLogical; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
+
+    // Continue from m15 onwards if selection extends past the repeat
+    if (endLogical >= 15) {
+      for (let l = 15; l <= endLogical; l++) {
+        logicalSeq.push(l);
+        seq.push(logicalToPhysicalFirst(l));
+      }
     }
   }
 
