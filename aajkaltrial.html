@@ -3413,6 +3413,28 @@ const visualStart =
 
     previewTimeouts.push(t);
 
+    // Score mode: highlight keyboard keys as each note sounds during preview
+    if (scoreModeActive) {
+        const keyOnDelay  = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
+        const keyOffDelay = keyOnDelay + (note.duration * 1000) / speedMultiplier;
+        const midi = note.midi;
+        const track = note.track;
+
+        const kOn = setTimeout(() => {
+            if (!previewMode) return;
+            scoreKeysPlaying = true;
+            if (track === TREBLE) expectedMidiTreble.add(midi);
+            else if (track === BASS) expectedMidiBass.add(midi);
+        }, keyOnDelay);
+
+        const kOff = setTimeout(() => {
+            if (track === TREBLE) expectedMidiTreble.delete(midi);
+            else if (track === BASS) expectedMidiBass.delete(midi);
+        }, keyOffDelay);
+
+        previewTimeouts.push(kOn, kOff);
+    }
+
     // Score mode: highlight each note as it sounds during preview
     if (scoreModeActive) {
         const highlightDelay = visualPreroll + (((note.playTime ?? note.time) - startTime) * 1000) / speedMultiplier;
@@ -3475,6 +3497,7 @@ const endTimeout = setTimeout(() => {
     previewMode = false;
     speedLocked = false;
     setSpeedButtonsEnabled(true);
+    scoreKeysPlaying = false;
 
     // Clear any keyboard keys left highlighted by landing preview notes
     expectedMidiTreble.clear();
