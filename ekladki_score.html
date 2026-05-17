@@ -3220,8 +3220,23 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
+    // Detect if the current note is a grace note by checking the SVG rank map:
+    // if the matched SVG notehead has isGrace=true, this note is ornamental and
+    // should play alone (not grouped with simultaneous bass/treble notes).
+    const _graceCheckKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
+    const _graceCheckEntry = _midiRankMap.get(_graceCheckKey);
+    const _isGraceNote = (() => {
+        if (!_graceCheckEntry) return false;
+        const bucket = _svgBuckets[_graceCheckEntry.sheet_measure]?.[_graceCheckEntry.clef];
+        if (!bucket || _graceCheckEntry.rank >= bucket.length) return false;
+        return !!_svgNoteElements[bucket[_graceCheckEntry.rank]]?.isGrace;
+    })();
+
     // Look ahead for simultaneous notes (within 10ms)
-    // When clefMode === 'both', include notes from BOTH tracks at the same time
+    // When clefMode === 'both', include notes from BOTH tracks at the same time.
+    // Exception: grace notes are ornamental and always play as a solo step —
+    // never group them with simultaneous notes from the other clef.
+    if (!_isGraceNote) {
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
@@ -3237,6 +3252,7 @@ function spawnTrainingNote(noteObj) {
         } else {
             break;
         }
+    }
     }
 
    const isChord = currentChordNotes.size > 1;
@@ -5553,33 +5569,6 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const matchedIdx = bucket[entry.rank];
     const matchedTx  = _svgNoteElements[matchedIdx].tx;
     const result = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 4);
-
-    // Grace-note co-highlight fix:
-    // If the matched SVG notehead is a grace note (visually small, isGrace=true),
-    // also highlight the next notehead in the same bucket (the main note that follows
-    // the grace ornament). This ensures that when the grace note is "spawned" as the
-    // first event in a measure, the main note (e.g. the C note at measure 28) is also
-    // lit up alongside it — since the grace note is ornamental and not a standalone beat.
-    if (_svgNoteElements[matchedIdx].isGrace) {
-        const nextRank = entry.rank + 1;
-        if (nextRank < bucket.length) {
-            const nextIdx = bucket[nextRank];
-            const nextEl  = _svgNoteElements[nextIdx];
-            // Only include if it is NOT itself a grace note (i.e. it is the real main note)
-            if (!nextEl.isGrace) {
-                const mainTx = nextEl.tx;
-                const mainNotes = bucket.filter(i =>
-                    !_svgNoteElements[i].isGrace &&
-                    Math.abs(_svgNoteElements[i].tx - mainTx) < 4
-                );
-                for (const i of mainNotes) {
-                    if (!result.includes(i)) result.push(i);
-                }
-                console.log(`🎶 Grace co-highlight: grace rank=${entry.rank} tx=${matchedTx.toFixed(0)} → also highlighting main rank=${nextRank} tx=${mainTx.toFixed(0)} (${mainNotes.length} note(s))`);
-            }
-        }
-    }
-
     return result;
 }
 
