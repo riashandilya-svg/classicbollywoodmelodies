@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
+
 <style>
 
 /* Fixed brand bar */
@@ -2757,6 +2758,7 @@ let visualClockStart = null;
 let allMidiNotes = [];
 let practiceNotes = [];
 let visualsPlaying = false;
+let scoreKeysPlaying = false; // true while listen-first key highlights are active in score mode
 let speedMultiplier = 1.0;
 let speedLocked = false;
 
@@ -2919,6 +2921,15 @@ function drawKeyboard() {
             ctx.shadowColor = '#ff6b6b';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(255,107,107,0.15)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
+        // Glow for active bass key
+        if (isBass) {
+            ctx.shadowColor = '#7C3AED';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(167,139,250,0.18)';
             ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
             ctx.shadowBlur = 0;
         }
@@ -3625,7 +3636,7 @@ function animate() {
     const now = performance.now();
 
     // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
-    if (!waitingForInput && !visualsPlaying && noteHoldStartTime === null) {
+    if (!waitingForInput && !visualsPlaying && !scoreKeysPlaying && noteHoldStartTime === null) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
     }
@@ -4649,6 +4660,7 @@ isPlaying = false;
 trainingActive = false;
 previewMode = false;
 visualsPlaying = false;
+scoreKeysPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
@@ -4708,6 +4720,7 @@ function resetAll() {
     previewMode      = false;
     waitingForInput  = false;
     visualsPlaying   = false;
+    scoreKeysPlaying = false;
     speedLocked      = false;
     countdownActive  = false;
     setSpeedButtonsEnabled(true);
@@ -4887,6 +4900,7 @@ addMidiFallingRectangle(
 
             const kOn = setTimeout(() => {
                 if (!fullSongPlaying) return;
+                scoreKeysPlaying = true;
                 if (track === TREBLE) expectedMidiTreble.add(midi);
                 else if (track === BASS) expectedMidiBass.add(midi);
             }, keyOnDelay);
