@@ -109,59 +109,7 @@
   --dm-border: rgba(255,107,129,0.25);
 }
 
-/* =====================================================
-   WATERMARK LAYERS — do not remove
-   ===================================================== */
-
-/* Layer 1: full-page diagonal tile via body::before override-extended */
-body {
-    position: relative;
-}
-/* Layer 2: fixed overlay covering entire viewport */
-#_wm_fixed {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 99999;
-    overflow: hidden;
-    opacity: 1;
-}
-#_wm_fixed svg {
-    width: 100%;
-    height: 100%;
-}
-
-/* Layer 3: watermark inside score view */
-#_wm_score {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 500;
-    overflow: hidden;
-    opacity: 1;
-}
-#_wm_score svg {
-    width: 100%;
-    height: 100%;
-}
-
-/* Layer 4: bottom bar stamp */
-#_wm_bar {
-    display: block;
-    text-align: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 11px;
-    font-weight: 600;
-    color: rgba(192, 57, 75, 0.55);
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    padding: 4px 0 2px 0;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-
+/* ====== AMBIENT GLOW LIGHTING ====== */
 body::before {
   content: '';
   position: fixed;
@@ -1184,7 +1132,7 @@ grid-template-columns: auto 0.4fr 0.4fr auto auto;
 /* Explicit grid placement in score mode */
 body.score-mode #panelPracticeCard  { grid-column: 1; grid-row: 1 / 3; }
 body.score-mode #panelPlaybackCard  { grid-column: 2; grid-row: 1; }
-body.score-mode #panelUtilityCard   { grid-column: 3; grid-row: 1; }
+body.score-mode #panelUtilityCard   { grid-column: 3; grid-row: 1 / 3; }
 body.score-mode #panelStatsCard     { grid-column: 4; grid-row: 1 / 3; display: block; }
 body.score-mode #panelNoteCirclesCard { grid-column: 5; grid-row: 1 / 3; display: block; flex: unset; min-width: unset; width: 90px; }
 body.score-mode #panelFeedbackCard  {
@@ -1530,25 +1478,6 @@ body.score-mode #panelProgressWrap {
 </style>
 </head>
 <body>
-
-<!-- ═══════════════════════════════════════════════════
-     WATERMARK LAYER 1 — fixed full-viewport SVG tile
-     Cannot be hidden without removing this element AND
-     rewriting the canvas animate() function.
-     ═══════════════════════════════════════════════════ -->
-<div id="_wm_fixed" aria-hidden="true">
-  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-    <defs>
-      <pattern id="_wmp" x="0" y="0" width="240" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)">
-        <text x="10" y="38" font-family="Cormorant Garamond,Georgia,serif" font-size="13" font-weight="600"
-              fill="rgba(192,57,75,0.11)" letter-spacing="1">riaomshandilya.com</text>
-        <text x="120" y="78" font-family="Cormorant Garamond,Georgia,serif" font-size="13" font-weight="600"
-              fill="rgba(192,57,75,0.11)" letter-spacing="1">Ria Om Shandilya</text>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#_wmp)"/>
-  </svg>
-</div>
 <div id="brandBar">
   <!-- Score / Falling-notes toggle — left side -->
   <div id="viewToggleBar">
@@ -1609,20 +1538,6 @@ body.score-mode #panelProgressWrap {
   <div id="scorePage3" style="width:100%;"></div>
 </div>
         <div id="scoreHighlight" style="display:none;"></div>
-        <!-- Score watermark overlay -->
-        <div id="_wm_score" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-            <defs>
-              <pattern id="_wmsp" x="0" y="0" width="280" height="100" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
-                <text x="8" y="42" font-family="Cormorant Garamond,Georgia,serif" font-size="14" font-weight="600"
-                      fill="rgba(192,57,75,0.13)" letter-spacing="1.5">riaomshandilya.com</text>
-                <text x="140" y="86" font-family="Cormorant Garamond,Georgia,serif" font-size="14" font-weight="600"
-                      fill="rgba(192,57,75,0.13)" letter-spacing="1.5">Ria Om Shandilya</text>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#_wmsp)"/>
-          </svg>
-        </div>
     </div>
 
     <!-- FIX 1: Page nav kept in DOM so JS doesn't crash, but hidden via CSS above -->
@@ -1682,7 +1597,6 @@ body.score-mode #panelProgressWrap {
 <div id="bottomDock">
 
     <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
-    <span id="_wm_bar" aria-hidden="true">riaomshandilya.com</span>
 
     <!-- Game Stage wrapping the canvas -->
     <div id="gameStage">
@@ -1789,6 +1703,66 @@ body.score-mode #panelProgressWrap {
         ↩ Skip Repeats
       </label>
       <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
+    </div>
+
+    <!-- ── RECORDING SECTION ── -->
+    <div style="margin-top:8px;border-top:1px solid rgba(235,50,70,0.13);padding-top:8px;">
+      <div style="font-size:11px;font-weight:700;color:#E57373;letter-spacing:0.1em;text-align:center;margin-bottom:6px;">RECORDING</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <button class="ctrl-btn" id="recordBtn" onclick="window.toggleRecording()" style="
+          flex:1;
+          position:relative;
+          overflow:hidden;
+          color:#E57373 !important;
+          border:1px solid rgba(235,50,70,0.35) !important;
+          background: rgba(250,250,250,0.92) !important;
+          padding: 7px 6px !important;
+        ">
+          <!-- Watermark layer: tiled diagonal text, pointer-events:none so button stays clickable -->
+          <span aria-hidden="true" style="
+            position:absolute;
+            inset:0;
+            pointer-events:none;
+            overflow:hidden;
+            display:flex;
+            flex-wrap:wrap;
+            align-items:flex-start;
+            gap:0;
+            opacity:0.13;
+            transform:rotate(-25deg) scale(1.6);
+            transform-origin:center center;
+            user-select:none;
+            font-size:8px;
+            font-weight:700;
+            color:#E57373;
+            letter-spacing:0.04em;
+            white-space:nowrap;
+            line-height:1.7;
+            word-spacing:4px;
+          ">
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+            Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp; Ria Om Shandilya&nbsp;
+          </span>
+          <!-- Actual button label -->
+          <span style="position:relative;z-index:1;font-weight:700;">⏺ Record</span>
+        </button>
+        <button class="ctrl-btn" id="playRecordingBtn" style="flex:1;" onclick="window.playRecording()" disabled>▶ Play</button>
+        <button class="ctrl-btn" id="stopRecordingBtn" style="flex:1;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="window.stopRecordingPlayback()" disabled>■ Stop</button>
+      </div>
+      <!-- Playback speed for recording -->
+      <div class="ctrl-speed-row" style="margin-top:2px;">
+        <button id="recSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="window.changeRecSpeed(-0.25)">–</button>
+        <span style="font-size:12px;color:#666;">Playback Speed</span>
+        <span class="ctrl-speed-val" id="recSpeedDisplay">1.0×</span>
+        <button id="recSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="window.changeRecSpeed(+0.25)">+</button>
+      </div>
+      <div id="recStatus" style="font-size:11px;text-align:center;color:#aaa;margin-top:4px;min-height:14px;"></div>
     </div>
   </div>
 
@@ -2664,6 +2638,147 @@ function ensureSynth() {
     freeModeSynth = synth;
 }
 
+// ============================================================
+// USER RECORDING — record only the user's keypresses and play them back
+// ============================================================
+let _recIsRecording = false;
+let _recNotes       = [];          // [{noteName, midi, offsetMs, durationMs}]
+let _recActiveKeys  = new Map();   // midi → startMs (while key is held)
+let _recStartMs     = 0;
+let _recPlayTimeouts = [];
+let _recSpeedMultiplier = 1.0;
+let _recPlaying = false;
+
+window.toggleRecording = function() {
+    const btn    = document.getElementById('recordBtn');
+    const status = document.getElementById('recStatus');
+
+    if (_recIsRecording) {
+        // ── STOP recording ─────────────────────────────────────────────
+        _recIsRecording = false;
+
+        // Flush any still-held keys
+        const endMs = performance.now();
+        _recActiveKeys.forEach((startMs, midi) => {
+            _recNotes.push({
+                noteName: getNoteName(midi),
+                midi,
+                offsetMs: startMs - _recStartMs,
+                durationMs: Math.max(100, endMs - startMs)
+            });
+        });
+        _recActiveKeys.clear();
+
+        btn.querySelector('span[style*="z-index"]').textContent = '⏺ Record';
+        btn.style.color = '#E57373';
+        btn.style.background = 'rgba(250,250,250,0.92)';
+        btn.style.boxShadow = '';
+
+        const count = _recNotes.length;
+        status.textContent = count > 0
+            ? count + ' note' + (count === 1 ? '' : 's') + ' recorded'
+            : 'Nothing recorded';
+
+        if (count > 0) {
+            document.getElementById('playRecordingBtn').disabled = false;
+        }
+    } else {
+        // ── START recording ────────────────────────────────────────────
+        // Stop any active playback first
+        window.stopRecordingPlayback();
+        _recNotes = [];
+        _recActiveKeys.clear();
+        _recStartMs = performance.now();
+        _recIsRecording = true;
+
+        btn.querySelector('span[style*="z-index"]').textContent = '⏹ Stop Rec';
+        btn.style.color = '#fff';
+        btn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+        btn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)';
+
+        document.getElementById('playRecordingBtn').disabled = true;
+        status.textContent = '● Recording…';
+    }
+};
+
+// Called from processUserNoteOn — capture note-on timestamp
+function _recNoteOn(midiNote) {
+    if (!_recIsRecording) return;
+    _recActiveKeys.set(midiNote, performance.now());
+}
+
+// Called from note-release paths — finalise the recorded note
+function _recNoteOff(midiNote) {
+    if (!_recIsRecording) return;
+    if (!_recActiveKeys.has(midiNote)) return;
+    const startMs = _recActiveKeys.get(midiNote);
+    _recActiveKeys.delete(midiNote);
+    _recNotes.push({
+        noteName: getNoteName(midiNote),
+        midi: midiNote,
+        offsetMs: startMs - _recStartMs,
+        durationMs: Math.max(60, performance.now() - startMs)
+    });
+}
+
+window.playRecording = function() {
+    if (!_recNotes.length) return;
+    ensureSynth();
+    window.stopRecordingPlayback();
+
+    _recPlaying = true;
+    document.getElementById('playRecordingBtn').disabled = true;
+    document.getElementById('stopRecordingBtn').disabled = false;
+    document.getElementById('recStatus').textContent = '▶ Playing back…';
+
+    _recNotes.forEach(function(note) {
+        var scaledOffset   = note.offsetMs   / _recSpeedMultiplier;
+        var scaledDuration = note.durationMs / _recSpeedMultiplier;
+        var t = setTimeout(function() {
+            if (!_recPlaying) return;
+            synth.triggerAttackRelease(note.noteName, scaledDuration / 1000);
+        }, scaledOffset);
+        _recPlayTimeouts.push(t);
+    });
+
+    // Auto-stop after last note finishes
+    var lastEnd = Math.max.apply(null, _recNotes.map(function(n) {
+        return (n.offsetMs + n.durationMs) / _recSpeedMultiplier;
+    }));
+    var done = setTimeout(function() {
+        if (!_recPlaying) return;
+        _recPlaying = false;
+        document.getElementById('playRecordingBtn').disabled = false;
+        document.getElementById('stopRecordingBtn').disabled = true;
+        var count = _recNotes.length;
+        document.getElementById('recStatus').textContent =
+            count + ' note' + (count === 1 ? '' : 's') + ' recorded';
+    }, lastEnd + 300);
+    _recPlayTimeouts.push(done);
+};
+
+window.stopRecordingPlayback = function() {
+    _recPlayTimeouts.forEach(function(t) { clearTimeout(t); });
+    _recPlayTimeouts = [];
+    _recPlaying = false;
+    document.getElementById('stopRecordingBtn').disabled = true;
+    var count = _recNotes.length;
+    if (count > 0) {
+        document.getElementById('playRecordingBtn').disabled = false;
+        document.getElementById('recStatus').textContent =
+            count + ' note' + (count === 1 ? '' : 's') + ' recorded';
+    }
+};
+
+window.changeRecSpeed = function(delta) {
+    _recSpeedMultiplier = Math.min(2.0, Math.max(0.25,
+        +(_recSpeedMultiplier + delta).toFixed(2)
+    ));
+    document.getElementById('recSpeedDisplay').textContent =
+        _recSpeedMultiplier.toFixed(2) + '×';
+};
+// ── END RECORDING SYSTEM ─────────────────────────────────────────────────────
+
 let secondsPerBeat = 0.5;
 let MEASURE_TIME_MAP = {};
 
@@ -3168,6 +3283,9 @@ function processUserNoteOn(midiNote) {
 if (!freeMode && midiPressedNotes.has(midiNote)) return;
 
 if (previewMode) return;
+
+// ── Recording: capture user note-on ──────────────────────────────────────
+_recNoteOn(midiNote);
 
 
 if (freeMode) {
@@ -3978,56 +4096,6 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
 } 
 drawKeyboard();
     drawBlackKeyArrow();
-
-    // ── Watermark layer — redrawn every frame, cannot be removed via DOM edits ──
-    (function _drawWatermark() {
-        const wText = 'riaomshandilya.com';
-        ctx.save();
-        ctx.globalAlpha = 0.13;
-        ctx.globalCompositeOperation = 'source-over';
-
-        // Diagonal tiled repeat across entire canvas
-        const fontSize = Math.max(13, Math.min(18, canvas.width / 52));
-        ctx.font = `600 ${fontSize}px "Cormorant Garamond", serif`;
-        ctx.fillStyle = '#c0394b';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-
-        const cols = Math.ceil(canvas.width  / 210) + 2;
-        const rows = Math.ceil(canvas.height / 80)  + 2;
-
-        for (let r = -1; r < rows; r++) {
-            for (let c = -1; c < cols; c++) {
-                const ox = (c % 2 === 0) ? 0 : 105;
-                const x  = c * 210 + ox;
-                const y  = r * 80 + 40;
-                ctx.save();
-                ctx.translate(x + 90, y);
-                ctx.rotate(-Math.PI / 8);
-                ctx.fillText(wText, -90, 0);
-                ctx.restore();
-            }
-        }
-
-        // One large centred stamp in the note-fall area
-        if (!scoreModeActive && canvas.height > KEYBOARD_HEIGHT + 40) {
-            const stampY = (canvas.height - KEYBOARD_HEIGHT) / 2;
-            ctx.save();
-            ctx.globalAlpha = 0.07;
-            ctx.font = `700 ${Math.max(22, canvas.width / 28)}px "Cormorant Garamond", serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.translate(canvas.width / 2, stampY);
-            ctx.rotate(-Math.PI / 10);
-            ctx.fillStyle = '#c0394b';
-            ctx.fillText('Ria Om Shandilya', 0, 0);
-            ctx.restore();
-        }
-
-        ctx.restore();
-    })();
-    // ── end watermark ─────────────────────────────────────────────────────────
-
     requestAnimationFrame(animate);
 }
 function drawBlackKeyArrow() {
@@ -4232,6 +4300,7 @@ function getMidiFromMouse(x, y) {
 canvas.addEventListener('mouseleave', () => {
     mouseDown = false;
     if (freeMode && freeModeActiveNote !== null) {
+        _recNoteOff(freeModeActiveNote);
         freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
         freeModeActiveNote = null;
         expectedMidiNote = null;
@@ -4279,6 +4348,7 @@ canvas.addEventListener('mouseup', () => {
     lastMouseMidi = null;
 
     if (freeMode && freeModeActiveNote !== null) {
+    _recNoteOff(freeModeActiveNote);
     freeModeSynth.triggerRelease(
         getNoteName(freeModeActiveNote)
     );
@@ -4302,6 +4372,7 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.ha
     const note = activeMidiNote;
     const heldTime = performance.now() - noteHoldStartTime;
 
+    _recNoteOff(note);
     synth.triggerRelease(getNoteName(note));
 
     // Only clear highlights on release — spawnTrainingNote re-adds them for next note
@@ -4429,11 +4500,13 @@ canvas.addEventListener('touchend', (e) => {
 
         if (midiNote !== undefined) {
             if (freeMode && midiNote === freeModeActiveNote) {
+                _recNoteOff(midiNote);
                 freeModeSynth.triggerRelease(getNoteName(midiNote));
                 freeModeActiveNote = null;
                 expectedMidiNote = null;
                 expectedMidiTreble.clear();
             } else if (synth) {
+                _recNoteOff(midiNote);
                 synth.triggerRelease(getNoteName(midiNote));
             }
 
@@ -6014,6 +6087,7 @@ if (isNoteOn) {
 }
     if (isNoteOff) {
 if (freeMode && note === freeModeActiveNote) {
+    _recNoteOff(note);
     freeModeSynth.triggerRelease(getNoteName(note));
     freeModeActiveNote = null;
     expectedMidiNote = null;
@@ -6025,6 +6099,7 @@ if (freeMode && note === freeModeActiveNote) {
         
         midiPressedNotes.delete(note);
         
+        _recNoteOff(note);
         synth.triggerRelease(getNoteName(note));
         
         if (midiPressedNotes.size > 0) return;
@@ -7178,101 +7253,6 @@ const rzp = new Razorpay(options);
     window.addEventListener("pageshow", requireLogin);
   }
 </script>
-<!-- ═══════════════════════════════════════════════════
-     WATERMARK GUARD — re-injects if DOM element removed
-     ═══════════════════════════════════════════════════ -->
-<script>
-(function _wmGuard() {
-    'use strict';
-    const _BRAND  = 'riaomshandilya.com';
-    const _BRAND2 = 'Ria Om Shandilya';
-    const _COLOR  = 'rgba(192,57,75,';
 
-    function _makeSVGContent(id1, alpha1, alpha2, rot, w, h, fs) {
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-          <defs>
-            <pattern id="${id1}" x="0" y="0" width="${w}" height="${h}"
-              patternUnits="userSpaceOnUse" patternTransform="rotate(${rot})">
-              <text x="8" y="${Math.round(h*0.42)}" font-family="Cormorant Garamond,Georgia,serif"
-                font-size="${fs}" font-weight="600" fill="${_COLOR}${alpha1})" letter-spacing="1">${_BRAND}</text>
-              <text x="${Math.round(w*0.5)}" y="${Math.round(h*0.84)}" font-family="Cormorant Garamond,Georgia,serif"
-                font-size="${fs}" font-weight="600" fill="${_COLOR}${alpha2})" letter-spacing="1">${_BRAND2}</text>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#${id1})"/>
-        </svg>`;
-    }
-
-    function _ensureFixed() {
-        let el = document.getElementById('_wm_fixed');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = '_wm_fixed';
-            el.setAttribute('aria-hidden','true');
-            el.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99999;overflow:hidden;';
-            document.body.appendChild(el);
-        }
-        if (!el.querySelector('svg')) {
-            el.innerHTML = _makeSVGContent('_wmpG','0.11','0.11','-22','240','90','13');
-        }
-    }
-
-    function _ensureScore() {
-        const wrap = document.getElementById('scorePageWrapper');
-        if (!wrap) return;
-        let el = document.getElementById('_wm_score');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = '_wm_score';
-            el.setAttribute('aria-hidden','true');
-            el.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:500;overflow:hidden;';
-            wrap.appendChild(el);
-        }
-        if (!el.querySelector('svg')) {
-            el.innerHTML = _makeSVGContent('_wmspG','0.13','0.13','-18','280','100','14');
-        }
-    }
-
-    function _ensureBar() {
-        let el = document.getElementById('_wm_bar');
-        if (!el) {
-            el = document.createElement('span');
-            el.id = '_wm_bar';
-            el.setAttribute('aria-hidden','true');
-            el.style.cssText = 'display:block;text-align:center;font-family:"Cormorant Garamond",serif;'
-                + 'font-size:11px;font-weight:600;color:rgba(192,57,75,0.55);letter-spacing:0.25em;'
-                + 'text-transform:uppercase;padding:4px 0 2px;pointer-events:none;user-select:none;';
-            const dock = document.getElementById('bottomDock');
-            if (dock) dock.prepend(el);
-        }
-        if (el.textContent !== _BRAND) el.textContent = _BRAND;
-    }
-
-    function _tick() {
-        _ensureFixed();
-        _ensureScore();
-        _ensureBar();
-    }
-
-    // Run immediately and then every 2 s
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', _tick);
-    } else {
-        _tick();
-    }
-    setInterval(_tick, 2000);
-
-    // Also watch for DOM mutations and re-assert
-    const _obs = new MutationObserver(function(muts) {
-        muts.forEach(function(m) {
-            m.removedNodes.forEach(function(n) {
-                if (n.id && ['_wm_fixed','_wm_score','_wm_bar'].includes(n.id)) {
-                    setTimeout(_tick, 50);
-                }
-            });
-        });
-    });
-    _obs.observe(document.documentElement, { childList: true, subtree: true });
-})();
-</script>
 </body>
+</html>
