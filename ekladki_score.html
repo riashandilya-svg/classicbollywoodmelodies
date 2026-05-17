@@ -5494,10 +5494,10 @@ function _buildSvgMidiMap() {
                 || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
             let rank         = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
-            // Measure 28 treble: the SVG has a grace B at rank 0, but the MIDI has no
-            // grace note — it starts directly at C6. Shift all treble ranks +1 so MIDI
-            // note 0 (C6) highlights SVG rank 1, and the last note (E5) hits rank 8.
-            if (sheetMeasure === 28 && clef === 'treble') {
+            // Measures 28 and 30 treble: the SVG has a grace B at rank 0, but the MIDI
+            // has no grace note — it starts directly at C6. Shift all treble ranks +1 so
+            // MIDI note 0 (C6) highlights SVG rank 1, and the last note (E5) hits rank 8.
+            if ((sheetMeasure === 28 || sheetMeasure === 30) && clef === 'treble') {
                 rank = rank + 1;
             }
 
