@@ -3392,7 +3392,60 @@ if (beatEnabled || countEnabled) {
 }
 
 const feedback = document.getElementById('feedback');
-feedback.textContent = 'Listen first…';
+
+// ── Listen-first countdown ──────────────────────────────────────────
+// Show a live "Your turn in Xs" ticker so users know the site isn't frozen
+// at slow speeds. Ticks every second until the preview ends.
+let _listenCountdownTimer = null;
+
+function _startListenCountdown(totalMs) {
+    // Cancel any leftover ticker from a previous preview
+    if (_listenCountdownTimer) { clearInterval(_listenCountdownTimer); _listenCountdownTimer = null; }
+
+    const slowMsg = speedMultiplier < 1.0
+        ? ` · slow speed (${speedMultiplier.toFixed(2)}×)`
+        : '';
+
+    const deadline = performance.now() + totalMs;
+
+    function _tick() {
+        if (!previewMode) {
+            clearInterval(_listenCountdownTimer);
+            _listenCountdownTimer = null;
+            return;
+        }
+        const secsLeft = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
+        feedback.textContent = secsLeft > 0
+            ? `Listen first… your turn in ${secsLeft}s${slowMsg}`
+            : 'Listen first…';
+    }
+
+    _tick();                                      // show immediately
+    _listenCountdownTimer = setInterval(_tick, 500); // refresh every 0.5 s for smooth rounding
+    previewTimeouts.push({ _isFakeTimeout: true, _clear: () => { clearInterval(_listenCountdownTimer); _listenCountdownTimer = null; } });
+}
+
+// Total ms the user waits before it becomes their turn:
+//   visualPreroll  = time before first note sounds
+//   previewLength  = computed later, but we can approximate via all note end times
+//   + 400 ms tail buffer
+// We'll start the ticker now with a rough estimate; the exact value doesn't need
+// to be pixel-perfect — it just needs to reassure the user.
+const _approxPreviewLength =
+    (() => {
+        const sn = practiceNotes.filter(note => {
+            if (clef === 'both') return true;
+            if (clef === 'treble') return note.track === TREBLE;
+            if (clef === 'bass')   return note.track === BASS;
+            return false;
+        });
+        if (!sn.length) return 0;
+        const lastEnd = Math.max(...sn.map(n => (n.playTime ?? n.time) + n.duration));
+        return ((lastEnd - startTime) * 1000) / speedMultiplier;
+    })();
+
+_startListenCountdown(visualPreroll + _approxPreviewLength + 400);
+// ────────────────────────────────────────────────────────────────────
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -3538,6 +3591,12 @@ const endTimeout = setTimeout(() => {
     // Kill beat/count/1&2& completely — preview is over, user's turn now
     stopMetronome();
     _cancelCountAudio();
+
+    // Stop the listen-first countdown ticker
+    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
+        clearInterval(_listenCountdownTimer);
+        _listenCountdownTimer = null;
+    }
 
     const feedback = document.getElementById('feedback');
     feedback.textContent = 'Your turn';
