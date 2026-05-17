@@ -109,7 +109,59 @@
   --dm-border: rgba(255,107,129,0.25);
 }
 
-/* ====== AMBIENT GLOW LIGHTING ====== */
+/* =====================================================
+   WATERMARK LAYERS — do not remove
+   ===================================================== */
+
+/* Layer 1: full-page diagonal tile via body::before override-extended */
+body {
+    position: relative;
+}
+/* Layer 2: fixed overlay covering entire viewport */
+#_wm_fixed {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99999;
+    overflow: hidden;
+    opacity: 1;
+}
+#_wm_fixed svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Layer 3: watermark inside score view */
+#_wm_score {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 500;
+    overflow: hidden;
+    opacity: 1;
+}
+#_wm_score svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Layer 4: bottom bar stamp */
+#_wm_bar {
+    display: block;
+    text-align: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(192, 57, 75, 0.55);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 4px 0 2px 0;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+
 body::before {
   content: '';
   position: fixed;
@@ -1478,6 +1530,25 @@ body.score-mode #panelProgressWrap {
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════
+     WATERMARK LAYER 1 — fixed full-viewport SVG tile
+     Cannot be hidden without removing this element AND
+     rewriting the canvas animate() function.
+     ═══════════════════════════════════════════════════ -->
+<div id="_wm_fixed" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+    <defs>
+      <pattern id="_wmp" x="0" y="0" width="240" height="90" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)">
+        <text x="10" y="38" font-family="Cormorant Garamond,Georgia,serif" font-size="13" font-weight="600"
+              fill="rgba(192,57,75,0.11)" letter-spacing="1">riaomshandilya.com</text>
+        <text x="120" y="78" font-family="Cormorant Garamond,Georgia,serif" font-size="13" font-weight="600"
+              fill="rgba(192,57,75,0.11)" letter-spacing="1">Ria Om Shandilya</text>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#_wmp)"/>
+  </svg>
+</div>
 <div id="brandBar">
   <!-- Score / Falling-notes toggle — left side -->
   <div id="viewToggleBar">
@@ -1538,6 +1609,20 @@ body.score-mode #panelProgressWrap {
   <div id="scorePage3" style="width:100%;"></div>
 </div>
         <div id="scoreHighlight" style="display:none;"></div>
+        <!-- Score watermark overlay -->
+        <div id="_wm_score" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs>
+              <pattern id="_wmsp" x="0" y="0" width="280" height="100" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+                <text x="8" y="42" font-family="Cormorant Garamond,Georgia,serif" font-size="14" font-weight="600"
+                      fill="rgba(192,57,75,0.13)" letter-spacing="1.5">riaomshandilya.com</text>
+                <text x="140" y="86" font-family="Cormorant Garamond,Georgia,serif" font-size="14" font-weight="600"
+                      fill="rgba(192,57,75,0.13)" letter-spacing="1.5">Ria Om Shandilya</text>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#_wmsp)"/>
+          </svg>
+        </div>
     </div>
 
     <!-- FIX 1: Page nav kept in DOM so JS doesn't crash, but hidden via CSS above -->
@@ -1597,6 +1682,7 @@ body.score-mode #panelProgressWrap {
 <div id="bottomDock">
 
     <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
+    <span id="_wm_bar" aria-hidden="true">riaomshandilya.com</span>
 
     <!-- Game Stage wrapping the canvas -->
     <div id="gameStage">
@@ -1642,6 +1728,28 @@ body.score-mode #panelProgressWrap {
           oninput="document.getElementById('endMeasureInput').value=this.value"
           value="4">
       </label>
+    </div>
+    <!-- Song section shortcuts -->
+    <div style="margin-top:6px;">
+      <select id="sectionShortcut"
+        style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:12px;color:#555;font-weight:600;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path d=%22M1 1l5 5 5-5%22 stroke=%22%23aaa%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;"
+        onchange="(function(sel){
+          const val = sel.value;
+          if (!val) return;
+          const [s, e] = val.split('-').map(Number);
+          document.getElementById('panelStartMeasure').value = s;
+          document.getElementById('panelEndMeasure').value   = e;
+          document.getElementById('startMeasureInput').value = s;
+          document.getElementById('endMeasureInput').value   = e;
+          sel.value = '';
+        })(this)">
+        <option value="">🎵 Jump to section…</option>
+        <option value="1-11">Intro music (1 – 11)</option>
+        <option value="12-28">Aaj kal — toh kya? (12 – 28)</option>
+        <option value="29-36">Middle music (29 – 36)</option>
+        <option value="37-57">Hamne toh — naam kar lia (37 – 57)</option>
+        <option value="58-73">Aaj kal toh kya — reprise (58 – 73)</option>
+      </select>
     </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
     <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
@@ -3370,7 +3478,60 @@ if (beatEnabled || countEnabled) {
 }
 
 const feedback = document.getElementById('feedback');
-feedback.textContent = 'Listen first…';
+
+// ── Listen-first countdown ──────────────────────────────────────────
+// Show a live "Your turn in Xs" ticker so users know the site isn't frozen
+// at slow speeds. Ticks every second until the preview ends.
+let _listenCountdownTimer = null;
+
+function _startListenCountdown(totalMs) {
+    // Cancel any leftover ticker from a previous preview
+    if (_listenCountdownTimer) { clearInterval(_listenCountdownTimer); _listenCountdownTimer = null; }
+
+    const slowMsg = speedMultiplier < 1.0
+        ? ` · slow speed (${speedMultiplier.toFixed(2)}×)`
+        : '';
+
+    const deadline = performance.now() + totalMs;
+
+    function _tick() {
+        if (!previewMode) {
+            clearInterval(_listenCountdownTimer);
+            _listenCountdownTimer = null;
+            return;
+        }
+        const secsLeft = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
+        feedback.textContent = secsLeft > 0
+            ? `Listen first… your turn in ${secsLeft}s${slowMsg}`
+            : 'Listen first…';
+    }
+
+    _tick();                                      // show immediately
+    _listenCountdownTimer = setInterval(_tick, 500); // refresh every 0.5 s for smooth rounding
+    previewTimeouts.push({ _isFakeTimeout: true, _clear: () => { clearInterval(_listenCountdownTimer); _listenCountdownTimer = null; } });
+}
+
+// Total ms the user waits before it becomes their turn:
+//   visualPreroll  = time before first note sounds
+//   previewLength  = computed later, but we can approximate via all note end times
+//   + 400 ms tail buffer
+// We'll start the ticker now with a rough estimate; the exact value doesn't need
+// to be pixel-perfect — it just needs to reassure the user.
+const _approxPreviewLength =
+    (() => {
+        const sn = practiceNotes.filter(note => {
+            if (clef === 'both') return true;
+            if (clef === 'treble') return note.track === TREBLE;
+            if (clef === 'bass')   return note.track === BASS;
+            return false;
+        });
+        if (!sn.length) return 0;
+        const lastEnd = Math.max(...sn.map(n => (n.playTime ?? n.time) + n.duration));
+        return ((lastEnd - startTime) * 1000) / speedMultiplier;
+    })();
+
+_startListenCountdown(visualPreroll + _approxPreviewLength + 400);
+// ────────────────────────────────────────────────────────────────────
 
 feedback.classList.remove('correct', 'wrong', 'show');
 void feedback.offsetWidth;
@@ -3516,6 +3677,12 @@ const endTimeout = setTimeout(() => {
     // Kill beat/count/1&2& completely — preview is over, user's turn now
     stopMetronome();
     _cancelCountAudio();
+
+    // Stop the listen-first countdown ticker
+    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
+        clearInterval(_listenCountdownTimer);
+        _listenCountdownTimer = null;
+    }
 
     const feedback = document.getElementById('feedback');
     feedback.textContent = 'Your turn';
@@ -3811,6 +3978,56 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
 } 
 drawKeyboard();
     drawBlackKeyArrow();
+
+    // ── Watermark layer — redrawn every frame, cannot be removed via DOM edits ──
+    (function _drawWatermark() {
+        const wText = 'riaomshandilya.com';
+        ctx.save();
+        ctx.globalAlpha = 0.13;
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Diagonal tiled repeat across entire canvas
+        const fontSize = Math.max(13, Math.min(18, canvas.width / 52));
+        ctx.font = `600 ${fontSize}px "Cormorant Garamond", serif`;
+        ctx.fillStyle = '#c0394b';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        const cols = Math.ceil(canvas.width  / 210) + 2;
+        const rows = Math.ceil(canvas.height / 80)  + 2;
+
+        for (let r = -1; r < rows; r++) {
+            for (let c = -1; c < cols; c++) {
+                const ox = (c % 2 === 0) ? 0 : 105;
+                const x  = c * 210 + ox;
+                const y  = r * 80 + 40;
+                ctx.save();
+                ctx.translate(x + 90, y);
+                ctx.rotate(-Math.PI / 8);
+                ctx.fillText(wText, -90, 0);
+                ctx.restore();
+            }
+        }
+
+        // One large centred stamp in the note-fall area
+        if (!scoreModeActive && canvas.height > KEYBOARD_HEIGHT + 40) {
+            const stampY = (canvas.height - KEYBOARD_HEIGHT) / 2;
+            ctx.save();
+            ctx.globalAlpha = 0.07;
+            ctx.font = `700 ${Math.max(22, canvas.width / 28)}px "Cormorant Garamond", serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.translate(canvas.width / 2, stampY);
+            ctx.rotate(-Math.PI / 10);
+            ctx.fillStyle = '#c0394b';
+            ctx.fillText('Ria Om Shandilya', 0, 0);
+            ctx.restore();
+        }
+
+        ctx.restore();
+    })();
+    // ── end watermark ─────────────────────────────────────────────────────────
+
     requestAnimationFrame(animate);
 }
 function drawBlackKeyArrow() {
@@ -6961,6 +7178,101 @@ const rzp = new Razorpay(options);
     window.addEventListener("pageshow", requireLogin);
   }
 </script>
+<!-- ═══════════════════════════════════════════════════
+     WATERMARK GUARD — re-injects if DOM element removed
+     ═══════════════════════════════════════════════════ -->
+<script>
+(function _wmGuard() {
+    'use strict';
+    const _BRAND  = 'riaomshandilya.com';
+    const _BRAND2 = 'Ria Om Shandilya';
+    const _COLOR  = 'rgba(192,57,75,';
 
+    function _makeSVGContent(id1, alpha1, alpha2, rot, w, h, fs) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <defs>
+            <pattern id="${id1}" x="0" y="0" width="${w}" height="${h}"
+              patternUnits="userSpaceOnUse" patternTransform="rotate(${rot})">
+              <text x="8" y="${Math.round(h*0.42)}" font-family="Cormorant Garamond,Georgia,serif"
+                font-size="${fs}" font-weight="600" fill="${_COLOR}${alpha1})" letter-spacing="1">${_BRAND}</text>
+              <text x="${Math.round(w*0.5)}" y="${Math.round(h*0.84)}" font-family="Cormorant Garamond,Georgia,serif"
+                font-size="${fs}" font-weight="600" fill="${_COLOR}${alpha2})" letter-spacing="1">${_BRAND2}</text>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#${id1})"/>
+        </svg>`;
+    }
+
+    function _ensureFixed() {
+        let el = document.getElementById('_wm_fixed');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = '_wm_fixed';
+            el.setAttribute('aria-hidden','true');
+            el.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:99999;overflow:hidden;';
+            document.body.appendChild(el);
+        }
+        if (!el.querySelector('svg')) {
+            el.innerHTML = _makeSVGContent('_wmpG','0.11','0.11','-22','240','90','13');
+        }
+    }
+
+    function _ensureScore() {
+        const wrap = document.getElementById('scorePageWrapper');
+        if (!wrap) return;
+        let el = document.getElementById('_wm_score');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = '_wm_score';
+            el.setAttribute('aria-hidden','true');
+            el.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:500;overflow:hidden;';
+            wrap.appendChild(el);
+        }
+        if (!el.querySelector('svg')) {
+            el.innerHTML = _makeSVGContent('_wmspG','0.13','0.13','-18','280','100','14');
+        }
+    }
+
+    function _ensureBar() {
+        let el = document.getElementById('_wm_bar');
+        if (!el) {
+            el = document.createElement('span');
+            el.id = '_wm_bar';
+            el.setAttribute('aria-hidden','true');
+            el.style.cssText = 'display:block;text-align:center;font-family:"Cormorant Garamond",serif;'
+                + 'font-size:11px;font-weight:600;color:rgba(192,57,75,0.55);letter-spacing:0.25em;'
+                + 'text-transform:uppercase;padding:4px 0 2px;pointer-events:none;user-select:none;';
+            const dock = document.getElementById('bottomDock');
+            if (dock) dock.prepend(el);
+        }
+        if (el.textContent !== _BRAND) el.textContent = _BRAND;
+    }
+
+    function _tick() {
+        _ensureFixed();
+        _ensureScore();
+        _ensureBar();
+    }
+
+    // Run immediately and then every 2 s
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _tick);
+    } else {
+        _tick();
+    }
+    setInterval(_tick, 2000);
+
+    // Also watch for DOM mutations and re-assert
+    const _obs = new MutationObserver(function(muts) {
+        muts.forEach(function(m) {
+            m.removedNodes.forEach(function(n) {
+                if (n.id && ['_wm_fixed','_wm_score','_wm_bar'].includes(n.id)) {
+                    setTimeout(_tick, 50);
+                }
+            });
+        });
+    });
+    _obs.observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
 </body>
-</html>
