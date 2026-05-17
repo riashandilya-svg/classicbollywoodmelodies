@@ -5679,6 +5679,21 @@ function onTrainingNoteSpawned(noteObj) {
 
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
+    // If the spawned note is a grace note, restrict SVG highlighting to the same
+    // track only — grace notes are ornamental solo steps and must not co-highlight
+    // simultaneous notes from the other clef.
+    const _graceHighlightKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
+    const _graceHighlightEntry = _midiRankMap.get(_graceHighlightKey);
+    const _spawnedIsGrace = (() => {
+        if (!_graceHighlightEntry) return false;
+        const bucket = _svgBuckets[_graceHighlightEntry.sheet_measure]?.[_graceHighlightEntry.clef];
+        if (!bucket || _graceHighlightEntry.rank >= bucket.length) return false;
+        return !!_svgNoteElements[bucket[_graceHighlightEntry.rank]]?.isGrace;
+    })();
+    if (_spawnedIsGrace) {
+        simultaneousNotes = simultaneousNotes.filter(n => n.track === noteObj.track);
+    }
+
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
     for (const n of simultaneousNotes) {
