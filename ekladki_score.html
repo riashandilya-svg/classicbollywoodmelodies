@@ -3220,23 +3220,8 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Detect if the current note is a grace note by checking the SVG rank map:
-    // if the matched SVG notehead has isGrace=true, this note is ornamental and
-    // should play alone (not grouped with simultaneous bass/treble notes).
-    const _graceCheckKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
-    const _graceCheckEntry = _midiRankMap.get(_graceCheckKey);
-    const _isGraceNote = (() => {
-        if (!_graceCheckEntry) return false;
-        const bucket = _svgBuckets[_graceCheckEntry.sheet_measure]?.[_graceCheckEntry.clef];
-        if (!bucket || _graceCheckEntry.rank >= bucket.length) return false;
-        return !!_svgNoteElements[bucket[_graceCheckEntry.rank]]?.isGrace;
-    })();
-
     // Look ahead for simultaneous notes (within 10ms)
-    // When clefMode === 'both', include notes from BOTH tracks at the same time.
-    // Exception: grace notes are ornamental and always play as a solo step —
-    // never group them with simultaneous notes from the other clef.
-    if (!_isGraceNote) {
+    // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
@@ -3252,7 +3237,6 @@ function spawnTrainingNote(noteObj) {
         } else {
             break;
         }
-    }
     }
 
    const isChord = currentChordNotes.size > 1;
@@ -3605,6 +3589,35 @@ function spawnNextValidNote() {
 
         if (isTiedContinuation) {
             // Tied continuation — skip silently (user already played the parent note)
+            trainingIndex++;
+            updateTrainingProgress();
+            continue;
+        }
+
+        // Skip grace notes and notes simultaneous with them as practice steps.
+        // Grace MIDI notes have no _midiRankMap entry (assignRanks skips them).
+        // Notes from any clef that are simultaneous with a grace are also skipped
+        // so they don't become an isolated solo step — they'll group with the next note.
+        const graceEntry = _midiRankMap.get(midiKey);
+        const notePlayTime2 = note.playTime ?? note.time;
+        const isGracePracticeNote = !graceEntry && _svgNoteElements.some(el => {
+            const pm = note.physicalMeasure ?? getMeasureFromTime(note.time);
+            if (!pm) return false;
+            const sm = PHYSICAL_TO_LOGICAL[pm] ?? pm;
+            return el.clef === note.track && el.sheet_measure === sm && el.isGrace;
+        });
+        const isSimultaneousWithGrace = !isGracePracticeNote && practiceNotes.some((n, ni) => {
+            if (ni === trainingIndex) return false;
+            const nPlayTime = n.playTime ?? n.time;
+            if (Math.abs(nPlayTime - notePlayTime2) >= 0.01) return false;
+            const nKey = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+            if (_midiRankMap.has(nKey)) return false;
+            const pm = n.physicalMeasure ?? getMeasureFromTime(n.time);
+            if (!pm) return false;
+            const sm = PHYSICAL_TO_LOGICAL[pm] ?? pm;
+            return _svgNoteElements.some(el => el.clef === n.track && el.sheet_measure === sm && el.isGrace);
+        });
+        if (isGracePracticeNote || isSimultaneousWithGrace) {
             trainingIndex++;
             updateTrainingProgress();
             continue;
@@ -5254,6 +5267,11 @@ function _buildSvgNoteIndex() {
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
 
+                        // Grace noteheads are ornamental — exclude them from the rank
+                        // buckets so the main note gets rank 0 and aligns with bass.
+                        // Grace MIDI notes are also skipped as practice steps (see training loop).
+                        if (n.isGrace) break;
+
                         // Measure REPEAT_END (36) appears on both page 1 (end of repeat)
                         // and page 2 (start of post-repeat section). Route page 2+ copies
                         // to _svgBucketsPage2 so the first-pass highlights use page 1 noteheads
@@ -5371,6 +5389,35 @@ function _buildSvgMidiMap() {
                     return sm === 36;
                 })();
             if (!isTiedM36Treble && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))) continue;
+
+            // Skip grace MIDI notes in rank assignment: their SVG noteheads were excluded
+            // from the buckets (isGrace=true notes are not pushed into bucket arrays).
+            // If we assign them a rank anyway, every subsequent note's rank shifts by +1,
+            // misaligning treble with bass. Detect grace MIDI notes by checking whether
+            // any _svgNoteElement with isGrace=true exists at approximately the same
+            // X position as what this note would occupy in its measure+clef bucket.
+            // Simpler: a note is a grace MIDI note if its time is the earliest in its
+            // measure AND the SVG bucket's lowest-tx element for that measure+clef has isGrace.
+            // We pre-compute this from _bucketFirstIsGrace — but that flag is set from the
+            // OLD bucket (before grace exclusion). Use _svgNoteElements scan instead.
+            {
+                const pm = getMeasureFromTime(note.time);
+                if (pm !== null) {
+                    const sm = PHYSICAL_TO_LOGICAL[pm] ?? pm;
+                    const clefKey = `${sm}|${clef}`;
+                    // Check if there's a grace SVG notehead at this measure+clef whose
+                    // tx is the smallest (i.e. it would have been rank 0 before exclusion).
+                    // If this MIDI note's time equals the measure start and such a grace exists, skip.
+                    const measureStart = MEASURE_TIME_MAP[pm]?.start ?? -1;
+                    const isAtMeasureStart = Math.abs(note.time - measureStart) < 0.01;
+                    if (isAtMeasureStart) {
+                        const hasGraceAtStart = _svgNoteElements.some(el =>
+                            el.clef === clef && el.sheet_measure === sm && el.isGrace
+                        );
+                        if (hasGraceAtStart) continue;
+                    }
+                }
+            }
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -5678,21 +5725,6 @@ function onTrainingNoteSpawned(noteObj) {
     }
 
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
-
-    // If the spawned note is a grace note, restrict SVG highlighting to the same
-    // track only — grace notes are ornamental solo steps and must not co-highlight
-    // simultaneous notes from the other clef.
-    const _graceHighlightKey = `${noteObj.time.toFixed(4)}|${noteObj.midi}|${noteObj.track}`;
-    const _graceHighlightEntry = _midiRankMap.get(_graceHighlightKey);
-    const _spawnedIsGrace = (() => {
-        if (!_graceHighlightEntry) return false;
-        const bucket = _svgBuckets[_graceHighlightEntry.sheet_measure]?.[_graceHighlightEntry.clef];
-        if (!bucket || _graceHighlightEntry.rank >= bucket.length) return false;
-        return !!_svgNoteElements[bucket[_graceHighlightEntry.rank]]?.isGrace;
-    })();
-    if (_spawnedIsGrace) {
-        simultaneousNotes = simultaneousNotes.filter(n => n.track === noteObj.track);
-    }
 
     // Deduplicate by time+midi+track so we don't double-lookup
     const seen = new Set();
