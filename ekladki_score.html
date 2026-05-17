@@ -3594,6 +3594,19 @@ function spawnNextValidNote() {
             continue;
         }
 
+        // Skip grace notes — they are ornamental, not real practice steps.
+        // The bass note simultaneous with the grace is NOT skipped; it plays as step 1.
+        const graceRankEntry = _midiRankMap.get(midiKey);
+        if (graceRankEntry) {
+            const graceBucket = _svgBuckets[graceRankEntry.sheet_measure]?.[graceRankEntry.clef];
+            const graceIdx = graceBucket?.[graceRankEntry.rank];
+            if (graceIdx !== undefined && _svgNoteElements[graceIdx]?.isGrace) {
+                trainingIndex++;
+                updateTrainingProgress();
+                continue;
+            }
+        }
+
         const isTreble = note.track === TREBLE;
         const isBass   = note.track === BASS;
 
@@ -5549,16 +5562,8 @@ function _svgIndicesForMidiNote(noteObj, hand) {
         return [];
     }
 
-    // Return the matched note AND all chord-mates at the same X position.
-    // If the matched notehead is a grace note (visually small, ornamental),
-    // highlight the NEXT rank instead — the main note — so the score cursor
-    // lands on the real beat note, not the tiny ornament.
-    let rankToUse = entry.rank;
-    const candidateIdx = bucket[rankToUse];
-    if (_svgNoteElements[candidateIdx].isGrace && rankToUse + 1 < bucket.length) {
-        rankToUse = rankToUse + 1;
-    }
-    const matchedIdx = bucket[rankToUse];
+    // Return the matched note AND all chord-mates at the same X position
+    const matchedIdx = bucket[entry.rank];
     const matchedTx  = _svgNoteElements[matchedIdx].tx;
     const result = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 4);
     return result;
