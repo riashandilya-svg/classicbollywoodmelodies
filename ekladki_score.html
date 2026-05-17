@@ -5301,8 +5301,8 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // DEBUG: dump SVG buckets 34-36
-    for (const m of [34,35,36]) {
+    // DEBUG: dump SVG buckets 28 and 34-36
+    for (const m of [28,34,35,36]) {
         for (const c of ["treble","bass"]) {
             const bucket = _svgBuckets[m]?.[c] || [];
             if (!bucket.length) continue;
@@ -5497,6 +5497,21 @@ function _buildSvgMidiMap() {
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
                 console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
+            }
+
+            // DEBUG: log all assignments to sheet 28 (both clefs)
+            // Expected rank map for m28 (user-verified):
+            //   rank 0: treble grace B
+            //   rank 1: treble C+  /  bass A
+            //   rank 2: treble B
+            //   rank 3: treble C+  /  bass C+E
+            //   rank 4: treble A
+            //   rank 5: treble B   /  bass G
+            //   rank 6: treble G
+            //   rank 7: treble A   /  bass B+D
+            //   rank 8: treble E
+            if (sheetMeasure === 28) {
+                console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
             }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
