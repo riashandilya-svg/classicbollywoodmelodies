@@ -2293,6 +2293,7 @@ let countEnabled = false;
 let metronomeRunning = false;
 let transportStartTime = null;
 let countdownActive = false;
+let countdownTimeoutId = null;
 
 // ── SpeechSynthesis kept ONLY as last-resort fallback ──────────────────────
 const speechSynth = window.speechSynthesis;
@@ -3413,6 +3414,15 @@ function setSpeedButtonsEnabled(enabled) {
     const panelUp   = document.getElementById('panelSpeedUp');
     if (panelDown) panelDown.disabled = !enabled;
     if (panelUp)   panelUp.disabled   = !enabled;
+
+    // Beat, Counting, 1&2&, BPM — locked for the exact same period as speed
+    const ids = ['beatToggle','countToggle','subdivisionToggle',
+                 'beatBtn','countBtn','subdivBtn',
+                 'bpmInput','bpmSetBtn','bpmResetBtn'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !enabled;
+    });
 }
 
 function playMeasurePreview(startTime, clef) {
@@ -3785,19 +3795,24 @@ function startVisualCountdown(onComplete) {
     overlay.textContent = count;
 
     const tick = () => {
+        if (!countdownActive) {
+            overlay.style.display = 'none';
+            return;
+        }
         count--;
 
         if (count > 0) {
             overlay.textContent = count;
-            setTimeout(tick, 1000);
+            countdownTimeoutId = setTimeout(tick, 1000);
         } else {
             overlay.style.display = 'none';
             countdownActive = false;
+            countdownTimeoutId = null;
             onComplete();
         }
     };
 
-    setTimeout(tick, 1000);
+    countdownTimeoutId = setTimeout(tick, 1000);
 }
 
 // Animation loop
@@ -4835,8 +4850,10 @@ scoreKeysPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
+countdownActive = false;
 setSpeedButtonsEnabled(true);
 
+if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
 if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 
 stopMetronome();
