@@ -3201,15 +3201,20 @@ midiPressedNotes.add(midiNote);
 
 const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
 
-if (allPressed && noteHoldStartTime === null) {
-    // All chord notes now held — stop any previous synth and start the hold timer cleanly
+// In score mode the user plays on a mouse/touchscreen — they can't hold multiple keys
+// simultaneously the way a MIDI keyboard can. Treat any correct chord-note press as
+// sufficient to start the hold timer so the key doesn't stay highlighted forever.
+const startHold = allPressed || scoreModeActive;
+
+if (startHold && noteHoldStartTime === null) {
+    // All chord notes held (or score mode shortcut) — start the hold timer
     hardStopUserNote();
     midiPressedNotes.add(midiNote); // re-add since hardStopUserNote doesn't touch midiPressedNotes
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
     
-} else if (!allPressed) {
+} else if (!startHold) {
     const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
     feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
 }
@@ -5839,7 +5844,7 @@ async function renderAllScorePages() {
     for (let pageNum = 1; pageNum <= SCORE_TOTAL_PAGES; pageNum++) {
         const container = document.getElementById(`scorePage${pageNum}`);
         if (!container) continue;
-        const response = await fetch(`svg/Jaane_kahan_mera-${pageNum}.svg`);
+        const response = await fetch(`jaanekahan-${pageNum}.svg`);
         const svgText = await response.text();
         container.innerHTML = svgText;
         const svgEl = container.querySelector('svg');
