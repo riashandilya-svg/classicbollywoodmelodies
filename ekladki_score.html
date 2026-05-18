@@ -3498,7 +3498,7 @@ const visualStart =
                 seen.add(k);
                 allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
-            if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+            if (allIndices.length > 0) _applyHighlight(allIndices);
         }, highlightDelay);
         previewTimeouts.push(th);
     }
@@ -5022,7 +5022,7 @@ addMidiFallingRectangle(
                         seen.add(k);
                         allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
                     }
-                    if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+                    if (allIndices.length > 0) _applyHighlight(allIndices);
                 }, (note.time * 1000) / speedMultiplier);
                 playbackTimeouts.push(ht);
             }
@@ -5596,17 +5596,24 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
 let _currentHighlightEls = [];
 
-function _applyHighlight(els) {
+function _applyHighlight(indices) {
     // Clear previous highlights
     for (const el of _currentHighlightEls) {
         el.removeAttribute('fill');
         el.removeAttribute('filter');
     }
-    _currentHighlightEls = Array.isArray(els) ? els.filter(Boolean) : (els ? [els] : []);
-    for (const el of _currentHighlightEls) {
-        el.setAttribute('fill', '#3B82F6');
+    // Accept either an array of indices (numbers) or legacy array of elements
+    const idxArray = Array.isArray(indices) ? indices.filter(x => x != null) : (indices != null ? [indices] : []);
+    _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
+    idxArray.forEach(x => {
+        const el   = typeof x === 'number' ? _svgNoteElements[x]?.el : x;
+        const clef = typeof x === 'number' ? _svgNoteElements[x]?.clef : null;
+        if (!el) return;
+        // Treble clef → blue, Bass clef → purple
+        const color = clef === 'bass' ? '#9333EA' : '#3B82F6';
+        el.setAttribute('fill', color);
         el.setAttribute('filter', 'url(#hlGlow)');
-    }
+    });
     scrollToHighlight();
 }
 
@@ -5717,7 +5724,7 @@ function onTrainingNoteSpawned(noteObj) {
     }
 
     if (allIndices.length > 0) {
-        _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+        _applyHighlight(allIndices);
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
@@ -5819,7 +5826,7 @@ scoreModeToggle.addEventListener('change', async () => {
             showScoreNoteDisplay(currentTrainingNote);
             if (noteObj) {
                 const indices = _svgIndicesForMidiNote(noteObj, clefMode);
-                if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
+                if (indices.length > 0) _applyHighlight(indices);
             }
         }
     } else {
