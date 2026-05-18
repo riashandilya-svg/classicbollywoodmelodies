@@ -2892,13 +2892,13 @@ function drawKeyboard() {
         if (isBass) {
             ctx.shadowColor = '#7C3AED';
             ctx.shadowBlur = 18;
-            ctx.fillStyle = 'rgba(167,139,250,0.18)';
+            ctx.fillStyle = 'rgba(234,179,8,0.18)';
             ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
             ctx.shadowBlur = 0;
         }
 
         if (showNoteNames) {
-            ctx.fillStyle = isBass ? '#4C1D95' : '#555';
+            ctx.fillStyle = isBass ? '#78350F' : '#555';
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -3150,10 +3150,10 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         gradient.addColorStop(0.65, "rgba(59,130,246,0.90)");
         gradient.addColorStop(1.00, "rgba(29,78,216,0.94)");
     } else if (track === BASS) {
-        gradient.addColorStop(0.00, "rgba(221,214,254,0.92)");
-        gradient.addColorStop(0.25, "rgba(196,181,253,0.88)");
-        gradient.addColorStop(0.65, "rgba(167,139,250,0.90)");
-        gradient.addColorStop(1.00, "rgba(124,58,237,0.94)");
+        gradient.addColorStop(0.00, "rgba(254,249,195,0.92)");
+        gradient.addColorStop(0.25, "rgba(253,224,71,0.88)");
+        gradient.addColorStop(0.65, "rgba(234,179,8,0.90)");
+        gradient.addColorStop(1.00, "rgba(161,98,7,0.94)");
     }
 
     fallingRectangles.push({
@@ -6770,16 +6770,16 @@ const bundlePriceDisplay = bundlePrice
 
       // Subscription — always shown
       paywallHTML += `
-        <div style="margin: 20px 0; padding: 15px; background: #ede9fe; border: 2px solid #7c3aed; border-radius: 8px;">
-          <h4 style="margin: 0 0 6px 0; color: #5b21b6;">🎵 Unlock All Songs</h4>
-          <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #4c1d95;">
+        <div style="margin: 20px 0; padding: 15px; background: #fefce8; border: 2px solid #EAB308; border-radius: 8px;">
+          <h4 style="margin: 0 0 6px 0; color: #78350F;">🎵 Unlock All Songs</h4>
+          <p style="margin: 0 0 10px 0; font-size: 0.9em; color: #92400E;">
             Access every song, cancel anytime.
           </p>
           <div style="display: flex; gap: 8px;">
             <button id="subscribeBtn" type="button" style="
               flex: 1;
               padding: 12px 8px;
-              background: #7c3aed;
+              background: #EAB308;
               color: white;
               border: none;
               border-radius: 6px;
@@ -6791,7 +6791,7 @@ const bundlePriceDisplay = bundlePrice
             <button id="subscribeAnnualBtn" type="button" style="
               flex: 1;
               padding: 12px 8px;
-              background: #5b21b6;
+              background: #CA8A04;
               color: white;
               border: none;
               border-radius: 6px;
@@ -6965,7 +6965,7 @@ description: planType === "monthly" ? "Monthly Subscription" : planType === "ann
     },
 
     prefill: { email: session.user.email },
-    theme: { color: "#6c47ff" },
+    theme: { color: "#EAB308" },
   };
 
 if (planType === "monthly" || planType === "annual") {
