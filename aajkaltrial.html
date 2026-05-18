@@ -1686,42 +1686,6 @@ body.score-mode #panelProgressWrap {
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
       <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
-    <div class="ctrl-speed-row" style="margin-top:6px;">
-      <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
-      <input
-        id="bpmInput"
-        type="number"
-        min="20" max="300" step="1"
-        placeholder="—"
-        style="
-          width:70px;
-          text-align:center;
-          font-size:15px;
-          font-weight:700;
-          font-family:inherit;
-          border:1px solid rgba(59,130,246,0.25);
-          border-radius:8px;
-          padding:4px 6px;
-          background:rgba(255,255,255,0.9);
-          color:var(--text-main);
-          outline:none;
-          transition:border-color 0.2s;
-        "
-        title="Type a BPM to set playback speed"
-      />
-      <button
-        id="bpmSetBtn"
-        class="ctrl-btn"
-        style="flex:0;padding:6px 10px !important;font-size:12px !important;"
-        title="Apply BPM"
-      >Set</button>
-      <button
-        id="bpmResetBtn"
-        class="ctrl-btn"
-        style="flex:0;padding:6px 8px !important;font-size:12px !important;"
-        title="Reset to original BPM"
-      >↺</button>
-    </div>
   </div>
 
   <!-- UTILITY card -->
@@ -2071,9 +2035,6 @@ async function loadSongMidi() {
     if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
     const pBpm = document.getElementById('panelStatBPM');
     if (pBpm) pBpm.textContent = Math.round(60 / secondsPerBeat);
-    originalBPM = Math.round(60 / secondsPerBeat);
-    const bpmInput = document.getElementById('bpmInput');
-    if (bpmInput) bpmInput.value = originalBPM;
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -2255,7 +2216,8 @@ function updateSpeed(delta) {
     );
 
     speedDisplay.textContent = speedMultiplier.toFixed(2) + "×";
-    syncBpmDisplay();
+
+    if (metronomeRunning) {
         startMetronome();
     }
 }
@@ -2821,7 +2783,6 @@ let visualsPlaying = false;
 let scoreKeysPlaying = false; // true while listen-first key highlights are active in score mode
 let speedMultiplier = 1.0;
 let speedLocked = false;
-let originalBPM = 100; // updated after MIDI loads
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
@@ -7047,38 +7008,40 @@ const rzp = new Razorpay(options);
   if (!window.supabase) {
     console.error('[FATAL] window.supabase is undefined — supabaseClient.js did not initialize correctly.');
   } else {
-    async function requireLogin() {
-      try {
-        const { data } = await window.supabase.auth.getSession();
-        if (!data.session) {
-          window.location.replace("/login.html");
+    (async () => {
+      async function requireLogin() {
+        try {
+          const { data } = await window.supabase.auth.getSession();
+          if (!data.session) {
+            window.location.replace("/login.html");
+            return false;
+          }
+          return true;
+        } catch (e) {
+          console.error("Auth check failed.", e);
           return false;
         }
-        return true;
-      } catch (e) {
-        console.error("Auth check failed.", e);
-        return false;
       }
-    }
 
-    const loggedIn = await requireLogin();
+      const loggedIn = await requireLogin();
 
-    if (loggedIn) {
-      if (typeof window.showPaywall !== 'function') {
-        console.error('[FATAL] window.showPaywall is not defined — paywall.js did not initialize correctly.');
-      } else {
-        window.showPaywall({
-          productId: "song:aajkal",
-          title: "This song is locked",
-          body: "Please buy to unlock this lesson.",
-          onSuccess: () => {
-            document.getElementById('app').style.display = 'block';
-          }
-        });
+      if (loggedIn) {
+        if (typeof window.showPaywall !== 'function') {
+          console.error('[FATAL] window.showPaywall is not defined — paywall.js did not initialize correctly.');
+        } else {
+          window.showPaywall({
+            productId: "song:aajkal",
+            title: "This song is locked",
+            body: "Please buy to unlock this lesson.",
+            onSuccess: () => {
+              document.getElementById('app').style.display = 'block';
+            }
+          });
+        }
       }
-    }
 
-    window.addEventListener("pageshow", requireLogin);
+      window.addEventListener("pageshow", requireLogin);
+    })();
   }
 </script>
 
