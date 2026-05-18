@@ -1132,7 +1132,7 @@ grid-template-columns: auto 0.4fr 0.4fr auto auto;
 /* Explicit grid placement in score mode */
 body.score-mode #panelPracticeCard  { grid-column: 1; grid-row: 1 / 3; }
 body.score-mode #panelPlaybackCard  { grid-column: 2; grid-row: 1; }
-body.score-mode #panelUtilityCard   { grid-column: 3; grid-row: 1 / 3; }
+body.score-mode #panelUtilityCard   { grid-column: 3; grid-row: 1; }
 body.score-mode #panelStatsCard     { grid-column: 4; grid-row: 1 / 3; display: block; }
 body.score-mode #panelNoteCirclesCard { grid-column: 5; grid-row: 1 / 3; display: block; flex: unset; min-width: unset; width: 90px; }
 body.score-mode #panelFeedbackCard  {
@@ -1686,6 +1686,42 @@ body.score-mode #panelProgressWrap {
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
       <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
+    <div class="ctrl-speed-row" style="margin-top:6px;">
+      <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
+      <input
+        id="bpmInput"
+        type="number"
+        min="20" max="300" step="1"
+        placeholder="—"
+        style="
+          width:70px;
+          text-align:center;
+          font-size:15px;
+          font-weight:700;
+          font-family:inherit;
+          border:1px solid rgba(59,130,246,0.25);
+          border-radius:8px;
+          padding:4px 6px;
+          background:rgba(255,255,255,0.9);
+          color:var(--text-main);
+          outline:none;
+          transition:border-color 0.2s;
+        "
+        title="Type a BPM to set playback speed"
+      />
+      <button
+        id="bpmSetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 10px !important;font-size:12px !important;"
+        title="Apply BPM"
+      >Set</button>
+      <button
+        id="bpmResetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 8px !important;font-size:12px !important;"
+        title="Reset to original BPM"
+      >↺</button>
+    </div>
   </div>
 
   <!-- UTILITY card -->
@@ -1703,93 +1739,6 @@ body.score-mode #panelProgressWrap {
         ↩ Skip Repeats
       </label>
       <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
-    </div>
-
-    <!-- ── RECORDING SECTION ── -->
-    <div style="margin-top:8px;border-top:1px solid rgba(235,50,70,0.13);padding-top:8px;">
-      <div style="font-size:11px;font-weight:700;color:#E57373;letter-spacing:0.1em;text-align:center;margin-bottom:6px;">SCREEN RECORDING</div>
-      <div style="display:flex;gap:6px;margin-bottom:6px;">
-
-        <!-- RECORD BUTTON — watermarked -->
-        <button class="ctrl-btn" id="recordBtn" onclick="window.toggleScreenRecording()" style="
-          flex:1;
-          position:relative;
-          overflow:hidden;
-          color:#E57373 !important;
-          border:1px solid rgba(235,50,70,0.35) !important;
-          background: rgba(250,250,250,0.92) !important;
-          padding: 7px 4px !important;
-          min-height: 44px;
-        ">
-          <!-- Watermark tiles — diagonal repeated brand text, not removable via a single CSS rule -->
-          <span aria-hidden="true" style="
-            position:absolute; inset:-60% -40%;
-            pointer-events:none; overflow:hidden;
-            display:grid;
-            grid-template-columns: repeat(6,1fr);
-            gap:0;
-            opacity:0.115;
-            transform:rotate(-28deg);
-            transform-origin:center center;
-            user-select:none;
-          ">
-            <!-- 48 watermark chips — each is an individual element so removing the parent span still leaves chips -->
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-            <span style="font-size:7.5px;font-weight:800;color:#c0392b;white-space:nowrap;line-height:2.2;letter-spacing:.03em;">Ria Om Shandilya</span>
-          </span>
-          <!-- Visible label on top -->
-          <span id="recordBtnLabel" style="position:relative;z-index:1;font-weight:700;font-size:12px;">⏺ Record</span>
-        </button>
-
-        <button class="ctrl-btn" id="stopRecordingBtn" style="flex:1;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="window.stopScreenRecording()" disabled>■ Stop</button>
-      </div>
-      <div id="recStatus" style="font-size:11px;text-align:center;color:#aaa;margin-top:4px;min-height:14px;letter-spacing:0.02em;"></div>
     </div>
   </div>
 
@@ -2122,6 +2071,9 @@ async function loadSongMidi() {
     if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
     const pBpm = document.getElementById('panelStatBPM');
     if (pBpm) pBpm.textContent = Math.round(60 / secondsPerBeat);
+    originalBPM = Math.round(60 / secondsPerBeat);
+    const bpmInput = document.getElementById('bpmInput');
+    if (bpmInput) bpmInput.value = originalBPM;
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -2303,8 +2255,7 @@ function updateSpeed(delta) {
     );
 
     speedDisplay.textContent = speedMultiplier.toFixed(2) + "×";
-
-    if (metronomeRunning) {
+    syncBpmDisplay();
         startMetronome();
     }
 }
@@ -2665,279 +2616,6 @@ function ensureSynth() {
     freeModeSynth = synth;
 }
 
-// ============================================================
-// ============================================================
-// SCREEN RECORDING — captures the screen via getDisplayMedia,
-// stores chunks, then shows the result in a popup modal.
-// ============================================================
-let _srStream     = null;
-let _srRecorder   = null;
-let _srChunks     = [];
-let _srIsRecording = false;
-
-function _srSetStatus(msg) {
-    const el = document.getElementById('recStatus');
-    if (el) el.textContent = msg;
-}
-function _srSetBtnLabel(txt) {
-    const el = document.getElementById('recordBtnLabel');
-    if (el) el.textContent = txt;
-}
-
-window.toggleScreenRecording = async function() {
-    if (_srIsRecording) {
-        window.stopScreenRecording();
-    } else {
-        await window.startScreenRecording();
-    }
-};
-
-window.startScreenRecording = async function() {
-    try {
-        // Ask browser for screen capture (tab / window / full screen)
-        _srStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { frameRate: 30 },
-            audio: true          // capture tab audio if browser supports it
-        });
-    } catch (err) {
-        _srSetStatus('Screen capture cancelled or denied.');
-        return;
-    }
-
-    _srChunks    = [];
-    _srIsRecording = true;
-
-    // Style: recording active
-    const btn = document.getElementById('recordBtn');
-    btn.style.background   = 'linear-gradient(135deg,#ef4444,#dc2626) !important';
-    btn.style.setProperty('background','linear-gradient(135deg,#ef4444,#dc2626)','important');
-    btn.style.color        = '#fff';
-    btn.style.boxShadow    = '0 4px 14px rgba(239,68,68,0.45)';
-    document.getElementById('stopRecordingBtn').disabled = false;
-    _srSetBtnLabel('⏹ Stop Rec');
-    _srSetStatus('● Recording screen…');
-
-    // Pick best supported MIME
-    const mime = ['video/webm;codecs=vp9,opus',
-                  'video/webm;codecs=vp8,opus',
-                  'video/webm',
-                  'video/mp4']
-        .find(m => MediaRecorder.isTypeSupported(m)) || '';
-
-    _srRecorder = new MediaRecorder(_srStream, mime ? { mimeType: mime } : {});
-
-    _srRecorder.ondataavailable = e => {
-        if (e.data && e.data.size > 0) _srChunks.push(e.data);
-    };
-
-    _srRecorder.onstop = () => {
-        _srStream.getTracks().forEach(t => t.stop());
-        _srStream = null;
-        _srIsRecording = false;
-
-        // Reset button
-        const b = document.getElementById('recordBtn');
-        b.style.removeProperty('background');
-        b.style.background = 'rgba(250,250,250,0.92)';
-        b.style.color      = '#E57373';
-        b.style.boxShadow  = '';
-        document.getElementById('stopRecordingBtn').disabled = true;
-        _srSetBtnLabel('⏺ Record');
-
-        if (_srChunks.length === 0) {
-            _srSetStatus('Nothing recorded.');
-            return;
-        }
-
-        _srSetStatus('Recording saved — opening preview…');
-
-        const blob = new Blob(_srChunks, { type: _srRecorder.mimeType || 'video/webm' });
-        _srChunks  = [];
-        _srShowPopup(blob, _srRecorder.mimeType || 'video/webm');
-    };
-
-    // If user stops sharing via browser's own stop button
-    _srStream.getVideoTracks()[0].onended = () => {
-        if (_srIsRecording) window.stopScreenRecording();
-    };
-
-    _srRecorder.start(200);   // collect a chunk every 200ms
-};
-
-window.stopScreenRecording = function() {
-    if (_srRecorder && _srRecorder.state !== 'inactive') {
-        _srRecorder.stop();   // triggers onstop above
-    } else if (_srStream) {
-        _srStream.getTracks().forEach(t => t.stop());
-        _srStream = null;
-    }
-};
-
-// ── Popup modal ───────────────────────────────────────────────────────────────
-function _srShowPopup(blob, mimeType) {
-    // Remove any previous popup
-    const old = document.getElementById('srPopupOverlay');
-    if (old) old.remove();
-
-    const url = URL.createObjectURL(blob);
-
-    // Extension guess
-    const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-    const filename = 'riaaz-recording-' + new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '.' + ext;
-
-    const overlay = document.createElement('div');
-    overlay.id = 'srPopupOverlay';
-    overlay.style.cssText = `
-        position:fixed; inset:0; z-index:99999;
-        background:rgba(0,0,0,0.72);
-        backdrop-filter:blur(6px);
-        display:flex; align-items:center; justify-content:center;
-        animation: srFadeIn 0.25s ease;
-    `;
-
-    // Click backdrop to close
-    overlay.addEventListener('click', e => {
-        if (e.target === overlay) _srClosePopup(overlay, url);
-    });
-
-    overlay.innerHTML = `
-      <style>
-        @keyframes srFadeIn { from{opacity:0;transform:scale(.96)} to{opacity:1;transform:scale(1)} }
-        #srPopupCard { animation: srFadeIn 0.25s ease; }
-        #srPopupCard button:hover { filter: brightness(1.1); }
-      </style>
-      <div id="srPopupCard" style="
-        background:#fff;
-        border-radius:22px;
-        box-shadow:0 32px 80px rgba(0,0,0,0.45);
-        padding:28px 28px 22px 28px;
-        max-width:min(92vw,860px);
-        width:100%;
-        display:flex;
-        flex-direction:column;
-        gap:16px;
-        position:relative;
-      ">
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#1A1A1F;letter-spacing:-.01em;">Your Recording</div>
-            <div style="font-size:12px;color:#aaa;margin-top:2px;">riaaz · Ria Om Shandilya</div>
-          </div>
-          <button onclick="(function(){const o=document.getElementById('srPopupOverlay');if(o)o.remove();})()" style="
-            background:rgba(239,68,68,0.08);
-            border:1px solid rgba(239,68,68,0.18);
-            color:#ef4444;
-            border-radius:50%;
-            width:36px; height:36px;
-            font-size:18px;
-            cursor:pointer;
-            display:flex;align-items:center;justify-content:center;
-            padding:0; box-shadow:none;
-          ">×</button>
-        </div>
-
-        <!-- Video player -->
-        <div style="position:relative;border-radius:14px;overflow:hidden;background:#0f1117;box-shadow:0 8px 28px rgba(0,0,0,0.25);">
-          <video id="srPreviewVideo" src="${url}" controls playsinline style="
-            width:100%; max-height:52vh;
-            display:block; border-radius:14px;
-          "></video>
-
-          <!-- Watermark overlay ON the video — multiple layers -->
-          <div aria-hidden="true" style="
-            position:absolute; inset:0;
-            pointer-events:none;
-            overflow:hidden;
-            border-radius:14px;
-          ">
-            <!-- diagonal tile 1 -->
-            <div style="
-              position:absolute; inset:-30% -20%;
-              display:grid; grid-template-columns:repeat(5,1fr);
-              transform:rotate(-22deg);
-              opacity:0.18;
-              user-select:none;
-            ">
-              ${Array(40).fill('<span style="font-size:11px;font-weight:800;color:#fff;white-space:nowrap;line-height:2.6;letter-spacing:.04em;text-shadow:0 1px 3px rgba(0,0,0,.5);">Ria Om Shandilya</span>').join('')}
-            </div>
-            <!-- centre large stamp -->
-            <div style="
-              position:absolute; inset:0;
-              display:flex; align-items:center; justify-content:center;
-              pointer-events:none; user-select:none;
-            ">
-              <span style="
-                font-family:'Cormorant Garamond',serif;
-                font-size:clamp(18px,4vw,38px);
-                font-weight:700;
-                color:rgba(255,255,255,0.10);
-                letter-spacing:.06em;
-                transform:rotate(-15deg);
-                white-space:nowrap;
-                text-shadow:0 2px 8px rgba(0,0,0,.2);
-              ">Ria Om Shandilya</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action buttons -->
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <a href="${url}" download="${filename}" style="
-            flex:1; min-width:140px;
-            display:flex; align-items:center; justify-content:center; gap:7px;
-            background:linear-gradient(135deg,#ff7b7b,#ff5c8a);
-            color:#fff; text-decoration:none;
-            border-radius:999px; padding:11px 18px;
-            font-family:'Inter',sans-serif; font-size:14px; font-weight:700;
-            box-shadow:0 4px 14px rgba(255,92,138,0.32);
-            transition:filter .2s;
-          ">⬇ Download</a>
-          <button onclick="(function(){const v=document.getElementById('srPreviewVideo');if(v){v.currentTime=0;v.play();}})()" style="
-            flex:1; min-width:100px;
-            background:rgba(229,115,115,0.1);
-            border:1px solid rgba(229,115,115,0.3);
-            color:#E57373; border-radius:999px;
-            padding:11px 18px; font-size:14px; font-weight:700;
-            cursor:pointer; box-shadow:none;
-          ">▶ Replay</button>
-          <button onclick="(function(){const o=document.getElementById('srPopupOverlay');if(o)o.remove();})()" style="
-            flex:1; min-width:80px;
-            background:rgba(0,0,0,0.05);
-            border:1px solid rgba(0,0,0,0.1);
-            color:#888; border-radius:999px;
-            padding:11px 18px; font-size:14px; font-weight:600;
-            cursor:pointer; box-shadow:none;
-          ">Close</button>
-        </div>
-
-        <div style="font-size:10.5px;color:#ccc;text-align:center;letter-spacing:.02em;">
-          riaaz.app · Ria Om Shandilya · Screen recording
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    // Auto-play preview
-    setTimeout(() => {
-        const v = document.getElementById('srPreviewVideo');
-        if (v) v.play().catch(() => {});
-    }, 300);
-
-    _srSetStatus('Done! Recording popup opened.');
-}
-
-function _srClosePopup(overlay, url) {
-    overlay.remove();
-}
-
-// Stubs so old references from _recNoteOn / _recNoteOff don't crash
-// (those hooks are still in processUserNoteOn — they just become no-ops now)
-function _recNoteOn() {}
-function _recNoteOff() {}
-// ── END SCREEN RECORDING SYSTEM ──────────────────────────────────────────────
-
 let secondsPerBeat = 0.5;
 let MEASURE_TIME_MAP = {};
 
@@ -3143,6 +2821,7 @@ let visualsPlaying = false;
 let scoreKeysPlaying = false; // true while listen-first key highlights are active in score mode
 let speedMultiplier = 1.0;
 let speedLocked = false;
+let originalBPM = 100; // updated after MIDI loads
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
@@ -3442,9 +3121,6 @@ function processUserNoteOn(midiNote) {
 if (!freeMode && midiPressedNotes.has(midiNote)) return;
 
 if (previewMode) return;
-
-// ── Recording: capture user note-on ──────────────────────────────────────
-_recNoteOn(midiNote);
 
 
 if (freeMode) {
@@ -4459,7 +4135,6 @@ function getMidiFromMouse(x, y) {
 canvas.addEventListener('mouseleave', () => {
     mouseDown = false;
     if (freeMode && freeModeActiveNote !== null) {
-        _recNoteOff(freeModeActiveNote);
         freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
         freeModeActiveNote = null;
         expectedMidiNote = null;
@@ -4507,7 +4182,6 @@ canvas.addEventListener('mouseup', () => {
     lastMouseMidi = null;
 
     if (freeMode && freeModeActiveNote !== null) {
-    _recNoteOff(freeModeActiveNote);
     freeModeSynth.triggerRelease(
         getNoteName(freeModeActiveNote)
     );
@@ -4531,7 +4205,6 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.ha
     const note = activeMidiNote;
     const heldTime = performance.now() - noteHoldStartTime;
 
-    _recNoteOff(note);
     synth.triggerRelease(getNoteName(note));
 
     // Only clear highlights on release — spawnTrainingNote re-adds them for next note
@@ -4659,13 +4332,11 @@ canvas.addEventListener('touchend', (e) => {
 
         if (midiNote !== undefined) {
             if (freeMode && midiNote === freeModeActiveNote) {
-                _recNoteOff(midiNote);
                 freeModeSynth.triggerRelease(getNoteName(midiNote));
                 freeModeActiveNote = null;
                 expectedMidiNote = null;
                 expectedMidiTreble.clear();
             } else if (synth) {
-                _recNoteOff(midiNote);
                 synth.triggerRelease(getNoteName(midiNote));
             }
 
@@ -6246,7 +5917,6 @@ if (isNoteOn) {
 }
     if (isNoteOff) {
 if (freeMode && note === freeModeActiveNote) {
-    _recNoteOff(note);
     freeModeSynth.triggerRelease(getNoteName(note));
     freeModeActiveNote = null;
     expectedMidiNote = null;
@@ -6258,7 +5928,6 @@ if (freeMode && note === freeModeActiveNote) {
         
         midiPressedNotes.delete(note);
         
-        _recNoteOff(note);
         synth.triggerRelease(getNoteName(note));
         
         if (midiPressedNotes.size > 0) return;
