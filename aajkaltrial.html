@@ -5717,7 +5717,10 @@ function _applyHighlight(els) {
     }
     _currentHighlightEls = Array.isArray(els) ? els.filter(Boolean) : (els ? [els] : []);
     for (const el of _currentHighlightEls) {
-        el.setAttribute('fill', '#E57373');
+        // Use purple for bass clef notes, red for treble
+        const entry = _svgNoteElements.find(n => n.el === el);
+        const isBass = entry && entry.clef === 'bass';
+        el.setAttribute('fill', isBass ? '#9B59D8' : '#E57373');
         el.setAttribute('filter', 'url(#hlGlow)');
     }
     scrollToHighlight();
