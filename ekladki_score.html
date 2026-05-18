@@ -1684,18 +1684,41 @@ body.score-mode #panelProgressWrap {
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
       <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
-    <!-- BPM input row -->
     <div class="ctrl-speed-row" style="margin-top:6px;">
-      <span style="font-size:13px;color:#666;">BPM</span>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <button id="panelBpmDown" class="ctrl-btn" style="flex:0;padding:6px 10px !important;font-size:14px!important;" onclick="window.adjustBpm(-5)">–</button>
-        <input id="panelBpmInput" type="number" min="20" max="300" value="100"
-          style="width:58px;padding:5px 6px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:15px;font-weight:700;text-align:center;color:var(--text-main);"
-          onchange="window.applyBpm(parseInt(this.value))"
-          onkeydown="if(event.key==='Enter')window.applyBpm(parseInt(this.value))">
-        <button id="panelBpmUp" class="ctrl-btn" style="flex:0;padding:6px 10px !important;font-size:14px!important;" onclick="window.adjustBpm(+5)">+</button>
-      </div>
-      <button class="ctrl-btn" style="flex:0;padding:5px 8px !important;font-size:11px!important;" onclick="window.resetBpm()" title="Reset to original BPM">↺</button>
+      <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
+      <input
+        id="bpmInput"
+        type="number"
+        min="20" max="300" step="1"
+        placeholder="—"
+        style="
+          width:70px;
+          text-align:center;
+          font-size:15px;
+          font-weight:700;
+          font-family:inherit;
+          border:1px solid rgba(59,130,246,0.25);
+          border-radius:8px;
+          padding:4px 6px;
+          background:rgba(255,255,255,0.9);
+          color:var(--text-main);
+          outline:none;
+          transition:border-color 0.2s;
+        "
+        title="Type a BPM to set playback speed"
+      />
+      <button
+        id="bpmSetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 10px !important;font-size:12px !important;"
+        title="Apply BPM"
+      >Set</button>
+      <button
+        id="bpmResetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 8px !important;font-size:12px !important;"
+        title="Reset to original BPM"
+      >↺</button>
     </div>
   </div>
 
@@ -1961,9 +1984,6 @@ async function loadSongMidi() {
         ? currentMidi.header.tempos[0].bpm
         : 120;
 
-    // Store original BPM so we can reset to it later
-    window._originalBpm = bpm;
-
     secondsPerBeat = 60 / bpm;
     secondsPerMeasure = secondsPerBeat * SONG_CONFIG.timeSignature[0];
     MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
@@ -1982,44 +2002,9 @@ async function loadSongMidi() {
     if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
     const pBpm = document.getElementById('panelStatBPM');
     if (pBpm) pBpm.textContent = Math.round(60 / secondsPerBeat);
-
-    // Sync BPM input to the loaded value
-    const bpmInput = document.getElementById('panelBpmInput');
-    if (bpmInput) bpmInput.value = Math.round(bpm);
-
-    // ── BPM control helpers (exposed on window so inline onclick can reach them) ──
-    window.applyBpm = function(newBpm) {
-        newBpm = Math.max(20, Math.min(300, newBpm || 60));
-        if (isNaN(newBpm)) return;
-
-        // Update timing state
-        secondsPerBeat = 60 / newBpm;
-        secondsPerMeasure = secondsPerBeat * SONG_CONFIG.timeSignature[0];
-        MEASURE_TIME_MAP = buildMeasureTimeMap(SONG_CONFIG, secondsPerBeat);
-
-        // Reflect in BPM input + stat displays
-        const inp = document.getElementById('panelBpmInput');
-        if (inp) inp.value = newBpm;
-        const statEl = document.getElementById('statBPM');
-        if (statEl) statEl.textContent = newBpm;
-        const panelEl = document.getElementById('panelStatBPM');
-        if (panelEl) panelEl.textContent = newBpm;
-
-        // If the metronome is running, restart it at the new tempo
-        if (metronomeRunning) startMetronome(transportStartTime);
-
-        console.log(`🎵 BPM set to ${newBpm} (secondsPerBeat=${secondsPerBeat.toFixed(4)})`);
-    };
-
-    window.adjustBpm = function(delta) {
-        const inp = document.getElementById('panelBpmInput');
-        const current = inp ? parseInt(inp.value) || Math.round(60 / secondsPerBeat) : Math.round(60 / secondsPerBeat);
-        window.applyBpm(current + delta);
-    };
-
-    window.resetBpm = function() {
-        window.applyBpm(Math.round(window._originalBpm || 100));
-    };
+    originalBPM = Math.round(60 / secondsPerBeat);
+    const bpmInput = document.getElementById('bpmInput');
+    if (bpmInput) bpmInput.value = originalBPM;
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -2212,6 +2197,9 @@ function updateSpeed(delta) {
 
     speedDisplay.textContent = speedMultiplier.toFixed(2) + "×";
 
+    // Sync BPM input and stat display to reflect new effective BPM
+    syncBpmDisplay();
+
     if (metronomeRunning) {
         startMetronome();
     }
@@ -2222,6 +2210,60 @@ speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
 // Note: speedDown/speedUp enabled state is managed entirely by setControlsEnabled()
 // and setSpeedButtonsEnabled(). Do NOT add unconditional .disabled = false here.
+
+// ====== BPM INPUT ======
+function syncBpmDisplay() {
+    const effectiveBPM = Math.round(originalBPM * speedMultiplier);
+    const bpmInput = document.getElementById('bpmInput');
+    if (bpmInput) bpmInput.value = effectiveBPM;
+    const pBpm = document.getElementById('panelStatBPM');
+    if (pBpm) pBpm.textContent = effectiveBPM;
+    const sBpm = document.getElementById('statBPM');
+    if (sBpm) sBpm.textContent = effectiveBPM;
+}
+
+function applyBpmInput() {
+    if (visualsPlaying || previewMode || speedLocked) return;
+    const bpmInput = document.getElementById('bpmInput');
+    if (!bpmInput || !originalBPM) return;
+    const target = parseFloat(bpmInput.value);
+    if (!target || target < 20 || target > 300) return;
+    speedMultiplier = Math.min(2.0, Math.max(0.1, +(target / originalBPM).toFixed(4)));
+    speedDisplay.textContent = speedMultiplier.toFixed(2) + "×";
+    syncBpmDisplay();
+    if (metronomeRunning) startMetronome();
+}
+
+(function() {
+    const bpmInput   = document.getElementById('bpmInput');
+    const setBtn     = document.getElementById('bpmSetBtn');
+    const resetBtn   = document.getElementById('bpmResetBtn');
+    if (!bpmInput || !setBtn || !resetBtn) return;
+
+    setBtn.addEventListener('click', applyBpmInput);
+
+    resetBtn.addEventListener('click', () => {
+        if (visualsPlaying || previewMode || speedLocked) return;
+        speedMultiplier = 1.0;
+        speedDisplay.textContent = '1.0×';
+        syncBpmDisplay();
+        if (metronomeRunning) startMetronome();
+    });
+
+    bpmInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyBpmInput();
+    });
+
+    // Style feedback on input focus
+    bpmInput.addEventListener('focus', () => {
+        bpmInput.style.borderColor = 'rgba(59,130,246,0.6)';
+        bpmInput.style.boxShadow   = '0 0 0 3px rgba(59,130,246,0.15)';
+    });
+    bpmInput.addEventListener('blur', () => {
+        bpmInput.style.borderColor = 'rgba(59,130,246,0.25)';
+        bpmInput.style.boxShadow   = 'none';
+    });
+})();
 
 
 
@@ -2778,6 +2820,7 @@ let visualsPlaying = false;
 let scoreKeysPlaying = false; // true while listen-first key highlights are active in score mode
 let speedMultiplier = 1.0;
 let speedLocked = false;
+let originalBPM = 100; // updated after MIDI loads
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
@@ -4887,6 +4930,7 @@ function resetAll() {
 
     speedMultiplier = 1.0;
     speedDisplay.textContent = '1.0×';
+    syncBpmDisplay();
 
     beatEnabled    = false;
     countEnabled   = false;
