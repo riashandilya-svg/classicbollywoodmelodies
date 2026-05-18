@@ -1682,7 +1682,7 @@ body.score-mode #panelProgressWrap {
     <div class="ctrl-card-title">PLAYBACK</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
-      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active'); if(!beatEnabled){stopMetronome();}">♩ Beat</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="window._panelBeatClick(this)">♩ Beat</button>
       <button class="ctrl-btn" id="countBtn" onclick="window._panelCountClick(this)">Counting</button>
     </div>
     <div class="ctrl-row">
@@ -2600,11 +2600,13 @@ subdivisionToggle.addEventListener('click', () => {
         countToggle.textContent = "Counting ✓";
         startMetronome(transportStartTime);
     } else {
-        // If neither beat nor count is wanted, stop the metronome entirely
-        if (!beatEnabled && !countEnabled) {
+        // Turning off subdivision also turns off counting (subdivision auto-enabled it)
+        countEnabled = false;
+        countToggle.textContent = "Counting";
+        if (!beatEnabled) {
             stopMetronome();
         } else {
-            // Restart with updated subdivision setting
+            // Beat still on — restart without subdivision
             startMetronome(transportStartTime);
         }
     }
@@ -2613,13 +2615,24 @@ subdivisionToggle.addEventListener('click', () => {
 
 
 // ── Panel button helpers (exposed to window so inline onclick can reach module scope) ──
+window._panelBeatClick = function(btn) {
+    beatToggle.click();   // toggles beatEnabled inside module scope
+    btn.classList.toggle('active', beatEnabled);
+    if (!beatEnabled && !countEnabled && !subdivisionEnabled) {
+        stopMetronome();
+    }
+};
 window._panelCountClick = function(btn) {
     countToggle.click();          // toggles countEnabled inside module scope
     // After the click, countEnabled reflects the NEW state
     btn.classList.toggle('active', countEnabled);
     if (!countEnabled) {
-        // If counting just turned off, also deactivate subdivision panel button
+        // Counting turned off — also deactivate subdivision
+        subdivisionEnabled = false;
+        countMode = "normal";
+        subdivisionToggle.textContent = "1 & 2 &";
         document.getElementById('subdivBtn').classList.remove('active');
+        stopMetronome();
     }
 };
 
@@ -2632,8 +2645,9 @@ window._panelSubdivClick = function(btn) {
         // Subdivision requires counting — highlight Counting button too
         countBtn.classList.add('active');
     } else {
-        // Subdivision off — remove both highlights
+        // Subdivision off — remove both highlights, stop metronome if nothing else needs it
         countBtn.classList.remove('active');
+        if (!beatEnabled) stopMetronome();
     }
 };
 
@@ -4965,6 +4979,18 @@ previewTimeouts = [];
 fallingRectangles = [];
 expectedMidiNote = null;
 activeMidiNote = null;
+
+// Always reset counting/beat state and un-highlight panel buttons on stop
+beatEnabled        = false;
+countEnabled       = false;
+subdivisionEnabled = false;
+countMode          = "normal";
+beatToggle.textContent        = 'Beat';
+countToggle.textContent       = 'Counting';
+subdivisionToggle.textContent = '1 & 2 &';
+document.getElementById('beatBtn')   ?.classList.remove('active');
+document.getElementById('countBtn')  ?.classList.remove('active');
+document.getElementById('subdivBtn') ?.classList.remove('active');
 
 if (!userInitiated) return;
 
