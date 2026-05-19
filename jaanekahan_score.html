@@ -6347,6 +6347,26 @@ if (freeMode && note === freeModeActiveNote) {
             return;
         }
 
+        // In both-hands mode: check if a must-hold note was released early.
+        // This must happen BEFORE the currentChordNotes guard because after
+        // _advanceBeatGroupSubNote runs, currentChordNotes no longer contains
+        // the first-chord notes (e.g. D3), so the guard would swallow the release.
+        if (clefMode === 'both') {
+            midiPressedNotes.delete(note);
+            if (synth) synth.triggerRelease(getNoteName(note));
+            if (_beatGroupSustainRequired.has(note) && !_beatGroupPaused) {
+                _beatGroupPaused = true;
+                if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+                const feedback = document.getElementById('feedback');
+                feedback.textContent = `Keep holding ${getNoteName(note)}!`;
+                feedback.classList.remove('correct', 'wrong', 'show');
+                void feedback.offsetWidth;
+                feedback.classList.add('wrong', 'show');
+                rebuildKeyboardHighlights();
+            }
+            return;
+        }
+
         if (!currentChordNotes.has(note)) return;
         
         midiPressedNotes.delete(note);
