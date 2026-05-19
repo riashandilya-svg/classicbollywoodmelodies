@@ -3313,6 +3313,7 @@ if (clefMode === 'both') {
     }
 
     const allCurrentPressed = Array.from(currentChordNotes).every(m => _beatGroupPressed.has(m));
+    console.log('🎹 beatGroup press: midi=' + midiNote + ' currentChordNotes=' + JSON.stringify([...currentChordNotes]) + ' pressed=' + JSON.stringify([..._beatGroupPressed]) + ' allCurrentPressed=' + allCurrentPressed);
     if (allCurrentPressed) {
         // The hold timer is started inside _advanceBeatGroupSubNote once all
         // sub-notes have been played (nextIdx === null). Do NOT start it here —
@@ -3371,21 +3372,18 @@ if (clefMode === 'both') {
 function _advanceBeatGroupSubNote() {
     if (!_beatGroupNotes.length) return;
 
-    // Derive the current slot's playTime from any note whose midi is in
-    // currentChordNotes.  This is more reliable than looking up _beatGroupIndex
-    // alone because the first chord may span multiple indices (e.g. D4 at idx=0
-    // and D3 at idx=1 are both at t=0), so _beatGroupIndex may point at only
-    // one of them while currentChordNotes correctly describes the whole slot.
     let currentPlayTime;
     const slotEntry = _beatGroupNotes.find(({ note: n }) => currentChordNotes.has(n.midi));
     if (slotEntry) {
         currentPlayTime = slotEntry.note.playTime ?? slotEntry.note.time;
     } else {
-        // Fallback: use _beatGroupIndex (handles edge-cases)
         currentPlayTime = _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.playTime
             ?? _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.time;
     }
-    if (currentPlayTime === undefined) return;
+    console.log('🎼 _advanceBeatGroup: currentChordNotes=' + JSON.stringify([...currentChordNotes])
+        + ' currentPlayTime=' + currentPlayTime
+        + ' _beatGroupNotes=' + JSON.stringify(_beatGroupNotes.map(e => ({midi:e.note.midi, t:(e.note.playTime??e.note.time).toFixed(4), idx:e.idx}))));
+    if (currentPlayTime === undefined) { console.log('🎼 EARLY RETURN: currentPlayTime undefined'); return; }
 
     // Find the next distinct playTime within the group
     let nextPlayTime = null;
@@ -3400,6 +3398,7 @@ function _advanceBeatGroupSubNote() {
         }
     }
 
+    console.log('🎼 nextIdx=' + nextIdx + ' nextPlayTime=' + nextPlayTime);
     if (nextIdx === null) {
         // All sub-notes played — NOW start the hold timer for the last note's duration.
         // The last note in the group has playTime == currentPlayTime; hold it for
