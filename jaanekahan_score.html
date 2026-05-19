@@ -3576,6 +3576,25 @@ function _advanceBeatGroupSubNote() {
         const allNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
         document.getElementById('scoreKeyboardLabel').textContent =
             currentChordNotes.size > 1 ? `Play: ${allNames}` : `Play: ${currentTrainingNote}`;
+
+        // ── Update SVG score highlight to the new sub-note slot ──────────────
+        // Collect all notes at nextPlayTime (and any held-across notes) and
+        // highlight their noteheads on the score, just like onTrainingNoteSpawned does.
+        const allIndices = [];
+        const seen = new Set();
+        for (const { note: n } of _beatGroupNotes) {
+            const t = n.playTime ?? n.time;
+            const tEnd = t + n.duration;
+            const isAtSlot = Math.abs(t - nextPlayTime) < 0.01;
+            const isHeldAcross = t < nextPlayTime - 0.001 && tEnd > nextPlayTime + 0.05;
+            if (isAtSlot || isHeldAcross) {
+                const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+                if (seen.has(k)) continue;
+                seen.add(k);
+                allIndices.push(..._svgIndicesForMidiNote(n, 'both'));
+            }
+        }
+        if (allIndices.length > 0) _applyHighlight(allIndices);
     }
 }
 
