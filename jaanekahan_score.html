@@ -2659,6 +2659,10 @@ let currentTrainingNote = null;
 let noteHoldStartTime = null;
 let holdEvaluated = false;   // guards against double-advance from simultaneous mouseup + MIDI noteOff
 let expectedHoldDuration = 0;
+let bassHoldEndAbsTime = null;  // absolute performance.now() when bass hold expires (both-mode only)
+let _bassDurationMs = 0;        // bass note's full hold duration in ms (both-mode only)
+let _persistentBassIndices = []; // SVG indices kept highlighted for the bass during treble advances
+let _bassExpireTimer = null;    // setTimeout handle that clears bass highlight when its hold ends
 let activeMidiNote = null;
 let expectedMidiNote = null;
 
@@ -3213,6 +3217,10 @@ if (startHold && noteHoldStartTime === null) {
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
+    // In both-mode: record when the bass hold should end independently of treble
+    if (clefMode === 'both' && _bassDurationMs > 0) {
+        bassHoldEndAbsTime = noteHoldStartTime + _bassDurationMs;
+    }
     
 } else if (!startHold) {
     const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
@@ -3296,11 +3304,26 @@ function spawnTrainingNote(noteObj) {
     previewTimeouts = [];
 
     const noteName = getNoteName(noteObj.midi);
+    const beats = noteObj.duration / secondsPerBeat;
+    const beatLabel = beatsToNoteName(beats);
 
     currentTrainingNote = noteName;
     autoSlowed = false;
     waitingForInput = true;
     failureCount = 0;
+
+    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
+
+    // Step 3: Preserve bass hold state when advancing to the next treble note
+    // while the bass is still within its hold window. Only reset if bass has expired.
+    const _bassStillRingingAtSpawn = clefMode === 'both'
+        && bassHoldEndAbsTime !== null
+        && performance.now() < bassHoldEndAbsTime;
+    if (!_bassStillRingingAtSpawn) {
+        _bassDurationMs    = 0;
+        bassHoldEndAbsTime = null;
+    }
+    // (_bassDurationMs and bassHoldEndAbsTime intentionally preserved if bass still rings)
 
     currentChordNotes.clear();
     chordNotesCompleted.clear();
@@ -3316,10 +3339,6 @@ function spawnTrainingNote(noteObj) {
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
-    // Also track the durations of all chord notes so we can hold for the longest one.
-    const chordNoteDurations = new Map();
-    chordNoteDurations.set(noteObj.midi, noteObj.duration);
-
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
@@ -3331,28 +3350,54 @@ function spawnTrainingNote(noteObj) {
             if (clefMode === 'both' || nextNote.track === noteObj.track) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
-                chordNoteDurations.set(nextNote.midi, nextNote.duration);
             }
         } else {
             break;
         }
     }
 
-    // Use the longest note duration in the chord as the required hold time.
-    // This ensures a bass whole note is held for its full value even when a
-    // shorter treble note is part of the same simultaneous group.
-    const maxChordDuration = Math.max(...chordNoteDurations.values());
-    expectedHoldDuration = (maxChordDuration * 1000) / speedMultiplier;
-
-    // beatLabel reflects the longest note in the chord (e.g. whole note symbol
-    // when bass is a whole note and treble has shorter notes).
-    const beats = maxChordDuration / secondsPerBeat;
-    const beatLabel = beatsToNoteName(beats);
+   // In both-hands mode: expectedHoldDuration = treble duration (shorter, what user holds per step).
+    // Bass duration is tracked separately so the bass can stay highlighted for its full value.
+    if (clefMode === 'both' && currentChordNotes.size > 0) {
+        let maxBassDur = 0, minTrebleDur = Infinity;
+        currentChordNotes.forEach(midi => {
+            const track = noteTrackMap.get(midi);
+            // find the practiceNote entry for this midi at this time to get its own duration
+            const notePlayTime = noteObj.playTime ?? noteObj.time;
+            const pn = practiceNotes.find(n =>
+                Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01 &&
+                n.midi === midi &&
+                n.track === track
+            );
+            const dur = pn ? pn.duration : noteObj.duration;
+            if (track === BASS  && dur > maxBassDur)   maxBassDur   = dur;
+            if (track === TREBLE && dur < minTrebleDur) minTrebleDur = dur;
+        });
+        // If we found both clefs, use treble duration for the hold requirement
+        const hasBass   = maxBassDur   > 0;
+        const hasTreble = minTrebleDur < Infinity;
+        if (hasBass && hasTreble) {
+            expectedHoldDuration = (minTrebleDur * 1000) / speedMultiplier;
+            _bassDurationMs      = (maxBassDur   * 1000) / speedMultiplier;
+        } else if (hasBass) {
+            // Bass-only at this timestamp (e.g. left hand only note at this beat)
+            expectedHoldDuration = (maxBassDur * 1000) / speedMultiplier;
+            _bassDurationMs      = expectedHoldDuration;
+        }
+        // hasTreble-only falls through to the default already set above
+    }
 
    const isChord = currentChordNotes.size > 1;
-    
+
     const holdEl = document.getElementById('holdInfo');
-    if (isChord) {
+    const _bassRingingAtLabel = clefMode === 'both'
+        && bassHoldEndAbsTime !== null
+        && performance.now() < bassHoldEndAbsTime;
+    if (_bassRingingAtLabel && !isChord) {
+        // Bass is still held from a previous beat — tell user to keep it down and play new treble
+        const bassNotes = Array.from(expectedMidiBass).map(m => getNoteName(m)).join(' + ');
+        holdEl.innerHTML = `Keep holding bass (${bassNotes}) &amp; play: <span class="music-symbol">${noteName}</span> for <span class="music-symbol">${beatLabel}</span>`;
+    } else if (isChord) {
         holdEl.innerHTML = `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (Hold for <span class="music-symbol">${beatLabel}</span>)`;
     } else {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
@@ -3362,8 +3407,14 @@ function spawnTrainingNote(noteObj) {
     setTargetNote(noteName);
     
     if (scoreModeActive) {
+        // If advancing a treble note while bass is still ringing, keep the bass keyboard highlight
+        const bassStillHeldNow = clefMode === 'both'
+            && bassHoldEndAbsTime !== null
+            && performance.now() < bassHoldEndAbsTime;
+
         expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        if (!bassStillHeldNow) expectedMidiBass.clear();
+
         currentChordNotes.forEach(midi => {
             const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
             if (trackForMidi === TREBLE) {
@@ -3389,8 +3440,14 @@ function spawnTrainingNote(noteObj) {
         });
 
         // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
+        // If bass is still held, preserve its keyboard highlight
+        const bassStillHeldNow = clefMode === 'both'
+            && bassHoldEndAbsTime !== null
+            && performance.now() < bassHoldEndAbsTime;
+
         expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        if (!bassStillHeldNow) expectedMidiBass.clear();
+
         currentChordNotes.forEach(midi => {
             const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
             if (trackForMidi === TREBLE) {
@@ -3823,10 +3880,13 @@ function animate() {
     const keyboardTop = scoreModeActive ? 0 : canvas.height - KEYBOARD_HEIGHT;
     const now = performance.now();
 
-    // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
+    // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted.
+    // Exception: keep bass highlight alive while bassHoldEndAbsTime is still in the future
+    // (both-mode bass held across treble note changes).
     if (!waitingForInput && !visualsPlaying && !scoreKeysPlaying && noteHoldStartTime === null) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
-        if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
+        const bassStillRinging = bassHoldEndAbsTime !== null && performance.now() < bassHoldEndAbsTime;
+        if (!bassStillRinging && expectedMidiBass.size > 0) expectedMidiBass.clear();
     }
 
     if (visualsPlaying && !scoreModeActive) {
@@ -4244,9 +4304,13 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.ha
 
     synth.triggerRelease(getNoteName(note));
 
-    // Only clear highlights on release — spawnTrainingNote re-adds them for next note
+    // Clear treble highlight immediately on release; bass stays until its hold expires
     expectedMidiTreble.clear();
-    expectedMidiBass.clear();
+    // Only clear bass immediately if it's not being held for longer (both-mode)
+    const bassStillActive = clefMode === 'both'
+        && bassHoldEndAbsTime !== null
+        && performance.now() < bassHoldEndAbsTime;
+    if (!bassStillActive) expectedMidiBass.clear();
 
     // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
     if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
@@ -4264,7 +4328,28 @@ explanationLocked = false;
         expectedMidiNote = null;
         
         expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        // Keep bass keyboard highlight alive; schedule cleanup when bass hold expires
+        if (bassStillActive) {
+            if (_bassExpireTimer) clearTimeout(_bassExpireTimer);
+            const remaining = bassHoldEndAbsTime - performance.now();
+            _bassExpireTimer = setTimeout(() => {
+                expectedMidiBass.clear();
+                _persistentBassIndices = [];
+                bassHoldEndAbsTime = null;
+                _bassExpireTimer = null;
+                // Remove bass SVG highlight — just re-apply current treble-only highlights
+                const trebleEls = _currentHighlightEls.filter(el => {
+                    const idx = _svgNoteElements.findIndex(n => n?.el === el);
+                    return idx >= 0 && _svgNoteElements[idx]?.clef !== 'bass';
+                });
+                const trebleIndices = trebleEls
+                    .map(el => _svgNoteElements.findIndex(n => n?.el === el))
+                    .filter(i => i >= 0);
+                _applyHighlight(trebleIndices, false);
+            }, Math.max(0, remaining));
+        } else {
+            expectedMidiBass.clear();
+        }
         
         advanceChordIndex();
 updateTrainingProgress();
@@ -4403,9 +4488,12 @@ canvas.addEventListener('touchend', (e) => {
         // Capture hold time before any state is cleared
         const heldTime = performance.now() - noteHoldStartTime;
 
-        // Clear highlights immediately — spawnTrainingNote re-adds them
+        // Clear treble highlights immediately; preserve bass if still within hold window
         expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        const bassStillActiveTouch = clefMode === 'both'
+            && bassHoldEndAbsTime !== null
+            && performance.now() < bassHoldEndAbsTime;
+        if (!bassStillActiveTouch) expectedMidiBass.clear();
 
         noteHoldStartTime = null;
         activeMidiNote = null;
@@ -4423,7 +4511,27 @@ canvas.addEventListener('touchend', (e) => {
             expectedMidiNote = null;
 
             expectedMidiTreble.clear();
-            expectedMidiBass.clear();
+            // Keep bass alive until its hold expires
+            if (bassStillActiveTouch) {
+                if (_bassExpireTimer) clearTimeout(_bassExpireTimer);
+                const remaining = bassHoldEndAbsTime - performance.now();
+                _bassExpireTimer = setTimeout(() => {
+                    expectedMidiBass.clear();
+                    _persistentBassIndices = [];
+                    bassHoldEndAbsTime = null;
+                    _bassExpireTimer = null;
+                    const trebleEls = _currentHighlightEls.filter(el => {
+                        const idx = _svgNoteElements.findIndex(n => n?.el === el);
+                        return idx >= 0 && _svgNoteElements[idx]?.clef !== 'bass';
+                    });
+                    const trebleIndices = trebleEls
+                        .map(el => _svgNoteElements.findIndex(n => n?.el === el))
+                        .filter(i => i >= 0);
+                    _applyHighlight(trebleIndices, false);
+                }, Math.max(0, remaining));
+            } else {
+                expectedMidiBass.clear();
+            }
 
             advanceChordIndex();
             updateTrainingProgress();
@@ -5669,20 +5777,38 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
 let _currentHighlightEls = [];
 
-function _applyHighlight(indices) {
-    // Clear previous highlights
+function _applyHighlight(indices, keepBass) {
+    // keepBass = true  → don't clear persistent bass SVG elements
+    // keepBass = false → full clear (default, used on fresh spawn or section end)
+    const shouldKeepBass = keepBass === true
+        && _persistentBassIndices.length > 0
+        && bassHoldEndAbsTime !== null
+        && performance.now() < bassHoldEndAbsTime;
+
+    // Clear previous treble highlights (skip persistent bass elements if keeping them)
+    const persistentBassEls = shouldKeepBass
+        ? new Set(_persistentBassIndices.map(i => _svgNoteElements[i]?.el).filter(Boolean))
+        : new Set();
     for (const el of _currentHighlightEls) {
+        if (persistentBassEls.has(el)) continue; // leave bass highlighted
         el.removeAttribute('fill');
         el.removeAttribute('filter');
     }
+
     // Accept either an array of indices (numbers) or legacy array of elements
     const idxArray = Array.isArray(indices) ? indices.filter(x => x != null) : (indices != null ? [indices] : []);
-    _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
-    idxArray.forEach(x => {
+
+    // Merge in persistent bass indices (if keeping), avoiding duplicates
+    const mergedIdxArray = shouldKeepBass
+        ? [...new Set([...idxArray, ..._persistentBassIndices])]
+        : idxArray;
+
+    _currentHighlightEls = mergedIdxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
+    mergedIdxArray.forEach(x => {
         const el   = typeof x === 'number' ? _svgNoteElements[x]?.el : x;
         const clef = typeof x === 'number' ? _svgNoteElements[x]?.clef : null;
         if (!el) return;
-        // Treble clef → blue, Bass clef → yellow
+        // Treble clef → yellow, Bass clef → amber
         const color = clef === 'bass' ? '#B45309' : '#FFC107';
         el.setAttribute('fill', color);
         el.setAttribute('filter', 'url(#hlGlow)');
@@ -5797,7 +5923,27 @@ function onTrainingNoteSpawned(noteObj) {
     }
 
     if (allIndices.length > 0) {
-        _applyHighlight(allIndices);
+        // Separate bass vs treble indices so we can store bass persistently
+        const bassIndices   = allIndices.filter(i => _svgNoteElements[i]?.clef === 'bass');
+        const trebleIndices = allIndices.filter(i => _svgNoteElements[i]?.clef !== 'bass');
+
+        // Determine whether we are advancing to a new treble note while bass is still held
+        const bassStillHeld = clefMode === 'both'
+            && bassHoldEndAbsTime !== null
+            && performance.now() < bassHoldEndAbsTime;
+
+        if (bassStillHeld) {
+            // Bass is still ringing from a previous chord — DO NOT overwrite _persistentBassIndices.
+            // The original bass SVG indices (set on the initial chord spawn) must remain so they
+            // stay highlighted for the full bass duration, regardless of what simultaneousNotes
+            // returns for this new treble timestamp (which may accidentally include stale bass entries).
+            // Just highlight the new treble indices on top of the already-persistent bass.
+            _applyHighlight(trebleIndices, true);
+        } else {
+            // Fresh chord: store bass indices as persistent and highlight everything normally
+            _persistentBassIndices = bassIndices;
+            _applyHighlight(allIndices, false);
+        }
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
@@ -5951,9 +6097,12 @@ if (freeMode && note === freeModeActiveNote) {
         
         if (noteHoldStartTime === null) return;
 
-        // Always clear highlights immediately on release — spawnTrainingNote re-adds them
+        // Clear treble immediately; bass stays if still within its hold window
         expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        const bassStillActiveMidi = clefMode === 'both'
+            && bassHoldEndAbsTime !== null
+            && performance.now() < bassHoldEndAbsTime;
+        if (!bassStillActiveMidi) expectedMidiBass.clear();
 
         const heldTime = performance.now() - noteHoldStartTime;
 
@@ -5972,7 +6121,27 @@ explanationLocked = false;
     expectedMidiNote = null;
     
     expectedMidiTreble.clear();
-    expectedMidiBass.clear();
+    // Keep bass keyboard highlight alive until its hold expires
+    if (bassStillActiveMidi) {
+        if (_bassExpireTimer) clearTimeout(_bassExpireTimer);
+        const remaining = bassHoldEndAbsTime - performance.now();
+        _bassExpireTimer = setTimeout(() => {
+            expectedMidiBass.clear();
+            _persistentBassIndices = [];
+            bassHoldEndAbsTime = null;
+            _bassExpireTimer = null;
+            const trebleEls = _currentHighlightEls.filter(el => {
+                const idx = _svgNoteElements.findIndex(n => n?.el === el);
+                return idx >= 0 && _svgNoteElements[idx]?.clef !== 'bass';
+            });
+            const trebleIndices = trebleEls
+                .map(el => _svgNoteElements.findIndex(n => n?.el === el))
+                .filter(i => i >= 0);
+            _applyHighlight(trebleIndices, false);
+        }, Math.max(0, remaining));
+    } else {
+        expectedMidiBass.clear();
+    }
     
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
     advanceChordIndex();
