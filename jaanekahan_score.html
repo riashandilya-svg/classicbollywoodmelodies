@@ -3322,7 +3322,7 @@ if (clefMode === 'both') {
         // to navigate D4 → D3 → G4 sequentially.
         _advanceBeatGroupSubNote();
     } else {
-        const missingNew       = newRequired.filter(m => !_beatGroupPressed.has(m));
+        const missingNew       = newRequired.filter(m => !_beatGroupSlotPressed.has(m));
         const missingSustained = sustainedRequired.filter(m => !midiPressedNotes.has(m));
         if (missingSustained.length > 0) {
             feedback.innerHTML = `Keep holding <strong>${missingSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
