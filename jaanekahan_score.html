@@ -2698,6 +2698,20 @@ let freeModeReleaseTimer = null;
 let lastMouseMidi = null;
 let touchActive = false;
 let activeTouches = new Map();
+
+// ── Sustained-bass tracking (both-hands mode) ────────────────────────────────
+// sustainedBassNotes: MIDI notes that the user MUST keep holding while the
+// treble hand advances. Populated when a bass note with longer duration than
+// the current treble step is first pressed correctly.
+let sustainedBassNotes = new Set();
+// physicallyHeldNotes: every key that is currently physically down (mouse,
+// touch, or MIDI). Updated on every noteOn / noteOff so we can verify
+// sustained notes are still held at any point in time.
+let physicallyHeldNotes = new Set();
+// sustainBassViolated: true from the moment the user releases a sustained
+// bass note early, until they re-press it. Blocks treble advancement.
+let sustainBassViolated = false;
+// ─────────────────────────────────────────────────────────────────────────────
     
 function hardStopUserNote() {
     if (!synth) return;
@@ -2710,7 +2724,43 @@ function hardStopUserNote() {
 
     activeMidiNote = null;
     noteHoldStartTime = null;
+    // Clear sustain tracking so a stopped session doesn't carry stale state
+    sustainedBassNotes.clear();
+    sustainBassViolated = false;
+    physicallyHeldNotes.clear();
 }
+// ── Continuous sustain verifier ──────────────────────────────────────────────
+// Runs every 40 ms. If any sustainedBassNote is no longer in physicallyHeldNotes
+// while a hold is in progress and we haven't already flagged a violation,
+// mark the hold as violated and show an error — the user must re-press the bass.
+(function startSustainVerifierLoop() {
+    setInterval(() => {
+        if (!trainingActive || previewMode || clefMode !== 'both') return;
+        if (sustainedBassNotes.size === 0) return;
+        if (sustainBassViolated) return; // already flagged — waiting for re-press
+        // Check: are all sustained bass notes still physically held?
+        for (const midi of sustainedBassNotes) {
+            if (!physicallyHeldNotes.has(midi)) {
+                // Bass note was released early — penalise immediately
+                sustainBassViolated = true;
+                const bassNoteNames = Array.from(sustainedBassNotes).map(m => getNoteName(m)).join(' + ');
+                const feedback = document.getElementById('feedback');
+                feedback.innerHTML = `Keep holding bass (${bassNoteNames})! Re-press and hold it.`;
+                feedback.classList.remove('correct', 'wrong', 'show');
+                void feedback.offsetWidth;
+                feedback.classList.add('wrong', 'show');
+                // Reset hold timer — user must re-press treble too
+                noteHoldStartTime = null;
+                holdEvaluated = false;
+                // Re-highlight the bass keys so the user knows what to press
+                sustainedBassNotes.forEach(m => expectedMidiBass.add(m));
+                break;
+            }
+        }
+    }, 40);
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 let failureCount = 0;
 let autoSlowed = false;
 let showBlackKeyArrow = false;
@@ -3111,11 +3161,19 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 function processUserNoteOn(midiNote) {
 
+// Track every physical key-down so the sustain verifier can check them.
+physicallyHeldNotes.add(midiNote);
+
 // Guard: ignore repeated noteOn for a note that's already held.
 // MIDI keyboards send repeated noteOn while a key is held; without this,
 // hardStopUserNote() below resets noteHoldStartTime on every repeat,
 // making the hold timer restart and causing multiple spawnTrainingNote calls.
-if (!freeMode && midiPressedNotes.has(midiNote)) return;
+// Exception: if this is a sustained bass note being re-pressed after a violation,
+// we MUST allow it through so the user can satisfy the sustain requirement.
+const isRePressSustainedBass = !freeMode
+    && sustainBassViolated
+    && sustainedBassNotes.has(midiNote);
+if (!freeMode && midiPressedNotes.has(midiNote) && !isRePressSustainedBass) return;
 
 if (previewMode) return;
 
@@ -3154,6 +3212,51 @@ if (!trainingActive) return;
 
 const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
+
+// ── Sustained-bass re-press after violation ───────────────────────────────
+// If the user previously released a sustained bass note early and is now
+// re-pressing it, check whether ALL sustained bass notes are now held again.
+if (sustainBassViolated && sustainedBassNotes.has(midiNote)) {
+    midiPressedNotes.add(midiNote);
+    ensureSynth();
+    synth.triggerAttack(noteName);
+    // Check if all sustained bass notes are now physically held
+    const allBassHeld = Array.from(sustainedBassNotes).every(m => physicallyHeldNotes.has(m));
+    if (allBassHeld) {
+        sustainBassViolated = false;
+        // Restore the hold timer — start fresh from now so the treble step
+        // can be measured again from when the bass was correctly re-held.
+        noteHoldStartTime = performance.now();
+        holdEvaluated = false;
+        const isChord = currentChordNotes.size > 1;
+        feedback.textContent = isChord ? 'Good — now hold!' : 'Bass held — continue!';
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+        activeMidiNote = midiNote;
+    } else {
+        // Still waiting for more sustained bass notes to be re-pressed
+        const stillMissing = Array.from(sustainedBassNotes)
+            .filter(m => !physicallyHeldNotes.has(m))
+            .map(m => getNoteName(m));
+        feedback.textContent = `Still need to hold: ${stillMissing.join(' + ')}`;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
+    }
+    return;
+}
+
+// ── Block any new treble note while sustain is violated ───────────────────
+if (sustainBassViolated) {
+    // User pressed something but bass isn't re-held yet — ignore and remind
+    const bassNoteNames = Array.from(sustainedBassNotes).map(m => getNoteName(m)).join(' + ');
+    feedback.textContent = `Re-press and hold bass (${bassNoteNames}) first!`;
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('wrong', 'show');
+    return;
+}
 
 // ---------- WRONG NOTE ----------
 if (!currentChordNotes.has(midiNote)) {
@@ -3220,6 +3323,19 @@ if (startHold && noteHoldStartTime === null) {
     // In both-mode: record when the bass hold should end independently of treble
     if (clefMode === 'both' && _bassDurationMs > 0) {
         bassHoldEndAbsTime = noteHoldStartTime + _bassDurationMs;
+        // Seed sustainedBassNotes with all bass notes that must stay held while treble advances
+        sustainedBassNotes.clear();
+        const _ntm = spawnTrainingNote._noteTrackMap;
+        if (_ntm) {
+            currentChordNotes.forEach(m => {
+                if (_ntm.get(m) === BASS) sustainedBassNotes.add(m);
+            });
+        }
+        // Fallback: use expectedMidiBass if map not available
+        if (sustainedBassNotes.size === 0) {
+            expectedMidiBass.forEach(m => sustainedBassNotes.add(m));
+        }
+        sustainBassViolated = false;
     }
     
 } else if (!startHold) {
@@ -3364,6 +3480,13 @@ function spawnTrainingNote(noteObj) {
             currentChordNotes.add(midi);
             noteTrackMap.set(midi, BASS);
         });
+        // Update sustainedBassNotes to the current set of bass notes that must stay held
+        sustainedBassNotes = new Set(expectedMidiBass);
+        sustainBassViolated = false; // fresh step — no violation yet
+    } else {
+        // Bass hold expired (or not in both-mode) — clear sustain tracking
+        sustainedBassNotes.clear();
+        sustainBassViolated = false;
     }
 
    // In both-hands mode: expectedHoldDuration = treble duration (shorter, what user holds per step).
@@ -4377,6 +4500,9 @@ canvas.addEventListener('mouseup', () => {
     mouseDown = false;
     lastMouseMidi = null;
 
+    // Track physical key-up
+    if (activeMidiNote !== null) physicallyHeldNotes.delete(activeMidiNote);
+
     if (freeMode && freeModeActiveNote !== null) {
     freeModeSynth.triggerRelease(
         getNoteName(freeModeActiveNote)
@@ -4402,6 +4528,23 @@ if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.ha
     const heldTime = performance.now() - noteHoldStartTime;
 
     synth.triggerRelease(getNoteName(note));
+
+    // Early bass release: if user released a sustained bass note before its hold expired, penalise.
+    if (!freeMode && !sustainBassViolated && sustainedBassNotes.has(note)
+        && bassHoldEndAbsTime !== null && performance.now() < bassHoldEndAbsTime) {
+        sustainBassViolated = true;
+        const bassNoteNames = Array.from(sustainedBassNotes).map(m => getNoteName(m)).join(' + ');
+        const fbEl = document.getElementById('feedback');
+        fbEl.innerHTML = `Keep holding bass (${bassNoteNames})! Re-press and hold it.`;
+        fbEl.classList.remove('correct', 'wrong', 'show');
+        void fbEl.offsetWidth;
+        fbEl.classList.add('wrong', 'show');
+        noteHoldStartTime = null;
+        holdEvaluated = false;
+        activeMidiNote = null;
+        sustainedBassNotes.forEach(m => expectedMidiBass.add(m));
+        return;
+    }
 
     // Clear treble highlight immediately on release; bass stays until its hold expires
     expectedMidiTreble.clear();
@@ -4436,6 +4579,9 @@ explanationLocked = false;
                 _persistentBassIndices = [];
                 bassHoldEndAbsTime = null;
                 _bassExpireTimer = null;
+                // Bass hold window ended — sustain requirement is over
+                sustainedBassNotes.clear();
+                sustainBassViolated = false;
                 // Remove bass SVG highlight — just re-apply current treble-only highlights
                 const trebleEls = _currentHighlightEls.filter(el => {
                     const idx = _svgNoteElements.findIndex(n => n?.el === el);
@@ -4448,6 +4594,8 @@ explanationLocked = false;
             }, Math.max(0, remaining));
         } else {
             expectedMidiBass.clear();
+            sustainedBassNotes.clear();
+            sustainBassViolated = false;
         }
         
         advanceChordIndex();
@@ -4552,6 +4700,7 @@ canvas.addEventListener('touchend', (e) => {
         const midiNote = activeTouches.get(touch.identifier);
 
         if (midiNote !== undefined) {
+            physicallyHeldNotes.delete(midiNote);
             if (freeMode && midiNote === freeModeActiveNote) {
                 freeModeSynth.triggerRelease(getNoteName(midiNote));
                 freeModeActiveNote = null;
@@ -4582,6 +4731,26 @@ canvas.addEventListener('touchend', (e) => {
     const allChordNotesReleased = !freeMode
         && noteHoldStartTime !== null
         && midiPressedNotes.size === 0;
+
+    // Early bass release: if user released a sustained bass note before its hold expired, penalise.
+    if (!freeMode && !sustainBassViolated && sustainedBassNotes.size > 0
+        && bassHoldEndAbsTime !== null && performance.now() < bassHoldEndAbsTime) {
+        for (const midi of sustainedBassNotes) {
+            if (!physicallyHeldNotes.has(midi)) {
+                sustainBassViolated = true;
+                const bassNoteNames = Array.from(sustainedBassNotes).map(m => getNoteName(m)).join(' + ');
+                const fbEl = document.getElementById('feedback');
+                fbEl.innerHTML = `Keep holding bass (${bassNoteNames})! Re-press and hold it.`;
+                fbEl.classList.remove('correct', 'wrong', 'show');
+                void fbEl.offsetWidth;
+                fbEl.classList.add('wrong', 'show');
+                noteHoldStartTime = null;
+                holdEvaluated = false;
+                sustainedBassNotes.forEach(m => expectedMidiBass.add(m));
+                break;
+            }
+        }
+    }
 
     if (allChordNotesReleased) {
         // Capture hold time before any state is cleared
@@ -4619,6 +4788,8 @@ canvas.addEventListener('touchend', (e) => {
                     _persistentBassIndices = [];
                     bassHoldEndAbsTime = null;
                     _bassExpireTimer = null;
+                    sustainedBassNotes.clear();
+                    sustainBassViolated = false;
                     const trebleEls = _currentHighlightEls.filter(el => {
                         const idx = _svgNoteElements.findIndex(n => n?.el === el);
                         return idx >= 0 && _svgNoteElements[idx]?.clef !== 'bass';
@@ -4630,6 +4801,8 @@ canvas.addEventListener('touchend', (e) => {
                 }, Math.max(0, remaining));
             } else {
                 expectedMidiBass.clear();
+                sustainedBassNotes.clear();
+                sustainBassViolated = false;
             }
 
             advanceChordIndex();
@@ -6178,6 +6351,9 @@ if (isNoteOn) {
     processUserNoteOn(note);
 }
     if (isNoteOff) {
+// Always remove from physical tracking on any key-up
+physicallyHeldNotes.delete(note);
+
 if (freeMode && note === freeModeActiveNote) {
     freeModeSynth.triggerRelease(getNoteName(note));
     freeModeActiveNote = null;
@@ -6185,6 +6361,24 @@ if (freeMode && note === freeModeActiveNote) {
     expectedMidiTreble.clear();
     return;
 }
+
+        // Early bass release detection: if this note is a sustained bass note
+        // that the user should still be holding, flag it immediately.
+        if (!freeMode && sustainedBassNotes.has(note) && !sustainBassViolated
+            && bassHoldEndAbsTime !== null && performance.now() < bassHoldEndAbsTime) {
+            sustainBassViolated = true;
+            midiPressedNotes.delete(note);
+            synth.triggerRelease(getNoteName(note));
+            const bassNoteNames = Array.from(sustainedBassNotes).map(m => getNoteName(m)).join(' + ');
+            feedback.innerHTML = `Keep holding bass (${bassNoteNames})! Re-press and hold it.`;
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('wrong', 'show');
+            noteHoldStartTime = null;
+            holdEvaluated = false;
+            sustainedBassNotes.forEach(m => expectedMidiBass.add(m));
+            return;
+        }
 
         if (!currentChordNotes.has(note)) return;
         
@@ -6229,6 +6423,8 @@ explanationLocked = false;
             _persistentBassIndices = [];
             bassHoldEndAbsTime = null;
             _bassExpireTimer = null;
+            sustainedBassNotes.clear();
+            sustainBassViolated = false;
             const trebleEls = _currentHighlightEls.filter(el => {
                 const idx = _svgNoteElements.findIndex(n => n?.el === el);
                 return idx >= 0 && _svgNoteElements[idx]?.clef !== 'bass';
@@ -6240,6 +6436,8 @@ explanationLocked = false;
         }, Math.max(0, remaining));
     } else {
         expectedMidiBass.clear();
+        sustainedBassNotes.clear();
+        sustainBassViolated = false;
     }
     
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
