@@ -1646,7 +1646,7 @@ body.score-mode #panelProgressWrap {
         End Measure
         <input id="panelEndMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
           oninput="document.getElementById('endMeasureInput').value=this.value"
-          value="4">
+          value="40">
       </label>
     </div>
     <!-- Song section shortcuts -->
@@ -1831,7 +1831,7 @@ body.score-mode #panelProgressWrap {
         
         <label>
             End Measure:
-            <input id="endMeasureInput" type="number" min="1" value="4" style="width:60px;">
+            <input id="endMeasureInput" type="number" min="1" value="40" style="width:60px;">
         </label>
         
     
@@ -5160,6 +5160,14 @@ startPracticeButton.addEventListener('click', async () => {
     hardStopUserNote();
 
     const selectedHand = handSelect.value;
+
+    // Always sync panel inputs -> hidden inputs before reading,
+    // since oninput only fires on typing (not programmatic changes).
+    const _panelSM = document.getElementById('panelStartMeasure');
+    const _panelEM = document.getElementById('panelEndMeasure');
+    if (_panelSM && _panelSM.value) startMeasureInput.value = _panelSM.value;
+    if (_panelEM && _panelEM.value) endMeasureInput.value   = _panelEM.value;
+
     const startMeasure = parseInt(startMeasureInput.value, 10);
 const endMeasure = parseInt(endMeasureInput.value, 10);
 
@@ -5507,7 +5515,7 @@ function resetAll() {
 
     handSelect.value = 'treble';
     startMeasureInput.value = 1;
-    endMeasureInput.value   = 4;
+    endMeasureInput.value   = 40;
     skipRepeatsCheckbox.checked = false;
     skipSheetRepeats = false;
     loopCheckbox.checked = false;
@@ -5523,7 +5531,7 @@ function resetAll() {
     const panelStart = document.getElementById('panelStartMeasure');
     const panelEnd   = document.getElementById('panelEndMeasure');
     if (panelStart) panelStart.value = 1;
-    if (panelEnd)   panelEnd.value   = 4;
+    if (panelEnd)   panelEnd.value   = 40;
 
     // ── 9. Reset hand-select buttons ─────────────────────────────────────
     handSelect.value = 'both';
