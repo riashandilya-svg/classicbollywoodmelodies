@@ -5401,214 +5401,39 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // DEBUG: dump SVG buckets 28 and 34-36
-    for (const m of [28,34,35,36]) {
-        for (const c of ["treble","bass"]) {
-            const bucket = _svgBuckets[m]?.[c] || [];
-            if (!bucket.length) continue;
-            const items = bucket.map((idx,r) => {
-                const n = _svgNoteElements[idx];
-                return "rank"+r+":tx="+n.tx.toFixed(0)+" midi_ty="+n.ty.toFixed(0)+" grace="+n.isGrace;
-            }).join("  ");
-            console.log("🪣 SVG bucket m="+m+" "+c+" ("+bucket.length+" notes): "+items);
-        }
-    }
-
-    const rankCounters = {};
+    // Simple linear assignment: no repeats, no grace notes, no overflow logic.
+    // For each measure+clef bucket, sort MIDI notes by time and SVG noteheads
+    // by X position, then zip them 1-to-1 by rank index.
 
     function midiKeyFor(note) {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
-    // Pre-compute how many SVG noteheads each measure+clef bucket holds for one pass.
-    // For repeated sections the MIDI sends notes twice but the SVG only has them once,
-    // so the % bucketSize wrapping handles the second pass. What we need here is the
-    // raw (single-pass) capacity of each bucket.
-    const bucketCapacity = {};
-    for (const [m, clefs] of Object.entries(_svgBuckets)) {
-        for (const c of ['treble', 'bass']) {
-            bucketCapacity[`${m}|${c}`] = (clefs[c] || []).length;
-        }
+    // Group non-tied MIDI notes by measure and clef
+    const midiByBucket = {};
+    for (const note of allMidiNotes) {
+        const mk = midiKeyFor(note);
+        const mkShifted = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
+        if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
+
+        const physMeasure = getMeasureFromTime(note.time);
+        if (physMeasure === null) continue;
+        const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+        const clef = note.track === TREBLE ? 'treble' : 'bass';
+        const key = `${sheetMeasure}|${clef}`;
+        if (!midiByBucket[key]) midiByBucket[key] = [];
+        midiByBucket[key].push(note);
     }
 
-    // assignedCount tracks how many MIDI notes have been assigned to each measure|clef
-    // within the current (first) pass. Once it hits bucketCapacity, any further note
-    // whose MIDI time still lands in that measure is a boundary-straddle and belongs
-    // to the next measure (classic grace-note-before-barline case).
-    const assignedCount = {};
-
-    // overflowFired tracks which (sheetMeasure|clef) buckets have already had
-    // the barline-straddle overflow applied. Overflow should fire at most once
-    // per bucket: the very first time a boundary note pushes a bucket past cap.
-    // Without this guard the repeat-pass notes (e.g. physical m37-44 → logical
-    // m29-36) arrive with assignedCount already === cap from the first pass, so
-    // "used >= cap && used < 2*cap" would fire for every single repeat note,
-    // redirecting all of m29's repeat notes into m30's bucket, m31's into m32,
-    // etc. — producing the "bass plays only even measures on repeat" bug.
-    const overflowFired = new Set();
-
-    function assignRanks(notes, clef) {
-        for (const note of notes) {
-            const mk = midiKeyFor(note);
-            // Also check the pre-splitRepeatedNotes timestamp (shifted back by NOTE_GAP_TIME)
-            // because _tiedNoteKeys was built before splitRepeatedNotes ran and some
-            // tied-continuation notes had their .time shifted forward by 0.02s.
-            const mkShifted = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
-
-            // Skip tied-continuation MIDI notes: the SVG buckets already exclude their
-            // noteheads, so counting them here shifts every subsequent rank by +1.
-            // Exception: treble measure 36's tied whole note is intentionally kept in
-            // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
-            // get a rank entry (rank 0) rather than being skipped.
-            // Jaanekahan: no repeat boundary — all tied-continuation notes are excluded normally
-            if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
-
-            const physMeasure = getMeasureFromTime(note.time);
-            if (physMeasure === null) continue;
-            let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
-
-            // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
-            // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
-            // On the repeat pass, the grace note for logical 29 lands in logical 36 (cap=0 or
-            // bucket-full from first pass). Bump them all forward to the correct SVG bucket.
-            // IMPORTANT: set gracePreCorrected=true here so the overflow check below
-            // does not fire a second time on the already-corrected sheetMeasure.
-            let hardcodedGraceCorrected = false;
-
-            // Measure 36 bass AND treble: _svgBuckets[36][bass|treble] is empty because the
-            // page-1 SVG only has a tied whole note (excluded as a tied continuation). The actual
-            // playable noteheads live on page 2 (_svgBucketsPage2[36][bass|treble]).
-            // Suppress the overflow→37 so all m36 notes stay at sheetMeasure=36 and
-            // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
-            if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
-                hardcodedGraceCorrected = true;
-            }
-
-            // Measure-boundary overflow correction:
-            // If the current measure's SVG bucket is already at capacity (all its
-            // noteheads have been claimed), this MIDI note's timestamp must have
-            // landed fractionally before the barline while the SVG places it in
-            // the next measure. Nudge sheetMeasure forward so ranks stay aligned.
-            // Only apply during the first pass (assignedCount < 2× capacity would
-            // fire on the second repeat pass too — cap at exactly bucketCapacity).
-            const capKey = `${sheetMeasure}|${clef}`;
-            const cap    = bucketCapacity[capKey] ?? 0;
-            const used   = assignedCount[capKey] ?? 0;
-
-            // Grace-note pre-correction (handles measures 29, 31, 33, 35, etc.):
-            // The MIDI file timestamps some grace notes in measure M-1, but their
-            // SVG notehead sits at the very beginning of measure M (the bucket for
-            // measure M starts with a grace note). In that case the current bucket
-            // does NOT start with a grace note, so assigning here would misalign
-            // every subsequent rank. Detect this and bump forward immediately,
-            // before the bucket-full overflow check runs.
-            const isMidiGrace   = note.duration < 0.1;
-            const thisStartsGrace = !!_bucketFirstIsGrace[capKey];
-            const nextKey         = `${sheetMeasure + 1}|${clef}`;
-            const nextStartsGrace = !!_bucketFirstIsGrace[nextKey];
-            // Grace-note pre-correction pass-guard:
-            // cap===0 means the current bucket is EMPTY for this clef (e.g. measure 30
-            // treble has zero SVG notes — all bass chords). used < 2*cap would be 0 < 0
-            // = false and the correction would never fire. Handle cap===0 specially:
-            // allow the correction on the very first encounter (used===0), and again
-            // on the second repeat pass (used===1 etc.) by using used < max(2*cap, 2).
-            const allowGraceCorrect = (cap === 0)
-                ? (used === 0 || used === 1)  // empty bucket: allow first & second pass
-                : (used < 2 * cap);            // normal bucket: within first pass
-            let gracePreCorrected = hardcodedGraceCorrected; // inherit hardcoded guard
-            if (!hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
-                const nextCap = bucketCapacity[nextKey] ?? 0;
-                if (nextCap > 0) {
-                    console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
-                    sheetMeasure = sheetMeasure + 1;
-                    gracePreCorrected = true;
-                }
-            }
-
-            // Overflow only for genuine barline-straddle notes: a note whose MIDI
-            // timestamp lands fractionally before the barline while the SVG places it
-            // in the next measure. This should fire AT MOST ONCE per bucket — the very
-            // first time a note finds the bucket already at capacity.
-            // overflowFired prevents re-triggering on repeat-pass notes, which arrive
-            // with assignedCount already === cap from the first pass (making "used >= cap"
-            // true for every repeat-pass note — the root cause of the bass even-measures
-            // only on repeat bug).
-            //
-            // Additionally, notes whose physical measure falls in the repeat-pass range
-            // (physical 15-21, logical 7-13) must NEVER trigger overflow — they are
-            // genuine second-pass notes, not barline-straddle notes. Without this guard,
-            // the FIRST repeat-pass note for each measure fires overflow (because overflowFired
-            // doesn't have the key yet) and gets mis-routed to the next sheet measure.
-            // Physical measure 14 is the 1st ending (NOT part of the repeat pass).
-            // The repeat pass occupies physical REPEAT_END+2 .. REPEAT_END+REPEAT_LEN+1 = 15..21.
-            const isRepeatPassNote = physMeasure > REPEAT_END + 1 && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
-            const overflowKey = `${sheetMeasure}|${clef}`;
-            if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
-                    (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
-                const nextCap = bucketCapacity[`${sheetMeasure + 1}|${clef}`] ?? 0;
-                if (nextCap > 0) {
-                    console.log(`📐 Overflow [${clef}] midi=${note.midi} time=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1} (bucket full: ${used}/${cap})`);
-                    overflowFired.add(overflowKey);
-                    sheetMeasure = sheetMeasure + 1;
-                }
-            }
-            // Always increment assignedCount so second-pass detection works correctly.
-            const newCapKey = `${sheetMeasure}|${clef}`;
-            assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
-
-            const bucketKey = `${sheetMeasure}|${clef}`;
-            if (rankCounters[bucketKey] === undefined) rankCounters[bucketKey] = 0;
-
-            // Raw rank keeps incrementing across both passes of a repeated section.
-            // Wrap it by the SVG bucket size so that repeat-pass notes (e.g. physical
-            // measures 37-44 which map to the same logical measures 29-36 as the first
-            // pass) resolve to rank 0, 1, 2, … again — i.e. they highlight the same
-            // SVG noteheads as the first pass.  For measures that are never repeated
-            // the bucket size is never exceeded so % has no effect.
-            const rawRank    = rankCounters[bucketKey]++;
-            // For measure 36 bass the noteheads live in _svgBucketsPage2 (page-1 bucket is empty).
-            // Fall back to page2 so the % wrap uses the correct size (6), not 0.
-            const bucketSize = ((_svgBuckets[sheetMeasure]?.[clef] || []).length)
-                || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
-            let rank         = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
-
-            // DEBUG: log all assignments to sheet 35 treble
-            if (sheetMeasure === 35 && clef === 'treble') {
-                console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
-            }
-
-            // DEBUG: log all assignments to sheet 28 (both clefs)
-            // Expected rank map for m28 (no grace note — ranks 0-6 treble, 0-5 bass)
-            if (sheetMeasure === 28) {
-                console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
-            }
-
-            _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
-
-
-        }
+    // Sort each MIDI bucket by time, then assign ranks matching SVG notehead order
+    for (const [key, notes] of Object.entries(midiByBucket)) {
+        notes.sort((a, b) => a.time - b.time || a.midi - b.midi);
+        const [mStr, clef] = key.split('|');
+        const sheetMeasure = parseInt(mStr);
+        notes.forEach((note, rank) => {
+            _midiRankMap.set(midiKeyFor(note), { sheet_measure: sheetMeasure, clef, rank });
+        });
     }
-
-    // Sort by time only — grace notes must arrive AFTER the previous measure's normal
-    // notes so the bucket-full overflow correction fires and nudges them forward correctly.
-    const trebleMidi = allMidiNotes.filter(n => n.track === TREBLE)
-        .sort((a, b) => a.time - b.time || a.midi - b.midi);
-    const bassMidi = allMidiNotes.filter(n => n.track === BASS)
-        .sort((a, b) => a.time - b.time || a.midi - b.midi);
-
-    assignRanks(trebleMidi, 'treble');
-
-    // Reset assignedCount between clef passes so that the pass-guard logic
-    // (used >= cap && used < 2*cap) is evaluated independently for each clef.
-    // Without this, treble-clef assigned-count values leak into the bass pass
-    // (they share the same object keyed by measure|clef, but the clef suffix
-    // makes them distinct — so in practice there is no cross-contamination).
-    // We reset anyway as a defensive measure to ensure clean state.
-    for (const key of Object.keys(assignedCount)) {
-        if (key.endsWith('|bass')) delete assignedCount[key];
-    }
-
-    assignRanks(bassMidi, 'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
 }
@@ -5630,7 +5455,7 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing (repeatPass=${isRepeatPass})`);
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} out of bounds (size=${bucket?.length})`);
         return [];
     }
 
