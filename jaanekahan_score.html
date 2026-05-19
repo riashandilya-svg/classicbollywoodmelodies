@@ -5237,7 +5237,7 @@ const SVG_PAGE_SYSTEMS = [
     { treble_top:1899.3, treble_bot:1995.7, bass_top:2236.4, bass_bot:2332.9, barline_xs:[214.8,970.9,1526.6,2139.2,2762.4],  start_measure:29 },
     // 5 measures: m33-m37
     { treble_top:2688.8, treble_bot:2785.3, bass_top:3009.4, bass_bot:3105.9, barline_xs:[214.8,864.6,1430.1,2007.3,2522.3,2762.4], start_measure:33 },
-    // 3 measures: m38-m40 (2740.2/2758.0 is double barline = one boundary → use 2758.0)
+    // 3 measures: m38-m40 (2740.2/2758.0 is double final barline — use only 2758.0 as the boundary)
     { treble_top:3461.9, treble_bot:3558.4, bass_top:3700.7, bass_bot:3797.2, barline_xs:[214.8,1213.3,2230.2,2758.0],         start_measure:38 },
   ],
 ];
@@ -5401,39 +5401,58 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // Simple linear assignment: no repeats, no grace notes, no overflow logic.
-    // For each measure+clef bucket, sort MIDI notes by time and SVG noteheads
-    // by X position, then zip them 1-to-1 by rank index.
+    // Simple greedy assignment — no repeats, no grace notes, no hardcoded corrections.
+    // Sort all MIDI notes by time, then for each note assign it to its natural measure
+    // (from getMeasureFromTime). If that measure's SVG bucket is already full (barline-
+    // straddle: MIDI timestamp lands fractionally before the barline but the notehead
+    // is visually in the next measure), bump it forward by one measure.
+    // SVG noteheads are already sorted by X within each bucket, so rank N MIDI note
+    // → rank N (left-to-right) notehead. No special cases needed.
 
     function midiKeyFor(note) {
         return `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
     }
 
-    // Group non-tied MIDI notes by measure and clef
-    const midiByBucket = {};
-    for (const note of allMidiNotes) {
-        const mk = midiKeyFor(note);
-        const mkShifted = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
-        if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
-
-        const physMeasure = getMeasureFromTime(note.time);
-        if (physMeasure === null) continue;
-        const sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
-        const clef = note.track === TREBLE ? 'treble' : 'bass';
-        const key = `${sheetMeasure}|${clef}`;
-        if (!midiByBucket[key]) midiByBucket[key] = [];
-        midiByBucket[key].push(note);
+    // Pre-compute SVG bucket sizes
+    const bucketSize = {};
+    for (const [m, clefs] of Object.entries(_svgBuckets)) {
+        for (const c of ['treble', 'bass']) {
+            bucketSize[`${m}|${c}`] = (clefs[c] || []).length;
+        }
     }
 
-    // Sort each MIDI bucket by time, then assign ranks matching SVG notehead order
-    for (const [key, notes] of Object.entries(midiByBucket)) {
-        notes.sort((a, b) => a.time - b.time || a.midi - b.midi);
-        const [mStr, clef] = key.split('|');
-        const sheetMeasure = parseInt(mStr);
-        notes.forEach((note, rank) => {
-            _midiRankMap.set(midiKeyFor(note), { sheet_measure: sheetMeasure, clef, rank });
-        });
+    // Sort all non-tied MIDI notes by time (treble and bass separately,
+    // since each clef has its own independent bucket sequence)
+    const rankCounters = {};
+
+    function processClef(clefNotes, clefName) {
+        clefNotes
+            .filter(n => {
+                const mk = midiKeyFor(n);
+                const mkS = `${(n.time - NOTE_GAP_TIME).toFixed(4)}|${n.midi}|${n.track}`;
+                return !_tiedNoteKeys.has(mk) && !_tiedNoteKeys.has(mkS);
+            })
+            .sort((a, b) => a.time - b.time || a.midi - b.midi)
+            .forEach(note => {
+                const physMeasure = getMeasureFromTime(note.time);
+                if (physMeasure === null) return;
+                let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+                const key = `${sheetMeasure}|${clefName}`;
+                const used = rankCounters[key] ?? 0;
+                const cap  = bucketSize[key] ?? 0;
+                // Barline-straddle: MIDI time is in measure M but SVG notehead is in M+1
+                if (cap > 0 && used >= cap) {
+                    sheetMeasure += 1;
+                }
+                const finalKey = `${sheetMeasure}|${clefName}`;
+                const rank = rankCounters[finalKey] ?? 0;
+                rankCounters[finalKey] = rank + 1;
+                _midiRankMap.set(midiKeyFor(note), { sheet_measure: sheetMeasure, clef: clefName, rank });
+            });
     }
+
+    processClef(allMidiNotes.filter(n => n.track === TREBLE), 'treble');
+    processClef(allMidiNotes.filter(n => n.track === BASS),   'bass');
 
     console.log(`🗺  Rank map built: ${_midiRankMap.size} notes`);
 }
