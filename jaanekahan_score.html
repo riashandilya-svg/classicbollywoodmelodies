@@ -2674,7 +2674,6 @@ let _beatGroupIndex   = 0;    // trainingIndex of currently active sub-note slot
 let _beatGroupCurrentPlayTime = null; // MIDI-time of the currently active slot (explicit, avoids ambiguity with carried-across notes)
 let _beatGroupTimer   = null; // setTimeout handle for group completion
 let _beatGroupPressed = new Set(); // midi numbers pressed so far in this group
-let _beatGroupSlotPressed = new Set(); // midi numbers pressed since the current slot started (resets each slot)
 let _beatGroupStartMs = null; // performance.now() when first press occurred
 // Saved copy of noteHoldStartTime captured just before evaluateHoldOnRelease clears it.
 // spawnTrainingNote's carry-forward block reads this instead of noteHoldStartTime, because
@@ -3288,7 +3287,6 @@ synth.triggerAttack(noteName);
 if (clefMode === 'both') {
     // ── Beat Group: note pressed ───────────────────────────────────────────
     _beatGroupPressed.add(midiNote);
-    _beatGroupSlotPressed.add(midiNote);
 
     // If this note is in the must-hold registry (re-press after early release),
     // restart the group timer and wait for the hold to complete.
@@ -3305,11 +3303,7 @@ if (clefMode === 'both') {
 
     // All new notes must be in _beatGroupPressed, AND all sustained notes must
     // still be physically down (in midiPressedNotes).
-    // Use _beatGroupSlotPressed (not _beatGroupPressed) for new-note detection.
-    // _beatGroupPressed accumulates across all slots, so repeated notes (e.g. D6 at
-    // slot t=0.9231 and again at t=1.1538) would appear "already pressed" and the
-    // guard at line ~3176 (midiPressedNotes) would block the second physical press.
-    const allNewPressed       = newRequired.every(m => _beatGroupSlotPressed.has(m));
+    const allNewPressed       = newRequired.every(m => _beatGroupPressed.has(m));
     const allSustainedStillOn = sustainedRequired.every(m => midiPressedNotes.has(m));
     const allCurrentPressed   = allNewPressed && allSustainedStillOn;
 
@@ -3322,7 +3316,7 @@ if (clefMode === 'both') {
         // to navigate D4 → D3 → G4 sequentially.
         _advanceBeatGroupSubNote();
     } else {
-        const missingNew       = newRequired.filter(m => !_beatGroupSlotPressed.has(m));
+        const missingNew       = newRequired.filter(m => !_beatGroupPressed.has(m));
         const missingSustained = sustainedRequired.filter(m => !midiPressedNotes.has(m));
         if (missingSustained.length > 0) {
             feedback.innerHTML = `Keep holding <strong>${missingSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
@@ -3488,7 +3482,6 @@ function _advanceBeatGroupSubNote() {
 
     _beatGroupIndex = nextIdx;
     _beatGroupCurrentPlayTime = nextPlayTime; // advance the explicit slot tracker
-    _beatGroupSlotPressed = new Set(); // reset per-slot tracker for repeated-note detection
 
     // Rebuild currentChordNotes for the next simultaneous slot.
     console.log('➡ Advancing to slot at nextPlayTime=', nextPlayTime?.toFixed(4), 'nextIdx=', nextIdx);
@@ -3609,7 +3602,6 @@ function _onBeatGroupComplete() {
 
     _beatGroupNotes   = [];
     _beatGroupPressed = new Set();
-    _beatGroupSlotPressed = new Set();
     _beatGroupStartMs = null;
     _beatGroupCurrentPlayTime = null;
     _bgHeldNotes.clear();
@@ -3757,7 +3749,6 @@ function spawnTrainingNote(noteObj) {
 
         _beatGroupNotes   = [];
         _beatGroupPressed = new Set();
-        _beatGroupSlotPressed = new Set();
         _beatGroupStartMs = null;
         _beatGroupIndex   = trainingIndex;
         _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time; // initialize to first slot's time
@@ -5390,7 +5381,6 @@ if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
 _beatGroupNotes   = [];
 _beatGroupPressed = new Set();
-_beatGroupSlotPressed = new Set();
 _beatGroupStartMs = null;
 _beatGroupCurrentPlayTime = null;
 _bgHeldNotes.clear();
