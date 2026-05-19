@@ -2661,6 +2661,10 @@ let holdEvaluated = false;   // guards against double-advance from simultaneous 
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
+// Saved copy of noteHoldStartTime captured just before evaluateHoldOnRelease clears it.
+// spawnTrainingNote's carry-forward block reads this instead of noteHoldStartTime, because
+// by the time spawnNextValidNote() fires (via setTimeout), noteHoldStartTime is already null.
+let _lastHoldStartTime = null;
 
 // ====== SUSTAINED NOTES (both-hands mode) ======
 // Maps midi → { startTime (ms), requiredDurationMs, track, noteObj }
@@ -3385,13 +3389,19 @@ function spawnTrainingNote(noteObj) {
     // When the new step's playTime is later than the current step (hands diverge),
     // notes from the current step that still have remaining hold time become "sustained"
     // — they stay highlighted and must be held while the other hand advances.
+    //
+    // IMPORTANT: We use _lastHoldStartTime rather than noteHoldStartTime here.
+    // evaluateHoldOnRelease clears noteHoldStartTime to null before calling
+    // spawnNextValidNote() → spawnTrainingNote(), so noteHoldStartTime is always
+    // null by the time we get here. _lastHoldStartTime is saved just before that
+    // clear and gives us the actual moment the user started holding the previous step.
     if (clefMode === 'both' && spawnTrainingNote._noteTrackMap) {
         cleanExpiredSustainedNotes();
 
-        const newPlayTime = noteObj.playTime ?? noteObj.time;
+        const holdRef = _lastHoldStartTime; // may be null if first step or retry
 
-        if (currentChordNotes.size > 0 && noteHoldStartTime !== null) {
-            const elapsed = performance.now() - noteHoldStartTime;
+        if (currentChordNotes.size > 0 && holdRef !== null) {
+            const elapsed = performance.now() - holdRef;
 
             currentChordNotes.forEach(midi => {
                 const track = spawnTrainingNote._noteTrackMap.get(midi);
@@ -3408,13 +3418,13 @@ function spawnTrainingNote(noteObj) {
                     // Note still needs to be held — carry it forward as sustained
                     if (!sustainedNotes.has(midi)) {
                         sustainedNotes.set(midi, {
-                            startTime: noteHoldStartTime,
+                            startTime: holdRef,
                             requiredDurationMs: perNoteDur,
                             track,
                         });
                     }
-                    // If it was already in sustainedNotes (e.g. from an earlier step),
-                    // leave it untouched — its startTime and duration are already correct.
+                    // If already in sustainedNotes (from an earlier step), leave untouched —
+                    // its startTime and duration are already correct.
                 } else {
                     sustainedNotes.delete(midi);
                 }
@@ -3481,14 +3491,15 @@ function spawnTrainingNote(noteObj) {
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
     // ── Per-note duration map ────────────────────────────────────────────────
-    // Stores the actual hold duration (ms) for every note in this step so that
-    // when a note from one hand is carried forward as a "sustained" note while
-    // the other hand advances to a shorter note, the correct (longer) duration
-    // is used — not the current step's expectedHoldDuration.
+    // Records each note's own musical hold duration (ms) independently.
+    // This is critical when hands have different rhythms: e.g. bass holds a
+    // crotchet while treble plays two quavers. Without this, the bass note's
+    // carry-forward duration would default to the treble quaver's duration,
+    // causing the bass highlight to disappear too early.
     if (!spawnTrainingNote._perNoteDuration) spawnTrainingNote._perNoteDuration = new Map();
     const perNoteDuration = spawnTrainingNote._perNoteDuration;
     perNoteDuration.clear();
-    // Seed with sustained notes that are still running (their durations are already set)
+    // Seed from any currently sustained notes so their durations survive further advances
     for (const [midi, s] of sustainedNotes) {
         perNoteDuration.set(midi, s.requiredDurationMs);
     }
@@ -3515,7 +3526,8 @@ function spawnTrainingNote(noteObj) {
             // Include regardless of track when times match — both hands must play together
             currentChordNotes.add(nextNote.midi);
             noteTrackMap.set(nextNote.midi, nextNote.track);
-            // Record this note's own duration (may differ from the leading note's duration)
+            // Record each simultaneous note's own duration — they may differ (e.g. quaver
+            // treble + crotchet bass both starting at beat 1).
             perNoteDuration.set(nextNote.midi, (nextNote.duration * 1000) / speedMultiplier);
         } else {
             break;
@@ -4384,6 +4396,12 @@ function evaluateHoldOnRelease(releasedMidi) {
         waitingForInput = false;
         expectedMidiNote = null;
 
+        // Save the hold start time NOW, before it gets cleared at the end of this function.
+        // spawnTrainingNote's carry-forward block needs it to compute how much of a
+        // longer-duration note (e.g. bass crotchet) has already elapsed when the next
+        // step (e.g. treble quaver) is spawned.
+        _lastHoldStartTime = noteHoldStartTime;
+
         // In both-hands mode: move the completed notes into sustainedNotes
         // so they remain required while the other hand continues
         if (clefMode === 'both') {
@@ -4424,6 +4442,7 @@ function evaluateHoldOnRelease(releasedMidi) {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
         if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+        _lastHoldStartTime = null; // retry — no carry-forward should happen
         retryTimeout = setTimeout(() => {
             if (trainingIndex < practiceNotes.length) {
                 spawnTrainingNote(practiceNotes[trainingIndex]);
@@ -4432,6 +4451,7 @@ function evaluateHoldOnRelease(releasedMidi) {
     }
 
     noteHoldStartTime = null;
+    _lastHoldStartTime = null; // cleared here; was already saved above before this line
     activeMidiNote = null;
     return true;
 }
