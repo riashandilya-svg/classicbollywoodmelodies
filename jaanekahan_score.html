@@ -2688,6 +2688,67 @@ let expectedMidiBass   = new Set();
 let currentChordNotes = new Set();
 let midiPressedNotes = new Set();
 let chordNotesCompleted = new Set();
+
+// ── Sustained key highlights ──────────────────────────────────────────────────
+// When a chord note has a longer duration than the hold-evaluation note (e.g. a
+// bass whole note paired with a treble quarter), we keep the key highlighted for
+// the remainder of its full note duration even after the training step advances.
+let _sustainedKeys = new Map(); // midi → { track, clearTimer }
+// Per-chord note durations (populated in spawnTrainingNote)
+let _chordNoteDurations = new Map(); // `${midi}|${track}` → durationSeconds
+// Module-level noteTrackMap (moved out of spawnTrainingNote so advance paths can read it)
+let noteTrackMap = new Map(); // midi → track
+
+function clearSustainedKeys() {
+    for (const { clearTimer } of _sustainedKeys.values()) {
+        clearTimeout(clearTimer);
+    }
+    _sustainedKeys.clear();
+}
+
+function sustainKeyFor(midi, track, remainingMs) {
+    // Cancel any existing sustain for this pitch
+    const existing = _sustainedKeys.get(midi);
+    if (existing) clearTimeout(existing.clearTimer);
+
+    // Add to expected highlight sets immediately
+    if (track === TREBLE) expectedMidiTreble.add(midi);
+    else if (track === BASS)   expectedMidiBass.add(midi);
+
+    const clearTimer = setTimeout(() => {
+        _sustainedKeys.delete(midi);
+        if (track === TREBLE) expectedMidiTreble.delete(midi);
+        else if (track === BASS)   expectedMidiBass.delete(midi);
+    }, Math.max(50, remainingMs));
+
+    _sustainedKeys.set(midi, { track, clearTimer });
+}
+
+// Re-add still-active sustained keys to the expected highlight sets.
+// Called right after expectedMidiTreble/Bass are cleared so sustained keys
+// are not lost when the training step advances.
+function reapplySustainedKeys() {
+    for (const [midi, { track }] of _sustainedKeys.entries()) {
+        if (track === TREBLE) expectedMidiTreble.add(midi);
+        else if (track === BASS)   expectedMidiBass.add(midi);
+    }
+}
+
+// Register all chord notes that still have remaining duration as sustained,
+// so their keyboard highlight persists while subsequent shorter notes are played.
+// `heldTimeMs` is how long the user actually held (≥ expectedHoldDuration when called).
+function registerSustainedChordKeys(heldTimeMs) {
+    for (const [key, durSec] of _chordNoteDurations.entries()) {
+        const [midiStr, trackStr] = key.split('|');
+        const midi  = parseInt(midiStr, 10);
+        const track = trackStr;
+        const fullDurationMs = (durSec * 1000) / speedMultiplier;
+        const remaining = fullDurationMs - heldTimeMs;
+        if (remaining > 120) {
+            sustainKeyFor(midi, track, remaining);
+        }
+    }
+}
 let freeModeActiveNote = null;
 let mouseDown = false;
 let freeModeReleaseTimer = null;
@@ -3296,28 +3357,27 @@ function spawnTrainingNote(noteObj) {
     previewTimeouts = [];
 
     const noteName = getNoteName(noteObj.midi);
+    const beats = noteObj.duration / secondsPerBeat;
+    const beatLabel = beatsToNoteName(beats);
 
     currentTrainingNote = noteName;
     autoSlowed = false;
     waitingForInput = true;
     failureCount = 0;
 
+    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
+
     currentChordNotes.clear();
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
-    // Store per-note track AND duration so we can highlight and draw correctly
-    if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
-    const noteTrackMap = spawnTrainingNote._noteTrackMap;
+    // Store per-note track so we can highlight correctly
     noteTrackMap.clear();
-
-    if (!spawnTrainingNote._noteDurationMap) spawnTrainingNote._noteDurationMap = new Map();
-    const noteDurationMap = spawnTrainingNote._noteDurationMap;
-    noteDurationMap.clear();
+    _chordNoteDurations.clear();
 
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
-    noteDurationMap.set(noteObj.midi, noteObj.duration);
+    _chordNoteDurations.set(`${noteObj.midi}|${noteObj.track}`, noteObj.duration);
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
@@ -3332,22 +3392,12 @@ function spawnTrainingNote(noteObj) {
             if (clefMode === 'both' || nextNote.track === noteObj.track) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
-                noteDurationMap.set(nextNote.midi, nextNote.duration);
+                _chordNoteDurations.set(`${nextNote.midi}|${nextNote.track}`, nextNote.duration);
             }
         } else {
             break;
         }
     }
-
-    // Use the LONGEST note duration in the chord for the hold requirement.
-    // This ensures a bass whole note isn't cut off just because a simultaneous
-    // treble quarter note has a shorter duration.
-    const maxChordDuration = Math.max(...Array.from(currentChordNotes).map(m => noteDurationMap.get(m) ?? noteObj.duration));
-
-    expectedHoldDuration = (maxChordDuration * 1000) / speedMultiplier;
-
-    const beats = maxChordDuration / secondsPerBeat;
-    const beatLabel = beatsToNoteName(beats);
 
    const isChord = currentChordNotes.size > 1;
     
@@ -3364,6 +3414,7 @@ function spawnTrainingNote(noteObj) {
     if (scoreModeActive) {
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
+        reapplySustainedKeys();
         currentChordNotes.forEach(midi => {
             const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
             if (trackForMidi === TREBLE) {
@@ -3377,13 +3428,12 @@ function spawnTrainingNote(noteObj) {
                 ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                 : `🎹 Play: ${noteName}`;
     } else {
-        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color and its own duration)
+        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color)
         currentChordNotes.forEach(midi => {
             const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            const durForMidi   = noteDurationMap.get(midi) ?? noteObj.duration;
             addMidiFallingRectangle(
                 midi,
-                durForMidi,
+                noteObj.duration,
                 trackForMidi,
                 performance.now()
             );
@@ -3392,6 +3442,7 @@ function spawnTrainingNote(noteObj) {
         // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
+        reapplySustainedKeys();
         currentChordNotes.forEach(midi => {
             const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
             if (trackForMidi === TREBLE) {
@@ -3825,7 +3876,7 @@ function animate() {
     const now = performance.now();
 
     // Safety net: if nothing is actively waiting for input, ensure no keys are stuck highlighted
-    if (!waitingForInput && !visualsPlaying && !scoreKeysPlaying && noteHoldStartTime === null) {
+    if (!waitingForInput && !visualsPlaying && !scoreKeysPlaying && noteHoldStartTime === null && _sustainedKeys.size === 0) {
         if (expectedMidiTreble.size > 0) expectedMidiTreble.clear();
         if (expectedMidiBass.size > 0)   expectedMidiBass.clear();
     }
@@ -4264,8 +4315,12 @@ explanationLocked = false;
         waitingForInput = false;
         expectedMidiNote = null;
         
+        // Sustain any chord notes that had a longer duration than the hold evaluation
+        registerSustainedChordKeys(heldTime);
+        
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
+        reapplySustainedKeys();
         
         advanceChordIndex();
 updateTrainingProgress();
@@ -4296,6 +4351,7 @@ holdEl.innerHTML =
 }
 
 retryTimeout = setTimeout(() => {
+    clearSustainedKeys();
     spawnTrainingNote(practiceNotes[trainingIndex]);
 }, 600);
 
@@ -4423,8 +4479,12 @@ canvas.addEventListener('touchend', (e) => {
             waitingForInput = false;
             expectedMidiNote = null;
 
+            // Sustain any chord notes that had a longer duration than the hold evaluation
+            registerSustainedChordKeys(heldTime);
+
             expectedMidiTreble.clear();
             expectedMidiBass.clear();
+            reapplySustainedKeys();
 
             advanceChordIndex();
             updateTrainingProgress();
@@ -4452,6 +4512,7 @@ canvas.addEventListener('touchend', (e) => {
             }
 
             retryTimeout = setTimeout(() => {
+                clearSustainedKeys();
                 if (trainingIndex < practiceNotes.length) {
                     spawnTrainingNote(practiceNotes[trainingIndex]);
                 }
@@ -4855,6 +4916,7 @@ fullSongPlaying = false;
 speedLocked = false;
 countdownActive = false;
 setSpeedButtonsEnabled(true);
+clearSustainedKeys();
 
 if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
 if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
@@ -4926,6 +4988,7 @@ function resetAll() {
     speedLocked      = false;
     countdownActive  = false;
     setSpeedButtonsEnabled(true);
+    clearSustainedKeys();
 
     // ── 4. Exit Free Mode if it is on ────────────────────────────────────
     if (freeMode) {
@@ -5972,8 +6035,12 @@ explanationLocked = false;
     waitingForInput = false;
     expectedMidiNote = null;
     
+    // Sustain any chord notes that had a longer duration than the hold evaluation
+    registerSustainedChordKeys(heldTime);
+    
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
+    reapplySustainedKeys();
     
     // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
     advanceChordIndex();
@@ -6000,6 +6067,7 @@ holdEl.innerHTML =
 
     if (retryTimeout) clearTimeout(retryTimeout);
     retryTimeout = setTimeout(() => {
+        clearSustainedKeys();
         if (trainingIndex < practiceNotes.length) {
             spawnTrainingNote(practiceNotes[trainingIndex]);
         }
