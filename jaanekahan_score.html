@@ -3583,15 +3583,28 @@ function spawnTrainingNote(noteObj) {
         _beatGroupIndex   = trainingIndex;
 
         const groupStartSec = noteObj.playTime ?? noteObj.time;
-        let   windowEndSec  = groupStartSec + noteObj.duration;
 
+        // Step 1: compute windowEndSec from the FIRST simultaneous chord only.
+        // Only notes at groupStartSec (within 10ms) set the window boundary.
+        // Sub-notes that arrive later within the window do NOT expand it further —
+        // that would cause a cascade where e.g. a crotchet at beat 2 pulls in all
+        // of beat 3's notes and so on, making the whole bar one giant group.
+        let windowEndSec = groupStartSec + noteObj.duration;
+        for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+            const n = practiceNotes[i];
+            const nStart = n.playTime ?? n.time;
+            if (Math.abs(nStart - groupStartSec) >= 0.01) break; // past first chord
+            const nEnd = nStart + n.duration;
+            if (nEnd > windowEndSec) windowEndSec = nEnd;
+        }
+
+        // Step 2: collect all notes whose START falls within the window.
+        // Their own duration does NOT expand the window (see above).
         for (let i = trainingIndex; i < practiceNotes.length; i++) {
             const n = practiceNotes[i];
             const nStart = n.playTime ?? n.time;
             if (nStart >= windowEndSec - 0.001) break;
             _beatGroupNotes.push({ note: n, idx: i });
-            const nEnd = nStart + n.duration;
-            if (nEnd > windowEndSec) windowEndSec = nEnd;
         }
 
         _beatGroupEndSec = windowEndSec;
