@@ -2652,7 +2652,11 @@ let trainingIndex = 0;
 let waitingForInput = false;
 let previewMode = false;
 let previewTimeouts = [];
-let retryTimeout = null; 
+let retryTimeout = null;
+// In both-hands mode, treble steps auto-advance by timer (not on key release).
+// This timer fires after expectedHoldDuration and advances to the next treble note
+// while the bass stays held.
+let trebleAutoAdvanceTimer = null;
 let fullSongPlaying = false;
 
 let currentTrainingNote = null;
@@ -2728,6 +2732,7 @@ function hardStopUserNote() {
     sustainedBassNotes.clear();
     sustainBassViolated = false;
     physicallyHeldNotes.clear();
+    if (trebleAutoAdvanceTimer) { clearTimeout(trebleAutoAdvanceTimer); trebleAutoAdvanceTimer = null; }
 }
 // ── Continuous sustain verifier ──────────────────────────────────────────────
 // Runs every 40 ms. If any sustainedBassNote is no longer in physicallyHeldNotes
@@ -3313,6 +3318,12 @@ const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.
 // sufficient to start the hold timer so the key doesn't stay highlighted forever.
 const startHold = allPressed || scoreModeActive;
 
+// Is the bass currently in a sustained-hold window? Used to decide whether to
+// auto-advance by timer (both-hands) instead of waiting for key release.
+const _bassStillRingingHere = clefMode === 'both'
+    && bassHoldEndAbsTime !== null
+    && performance.now() < bassHoldEndAbsTime;
+
 if (startHold && noteHoldStartTime === null) {
     // All chord notes held (or score mode shortcut) — start the hold timer
     hardStopUserNote();
@@ -3320,6 +3331,7 @@ if (startHold && noteHoldStartTime === null) {
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
+    holdEvaluated = false;
     // In both-mode: record when the bass hold should end independently of treble
     if (clefMode === 'both' && _bassDurationMs > 0) {
         bassHoldEndAbsTime = noteHoldStartTime + _bassDurationMs;
@@ -3336,6 +3348,40 @@ if (startHold && noteHoldStartTime === null) {
             expectedMidiBass.forEach(m => sustainedBassNotes.add(m));
         }
         sustainBassViolated = false;
+    }
+
+    // ── Both-hands timer-based advance ───────────────────────────────────────
+    // When bass is sustained across treble steps, advance the treble note
+    // automatically once the hold duration is met — the user does NOT need to
+    // release any key. They keep holding the bass and just move the treble.
+    const _bassIsCurrentlySustained = clefMode === 'both'
+        && (sustainedBassNotes.size > 0 || _bassStillRingingHere);
+    if (_bassIsCurrentlySustained) {
+        if (trebleAutoAdvanceTimer) { clearTimeout(trebleAutoAdvanceTimer); trebleAutoAdvanceTimer = null; }
+        trebleAutoAdvanceTimer = setTimeout(() => {
+            trebleAutoAdvanceTimer = null;
+            // Only advance if bass is still held and we haven't violated sustain
+            if (sustainBassViolated) return;
+            if (!trainingActive) return;
+            // Bass still within its hold window — do NOT require key release
+            const feedback2 = document.getElementById('feedback');
+            feedback2.textContent = 'Good!';
+            feedback2.classList.remove('correct', 'wrong', 'show');
+            void feedback2.offsetWidth;
+            feedback2.classList.add('correct', 'show');
+            explanationLocked = false;
+            waitingForInput = false;
+            expectedMidiNote = null;
+            holdEvaluated = true; // prevent release handlers from double-advancing
+            // Clear treble highlight; keep bass
+            expectedMidiTreble.clear();
+            noteHoldStartTime = null;
+            activeMidiNote = null;
+            advanceChordIndex();
+            updateTrainingProgress();
+            document.getElementById('holdInfo').textContent = '';
+            setTimeout(() => spawnNextValidNote(), 300);
+        }, expectedHoldDuration);
     }
     
 } else if (!startHold) {
@@ -4609,6 +4655,31 @@ setTimeout(() => spawnNextValidNote(), 300);
         const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
 
         const feedback = document.getElementById('feedback');
+
+        // In both-hands mode with bass still sustained: the user released the
+        // treble note too early. Cancel the auto-advance timer and tell them to
+        // re-press only the treble (bass must stay held).
+        const _bassStillForRetry = clefMode === 'both'
+            && bassHoldEndAbsTime !== null
+            && performance.now() < bassHoldEndAbsTime
+            && !sustainBassViolated;
+        if (_bassStillForRetry) {
+            if (trebleAutoAdvanceTimer) { clearTimeout(trebleAutoAdvanceTimer); trebleAutoAdvanceTimer = null; }
+            feedback.innerHTML =
+                `Treble too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>. Keep holding bass &amp; re-press treble!`;
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('wrong', 'show');
+            const holdEl = document.getElementById('holdInfo');
+            holdEl.innerHTML = `Keep holding bass &amp; re-press: <span class="music-symbol">${currentTrainingNote}</span>`;
+            // Reset only the treble hold timer — bass state preserved
+            noteHoldStartTime = null;
+            holdEvaluated = false;
+            activeMidiNote = null;
+            // Do NOT call spawnTrainingNote — that would reset bass. Just wait for re-press.
+            return;
+        }
+
 feedback.innerHTML =
     `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
@@ -4816,6 +4887,26 @@ canvas.addEventListener('touchend', (e) => {
             const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
 
             const feedback = document.getElementById('feedback');
+
+            // In both-hands mode with bass still sustained: preserve bass, just retry treble
+            const _bassStillForRetryTouch = clefMode === 'both'
+                && bassHoldEndAbsTime !== null
+                && performance.now() < bassHoldEndAbsTime
+                && !sustainBassViolated;
+            if (_bassStillForRetryTouch) {
+                if (trebleAutoAdvanceTimer) { clearTimeout(trebleAutoAdvanceTimer); trebleAutoAdvanceTimer = null; }
+                feedback.innerHTML =
+                    `Treble too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>. Keep holding bass &amp; re-press treble!`;
+                feedback.classList.remove('correct', 'wrong', 'show');
+                void feedback.offsetWidth;
+                feedback.classList.add('wrong', 'show');
+                const holdEl3 = document.getElementById('holdInfo');
+                holdEl3.innerHTML = `Keep holding bass &amp; re-press: <span class="music-symbol">${currentTrainingNote}</span>`;
+                // noteHoldStartTime / activeMidiNote already cleared above this block
+                holdEvaluated = false;
+                return;
+            }
+
             feedback.innerHTML = `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
             feedback.classList.remove('correct', 'wrong', 'show');
@@ -6449,6 +6540,26 @@ updateTrainingProgress();
         } else {
             const heldBeats = heldTime / 1000 / secondsPerBeat;
 const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+
+            // In both-hands mode with bass still sustained: preserve bass, just retry treble
+            const _bassStillForRetryMidi = clefMode === 'both'
+                && bassHoldEndAbsTime !== null
+                && performance.now() < bassHoldEndAbsTime
+                && !sustainBassViolated;
+            if (_bassStillForRetryMidi) {
+                if (trebleAutoAdvanceTimer) { clearTimeout(trebleAutoAdvanceTimer); trebleAutoAdvanceTimer = null; }
+                feedback.innerHTML =
+                    `Treble too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>. Keep holding bass &amp; re-press treble!`;
+                feedback.classList.remove('correct', 'wrong', 'show');
+                void feedback.offsetWidth;
+                feedback.classList.add('wrong', 'show');
+                const holdEl2 = document.getElementById('holdInfo');
+                holdEl2.innerHTML = `Keep holding bass &amp; re-press: <span class="music-symbol">${currentTrainingNote}</span>`;
+                noteHoldStartTime = null;
+                holdEvaluated = false;
+                activeMidiNote = null;
+                return;
+            }
 
 feedback.innerHTML =
     `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>,
