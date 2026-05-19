@@ -3290,6 +3290,7 @@ if (clefMode === 'both') {
     // If this note is in the must-hold registry (re-press after early release),
     // restart the group timer and wait for the hold to complete.
     if (_bgRestartHoldTimer(midiNote)) {
+        console.log('🔁 _bgRestartHoldTimer fired for', getNoteName(midiNote), '— returning early. bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName));
         return;
     }
 
@@ -3304,6 +3305,8 @@ if (clefMode === 'both') {
     const allNewPressed       = newRequired.every(m => _beatGroupPressed.has(m));
     const allSustainedStillOn = sustainedRequired.every(m => midiPressedNotes.has(m));
     const allCurrentPressed   = allNewPressed && allSustainedStillOn;
+
+    console.log('🎹 noteOn', getNoteName(midiNote), '| chord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName), '| midiPressed:', [...midiPressedNotes].map(getNoteName), '| sustReq:', sustainedRequired.map(getNoteName), '| newReq:', newRequired.map(getNoteName), '| allNewPressed:', allNewPressed, '| allSustOn:', allSustainedStillOn, '| willAdvance:', allCurrentPressed);
 
     if (allCurrentPressed) {
         // The hold timer is started inside _advanceBeatGroupSubNote once all
@@ -3457,6 +3460,7 @@ function _advanceBeatGroupSubNote() {
 
     if (nextIdx === null) {
         // All sub-notes played — NOW start the hold timer for the last note's duration.
+        console.log('⏱ All sub-notes done. Starting hold timer. bgHeld before register:', [..._bgHeldNotes.keys()].map(getNoteName), 'bgPressed:', [..._beatGroupPressed].map(getNoteName));
         // The last note in the group has playTime == currentPlayTime; hold it for
         // (_beatGroupEndSec - currentPlayTime). This is the only correct place to
         // start the timer — doing it earlier (at spawn or first chord) gave the user
@@ -3486,6 +3490,7 @@ function _advanceBeatGroupSubNote() {
     _beatGroupIndex = nextIdx;
 
     // Rebuild currentChordNotes for the next simultaneous slot.
+    console.log('➡ Advancing to slot at nextPlayTime=', nextPlayTime?.toFixed(4), 'nextIdx=', nextIdx);
     // IMPORTANT: also include any notes from earlier slots whose duration
     // extends into this slot — those must still be physically held.
     currentChordNotes.clear();
@@ -3538,6 +3543,8 @@ function _advanceBeatGroupSubNote() {
             _bgRegisterHold(n.midi, holdUntilMs);
         }
     }
+
+    console.log('🔗 After slot advance: currentChord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName));
 
     // Update target display
     const firstNote = practiceNotes[nextIdx];
