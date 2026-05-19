@@ -3509,6 +3509,23 @@ function _advanceBeatGroupSubNote() {
     // they aren't treated as "missing" — they only need to stay held, not re-pressed.
     // (They were already pressed in an earlier slot.)
     // Also register them in _bgHeldNotes so any release is caught immediately.
+    //
+    // IMPORTANT: first, clear _bgHeldNotes for any notes that do NOT carry across
+    // into this slot. Without this, notes registered in the previous slot's completion
+    // (e.g. short treble quavers) stay in _bgHeldNotes, causing _bgRestartHoldTimer
+    // to fire when the user presses the next note — blocking _advanceBeatGroupSubNote
+    // and requiring a second press to advance (the "double input" bug).
+    const carriedAcrossMidis = new Set();
+    for (const { note: n } of _beatGroupNotes) {
+        const t = n.playTime ?? n.time;
+        const tEnd = t + n.duration;
+        const isHeldAcross = t < nextPlayTime - 0.001 && tEnd > nextPlayTime + 0.05;
+        if (isHeldAcross) carriedAcrossMidis.add(n.midi);
+    }
+    for (const midi of [..._bgHeldNotes.keys()]) {
+        if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
+    }
+
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         const tEnd = t + n.duration;
