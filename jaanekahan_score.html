@@ -3648,12 +3648,31 @@ const visualStart =
             else if (track === BASS) expectedMidiBass.add(midi);
         }, keyOnDelay);
 
-        const kOff = setTimeout(() => {
-            if (track === TREBLE) expectedMidiTreble.delete(midi);
-            else if (track === BASS) expectedMidiBass.delete(midi);
-        }, keyOffDelay);
+        // Bass notes: only schedule kOff if this is the LAST (longest) occurrence of this
+        // midi in the bass during preview, so a whole-note bass stays lit while treble changes.
+        // Treble notes clear individually as before.
+        let scheduleOff = true;
+        if (track === BASS) {
+            const thisOffDelay = keyOffDelay;
+            // Check whether any later note in sectionNotes has the same bass midi
+            // and a later off-time — if so, skip scheduling kOff here; the later one will clear it.
+            const hasLaterOff = sectionNotes.some(other => {
+                if (other.track !== BASS || other.midi !== midi) return false;
+                const otherOnDelay  = visualPreroll + (((other.playTime ?? other.time) - startTime) * 1000) / speedMultiplier;
+                const otherOffDelay = otherOnDelay + (other.duration * 1000) / speedMultiplier;
+                return otherOffDelay > thisOffDelay + 10; // >10ms later
+            });
+            if (hasLaterOff) scheduleOff = false;
+        }
+        if (scheduleOff) {
+            const kOff = setTimeout(() => {
+                if (track === TREBLE) expectedMidiTreble.delete(midi);
+                else if (track === BASS) expectedMidiBass.delete(midi);
+            }, keyOffDelay);
+            previewTimeouts.push(kOff);
+        }
 
-        previewTimeouts.push(kOn, kOff);
+        previewTimeouts.push(kOn);
     }
 
     // Score mode: highlight each note as it sounds during preview
@@ -3703,7 +3722,30 @@ const visualStart =
                 seen.add(k);
                 allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
-            if (allIndices.length > 0) _applyHighlight(allIndices);
+            if (allIndices.length > 0) {
+                // During preview: if this is a treble-only highlight moment and there are
+                // bass notes whose duration extends beyond this point, keep bass SVG highlighted.
+                const notePT = note.playTime ?? note.time;
+                const hasOnlyTrebleNow = notesToHighlight.every(n => n.track === TREBLE);
+                const bassStillSounding = hasOnlyTrebleNow && sectionNotes.some(n => {
+                    if (n.track !== BASS) return false;
+                    const bStart = n.playTime ?? n.time;
+                    const bEnd   = bStart + n.duration;
+                    return bStart < notePT - 0.01 && bEnd > notePT + 0.01;
+                });
+                if (bassStillSounding) {
+                    // Capture current bass SVG indices as persistent if not already set
+                    if (_persistentBassIndices.length === 0) {
+                        _persistentBassIndices = _currentHighlightEls
+                            .map(el => _svgNoteElements.findIndex(n => n?.el === el))
+                            .filter(i => i >= 0 && _svgNoteElements[i]?.clef === 'bass');
+                    }
+                    _applyHighlight(allIndices, true);
+                } else {
+                    _persistentBassIndices = [];
+                    _applyHighlight(allIndices, false);
+                }
+            }
         }, highlightDelay);
         previewTimeouts.push(th);
     }
