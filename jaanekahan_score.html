@@ -3296,15 +3296,11 @@ function spawnTrainingNote(noteObj) {
     previewTimeouts = [];
 
     const noteName = getNoteName(noteObj.midi);
-    const beats = noteObj.duration / secondsPerBeat;
-    const beatLabel = beatsToNoteName(beats);
 
     currentTrainingNote = noteName;
     autoSlowed = false;
     waitingForInput = true;
     failureCount = 0;
-
-    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
 
     currentChordNotes.clear();
     chordNotesCompleted.clear();
@@ -3318,12 +3314,12 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Track simultaneous notes with their durations so we can pick the longest hold
+    // Look ahead for simultaneous notes (within 10ms)
+    // When clefMode === 'both', include notes from BOTH tracks at the same time
+    // Also track the durations of all chord notes so we can hold for the longest one.
     const chordNoteDurations = new Map();
     chordNoteDurations.set(noteObj.midi, noteObj.duration);
 
-    // Look ahead for simultaneous notes (within 10ms)
-    // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
@@ -3342,11 +3338,16 @@ function spawnTrainingNote(noteObj) {
         }
     }
 
-    // Use the LONGEST duration among all simultaneous chord notes.
-    // This is critical for 'both' mode: if the bass has a whole note and the treble
-    // has a quarter note, expectedHoldDuration must be the whole note's duration —
-    // otherwise the bass highlight clears as soon as the shorter treble duration elapses.
+    // Use the longest note duration in the chord as the required hold time.
+    // This ensures a bass whole note is held for its full value even when a
+    // shorter treble note is part of the same simultaneous group.
     const maxChordDuration = Math.max(...chordNoteDurations.values());
+    expectedHoldDuration = (maxChordDuration * 1000) / speedMultiplier;
+
+    // beatLabel reflects the longest note in the chord (e.g. whole note symbol
+    // when bass is a whole note and treble has shorter notes).
+    const beats = maxChordDuration / secondsPerBeat;
+    const beatLabel = beatsToNoteName(beats);
 
    const isChord = currentChordNotes.size > 1;
     
