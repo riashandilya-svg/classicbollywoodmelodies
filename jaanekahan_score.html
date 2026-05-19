@@ -3351,19 +3351,15 @@ if (startHold && noteHoldStartTime === null) {
     }
 
     // ── Both-hands timer-based advance ───────────────────────────────────────
-    // When bass is sustained across treble steps, advance the treble note
-    // automatically once the hold duration is met — the user does NOT need to
-    // release any key. They keep holding the bass and just move the treble.
-    const _bassIsCurrentlySustained = clefMode === 'both'
-        && (sustainedBassNotes.size > 0 || _bassStillRingingHere);
-    if (_bassIsCurrentlySustained) {
+    // Only auto-advance by timer when the bass was ALREADY sustained from a
+    // previous step (_bassStillRingingHere). On the first step where bass and
+    // treble are pressed together, the user releases treble normally to advance.
+    if (_bassStillRingingHere) {
         if (trebleAutoAdvanceTimer) { clearTimeout(trebleAutoAdvanceTimer); trebleAutoAdvanceTimer = null; }
         trebleAutoAdvanceTimer = setTimeout(() => {
             trebleAutoAdvanceTimer = null;
-            // Only advance if bass is still held and we haven't violated sustain
             if (sustainBassViolated) return;
             if (!trainingActive) return;
-            // Bass still within its hold window — do NOT require key release
             const feedback2 = document.getElementById('feedback');
             feedback2.textContent = 'Good!';
             feedback2.classList.remove('correct', 'wrong', 'show');
@@ -3372,8 +3368,7 @@ if (startHold && noteHoldStartTime === null) {
             explanationLocked = false;
             waitingForInput = false;
             expectedMidiNote = null;
-            holdEvaluated = true; // prevent release handlers from double-advancing
-            // Clear treble highlight; keep bass
+            holdEvaluated = true;
             expectedMidiTreble.clear();
             noteHoldStartTime = null;
             activeMidiNote = null;
@@ -3490,6 +3485,14 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.clear();
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
+    // When bass is still sustained and we're advancing a treble step,
+    // pre-populate midiPressedNotes with the bass notes the user is already
+    // physically holding — so they only need to press the new treble note.
+    if (_bassStillRingingAtSpawn && clefMode === 'both') {
+        sustainedBassNotes.forEach(m => {
+            if (physicallyHeldNotes.has(m)) midiPressedNotes.add(m);
+        });
+    }
     
     // Store per-note track so we can highlight correctly
     if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
