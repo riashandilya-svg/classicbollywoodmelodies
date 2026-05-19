@@ -2671,6 +2671,7 @@ let expectedMidiNote = null;
 let _beatGroupNotes   = [];   // [{note, idx}] all practiceNotes in this group
 let _beatGroupEndSec  = 0;    // MIDI-time when last note in group ends
 let _beatGroupIndex   = 0;    // trainingIndex of currently active sub-note slot
+let _beatGroupCurrentPlayTime = null; // MIDI-time of the currently active slot (explicit, avoids ambiguity with carried-across notes)
 let _beatGroupTimer   = null; // setTimeout handle for group completion
 let _beatGroupPressed = new Set(); // midi numbers pressed so far in this group
 let _beatGroupStartMs = null; // performance.now() when first press occurred
@@ -3429,21 +3430,13 @@ function _bgRestartHoldTimer(midi) {
 function _advanceBeatGroupSubNote() {
     if (!_beatGroupNotes.length) return;
 
-    // Derive the current slot's playTime from any note whose midi is in
-    // currentChordNotes.  This is more reliable than looking up _beatGroupIndex
-    // alone because the first chord may span multiple indices (e.g. D4 at idx=0
-    // and D3 at idx=1 are both at t=0), so _beatGroupIndex may point at only
-    // one of them while currentChordNotes correctly describes the whole slot.
-    let currentPlayTime;
-    const slotEntry = _beatGroupNotes.find(({ note: n }) => currentChordNotes.has(n.midi));
-    if (slotEntry) {
-        currentPlayTime = slotEntry.note.playTime ?? slotEntry.note.time;
-    } else {
-        // Fallback: use _beatGroupIndex (handles edge-cases)
-        currentPlayTime = _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.playTime
-            ?? _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.time;
-    }
-    if (currentPlayTime === undefined) return;
+    // Use the explicitly-tracked current slot playTime.
+    // We cannot derive it from currentChordNotes because carried-across bass notes
+    // appear in both the old and new slot — looking them up always returns the
+    // original (earlier) slot time, causing _advanceBeatGroupSubNote to find the
+    // same "next" slot repeatedly instead of advancing (the double-input bug).
+    const currentPlayTime = _beatGroupCurrentPlayTime;
+    if (currentPlayTime === null || currentPlayTime === undefined) return;
 
     // Find the next distinct playTime within the group
     let nextPlayTime = null;
@@ -3488,6 +3481,7 @@ function _advanceBeatGroupSubNote() {
     }
 
     _beatGroupIndex = nextIdx;
+    _beatGroupCurrentPlayTime = nextPlayTime; // advance the explicit slot tracker
 
     // Rebuild currentChordNotes for the next simultaneous slot.
     console.log('➡ Advancing to slot at nextPlayTime=', nextPlayTime?.toFixed(4), 'nextIdx=', nextIdx);
@@ -3609,6 +3603,7 @@ function _onBeatGroupComplete() {
     _beatGroupNotes   = [];
     _beatGroupPressed = new Set();
     _beatGroupStartMs = null;
+    _beatGroupCurrentPlayTime = null;
     _bgHeldNotes.clear();
     sustainedNotes.clear();
     expectedMidiTreble.clear();
@@ -3756,6 +3751,7 @@ function spawnTrainingNote(noteObj) {
         _beatGroupPressed = new Set();
         _beatGroupStartMs = null;
         _beatGroupIndex   = trainingIndex;
+        _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time; // initialize to first slot's time
 
         const groupStartSec = noteObj.playTime ?? noteObj.time;
 
@@ -5386,6 +5382,7 @@ if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
 _beatGroupNotes   = [];
 _beatGroupPressed = new Set();
 _beatGroupStartMs = null;
+_beatGroupCurrentPlayTime = null;
 _bgHeldNotes.clear();
 
 stopMetronome();
