@@ -3285,29 +3285,9 @@ if (clefMode === 'both') {
     // ── Beat Group: note pressed ───────────────────────────────────────────
     _beatGroupPressed.add(midiNote);
 
-    // If the beat group timer was cancelled (early release penalty), restart it
-    // now that the user has re-pressed the note.
-    if (_beatGroupTimer === null && _beatGroupStartMs !== null) {
-        // All sub-notes have been played (timer was running before release),
-        // so restart the hold timer for the remaining duration.
-        const elapsedMs = performance.now() - _beatGroupStartMs;
-        const groupStartSec = _beatGroupNotes[0]?.note?.playTime ?? _beatGroupNotes[0]?.note?.time ?? 0;
-        const groupDurMs = (_beatGroupEndSec - groupStartSec) * 1000 / speedMultiplier;
-        const remainingMs = Math.max(300, groupDurMs - elapsedMs);
-
-        // Reset start time so remaining is measured from now
-        _beatGroupStartMs = performance.now() - elapsedMs; // keep elapsed progress
-
-        _beatGroupTimer = setTimeout(() => {
-            _beatGroupTimer = null;
-            _onBeatGroupComplete();
-        }, remainingMs);
-
-        const feedback = document.getElementById('feedback');
-        feedback.textContent = 'Hold...';
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('correct', 'show');
+    // If this note is in the must-hold registry (re-press after early release),
+    // restart the group timer and wait for the hold to complete.
+    if (_bgRestartHoldTimer(midiNote)) {
         return;
     }
 
@@ -3359,6 +3339,69 @@ if (clefMode === 'both') {
 }
 }
 
+// ── Beat Group sustained-hold registry ───────────────────────────────────────
+// Maps midi → { requiredUntilMs } for notes that must be held for their full
+// beat-group duration. Populated when a note is pressed; checked on every release.
+const _bgHeldNotes = new Map();
+
+// Register a note as "must hold until requiredUntilMs".
+function _bgRegisterHold(midi, requiredUntilMs) {
+    _bgHeldNotes.set(midi, { requiredUntilMs });
+}
+
+// Called on every note-off in both-hands mode.
+// Returns true if this was an early-release violation (caller must stop).
+function _bgCheckEarlyRelease(releasedMidi) {
+    const held = _bgHeldNotes.get(releasedMidi);
+    if (!held) return false;
+
+    const now = performance.now();
+    if (now >= held.requiredUntilMs) {
+        _bgHeldNotes.delete(releasedMidi);
+        return false;  // hold completed — not a violation
+    }
+
+    // Released too early
+    const remainingSec = ((held.requiredUntilMs - now) / 1000).toFixed(1);
+
+    // Cancel the beat-group completion timer so the group cannot auto-advance
+    if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+
+    const feedback = document.getElementById('feedback');
+    feedback.innerHTML = `Keep holding <strong>${getNoteName(releasedMidi)}</strong>! ${remainingSec}s left`;
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('wrong', 'show');
+
+    rebuildKeyboardHighlights();
+    return true;  // early release — caller should not proceed
+}
+
+// Called when the user re-presses a note they released too early.
+// Restarts the beat-group timer for the remaining hold duration.
+function _bgRestartHoldTimer(midi) {
+    const held = _bgHeldNotes.get(midi);
+    if (!held) return false;
+
+    const now = performance.now();
+    const remainingMs = Math.max(300, held.requiredUntilMs - now);
+
+    // Only restart if the group timer isn't already running
+    if (_beatGroupTimer === null) {
+        _beatGroupTimer = setTimeout(() => {
+            _beatGroupTimer = null;
+            _onBeatGroupComplete();
+        }, remainingMs);
+
+        const feedback = document.getElementById('feedback');
+        feedback.textContent = 'Hold...';
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+    }
+    return true;
+}
+
 // ── Beat Group helpers ────────────────────────────────────────────────────────
 
 // Called after all notes in the current simultaneous slot have been pressed.
@@ -3408,6 +3451,12 @@ function _advanceBeatGroupSubNote() {
             _beatGroupTimer = null;
             _onBeatGroupComplete();
         }, holdDurMs);
+
+        // Register every pressed group note as "must hold" until the group completes.
+        // This covers both bass notes (pressed first) and any treble notes still held.
+        // _bgCheckEarlyRelease() will cancel the timer if any of them are released early.
+        const requiredUntilMs = performance.now() + holdDurMs;
+        _beatGroupPressed.forEach(midi => _bgRegisterHold(midi, requiredUntilMs));
 
         const feedback = document.getElementById('feedback');
         feedback.textContent = 'Hold...';
@@ -3475,6 +3524,7 @@ function _onBeatGroupComplete() {
     _beatGroupNotes   = [];
     _beatGroupPressed = new Set();
     _beatGroupStartMs = null;
+    _bgHeldNotes.clear();
     sustainedNotes.clear();
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
@@ -4527,35 +4577,13 @@ function handleSustainedNoteRelease(midiNote) {
 // Core hold evaluation — called from mouseup, touchend, and MIDI noteOff
 // Returns true if the hold was evaluated (advance or retry), false if not applicable.
 function evaluateHoldOnRelease(releasedMidi) {
-    // In both-hands mode: enforce that pressed notes are held until the beat group ends.
+    // In both-hands mode: enforce sustained holds via the _bgHeldNotes registry.
     if (clefMode === 'both') {
         if (synth) synth.triggerRelease(getNoteName(releasedMidi));
         midiPressedNotes.delete(releasedMidi);
 
-        // If the beat group timer is still running (group not yet complete) AND
-        // this released note was part of the group, block advancement.
-        const wasGroupNote = _beatGroupNotes.some(({ note: n }) => n.midi === releasedMidi);
-        if (wasGroupNote && _beatGroupTimer !== null) {
-            // Calculate remaining hold time
-            const elapsedMs = _beatGroupStartMs !== null ? (performance.now() - _beatGroupStartMs) : 0;
-            const groupDurMs = (_beatGroupEndSec - (
-                _beatGroupNotes[0]?.note?.playTime ?? _beatGroupNotes[0]?.note?.time ?? 0
-            )) * 1000 / speedMultiplier;
-            const remainingMs = Math.max(0, groupDurMs - elapsedMs);
-            const remainingSec = (remainingMs / 1000).toFixed(1);
-
-            const feedback = document.getElementById('feedback');
-            feedback.innerHTML = `Keep holding <strong>${getNoteName(releasedMidi)}</strong>! ${remainingSec}s remaining`;
-            feedback.classList.remove('correct', 'wrong', 'show');
-            void feedback.offsetWidth;
-            feedback.classList.add('wrong', 'show');
-
-            // Cancel the timer — user must re-press the note to restart the hold
-            if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
-
-            // Keep the key highlighted so user knows what to hold
-            rebuildKeyboardHighlights();
-        }
+        // Check if this note must still be held — penalise and block if so
+        _bgCheckEarlyRelease(releasedMidi);
         return true;
     }
 
@@ -4740,6 +4768,13 @@ canvas.addEventListener('mouseup', () => {
     }
 
     if (releasedMidi !== null) {
+        // In both-hands mode: always check the hold registry first
+        if (clefMode === 'both' && _bgHeldNotes.has(releasedMidi)) {
+            midiPressedNotes.delete(releasedMidi);
+            if (synth) synth.triggerRelease(getNoteName(releasedMidi));
+            _bgCheckEarlyRelease(releasedMidi);
+            return;
+        }
         midiPressedNotes.delete(releasedMidi);
         if (synth) synth.triggerRelease(getNoteName(releasedMidi));
         // Check sustained note release first
@@ -4840,6 +4875,13 @@ canvas.addEventListener('touchend', (e) => {
     }
 
     // Check for early sustained-note release
+    if (lastReleasedMidi !== null && clefMode === 'both' && _bgHeldNotes.has(lastReleasedMidi)) {
+        _bgCheckEarlyRelease(lastReleasedMidi);
+        // Tear down touch tracking
+        if (e.touches.length === 0) { touchActive = false; mouseDown = false; activeTouches.clear(); }
+        return;
+    }
+
     if (lastReleasedMidi !== null && sustainedNotes.has(lastReleasedMidi)) {
         handleSustainedNoteRelease(lastReleasedMidi);
     }
@@ -5259,6 +5301,7 @@ if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
 _beatGroupNotes   = [];
 _beatGroupPressed = new Set();
 _beatGroupStartMs = null;
+_bgHeldNotes.clear();
 
 stopMetronome();
 
@@ -6342,6 +6385,15 @@ if (freeMode && note === freeModeActiveNote) {
     expectedMidiTreble.clear();
     return;
 }
+
+        // In both-hands mode: always run the hold-registry check on every note-off,
+        // even if the note is no longer in currentChordNotes (it may still be in _bgHeldNotes).
+        if (clefMode === 'both' && _bgHeldNotes.has(note)) {
+            midiPressedNotes.delete(note);
+            if (synth) synth.triggerRelease(getNoteName(note));
+            _bgCheckEarlyRelease(note);
+            return;
+        }
 
         // Check for early sustained-note release before the standard hold evaluation
         if (sustainedNotes.has(note) && !sustainedNoteExpired(note)) {
