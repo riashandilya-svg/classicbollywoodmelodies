@@ -3288,21 +3288,10 @@ if (clefMode === 'both') {
     // Check if all notes in the current simultaneous slot have been pressed
     const allCurrentPressed = Array.from(currentChordNotes).every(m => _beatGroupPressed.has(m));
     if (allCurrentPressed) {
-        // Start the group timer only once the FULL first chord is complete.
-        // Starting on the very first keypress risks the timer firing before
-        // the user is even prompted for subsequent sub-notes in the group.
-        if (_beatGroupStartMs === null) {
-            _beatGroupStartMs = performance.now();
-            const groupStartSec = _beatGroupNotes.length > 0
-                ? (_beatGroupNotes[0].note.playTime ?? _beatGroupNotes[0].note.time)
-                : 0;
-            const groupDurMs = (_beatGroupEndSec - groupStartSec) * 1000 / speedMultiplier;
-            if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
-            _beatGroupTimer = setTimeout(() => {
-                _beatGroupTimer = null;
-                _onBeatGroupComplete();
-            }, Math.max(groupDurMs, 100));
-        }
+        // The hold timer is started inside _advanceBeatGroupSubNote once all
+        // sub-notes have been played (nextIdx === null). Do NOT start it here —
+        // the group musical window (e.g. 437ms) is far too short for a learner
+        // to navigate D4 → D3 → G4 sequentially.
         _advanceBeatGroupSubNote();
     } else {
         const missing = Array.from(currentChordNotes).filter(m => !_beatGroupPressed.has(m));
@@ -3381,7 +3370,19 @@ function _advanceBeatGroupSubNote() {
     }
 
     if (nextIdx === null) {
-        // All sub-notes played — wait for the timer
+        // All sub-notes played — NOW start the hold timer for the last note's duration.
+        // The last note in the group has playTime == currentPlayTime; hold it for
+        // (_beatGroupEndSec - currentPlayTime). This is the only correct place to
+        // start the timer — doing it earlier (at spawn or first chord) gave the user
+        // only ~437ms to play all sub-notes sequentially, which is far too short.
+        if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
+        _beatGroupStartMs = performance.now();
+        const holdDurMs = Math.max((_beatGroupEndSec - currentPlayTime) * 1000 / speedMultiplier, 300);
+        _beatGroupTimer = setTimeout(() => {
+            _beatGroupTimer = null;
+            _onBeatGroupComplete();
+        }, holdDurMs);
+
         const feedback = document.getElementById('feedback');
         feedback.textContent = 'Hold...';
         feedback.classList.remove('correct', 'wrong', 'show');
