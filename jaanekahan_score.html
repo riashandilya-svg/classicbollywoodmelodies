@@ -3207,8 +3207,9 @@ const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.
 
 // In score mode the user plays on a mouse/touchscreen — they can't hold multiple keys
 // simultaneously the way a MIDI keyboard can. Treat any correct chord-note press as
-// sufficient to start the hold timer so the key doesn't stay highlighted forever.
-const startHold = allPressed || scoreModeActive;
+// sufficient to start the hold timer IF it's a single-note step.
+// For chords (especially both-hands mode), require ALL notes to be pressed first.
+const startHold = allPressed || (scoreModeActive && currentChordNotes.size === 1);
 
 if (startHold && noteHoldStartTime === null) {
     // All chord notes held (or score mode shortcut) — start the hold timer
@@ -3223,8 +3224,14 @@ if (startHold && noteHoldStartTime === null) {
     }
     
 } else if (!startHold) {
+    const noteTrackMap = spawnTrainingNote._noteTrackMap;
     const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
-    feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
+    const remainingLabels = remaining.map(m => {
+        const track = noteTrackMap ? noteTrackMap.get(m) : null;
+        const label = track === BASS ? '(L)' : track === TREBLE ? '(R)' : '';
+        return `${getNoteName(m)}${label}`;
+    });
+    feedback.textContent = `Now add: ${remainingLabels.join(' + ')}`;
 }
 
 feedback.classList.remove('correct', 'wrong', 'show');
