@@ -3285,23 +3285,24 @@ if (clefMode === 'both') {
     // ── Beat Group: note pressed ───────────────────────────────────────────
     _beatGroupPressed.add(midiNote);
 
-    // Start the group timer on the FIRST correct press in the group
-    if (_beatGroupStartMs === null) {
-        _beatGroupStartMs = performance.now();
-        const groupStartSec = _beatGroupNotes.length > 0
-            ? (_beatGroupNotes[0].note.playTime ?? _beatGroupNotes[0].note.time)
-            : 0;
-        const groupDurMs = (_beatGroupEndSec - groupStartSec) * 1000 / speedMultiplier;
-        if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
-        _beatGroupTimer = setTimeout(() => {
-            _beatGroupTimer = null;
-            _onBeatGroupComplete();
-        }, Math.max(groupDurMs, 100));
-    }
-
     // Check if all notes in the current simultaneous slot have been pressed
     const allCurrentPressed = Array.from(currentChordNotes).every(m => _beatGroupPressed.has(m));
     if (allCurrentPressed) {
+        // Start the group timer only once the FULL first chord is complete.
+        // Starting on the very first keypress risks the timer firing before
+        // the user is even prompted for subsequent sub-notes in the group.
+        if (_beatGroupStartMs === null) {
+            _beatGroupStartMs = performance.now();
+            const groupStartSec = _beatGroupNotes.length > 0
+                ? (_beatGroupNotes[0].note.playTime ?? _beatGroupNotes[0].note.time)
+                : 0;
+            const groupDurMs = (_beatGroupEndSec - groupStartSec) * 1000 / speedMultiplier;
+            if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
+            _beatGroupTimer = setTimeout(() => {
+                _beatGroupTimer = null;
+                _onBeatGroupComplete();
+            }, Math.max(groupDurMs, 100));
+        }
         _advanceBeatGroupSubNote();
     } else {
         const missing = Array.from(currentChordNotes).filter(m => !_beatGroupPressed.has(m));
@@ -3350,8 +3351,20 @@ if (clefMode === 'both') {
 function _advanceBeatGroupSubNote() {
     if (!_beatGroupNotes.length) return;
 
-    const currentPlayTime = _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.playTime
-        ?? _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.time;
+    // Derive the current slot's playTime from any note whose midi is in
+    // currentChordNotes.  This is more reliable than looking up _beatGroupIndex
+    // alone because the first chord may span multiple indices (e.g. D4 at idx=0
+    // and D3 at idx=1 are both at t=0), so _beatGroupIndex may point at only
+    // one of them while currentChordNotes correctly describes the whole slot.
+    let currentPlayTime;
+    const slotEntry = _beatGroupNotes.find(({ note: n }) => currentChordNotes.has(n.midi));
+    if (slotEntry) {
+        currentPlayTime = slotEntry.note.playTime ?? slotEntry.note.time;
+    } else {
+        // Fallback: use _beatGroupIndex (handles edge-cases)
+        currentPlayTime = _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.playTime
+            ?? _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.time;
+    }
     if (currentPlayTime === undefined) return;
 
     // Find the next distinct playTime within the group
