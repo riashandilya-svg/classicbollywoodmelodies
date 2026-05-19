@@ -5340,7 +5340,7 @@ function _buildSvgNoteIndex() {
             if (tiedNoteheadSet.has(ri)) continue;
             const n = raw[ri];
             for (const sys of pageSystems) {
-                const inTreble = n.ty >= sys.treble_top - 50 && n.ty <= sys.treble_bot + 50;
+                const inTreble = n.ty >= sys.treble_top - 80 && n.ty <= sys.treble_bot + 50;
                 const inBass   = n.ty >= sys.bass_top   - 50 && n.ty <= sys.bass_bot   + 50;
                 if (!inTreble && !inBass) continue;
                 const clef = inTreble ? 'treble' : 'bass';
@@ -5481,16 +5481,6 @@ function _buildSvgMidiMap() {
             // Suppress the overflow→37 so all m36 notes stay at sheetMeasure=36 and
             // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
             if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
-                hardcodedGraceCorrected = true;
-            }
-
-            // Measure 12 treble: the SVG has 7 noteheads but the MIDI contains 10 treble
-            // note-events (an ornamental sixteenth-note run fills the last two beats).
-            // Without this guard, the overflow logic fires at rank 7 and re-routes notes
-            // 8-10 to sheetMeasure=13, causing wrong highlights in the next measure.
-            // Suppressing overflow keeps all 10 MIDI notes cycling within m12's 7 SVG
-            // noteheads via the existing rawRank % bucketSize wrapping.
-            if (sheetMeasure === 12 && clef === 'treble') {
                 hardcodedGraceCorrected = true;
             }
 
