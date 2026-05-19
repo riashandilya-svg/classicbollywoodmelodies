@@ -5572,12 +5572,9 @@ function _buildSvgMidiMap() {
                 || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
             let rank         = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
-            // Measures 28 and 30 treble: the SVG has a grace B at rank 0, but the MIDI
-            // has no grace note — it starts directly at C6. Shift all treble ranks +1 so
-            // MIDI note 0 (C6) highlights SVG rank 1, and the last note (E5) hits rank 8.
-            if ((sheetMeasure === 28 || sheetMeasure === 30) && clef === 'treble') {
-                rank = rank + 1;
-            }
+            // NOTE: m28/m30 treble grace-note offset removed — grace B no longer exists
+            // in the SVG, so the old rank+1 was skipping rank 0 and pushing the last
+            // MIDI note (rawRank=6) to rank 7, which is out of bounds on a 7-note bucket.
 
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
