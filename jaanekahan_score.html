@@ -2661,6 +2661,19 @@ let holdEvaluated = false;   // guards against double-advance from simultaneous 
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
+
+// ====== BEAT GROUP (both-hands mode) ======
+// In both-hands mode, notes interleave between hands. A "beat group" spans from
+// the current note's start to the furthest note-end reachable within that window.
+// Example: bass crotchet (0.000s, dur 0.437s) + treble quaver (0.000s, dur 0.218s)
+//          + treble quaver (0.231s, dur 0.218s): all fall within 0.437s, so the
+//          full group lasts 0.449s. "Good" fires only after the full group.
+let _beatGroupNotes   = [];   // [{note, idx}] all practiceNotes in this group
+let _beatGroupEndSec  = 0;    // MIDI-time when last note in group ends
+let _beatGroupIndex   = 0;    // trainingIndex of currently active sub-note slot
+let _beatGroupTimer   = null; // setTimeout handle for group completion
+let _beatGroupPressed = new Set(); // midi numbers pressed so far in this group
+let _beatGroupStartMs = null; // performance.now() when first press occurred
 // Saved copy of noteHoldStartTime captured just before evaluateHoldOnRelease clears it.
 // spawnTrainingNote's carry-forward block reads this instead of noteHoldStartTime, because
 // by the time spawnNextValidNote() fires (via setTimeout), noteHoldStartTime is already null.
@@ -3264,52 +3277,178 @@ statsCombo++;
 updateStatsBar();
 
 midiPressedNotes.add(midiNote);
+activeMidiNote = midiNote;
+ensureSynth();
+synth.triggerAttack(noteName);
 
-// All current-step chord notes must be pressed.
-// In both-hands mode, sustained notes from the other hand must ALSO still be held.
-const allCurrentPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
-const allSustainedHeld = clefMode !== 'both' || [...sustainedNotes.keys()]
-    .filter(m => !sustainedNoteExpired(m))
-    .every(m => midiPressedNotes.has(m));
+if (clefMode === 'both') {
+    // ── Beat Group: note pressed ───────────────────────────────────────────
+    _beatGroupPressed.add(midiNote);
 
-// In score mode the user plays on a mouse/touchscreen — they can't hold multiple keys
-// simultaneously the way a MIDI keyboard can. Treat any correct chord-note press as
-// sufficient to start the hold timer so the key doesn't stay highlighted forever.
-const startHold = (allCurrentPressed && allSustainedHeld) || scoreModeActive;
+    // Start the group timer on the FIRST correct press in the group
+    if (_beatGroupStartMs === null) {
+        _beatGroupStartMs = performance.now();
+        const groupStartSec = _beatGroupNotes.length > 0
+            ? (_beatGroupNotes[0].note.playTime ?? _beatGroupNotes[0].note.time)
+            : 0;
+        const groupDurMs = (_beatGroupEndSec - groupStartSec) * 1000 / speedMultiplier;
+        if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
+        _beatGroupTimer = setTimeout(() => {
+            _beatGroupTimer = null;
+            _onBeatGroupComplete();
+        }, Math.max(groupDurMs, 100));
+    }
 
-if (startHold && noteHoldStartTime === null) {
-    // All required notes held — start the hold timer
-    if (clefMode !== 'both') {
+    // Check if all notes in the current simultaneous slot have been pressed
+    const allCurrentPressed = Array.from(currentChordNotes).every(m => _beatGroupPressed.has(m));
+    if (allCurrentPressed) {
+        _advanceBeatGroupSubNote();
+    } else {
+        const missing = Array.from(currentChordNotes).filter(m => !_beatGroupPressed.has(m));
+        feedback.textContent = `Also play: ${missing.map(m => getNoteName(m)).join(' + ')}`;
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+    }
+
+} else {
+    // ── Single-hand mode: hold-timer logic ────────────────────────────────
+    const allCurrentPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
+    const allSustainedHeld = [...sustainedNotes.keys()]
+        .filter(m => !sustainedNoteExpired(m))
+        .every(m => midiPressedNotes.has(m));
+    const startHold = (allCurrentPressed && allSustainedHeld) || scoreModeActive;
+
+    if (startHold && noteHoldStartTime === null) {
         hardStopUserNote();
         midiPressedNotes.add(midiNote);
+        const isChord = currentChordNotes.size > 1;
+        feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
+        noteHoldStartTime = performance.now();
+    } else if (!startHold) {
+        const missingCurrent = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
+        const missingSustained = [...sustainedNotes.keys()]
+            .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m));
+        const allMissing = [...missingCurrent, ...missingSustained];
+        if (allMissing.length > 0) {
+            feedback.textContent = allMissing.length === missingCurrent.length
+                ? `Keep holding, add: ${allMissing.map(m => getNoteName(m)).join(' + ')}`
+                : `Keep holding all: ${allMissing.map(m => getNoteName(m)).join(' + ')}`;
+        }
     }
-    const isChord = currentChordNotes.size > 1;
-    feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
-    noteHoldStartTime = performance.now();
-    
-} else if (!startHold) {
-    const missingCurrent = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
-    const missingSustained = [...sustainedNotes.keys()]
-        .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m));
-    const allMissing = [...missingCurrent, ...missingSustained];
-    if (allMissing.length > 0) {
-        feedback.textContent = allMissing.length === missingCurrent.length
-            ? `Keep holding, add: ${allMissing.map(m => getNoteName(m)).join(' + ')}`
-            : `Keep holding all: ${allMissing.map(m => getNoteName(m)).join(' + ')}`;
+
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+}
+}
+
+// ── Beat Group helpers ────────────────────────────────────────────────────────
+
+// Called after all notes in the current simultaneous slot have been pressed.
+// Finds the next distinct playTime in the group and updates currentChordNotes.
+function _advanceBeatGroupSubNote() {
+    if (!_beatGroupNotes.length) return;
+
+    const currentPlayTime = _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.playTime
+        ?? _beatGroupNotes.find(({ idx }) => idx === _beatGroupIndex)?.note.time;
+    if (currentPlayTime === undefined) return;
+
+    // Find the next distinct playTime within the group
+    let nextPlayTime = null;
+    let nextIdx = null;
+    for (const { note: n, idx: i } of _beatGroupNotes) {
+        const t = n.playTime ?? n.time;
+        if (t > currentPlayTime + 0.001) {
+            if (nextPlayTime === null || t < nextPlayTime) {
+                nextPlayTime = t;
+                nextIdx = i;
+            }
+        }
+    }
+
+    if (nextIdx === null) {
+        // All sub-notes played — wait for the timer
+        const feedback = document.getElementById('feedback');
+        feedback.textContent = 'Hold...';
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+        return;
+    }
+
+    _beatGroupIndex = nextIdx;
+
+    // Rebuild currentChordNotes for the next simultaneous slot
+    currentChordNotes.clear();
+    if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
+    const noteTrackMap = spawnTrainingNote._noteTrackMap;
+
+    for (const { note: n } of _beatGroupNotes) {
+        const t = n.playTime ?? n.time;
+        if (Math.abs(t - nextPlayTime) < 0.01) {
+            currentChordNotes.add(n.midi);
+            noteTrackMap.set(n.midi, n.track);
+        }
+    }
+
+    // Update target display
+    const firstNote = practiceNotes[nextIdx];
+    currentTrainingNote = getNoteName(firstNote.midi);
+    setTargetNote(currentTrainingNote);
+
+    const nextNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = `Now: ${nextNames}`;
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('correct', 'show');
+
+    rebuildKeyboardHighlights();
+    if (scoreModeActive) {
+        document.getElementById('scoreKeyboardLabel').textContent =
+            currentChordNotes.size > 1 ? `Play: ${nextNames}` : `Play: ${currentTrainingNote}`;
     }
 }
 
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('show');
+// Called when the group timer fires — all notes have completed their full duration.
+function _onBeatGroupComplete() {
+    if (!trainingActive && !waitingForInput) return;
 
-activeMidiNote = midiNote;
-ensureSynth();
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Good!';
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('correct', 'show');
 
-synth.triggerAttack(noteName);
+    explanationLocked = false;
+    waitingForInput   = false;
+    expectedMidiNote  = null;
+
+    // Advance trainingIndex past the entire beat group
+    if (_beatGroupNotes.length > 0) {
+        trainingIndex = _beatGroupNotes[_beatGroupNotes.length - 1].idx + 1;
+    } else {
+        advanceChordIndex();
+    }
+
+    _beatGroupNotes   = [];
+    _beatGroupPressed = new Set();
+    _beatGroupStartMs = null;
+    sustainedNotes.clear();
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    noteHoldStartTime = null;
+    activeMidiNote    = null;
+    holdEvaluated     = true;
+
+    updateTrainingProgress();
+    document.getElementById('holdInfo').textContent = '';
+    setTimeout(() => spawnNextValidNote(), 300);
 }
 
 function isBlackKey(noteName) { return noteName.includes("#"); }
+
 function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const x = noteToX(midiNumber);
 
@@ -3385,75 +3524,21 @@ function spawnTrainingNote(noteObj) {
         return;
     }
 
-    // ── In both-hands mode: carry forward any notes whose hold duration hasn't expired ──
-    // When the new step's playTime is later than the current step (hands diverge),
-    // notes from the current step that still have remaining hold time become "sustained"
-    // — they stay highlighted and must be held while the other hand advances.
-    //
-    // IMPORTANT: We use _lastHoldStartTime rather than noteHoldStartTime here.
-    // evaluateHoldOnRelease clears noteHoldStartTime to null before calling
-    // spawnNextValidNote() → spawnTrainingNote(), so noteHoldStartTime is always
-    // null by the time we get here. _lastHoldStartTime is saved just before that
-    // clear and gives us the actual moment the user started holding the previous step.
-    if (clefMode === 'both' && spawnTrainingNote._noteTrackMap) {
-        cleanExpiredSustainedNotes();
-
-        const holdRef = _lastHoldStartTime; // may be null if first step or retry
-
-        if (currentChordNotes.size > 0 && holdRef !== null) {
-            const elapsed = performance.now() - holdRef;
-
-            currentChordNotes.forEach(midi => {
-                const track = spawnTrainingNote._noteTrackMap.get(midi);
-                // Per-note required duration — use the dedicated map which records
-                // each note's own musical duration rather than the step's global
-                // expectedHoldDuration. This is critical when hands have different
-                // rhythms (e.g. bass holds a crotchet while treble plays two quavers):
-                // the bass note's perNoteDur is a full crotchet, so it stays
-                // highlighted and required for the entire crotchet duration.
-                const perNoteDur = spawnTrainingNote._perNoteDuration?.get(midi) ?? expectedHoldDuration;
-                const remaining = perNoteDur - elapsed;
-
-                if (remaining > 50) {
-                    // Note still needs to be held — carry it forward as sustained
-                    if (!sustainedNotes.has(midi)) {
-                        sustainedNotes.set(midi, {
-                            startTime: holdRef,
-                            requiredDurationMs: perNoteDur,
-                            track,
-                        });
-                    }
-                    // If already in sustainedNotes (from an earlier step), leave untouched —
-                    // its startTime and duration are already correct.
-                } else {
-                    sustainedNotes.delete(midi);
-                }
-            });
-        }
-    } else {
-        sustainedNotes.clear();
+    // ── Both-hands: clear old sustain state (beat group model replaces it) ──
+    sustainedNotes.clear();
+    if (clefMode === 'both' && _beatGroupTimer) {
+        clearTimeout(_beatGroupTimer);
+        _beatGroupTimer = null;
     }
 
-    // ── Standard setup ────────────────────────────────────────────────────────
-    // In both-hands mode we do NOT call hardStopUserNote() because that would
-    // release sustained notes from the other hand that must keep sounding.
+    // ── Standard setup ──────────────────────────────────────────────────────────
     if (clefMode === 'both') {
-        if (spawnTrainingNote._noteTrackMap) {
-            currentChordNotes.forEach(midi => {
-                if (!sustainedNotes.has(midi) && synth) {
-                    synth.triggerRelease(getNoteName(midi));
-                }
-            });
-        }
         activeMidiNote = null;
         noteHoldStartTime = null;
-        currentChordNotes.forEach(midi => {
-            if (!sustainedNotes.has(midi)) midiPressedNotes.delete(midi);
-        });
     } else {
         hardStopUserNote();
-        midiPressedNotes.clear();
     }
+    midiPressedNotes.clear();
 
     trainingActive = true;
     visualsPlaying = !scoreModeActive;
@@ -3475,97 +3560,129 @@ function spawnTrainingNote(noteObj) {
 
     currentChordNotes.clear();
     chordNotesCompleted.clear();
-    // In both-hands mode: keep sustained notes in midiPressedNotes so they aren't treated as unpressed
-    if (clefMode !== 'both') midiPressedNotes.clear();
 
-    // Store per-note track so we can highlight correctly
     if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
     const noteTrackMap = spawnTrainingNote._noteTrackMap;
     noteTrackMap.clear();
-    // Re-populate trackMap with sustained notes so rebuildKeyboardHighlights works
-    for (const [midi, s] of sustainedNotes) {
-        noteTrackMap.set(midi, s.track);
-    }
 
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // ── Per-note duration map ────────────────────────────────────────────────
-    // Records each note's own musical hold duration (ms) independently.
-    // This is critical when hands have different rhythms: e.g. bass holds a
-    // crotchet while treble plays two quavers. Without this, the bass note's
-    // carry-forward duration would default to the treble quaver's duration,
-    // causing the bass highlight to disappear too early.
-    if (!spawnTrainingNote._perNoteDuration) spawnTrainingNote._perNoteDuration = new Map();
-    const perNoteDuration = spawnTrainingNote._perNoteDuration;
-    perNoteDuration.clear();
-    // Seed from any currently sustained notes so their durations survive further advances
-    for (const [midi, s] of sustainedNotes) {
-        perNoteDuration.set(midi, s.requiredDurationMs);
-    }
-    // Record this step's leading note duration
-    perNoteDuration.set(noteObj.midi, (noteObj.duration * 1000) / speedMultiplier);
+    if (clefMode === 'both') {
+        // ── Beat Group Model ─────────────────────────────────────────────────────
+        // Build the complete beat group: all notes (both hands) that must be played
+        // before "Good" fires. The group spans from this note's start to the furthest
+        // note-end reachable by walking ahead through interleaved notes.
+        //
+        // Example: bass crotchet (0-0.437s) + treble quaver (0-0.218s)
+        //          + treble quaver (0.231-0.449s) => window=0.449s, all three grouped.
 
-    // Look ahead for simultaneous notes (within 10ms).
-    //
-    // Rule for 'both' mode:
-    //   • Same playTime, SAME track   → same-hand chord (e.g. treble C+E played together)
-    //   • Same playTime, OTHER track  → cross-hand simultaneous note (e.g. treble D + bass D
-    //                                   at beat 1) — include in currentChordNotes so both are
-    //                                   required together right now.
-    //   • Different playTime          → independent rhythm; handled via sustainedNotes later.
-    //
-    // In single-hand mode the filter is already correct (same track only, other-track
-    // notes don't exist in practiceNotes).
-    for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
-        const nextNote = practiceNotes[i];
-        const currentPlayTime = noteObj.playTime ?? noteObj.time;
-        const nextPlayTime = nextNote.playTime ?? nextNote.time;
+        _beatGroupNotes   = [];
+        _beatGroupPressed = new Set();
+        _beatGroupStartMs = null;
+        _beatGroupIndex   = trainingIndex;
 
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
-            // Include regardless of track when times match — both hands must play together
-            currentChordNotes.add(nextNote.midi);
-            noteTrackMap.set(nextNote.midi, nextNote.track);
-            // Record each simultaneous note's own duration — they may differ (e.g. quaver
-            // treble + crotchet bass both starting at beat 1).
-            perNoteDuration.set(nextNote.midi, (nextNote.duration * 1000) / speedMultiplier);
-        } else {
-            break;
+        const groupStartSec = noteObj.playTime ?? noteObj.time;
+        let   windowEndSec  = groupStartSec + noteObj.duration;
+
+        for (let i = trainingIndex; i < practiceNotes.length; i++) {
+            const n = practiceNotes[i];
+            const nStart = n.playTime ?? n.time;
+            if (nStart >= windowEndSec - 0.001) break;
+            _beatGroupNotes.push({ note: n, idx: i });
+            const nEnd = nStart + n.duration;
+            if (nEnd > windowEndSec) windowEndSec = nEnd;
         }
-    }
 
-    const isChord = currentChordNotes.size > 1;
+        _beatGroupEndSec = windowEndSec;
 
-    // Build hold instruction — include sustained notes if any
-    const holdEl = document.getElementById('holdInfo');
-    cleanExpiredSustainedNotes();
-    const sustainedActive = [...sustainedNotes.keys()].filter(m => !sustainedNoteExpired(m));
-    if (sustainedActive.length > 0) {
-        const newNoteNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
-        const sustainNames = sustainedActive.map(m => getNoteName(m)).join(' + ');
-        holdEl.innerHTML = `Keep holding <strong>${sustainNames}</strong> + play ${newNoteNames} (hold <span class="music-symbol">${beatLabel}</span>)`;
-    } else if (isChord) {
-        holdEl.innerHTML = `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (Hold for <span class="music-symbol">${beatLabel}</span>)`;
+        // Seed currentChordNotes with notes simultaneous to noteObj (first time slot)
+        for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+            const nextNote = practiceNotes[i];
+            const nextPlayTime = nextNote.playTime ?? nextNote.time;
+            if (Math.abs(nextPlayTime - groupStartSec) < 0.01) {
+                currentChordNotes.add(nextNote.midi);
+                noteTrackMap.set(nextNote.midi, nextNote.track);
+            } else {
+                break;
+            }
+        }
+
+        const isChord = currentChordNotes.size > 1;
+        const totalGroupNotes = _beatGroupNotes.length;
+        const groupDurSec = _beatGroupEndSec - groupStartSec;
+        const groupBeats  = groupDurSec / secondsPerBeat;
+        const groupLabel  = beatsToNoteName(groupBeats);
+
+        const holdEl = document.getElementById('holdInfo');
+        holdEl.innerHTML = totalGroupNotes > currentChordNotes.size
+            ? `Play all notes across both hands (group: <span class="music-symbol">${groupLabel}</span>)`
+            : isChord
+                ? `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (<span class="music-symbol">${groupLabel}</span>)`
+                : `Hold for <span class="music-symbol">${groupLabel}</span>`;
+
+        noteHoldStartTime = null;
+        holdEvaluated     = false;
+        expectedHoldDuration = (groupDurSec * 1000) / speedMultiplier;
+
+        setTargetNote(noteName);
+
+        if (scoreModeActive) {
+            rebuildKeyboardHighlights();
+            document.getElementById('scoreKeyboardLabel').textContent =
+                currentChordNotes.size > 1
+                    ? `Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
+                    : `Play: ${noteName}`;
+        } else {
+            _beatGroupNotes.forEach(({ note: n }) => {
+                addMidiFallingRectangle(n.midi, n.duration, n.track, performance.now());
+            });
+            rebuildKeyboardHighlights();
+        }
+
     } else {
-        holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
-    }
+        // ── Single-hand mode: original logic ────────────────────────────────────
+        for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+            const nextNote = practiceNotes[i];
+            const currentPlayTime = noteObj.playTime ?? noteObj.time;
+            const nextPlayTime = nextNote.playTime ?? nextNote.time;
+            if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
+                currentChordNotes.add(nextNote.midi);
+                noteTrackMap.set(nextNote.midi, nextNote.track);
+            } else {
+                break;
+            }
+        }
 
-    noteHoldStartTime = null;
-    holdEvaluated = false;
-    setTargetNote(noteName);
+        const isChord = currentChordNotes.size > 1;
+        const holdEl = document.getElementById('holdInfo');
+        const sustainedActive = [...sustainedNotes.keys()].filter(m => !sustainedNoteExpired(m));
+        if (sustainedActive.length > 0) {
+            const newNoteNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
+            const sustainNames = sustainedActive.map(m => getNoteName(m)).join(' + ');
+            holdEl.innerHTML = `Keep holding <strong>${sustainNames}</strong> + play ${newNoteNames} (hold <span class="music-symbol">${beatLabel}</span>)`;
+        } else if (isChord) {
+            holdEl.innerHTML = `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (Hold for <span class="music-symbol">${beatLabel}</span>)`;
+        } else {
+            holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
+        }
 
-    if (scoreModeActive) {
-        rebuildKeyboardHighlights();
-        document.getElementById('scoreKeyboardLabel').textContent =
-            isChord
-                ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
-                : `🎹 Play: ${noteName}`;
-    } else {
-        // Create falling notes for the new step only
-        currentChordNotes.forEach(midi => {
-            addMidiFallingRectangle(midi, noteObj.duration, noteTrackMap.get(midi) ?? noteObj.track, performance.now());
-        });
-        rebuildKeyboardHighlights();
+        noteHoldStartTime = null;
+        holdEvaluated = false;
+        setTargetNote(noteName);
+
+        if (scoreModeActive) {
+            rebuildKeyboardHighlights();
+            document.getElementById('scoreKeyboardLabel').textContent =
+                isChord
+                    ? `Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
+                    : `Play: ${noteName}`;
+        } else {
+            currentChordNotes.forEach(midi => {
+                addMidiFallingRectangle(midi, noteObj.duration, noteTrackMap.get(midi) ?? noteObj.track, performance.now());
+            });
+            rebuildKeyboardHighlights();
+        }
     }
 
     console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]) + ' sustained=' + JSON.stringify([...sustainedNotes.keys()]));
@@ -4357,27 +4474,20 @@ function handleSustainedNoteRelease(midiNote) {
 // Core hold evaluation — called from mouseup, touchend, and MIDI noteOff
 // Returns true if the hold was evaluated (advance or retry), false if not applicable.
 function evaluateHoldOnRelease(releasedMidi) {
+    // In both-hands mode the beat group timer handles all advancement — release
+    // events are irrelevant to timing. Just mute the released note and return.
+    if (clefMode === 'both') {
+        if (synth && activeMidiNote === releasedMidi) {
+            synth.triggerRelease(getNoteName(releasedMidi));
+        }
+        midiPressedNotes.delete(releasedMidi);
+        return true;
+    }
+
     // If a sustained note was released early, handle that and stop
     if (handleSustainedNoteRelease(releasedMidi)) return true;
 
     if (noteHoldStartTime === null) return false;
-
-    // In both-hands mode: check that all sustained notes are still held
-    if (clefMode === 'both') {
-        cleanExpiredSustainedNotes();
-        const droppedSustained = [...sustainedNotes.keys()]
-            .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m) && m !== releasedMidi);
-        if (droppedSustained.length > 0) {
-            // A sustained note from the other hand was dropped — error
-            const feedback = document.getElementById('feedback');
-            feedback.innerHTML = `Keep holding: <strong>${droppedSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
-            feedback.classList.remove('correct', 'wrong', 'show');
-            void feedback.offsetWidth;
-            feedback.classList.add('wrong', 'show');
-            rebuildKeyboardHighlights();
-            return true;
-        }
-    }
 
     const heldTime = performance.now() - noteHoldStartTime;
 
@@ -5068,6 +5178,12 @@ setSpeedButtonsEnabled(true);
 
 if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
 if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+
+// Clear beat group state
+if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+_beatGroupNotes   = [];
+_beatGroupPressed = new Set();
+_beatGroupStartMs = null;
 
 stopMetronome();
 
