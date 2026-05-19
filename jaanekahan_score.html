@@ -3318,6 +3318,10 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
+    // Track simultaneous notes with their durations so we can pick the longest hold
+    const chordNoteDurations = new Map();
+    chordNoteDurations.set(noteObj.midi, noteObj.duration);
+
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
@@ -3331,11 +3335,18 @@ function spawnTrainingNote(noteObj) {
             if (clefMode === 'both' || nextNote.track === noteObj.track) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
+                chordNoteDurations.set(nextNote.midi, nextNote.duration);
             }
         } else {
             break;
         }
     }
+
+    // Use the LONGEST duration among all simultaneous chord notes.
+    // This is critical for 'both' mode: if the bass has a whole note and the treble
+    // has a quarter note, expectedHoldDuration must be the whole note's duration —
+    // otherwise the bass highlight clears as soon as the shorter treble duration elapses.
+    const maxChordDuration = Math.max(...chordNoteDurations.values());
 
    const isChord = currentChordNotes.size > 1;
     
