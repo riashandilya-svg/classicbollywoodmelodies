@@ -3395,7 +3395,12 @@ function spawnTrainingNote(noteObj) {
 
             currentChordNotes.forEach(midi => {
                 const track = spawnTrainingNote._noteTrackMap.get(midi);
-                // Per-note required duration (stored when the step was spawned)
+                // Per-note required duration — use the dedicated map which records
+                // each note's own musical duration rather than the step's global
+                // expectedHoldDuration. This is critical when hands have different
+                // rhythms (e.g. bass holds a crotchet while treble plays two quavers):
+                // the bass note's perNoteDur is a full crotchet, so it stays
+                // highlighted and required for the entire crotchet duration.
                 const perNoteDur = spawnTrainingNote._perNoteDuration?.get(midi) ?? expectedHoldDuration;
                 const remaining = perNoteDur - elapsed;
 
@@ -3408,6 +3413,8 @@ function spawnTrainingNote(noteObj) {
                             track,
                         });
                     }
+                    // If it was already in sustainedNotes (e.g. from an earlier step),
+                    // leave it untouched — its startTime and duration are already correct.
                 } else {
                     sustainedNotes.delete(midi);
                 }
@@ -3473,6 +3480,21 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
+    // ── Per-note duration map ────────────────────────────────────────────────
+    // Stores the actual hold duration (ms) for every note in this step so that
+    // when a note from one hand is carried forward as a "sustained" note while
+    // the other hand advances to a shorter note, the correct (longer) duration
+    // is used — not the current step's expectedHoldDuration.
+    if (!spawnTrainingNote._perNoteDuration) spawnTrainingNote._perNoteDuration = new Map();
+    const perNoteDuration = spawnTrainingNote._perNoteDuration;
+    perNoteDuration.clear();
+    // Seed with sustained notes that are still running (their durations are already set)
+    for (const [midi, s] of sustainedNotes) {
+        perNoteDuration.set(midi, s.requiredDurationMs);
+    }
+    // Record this step's leading note duration
+    perNoteDuration.set(noteObj.midi, (noteObj.duration * 1000) / speedMultiplier);
+
     // Look ahead for simultaneous notes (within 10ms).
     //
     // Rule for 'both' mode:
@@ -3493,6 +3515,8 @@ function spawnTrainingNote(noteObj) {
             // Include regardless of track when times match — both hands must play together
             currentChordNotes.add(nextNote.midi);
             noteTrackMap.set(nextNote.midi, nextNote.track);
+            // Record this note's own duration (may differ from the leading note's duration)
+            perNoteDuration.set(nextNote.midi, (nextNote.duration * 1000) / speedMultiplier);
         } else {
             break;
         }
