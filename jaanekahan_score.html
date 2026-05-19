@@ -3380,14 +3380,43 @@ function spawnTrainingNote(noteObj) {
             expectedHoldDuration = (minTrebleDur * 1000) / speedMultiplier;
             _bassDurationMs      = (maxBassDur   * 1000) / speedMultiplier;
         } else if (hasBass) {
-            // Bass-only at this timestamp (e.g. left hand only note at this beat)
-            expectedHoldDuration = (maxBassDur * 1000) / speedMultiplier;
-            _bassDurationMs      = expectedHoldDuration;
+            // Bass-only at this timestamp — look ahead for treble notes within the bass duration.
+            // If found, the bass is a "long hold" note: user presses bass, keeps holding it,
+            // and then plays the upcoming treble notes one by one while the bass stays highlighted.
+            const notePlayTime = noteObj.playTime ?? noteObj.time;
+            const bassEndPlayTime = notePlayTime + maxBassDur;
+            const upcomingTrebleInBassWindow = practiceNotes.find(n =>
+                n.track === TREBLE &&
+                (n.playTime ?? n.time) > notePlayTime + 0.01 &&
+                (n.playTime ?? n.time) < bassEndPlayTime - 0.01
+            );
+            if (upcomingTrebleInBassWindow) {
+                // Treat as: hold bass for its full duration, but only require the FIRST
+                // treble note's hold duration so we can advance treble independently.
+                // expectedHoldDuration = first treble note's duration (user releases treble quickly)
+                // _bassDurationMs      = full bass duration (bass stays highlighted throughout)
+                expectedHoldDuration = (upcomingTrebleInBassWindow.duration * 1000) / speedMultiplier;
+                _bassDurationMs      = (maxBassDur * 1000) / speedMultiplier;
+                // Pre-populate expectedMidiBass so the "keep holding bass" label works on next treble spawn
+                currentChordNotes.forEach(midi => {
+                    if (noteTrackMap.get(midi) === BASS) expectedMidiBass.add(midi);
+                });
+            } else {
+                // Truly bass-only with no treble following — normal single-note hold
+                expectedHoldDuration = (maxBassDur * 1000) / speedMultiplier;
+                _bassDurationMs      = expectedHoldDuration;
+            }
         }
         // hasTreble-only falls through to the default already set above
     }
 
    const isChord = currentChordNotes.size > 1;
+
+    // Detect: bass-only step where treble notes follow within the bass duration
+    const _isBassOnlyWithUpcomingTreble = clefMode === 'both'
+        && !isChord
+        && noteObj.track === BASS
+        && _bassDurationMs > expectedHoldDuration + 50;
 
     const holdEl = document.getElementById('holdInfo');
     const _bassRingingAtLabel = clefMode === 'both'
@@ -3397,6 +3426,8 @@ function spawnTrainingNote(noteObj) {
         // Bass is still held from a previous beat — tell user to keep it down and play new treble
         const bassNotes = Array.from(expectedMidiBass).map(m => getNoteName(m)).join(' + ');
         holdEl.innerHTML = `Keep holding bass (${bassNotes}) &amp; play: <span class="music-symbol">${noteName}</span> for <span class="music-symbol">${beatLabel}</span>`;
+    } else if (_isBassOnlyWithUpcomingTreble) {
+        holdEl.innerHTML = `Press &amp; hold bass: <span class="music-symbol">${noteName}</span> — keep holding while treble notes follow!`;
     } else if (isChord) {
         holdEl.innerHTML = `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (Hold for <span class="music-symbol">${beatLabel}</span>)`;
     } else {
