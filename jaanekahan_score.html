@@ -2662,6 +2662,50 @@ let expectedHoldDuration = 0;
 let activeMidiNote = null;
 let expectedMidiNote = null;
 
+// ====== SUSTAINED NOTES (both-hands mode) ======
+// Maps midi → { startTime (ms), requiredDurationMs, track, noteObj }
+// A note lives here while it's still within its required hold window.
+// Sustained notes from one hand remain active while the other hand changes steps.
+const sustainedNotes = new Map();
+
+function sustainedNoteExpired(midi) {
+    const s = sustainedNotes.get(midi);
+    if (!s) return true;
+    return (performance.now() - s.startTime) >= s.requiredDurationMs;
+}
+
+function cleanExpiredSustainedNotes() {
+    for (const [midi] of sustainedNotes) {
+        if (sustainedNoteExpired(midi)) {
+            sustainedNotes.delete(midi);
+            // Remove from keyboard highlights if no longer expected
+            expectedMidiTreble.delete(midi);
+            expectedMidiBass.delete(midi);
+        }
+    }
+}
+
+// Re-builds expectedMidiTreble/Bass from currentChordNotes + active sustainedNotes
+function rebuildKeyboardHighlights() {
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    // Current step notes
+    if (spawnTrainingNote._noteTrackMap) {
+        currentChordNotes.forEach(midi => {
+            const track = spawnTrainingNote._noteTrackMap.get(midi);
+            if (track === TREBLE) expectedMidiTreble.add(midi);
+            else if (track === BASS) expectedMidiBass.add(midi);
+        });
+    }
+    // Sustained notes from other hand
+    for (const [midi, s] of sustainedNotes) {
+        if (!sustainedNoteExpired(midi)) {
+            if (s.track === TREBLE) expectedMidiTreble.add(midi);
+            else if (s.track === BASS) expectedMidiBass.add(midi);
+        }
+    }
+}
+
 // ====== HOLD COUNTDOWN ======
 (function startHoldCountdownLoop() {
     const el = document.getElementById('statHold');
@@ -2706,6 +2750,7 @@ function hardStopUserNote() {
 
     activeMidiNote = null;
     noteHoldStartTime = null;
+    sustainedNotes.clear();
 }
 let failureCount = 0;
 let autoSlowed = false;
@@ -3151,8 +3196,11 @@ if (!trainingActive) return;
 const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
 
+// Check if this is a sustained note being re-pressed (after early release)
+const isSustainedNote = sustainedNotes.has(midiNote) && !sustainedNoteExpired(midiNote);
+
 // ---------- WRONG NOTE ----------
-if (!currentChordNotes.has(midiNote)) {
+if (!currentChordNotes.has(midiNote) && !isSustainedNote) {
 
 const expectedMidi = allMidiNotes[trainingIndex].midi;
 const explanation = explainWrongNote(midiNote, expectedMidi);
@@ -3179,6 +3227,20 @@ document.getElementById('correctNoteCircle').textContent =
 return;
 }
 
+// ---------- RE-PRESSING A SUSTAINED NOTE ----------
+if (isSustainedNote && !currentChordNotes.has(midiNote)) {
+    // User re-pressed a note they released too early — acknowledge it
+    midiPressedNotes.add(midiNote);
+    ensureSynth();
+    synth.triggerAttack(noteName);
+    feedback.textContent = 'Good — keep holding!';
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('correct', 'show');
+    rebuildKeyboardHighlights();
+    return;
+}
+
 // ---------- CORRECT NOTE ----------
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
@@ -3199,24 +3261,38 @@ updateStatsBar();
 
 midiPressedNotes.add(midiNote);
 
-const allPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
+// All current-step chord notes must be pressed.
+// In both-hands mode, sustained notes from the other hand must ALSO still be held.
+const allCurrentPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
+const allSustainedHeld = clefMode !== 'both' || [...sustainedNotes.keys()]
+    .filter(m => !sustainedNoteExpired(m))
+    .every(m => midiPressedNotes.has(m));
 
 // In score mode the user plays on a mouse/touchscreen — they can't hold multiple keys
 // simultaneously the way a MIDI keyboard can. Treat any correct chord-note press as
 // sufficient to start the hold timer so the key doesn't stay highlighted forever.
-const startHold = allPressed || scoreModeActive;
+const startHold = (allCurrentPressed && allSustainedHeld) || scoreModeActive;
 
 if (startHold && noteHoldStartTime === null) {
-    // All chord notes held (or score mode shortcut) — start the hold timer
-    hardStopUserNote();
-    midiPressedNotes.add(midiNote); // re-add since hardStopUserNote doesn't touch midiPressedNotes
+    // All required notes held — start the hold timer
+    if (clefMode !== 'both') {
+        hardStopUserNote();
+        midiPressedNotes.add(midiNote);
+    }
     const isChord = currentChordNotes.size > 1;
     feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
     noteHoldStartTime = performance.now();
     
 } else if (!startHold) {
-    const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
-    feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
+    const missingCurrent = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
+    const missingSustained = [...sustainedNotes.keys()]
+        .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m));
+    const allMissing = [...missingCurrent, ...missingSustained];
+    if (allMissing.length > 0) {
+        feedback.textContent = allMissing.length === missingCurrent.length
+            ? `Keep holding, add: ${allMissing.map(m => getNoteName(m)).join(' + ')}`
+            : `Keep holding all: ${allMissing.map(m => getNoteName(m)).join(' + ')}`;
+    }
 }
 
 feedback.classList.remove('correct', 'wrong', 'show');
@@ -3275,6 +3351,22 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
 function spawnTrainingNote(noteObj) {
     if (!noteObj) {
         // trainingIndex walked off the end — treat as section complete
+        // But only if there are no active sustained notes still requiring hold
+        cleanExpiredSustainedNotes();
+        if (sustainedNotes.size > 0) {
+            // Other hand still has notes to hold — just wait, don't end yet
+            waitingForInput = true;
+            rebuildKeyboardHighlights();
+            const holdEl = document.getElementById('holdInfo');
+            const remaining = [];
+            for (const [midi, s] of sustainedNotes) {
+                if (!sustainedNoteExpired(midi)) remaining.push(getNoteName(midi));
+            }
+            holdEl.textContent = remaining.length
+                ? `Keep holding: ${remaining.join(' + ')}`
+                : '';
+            return;
+        }
         trainingActive = false;
         setSpeedButtonsEnabled(true);
         startPracticeButton.disabled = false;
@@ -3285,11 +3377,80 @@ function spawnTrainingNote(noteObj) {
         feedback.textContent = 'Excellent work! 🌟';
         feedback.classList.remove('wrong');
         feedback.classList.add('correct', 'show');
+        sustainedNotes.clear();
         return;
     }
-    hardStopUserNote();
+
+    // ── In both-hands mode: preserve sustained notes from the OTHER hand ──────
+    // Before clearing state, move notes from the previous step's OTHER track into
+    // sustainedNotes so they remain highlighted and required while this hand moves on.
+    if (clefMode === 'both' && spawnTrainingNote._noteTrackMap) {
+        const prevTrackMap = spawnTrainingNote._noteTrackMap;
+        // Clean up any previously sustained notes that have now expired
+        cleanExpiredSustainedNotes();
+
+        // If the current step was from the opposite track of noteObj, carry it forward.
+        // We detect this by checking what track the PREVIOUS currentChordNotes belonged to.
+        // The previous step's notes are still in currentChordNotes + _noteTrackMap.
+        if (currentChordNotes.size > 0) {
+            const prevFirstMidi = currentChordNotes.values().next().value;
+            const prevTrack = prevTrackMap.get(prevFirstMidi);
+            const newTrack = noteObj.track;
+
+            if (prevTrack && prevTrack !== newTrack) {
+                // The new step is from a DIFFERENT hand — carry previous notes forward as sustained
+                // (they get replaced below, so capture now before clear)
+                currentChordNotes.forEach(midi => {
+                    const t = prevTrackMap.get(midi) ?? prevTrack;
+                    if (!sustainedNoteExpired(midi)) {
+                        // Already in sustainedNotes from an earlier step — don't reset its timer
+                        if (!sustainedNotes.has(midi)) {
+                            sustainedNotes.set(midi, {
+                                startTime: noteHoldStartTime ?? performance.now(),
+                                requiredDurationMs: expectedHoldDuration,
+                                track: t,
+                            });
+                        }
+                    } else {
+                        sustainedNotes.delete(midi);
+                    }
+                });
+            }
+            // If same track: clear any opposite-track sustained notes that have expired
+            // (leave still-active ones)
+        }
+    } else {
+        // Single-hand mode or not using both — clear everything
+        sustainedNotes.clear();
+    }
+
+    // ── Standard setup ────────────────────────────────────────────────────────
+    // In both-hands mode we do NOT call hardStopUserNote() because that would
+    // release sustained notes from the other hand that must keep sounding.
+    if (clefMode === 'both') {
+        // Only stop sound for the NEW track's previous notes, keep other-track sounds alive
+        if (spawnTrainingNote._noteTrackMap) {
+            currentChordNotes.forEach(midi => {
+                const t = spawnTrainingNote._noteTrackMap.get(midi);
+                // Only release if this note is NOT in sustainedNotes (i.e. not being carried over)
+                if (!sustainedNotes.has(midi) && synth) {
+                    synth.triggerRelease(getNoteName(midi));
+                }
+            });
+        }
+        activeMidiNote = null;
+        noteHoldStartTime = null;
+        // Remove current-step notes from midiPressedNotes (sustained ones stay)
+        currentChordNotes.forEach(midi => {
+            if (!sustainedNotes.has(midi)) midiPressedNotes.delete(midi);
+        });
+    } else {
+        hardStopUserNote();
+        midiPressedNotes.clear();
+    }
+
     trainingActive = true;
-    visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
+    visualsPlaying = !scoreModeActive;
     fallingRectangles = [];
 
     previewTimeouts.forEach(t => clearTimeout(t));
@@ -3308,29 +3469,28 @@ function spawnTrainingNote(noteObj) {
 
     currentChordNotes.clear();
     chordNotesCompleted.clear();
-    midiPressedNotes.clear();
-    
+    // In both-hands mode: keep sustained notes in midiPressedNotes so they aren't treated as unpressed
+    if (clefMode !== 'both') midiPressedNotes.clear();
+
     // Store per-note track so we can highlight correctly
     if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
     const noteTrackMap = spawnTrainingNote._noteTrackMap;
     noteTrackMap.clear();
+    // Re-populate trackMap with sustained notes so rebuildKeyboardHighlights works
+    for (const [midi, s] of sustainedNotes) {
+        noteTrackMap.set(midi, s.track);
+    }
 
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Look ahead for simultaneous notes (within 10ms)
-    // In 'both' mode: each clef is independent — collect same-track chord-mates only.
-    // This mirrors exactly what Right Hand / Left Hand modes do: treble plays its own
-    // rhythm, bass plays its own rhythm.  advanceChordIndex (below) is also patched
-    // to advance only same-track notes so the two sequences stay independent.
+    // Look ahead for simultaneous notes (within 10ms) — same track only
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
 
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
-            // Always require same-track membership for chord grouping.
-            // (In 'both' mode this gives each hand its own independent rhythm.)
             if (nextNote.track === noteObj.track) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
@@ -3340,59 +3500,41 @@ function spawnTrainingNote(noteObj) {
         }
     }
 
-   const isChord = currentChordNotes.size > 1;
-    
+    const isChord = currentChordNotes.size > 1;
+
+    // Build hold instruction — include sustained notes if any
     const holdEl = document.getElementById('holdInfo');
-    if (isChord) {
+    cleanExpiredSustainedNotes();
+    const sustainedActive = [...sustainedNotes.keys()].filter(m => !sustainedNoteExpired(m));
+    if (sustainedActive.length > 0) {
+        const newNoteNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
+        const sustainNames = sustainedActive.map(m => getNoteName(m)).join(' + ');
+        holdEl.innerHTML = `Keep holding <strong>${sustainNames}</strong> + play ${newNoteNames} (hold <span class="music-symbol">${beatLabel}</span>)`;
+    } else if (isChord) {
         holdEl.innerHTML = `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (Hold for <span class="music-symbol">${beatLabel}</span>)`;
     } else {
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
     }
+
     noteHoldStartTime = null;
     holdEvaluated = false;
     setTargetNote(noteName);
-    
+
     if (scoreModeActive) {
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-        currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            if (trackForMidi === TREBLE) {
-                expectedMidiTreble.add(midi);
-            } else if (trackForMidi === BASS) {
-                expectedMidiBass.add(midi);
-            }
-        });
+        rebuildKeyboardHighlights();
         document.getElementById('scoreKeyboardLabel').textContent =
             isChord
                 ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                 : `🎹 Play: ${noteName}`;
     } else {
-        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color)
+        // Create falling notes for the new step only
         currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            addMidiFallingRectangle(
-                midi,
-                noteObj.duration,
-                trackForMidi,
-                performance.now()
-            );
+            addMidiFallingRectangle(midi, noteObj.duration, noteTrackMap.get(midi) ?? noteObj.track, performance.now());
         });
-
-        // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-        currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            if (trackForMidi === TREBLE) {
-                expectedMidiTreble.add(midi);
-            } else if (trackForMidi === BASS) {
-                expectedMidiBass.add(midi);
-            }
-        });
+        rebuildKeyboardHighlights();
     }
 
-    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
+    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]) + ' sustained=' + JSON.stringify([...sustainedNotes.keys()]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
@@ -4141,6 +4283,126 @@ function startMetronome(startTimeOverride = null) {
 }
 
 // ================================
+// SHARED HOLD / SUSTAIN HELPERS
+// ================================
+
+// Called when a note is released. Returns true if it was a sustained note released early.
+// If so, it flags the error and keeps the note highlighted.
+function handleSustainedNoteRelease(midiNote) {
+    if (!sustainedNotes.has(midiNote)) return false;
+    if (sustainedNoteExpired(midiNote)) {
+        sustainedNotes.delete(midiNote);
+        return false;
+    }
+    // Released too early — flag error, keep highlighting
+    midiPressedNotes.delete(midiNote);
+    if (synth) synth.triggerRelease(getNoteName(midiNote));
+    rebuildKeyboardHighlights();
+    const feedback = document.getElementById('feedback');
+    const s = sustainedNotes.get(midiNote);
+    const remaining = Math.max(0, (s.requiredDurationMs - (performance.now() - s.startTime)) / 1000);
+    feedback.innerHTML = `Keep holding <strong>${getNoteName(midiNote)}</strong>! ${remaining.toFixed(1)}s remaining`;
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('wrong', 'show');
+    return true;
+}
+
+// Core hold evaluation — called from mouseup, touchend, and MIDI noteOff
+// Returns true if the hold was evaluated (advance or retry), false if not applicable.
+function evaluateHoldOnRelease(releasedMidi) {
+    // If a sustained note was released early, handle that and stop
+    if (handleSustainedNoteRelease(releasedMidi)) return true;
+
+    if (noteHoldStartTime === null) return false;
+
+    // In both-hands mode: check that all sustained notes are still held
+    if (clefMode === 'both') {
+        cleanExpiredSustainedNotes();
+        const droppedSustained = [...sustainedNotes.keys()]
+            .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m) && m !== releasedMidi);
+        if (droppedSustained.length > 0) {
+            // A sustained note from the other hand was dropped — error
+            const feedback = document.getElementById('feedback');
+            feedback.innerHTML = `Keep holding: <strong>${droppedSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
+            feedback.classList.remove('correct', 'wrong', 'show');
+            void feedback.offsetWidth;
+            feedback.classList.add('wrong', 'show');
+            rebuildKeyboardHighlights();
+            return true;
+        }
+    }
+
+    const heldTime = performance.now() - noteHoldStartTime;
+
+    if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return true; }
+    holdEvaluated = true;
+
+    const feedback = document.getElementById('feedback');
+
+    if (heldTime >= expectedHoldDuration) {
+        feedback.textContent = 'Good!';
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+        explanationLocked = false;
+
+        waitingForInput = false;
+        expectedMidiNote = null;
+
+        // In both-hands mode: move the completed notes into sustainedNotes
+        // so they remain required while the other hand continues
+        if (clefMode === 'both') {
+            const nowMs = performance.now();
+            currentChordNotes.forEach(midi => {
+                if (midi !== releasedMidi) {
+                    // Notes still pressed — they may need to be sustained
+                    // For simplicity, they've been held for expectedHoldDuration, so they're done
+                }
+                sustainedNotes.delete(midi);
+            });
+            // Clean up expired sustained notes from the other hand
+            cleanExpiredSustainedNotes();
+            rebuildKeyboardHighlights();
+        } else {
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+        }
+
+        advanceChordIndex();
+        updateTrainingProgress();
+
+        document.getElementById('holdInfo').textContent = '';
+        setTimeout(() => spawnNextValidNote(), 300);
+
+    } else {
+        const heldBeats = heldTime / 1000 / secondsPerBeat;
+        const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+
+        feedback.innerHTML =
+            `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
+
+        const holdEl = document.getElementById('holdInfo');
+        holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+        if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+        retryTimeout = setTimeout(() => {
+            if (trainingIndex < practiceNotes.length) {
+                spawnTrainingNote(practiceNotes[trainingIndex]);
+            }
+        }, 600);
+    }
+
+    noteHoldStartTime = null;
+    activeMidiNote = null;
+    return true;
+}
+
+// ================================
 // MOUSE INPUT (NOTE ON / OFF)
 // ================================
 function getMidiFromMouse(x, y) {
@@ -4226,92 +4488,35 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mouseup', () => {
     mouseDown = false;
+    const releasedMidi = lastMouseMidi;
     lastMouseMidi = null;
 
     if (freeMode && freeModeActiveNote !== null) {
-    freeModeSynth.triggerRelease(
-        getNoteName(freeModeActiveNote)
-    );
-    freeModeActiveNote = null;
-    expectedMidiNote = null;
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    return;
-}
-
-    if (activeMidiNote === null || noteHoldStartTime === null) return;
-// Allow release if the active note is the training note OR is part of the current chord
-if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.has(activeMidiNote)) {
-    activeMidiNote = null;
-    noteHoldStartTime = null;
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    return;
-}
-
-    const note = activeMidiNote;
-    const heldTime = performance.now() - noteHoldStartTime;
-
-    synth.triggerRelease(getNoteName(note));
-
-    // Only clear highlights on release — spawnTrainingNote re-adds them for next note
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-
-    // Guard: if MIDI noteOff already evaluated this hold, don't double-advance
-    if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
-    holdEvaluated = true;
-
-    if (heldTime >= expectedHoldDuration) {
-const feedback = document.getElementById('feedback');
-feedback.textContent = 'Good!';
-
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('correct', 'show');
-explanationLocked = false;
-        waitingForInput = false;
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+        freeModeActiveNote = null;
         expectedMidiNote = null;
-        
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
-        
-        advanceChordIndex();
-updateTrainingProgress();
-
-document.getElementById('holdInfo').textContent = '';
-setTimeout(() => spawnNextValidNote(), 300);
-
-    } else {
-        const heldBeats = heldTime / 1000 / secondsPerBeat;
-        const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
-
-        const feedback = document.getElementById('feedback');
-feedback.innerHTML =
-    `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-     feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('wrong', 'show');
-
-        const holdEl = document.getElementById('holdInfo');
-holdEl.innerHTML =
-    `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-
-            if (retryTimeout) {
-    clearTimeout(retryTimeout);
-    retryTimeout = null;
-}
-
-retryTimeout = setTimeout(() => {
-    spawnTrainingNote(practiceNotes[trainingIndex]);
-}, 600);
-
+        return;
     }
 
-    noteHoldStartTime = null;
-    activeMidiNote = null;
+    if (releasedMidi !== null) {
+        midiPressedNotes.delete(releasedMidi);
+        if (synth) synth.triggerRelease(getNoteName(releasedMidi));
+        // Check sustained note release first
+        if (handleSustainedNoteRelease(releasedMidi)) return;
+    }
+
+    if (activeMidiNote === null || noteHoldStartTime === null) return;
+    if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.has(activeMidiNote)) {
+        activeMidiNote = null;
+        noteHoldStartTime = null;
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        return;
+    }
+
+    if (!holdEvaluated) evaluateHoldOnRelease(releasedMidi ?? activeMidiNote);
 });
 // ================================
 // TOUCH EVENTS
@@ -4373,11 +4578,14 @@ canvas.addEventListener('touchend', (e) => {
     if (!touchActive) return;
     e.preventDefault();
 
+    let lastReleasedMidi = null;
+
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const midiNote = activeTouches.get(touch.identifier);
 
         if (midiNote !== undefined) {
+            lastReleasedMidi = midiNote;
             if (freeMode && midiNote === freeModeActiveNote) {
                 freeModeSynth.triggerRelease(getNoteName(midiNote));
                 freeModeActiveNote = null;
@@ -4388,84 +4596,23 @@ canvas.addEventListener('touchend', (e) => {
             }
 
             midiPressedNotes.delete(midiNote);
-
             activeTouches.delete(touch.identifier);
         }
     }
 
-    // ── Multi-touch chord fix ────────────────────────────────────────────────
-    // Previously we only evaluated the hold when e.touches.length === 0, which
-    // breaks two-finger chords: the user typically lifts one finger a few ms
-    // before the other, so the first touchend sees e.touches.length === 1 and
-    // skips evaluation; by the time the second fires the browser sometimes
-    // reports length 0 but activeTouches is already clear.
-    //
-    // Instead, evaluate whenever ALL chord notes have been released
-    // (midiPressedNotes is empty and a hold was in progress).  We still use
-    // e.touches.length === 0 as the signal to fully tear down touch state.
-    // ─────────────────────────────────────────────────────────────────────────
+    // Check for early sustained-note release
+    if (lastReleasedMidi !== null && sustainedNotes.has(lastReleasedMidi)) {
+        handleSustainedNoteRelease(lastReleasedMidi);
+    }
 
-    const allChordNotesReleased = !freeMode
+    // Evaluate hold when all current-chord notes have been released
+    // (sustained notes from the other hand may still be held — that's fine)
+    const currentChordAllReleased = !freeMode
         && noteHoldStartTime !== null
-        && midiPressedNotes.size === 0;
+        && Array.from(currentChordNotes).every(m => !midiPressedNotes.has(m));
 
-    if (allChordNotesReleased) {
-        // Capture hold time before any state is cleared
-        const heldTime = performance.now() - noteHoldStartTime;
-
-        // Clear highlights immediately — spawnTrainingNote re-adds them
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-
-        noteHoldStartTime = null;
-        activeMidiNote = null;
-
-        if (heldTime >= expectedHoldDuration) {
-            const feedback = document.getElementById('feedback');
-            feedback.textContent = 'Good!';
-
-            feedback.classList.remove('correct', 'wrong', 'show');
-            void feedback.offsetWidth;
-            feedback.classList.add('correct', 'show');
-            explanationLocked = false;
-
-            waitingForInput = false;
-            expectedMidiNote = null;
-
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
-
-            advanceChordIndex();
-            updateTrainingProgress();
-
-            document.getElementById('holdInfo').textContent = '';
-            setTimeout(() => spawnNextValidNote(), 300);
-
-        } else {
-            const heldBeats = heldTime / 1000 / secondsPerBeat;
-            const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
-
-            const feedback = document.getElementById('feedback');
-            feedback.innerHTML = `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-            feedback.classList.remove('correct', 'wrong', 'show');
-            void feedback.offsetWidth;
-            feedback.classList.add('wrong', 'show');
-
-            const holdEl = document.getElementById('holdInfo');
-            holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-            if (retryTimeout) {
-                clearTimeout(retryTimeout);
-                retryTimeout = null;
-            }
-
-            retryTimeout = setTimeout(() => {
-                if (trainingIndex < practiceNotes.length) {
-                    spawnTrainingNote(practiceNotes[trainingIndex]);
-                }
-            }, 600);
-        }
+    if (currentChordAllReleased && !holdEvaluated) {
+        evaluateHoldOnRelease(lastReleasedMidi ?? activeMidiNote ?? 0);
     }
 
     // Tear down touch tracking once all physical fingers have left the screen
@@ -4474,9 +4621,8 @@ canvas.addEventListener('touchend', (e) => {
         mouseDown = false;
         activeTouches.clear();
 
-        // Safety-net clear in case allChordNotesReleased path didn't run
-        // (e.g. freeMode, or noteHoldStartTime was already null)
-        if (!allChordNotesReleased) {
+        // Safety-net clear only for non-both-hands mode (sustained notes need to stay)
+        if (clefMode !== 'both' && !currentChordAllReleased) {
             expectedMidiTreble.clear();
             expectedMidiBass.clear();
         }
@@ -4506,6 +4652,7 @@ canvas.addEventListener('touchcancel', (e) => {
         expectedMidiBass.clear();
         noteHoldStartTime = null;
         activeMidiNote = null;
+        sustainedNotes.clear();
     }
 }, { passive: false });
 
@@ -5951,72 +6098,30 @@ if (freeMode && note === freeModeActiveNote) {
     return;
 }
 
+        // Check for early sustained-note release before the standard hold evaluation
+        if (sustainedNotes.has(note) && !sustainedNoteExpired(note)) {
+            midiPressedNotes.delete(note);
+            synth.triggerRelease(getNoteName(note));
+            handleSustainedNoteRelease(note);
+            return;
+        }
+
         if (!currentChordNotes.has(note)) return;
         
         midiPressedNotes.delete(note);
         
         synth.triggerRelease(getNoteName(note));
         
-        if (midiPressedNotes.size > 0) return;
+        // In both-hands mode: only evaluate hold when ALL current-step chord notes released
+        // (sustained notes from other hand may still be held — that's intended)
+        const currentStepAllReleased = Array.from(currentChordNotes).every(m => !midiPressedNotes.has(m));
+        if (!currentStepAllReleased) return;
         
         if (noteHoldStartTime === null) return;
 
-        // Always clear highlights immediately on release — spawnTrainingNote re-adds them
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-
-        const heldTime = performance.now() - noteHoldStartTime;
-
-        // Guard: if mouseup already evaluated this hold, don't double-advance
         if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
-        holdEvaluated = true;
 
-        if (heldTime >= expectedHoldDuration) {
-   feedback.textContent = 'Good!';
-
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('correct', 'show');
-explanationLocked = false;
-    waitingForInput = false;
-    expectedMidiNote = null;
-    
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    
-    // ✅ Skip ALL notes in the chord (including both-hand simultaneous notes)
-    advanceChordIndex();
-updateTrainingProgress();
-    document.getElementById('holdInfo').textContent = '';
-
-    setTimeout(() => spawnNextValidNote(), 300);
-        } else {
-            const heldBeats = heldTime / 1000 / secondsPerBeat;
-const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
-
-feedback.innerHTML =
-    `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>,
-     need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-     feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('wrong', 'show');
-
-const holdEl = document.getElementById('holdInfo');
-holdEl.innerHTML =
-    `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-
-    if (retryTimeout) clearTimeout(retryTimeout);
-    retryTimeout = setTimeout(() => {
-        if (trainingIndex < practiceNotes.length) {
-            spawnTrainingNote(practiceNotes[trainingIndex]);
-        }
-    }, 600);
-        }
-
-        noteHoldStartTime = null;
-        activeMidiNote = null;
+        evaluateHoldOnRelease(note);
     }
 }
 
