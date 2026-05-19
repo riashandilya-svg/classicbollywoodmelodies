@@ -3296,27 +3296,28 @@ function spawnTrainingNote(noteObj) {
     previewTimeouts = [];
 
     const noteName = getNoteName(noteObj.midi);
-    const beats = noteObj.duration / secondsPerBeat;
-    const beatLabel = beatsToNoteName(beats);
 
     currentTrainingNote = noteName;
     autoSlowed = false;
     waitingForInput = true;
     failureCount = 0;
 
-    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
-
     currentChordNotes.clear();
     chordNotesCompleted.clear();
     midiPressedNotes.clear();
     
-    // Store per-note track so we can highlight correctly
+    // Store per-note track AND duration so we can highlight and draw correctly
     if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
     const noteTrackMap = spawnTrainingNote._noteTrackMap;
     noteTrackMap.clear();
 
+    if (!spawnTrainingNote._noteDurationMap) spawnTrainingNote._noteDurationMap = new Map();
+    const noteDurationMap = spawnTrainingNote._noteDurationMap;
+    noteDurationMap.clear();
+
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
+    noteDurationMap.set(noteObj.midi, noteObj.duration);
 
     // Look ahead for simultaneous notes (within 10ms)
     // When clefMode === 'both', include notes from BOTH tracks at the same time
@@ -3331,11 +3332,22 @@ function spawnTrainingNote(noteObj) {
             if (clefMode === 'both' || nextNote.track === noteObj.track) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
+                noteDurationMap.set(nextNote.midi, nextNote.duration);
             }
         } else {
             break;
         }
     }
+
+    // Use the LONGEST note duration in the chord for the hold requirement.
+    // This ensures a bass whole note isn't cut off just because a simultaneous
+    // treble quarter note has a shorter duration.
+    const maxChordDuration = Math.max(...Array.from(currentChordNotes).map(m => noteDurationMap.get(m) ?? noteObj.duration));
+
+    expectedHoldDuration = (maxChordDuration * 1000) / speedMultiplier;
+
+    const beats = maxChordDuration / secondsPerBeat;
+    const beatLabel = beatsToNoteName(beats);
 
    const isChord = currentChordNotes.size > 1;
     
@@ -3365,12 +3377,13 @@ function spawnTrainingNote(noteObj) {
                 ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                 : `🎹 Play: ${noteName}`;
     } else {
-        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color)
+        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color and its own duration)
         currentChordNotes.forEach(midi => {
             const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
+            const durForMidi   = noteDurationMap.get(midi) ?? noteObj.duration;
             addMidiFallingRectangle(
                 midi,
-                noteObj.duration,
+                durForMidi,
                 trackForMidi,
                 performance.now()
             );
