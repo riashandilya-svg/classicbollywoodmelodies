@@ -3381,46 +3381,39 @@ function spawnTrainingNote(noteObj) {
         return;
     }
 
-    // ── In both-hands mode: preserve sustained notes from the OTHER hand ──────
-    // Before clearing state, move notes from the previous step's OTHER track into
-    // sustainedNotes so they remain highlighted and required while this hand moves on.
+    // ── In both-hands mode: carry forward any notes whose hold duration hasn't expired ──
+    // When the new step's playTime is later than the current step (hands diverge),
+    // notes from the current step that still have remaining hold time become "sustained"
+    // — they stay highlighted and must be held while the other hand advances.
     if (clefMode === 'both' && spawnTrainingNote._noteTrackMap) {
-        const prevTrackMap = spawnTrainingNote._noteTrackMap;
-        // Clean up any previously sustained notes that have now expired
         cleanExpiredSustainedNotes();
 
-        // If the current step was from the opposite track of noteObj, carry it forward.
-        // We detect this by checking what track the PREVIOUS currentChordNotes belonged to.
-        // The previous step's notes are still in currentChordNotes + _noteTrackMap.
-        if (currentChordNotes.size > 0) {
-            const prevFirstMidi = currentChordNotes.values().next().value;
-            const prevTrack = prevTrackMap.get(prevFirstMidi);
-            const newTrack = noteObj.track;
+        const newPlayTime = noteObj.playTime ?? noteObj.time;
 
-            if (prevTrack && prevTrack !== newTrack) {
-                // The new step is from a DIFFERENT hand — carry previous notes forward as sustained
-                // (they get replaced below, so capture now before clear)
-                currentChordNotes.forEach(midi => {
-                    const t = prevTrackMap.get(midi) ?? prevTrack;
-                    if (!sustainedNoteExpired(midi)) {
-                        // Already in sustainedNotes from an earlier step — don't reset its timer
-                        if (!sustainedNotes.has(midi)) {
-                            sustainedNotes.set(midi, {
-                                startTime: noteHoldStartTime ?? performance.now(),
-                                requiredDurationMs: expectedHoldDuration,
-                                track: t,
-                            });
-                        }
-                    } else {
-                        sustainedNotes.delete(midi);
+        if (currentChordNotes.size > 0 && noteHoldStartTime !== null) {
+            const elapsed = performance.now() - noteHoldStartTime;
+
+            currentChordNotes.forEach(midi => {
+                const track = spawnTrainingNote._noteTrackMap.get(midi);
+                // Per-note required duration (stored when the step was spawned)
+                const perNoteDur = spawnTrainingNote._perNoteDuration?.get(midi) ?? expectedHoldDuration;
+                const remaining = perNoteDur - elapsed;
+
+                if (remaining > 50) {
+                    // Note still needs to be held — carry it forward as sustained
+                    if (!sustainedNotes.has(midi)) {
+                        sustainedNotes.set(midi, {
+                            startTime: noteHoldStartTime,
+                            requiredDurationMs: perNoteDur,
+                            track,
+                        });
                     }
-                });
-            }
-            // If same track: clear any opposite-track sustained notes that have expired
-            // (leave still-active ones)
+                } else {
+                    sustainedNotes.delete(midi);
+                }
+            });
         }
     } else {
-        // Single-hand mode or not using both — clear everything
         sustainedNotes.clear();
     }
 
@@ -3428,11 +3421,8 @@ function spawnTrainingNote(noteObj) {
     // In both-hands mode we do NOT call hardStopUserNote() because that would
     // release sustained notes from the other hand that must keep sounding.
     if (clefMode === 'both') {
-        // Only stop sound for the NEW track's previous notes, keep other-track sounds alive
         if (spawnTrainingNote._noteTrackMap) {
             currentChordNotes.forEach(midi => {
-                const t = spawnTrainingNote._noteTrackMap.get(midi);
-                // Only release if this note is NOT in sustainedNotes (i.e. not being carried over)
                 if (!sustainedNotes.has(midi) && synth) {
                     synth.triggerRelease(getNoteName(midi));
                 }
@@ -3440,7 +3430,6 @@ function spawnTrainingNote(noteObj) {
         }
         activeMidiNote = null;
         noteHoldStartTime = null;
-        // Remove current-step notes from midiPressedNotes (sustained ones stay)
         currentChordNotes.forEach(midi => {
             if (!sustainedNotes.has(midi)) midiPressedNotes.delete(midi);
         });
@@ -3484,17 +3473,26 @@ function spawnTrainingNote(noteObj) {
     currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // Look ahead for simultaneous notes (within 10ms) — same track only
+    // Look ahead for simultaneous notes (within 10ms).
+    //
+    // Rule for 'both' mode:
+    //   • Same playTime, SAME track   → same-hand chord (e.g. treble C+E played together)
+    //   • Same playTime, OTHER track  → cross-hand simultaneous note (e.g. treble D + bass D
+    //                                   at beat 1) — include in currentChordNotes so both are
+    //                                   required together right now.
+    //   • Different playTime          → independent rhythm; handled via sustainedNotes later.
+    //
+    // In single-hand mode the filter is already correct (same track only, other-track
+    // notes don't exist in practiceNotes).
     for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
         const nextNote = practiceNotes[i];
         const currentPlayTime = noteObj.playTime ?? noteObj.time;
         const nextPlayTime = nextNote.playTime ?? nextNote.time;
 
         if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
-            if (nextNote.track === noteObj.track) {
-                currentChordNotes.add(nextNote.midi);
-                noteTrackMap.set(nextNote.midi, nextNote.track);
-            }
+            // Include regardless of track when times match — both hands must play together
+            currentChordNotes.add(nextNote.midi);
+            noteTrackMap.set(nextNote.midi, nextNote.track);
         } else {
             break;
         }
@@ -3913,26 +3911,38 @@ function advanceChordIndex() {
     const baseTime  = practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time;
     const baseTrack = practiceNotes[trainingIndex].track;
 
-    // In 'both' mode each clef runs its own independent sequence.
-    // Advance past the current same-track time-group, then skip any
-    // other-track notes whose playTime is strictly before baseTime
-    // (those are stale interleaved steps that were already completed).
     let i = trainingIndex;
 
-    // Step 1: skip current same-track chord (same track + same playTime)
-    while (i < practiceNotes.length) {
-        const n = practiceNotes[i];
-        const t = n.playTime ?? n.time;
-        if (n.track === baseTrack && Math.abs(t - baseTime) < 0.01) { i++; }
-        else break;
-    }
+    if (clefMode === 'both') {
+        // In 'both' mode: if the current step included cross-track notes at the same
+        // playTime (they were all in currentChordNotes), advance past ALL of them
+        // regardless of track. Then skip any other-track notes whose playTime is
+        // strictly before baseTime (stale interleaved steps already completed).
 
-    // Step 2: skip stale other-track notes that came before baseTime
-    while (i < practiceNotes.length) {
-        const n = practiceNotes[i];
-        const t = n.playTime ?? n.time;
-        if (n.track !== baseTrack && t < baseTime - 0.001) { i++; }
-        else break;
+        // Step 1: skip ALL notes at the same playTime (same or different track)
+        // — these were all presented together as one chord step.
+        while (i < practiceNotes.length) {
+            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+            if (Math.abs(t - baseTime) < 0.01) { i++; }
+            else break;
+        }
+
+        // Step 2: skip any stale other-track notes that sit before baseTime
+        // (can happen when the two hands have offset rhythms and we've already
+        //  played the other hand's earlier steps)
+        while (i < practiceNotes.length) {
+            const n = practiceNotes[i];
+            const t = n.playTime ?? n.time;
+            if (n.track !== baseTrack && t < baseTime - 0.001) { i++; }
+            else break;
+        }
+    } else {
+        // Single-hand mode: advance past all notes at same playTime (original logic)
+        while (i < practiceNotes.length) {
+            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+            if (Math.abs(t - baseTime) < 0.01) { i++; }
+            else break;
+        }
     }
 
     // Ensure we advance by at least 1
