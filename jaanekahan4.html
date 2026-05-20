@@ -2657,6 +2657,7 @@ let fullSongPlaying = false;
 
 let currentTrainingNote = null;
 let noteHoldStartTime = null;
+let _bgCountdownStartMs = null;  // set on first correct press in a beat group, for stats countdown
 let holdEvaluated = false;   // guards against double-advance from simultaneous mouseup + MIDI noteOff
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
@@ -2730,9 +2731,13 @@ function rebuildKeyboardHighlights() {
     const pel = document.getElementById('panelStatHold');
     setInterval(() => {
         let val, color;
-        if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+        // Use actual hold start (single-hand or final beat-group hold);
+        // fall back to _bgCountdownStartMs (set on first correct press) for
+        // the sub-note traversal phase so the stat counts down from the start.
+        const activeStart = noteHoldStartTime ?? (clefMode === 'both' ? _bgCountdownStartMs : null);
+        if (activeStart !== null && expectedHoldDuration > 0) {
             const remaining = Math.max(0,
-                (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
+                (expectedHoldDuration - (performance.now() - activeStart)) / 1000
             );
             val = remaining.toFixed(1) + 's';
             color = remaining < 0.3 ? '#22c55e' : '';
@@ -3252,6 +3257,7 @@ document.getElementById('correctNoteCircle').textContent =
 trainingActive = false;
 waitingForInput = false;
 if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+_bgCountdownStartMs = null;
 
 // Keep holdInfo showing the correct note + hold duration during the error pause
 {
@@ -3340,6 +3346,9 @@ if (clefMode === 'both') {
     console.log('🎹 noteOn', getNoteName(midiNote), '| chord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName), '| midiPressed:', [...midiPressedNotes].map(getNoteName), '| sustReq:', sustainedRequired.map(getNoteName), '| newReq:', newRequired.map(getNoteName), '| allNewPressed:', allNewPressed, '| allSustOn:', allSustainedStillOn, '| willAdvance:', allCurrentPressed);
 
     if (allCurrentPressed) {
+        // Start the stats countdown from the very first correct press so the
+        // stat bar counts down for the entire beat group, not just the final hold.
+        if (_bgCountdownStartMs === null) _bgCountdownStartMs = performance.now();
         // The hold timer is started inside _advanceBeatGroupSubNote once all
         // sub-notes have been played (nextIdx === null). Do NOT start it here —
         // the group musical window (e.g. 437ms) is far too short for a learner
@@ -3636,6 +3645,7 @@ function _onBeatGroupComplete() {
     _beatGroupNotes   = [];
     _beatGroupPressed = new Set();
     _beatGroupStartMs = null;
+    _bgCountdownStartMs = null;
     _beatGroupCurrentPlayTime = null;
     _bgHeldNotes.clear();
     sustainedNotes.clear();
@@ -3738,6 +3748,7 @@ function spawnTrainingNote(noteObj) {
     if (clefMode === 'both') {
         activeMidiNote = null;
         noteHoldStartTime = null;
+        _bgCountdownStartMs = null;
     } else {
         hardStopUserNote();
     }
