@@ -2736,6 +2736,9 @@ function rebuildKeyboardHighlights() {
             );
             val = remaining.toFixed(1) + 's';
             color = remaining < 0.3 ? '#22c55e' : '';
+        } else if (expectedHoldDuration > 0 && (trainingActive || waitingForInput)) {
+            val = (expectedHoldDuration / 1000).toFixed(1) + 's';
+            color = '#aaa';
         } else {
             val = '—';
             color = '';
@@ -3249,6 +3252,22 @@ document.getElementById('correctNoteCircle').textContent =
 trainingActive = false;
 waitingForInput = false;
 if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+
+// Keep holdInfo showing the correct note + hold duration during the error pause
+{
+    const _wrongNoteObj = practiceNotes[trainingIndex];
+    if (_wrongNoteObj) {
+        const _wrongGroupDurSec = _beatGroupEndSec
+            ? _beatGroupEndSec - (_wrongNoteObj.playTime ?? _wrongNoteObj.time)
+            : _wrongNoteObj.duration;
+        const _wrongGroupBeats = _wrongGroupDurSec / secondsPerBeat;
+        const _wrongGroupLabel = beatsToNoteName(_wrongGroupBeats);
+        const _wrongChordNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
+        const holdEl = document.getElementById('holdInfo');
+        holdEl.innerHTML = `Play <strong>${_wrongChordNames}</strong> and hold for <span class="music-symbol">${_wrongGroupLabel}</span>`;
+    }
+}
+
 setTimeout(() => {
     if (practiceNotes[trainingIndex]) {
         spawnTrainingNote(practiceNotes[trainingIndex]);
