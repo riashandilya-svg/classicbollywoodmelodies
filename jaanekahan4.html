@@ -2727,29 +2727,57 @@ function rebuildKeyboardHighlights() {
 
 // ====== HOLD COUNTDOWN ======
 (function startHoldCountdownLoop() {
-    const el = document.getElementById('statHold');
+    const el  = document.getElementById('statHold');
     const pel = document.getElementById('panelStatHold');
+    // Find the label spans next to the stat values so we can swap "Hold for" ↔ "Notes left"
+    const labelEl  = el  ? (el.parentElement.querySelector('.ctrl-stat-label')  || el.parentElement.querySelector('span:last-child'))  : null;
+    const labelPel = pel ? (pel.parentElement.querySelector('.ctrl-stat-label') || pel.parentElement.querySelector('span:last-child')) : null;
+
     setInterval(() => {
-        let val, color;
-        // Use actual hold start (single-hand or final beat-group hold);
-        // fall back to _bgCountdownStartMs (set on first correct press) for
-        // the sub-note traversal phase so the stat counts down from the start.
-        const activeStart = noteHoldStartTime ?? (clefMode === 'both' ? _bgCountdownStartMs : null);
-        if (activeStart !== null && expectedHoldDuration > 0) {
+        let val, color, label;
+
+        if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+            // ── Final hold phase: count down the remaining hold time ──
             const remaining = Math.max(0,
-                (expectedHoldDuration - (performance.now() - activeStart)) / 1000
+                (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
             );
-            val = remaining.toFixed(1) + 's';
+            val   = remaining.toFixed(1) + 's';
             color = remaining < 0.3 ? '#22c55e' : '';
+            label = 'Hold for';
+
+        } else if (clefMode === 'both' && _bgCountdownStartMs !== null && _beatGroupNotes.length > 0) {
+            // ── Sub-note traversal phase: show how many notes remain to press ──
+            // Count distinct time-slots left (not raw notes), so a 4-note chord counts as 1 step.
+            const pressedSlots = new Set();
+            for (const { note: n } of _beatGroupNotes) {
+                const t = n.playTime ?? n.time;
+                if (_beatGroupPressed.has(n.midi)) pressedSlots.add(t.toFixed(4));
+            }
+            const totalSlots = new Set(
+                _beatGroupNotes.map(({ note: n }) => (n.playTime ?? n.time).toFixed(4))
+            ).size;
+            const doneSlots  = pressedSlots.size;
+            const leftSlots  = Math.max(0, totalSlots - doneSlots);
+            val   = leftSlots + '/' + totalSlots;
+            color = leftSlots === 0 ? '#22c55e' : '#FFC107';
+            label = 'Notes left';
+
         } else if (expectedHoldDuration > 0 && (trainingActive || waitingForInput)) {
-            val = (expectedHoldDuration / 1000).toFixed(1) + 's';
+            // ── Waiting for first press: show full duration as a static hint ──
+            val   = (expectedHoldDuration / 1000).toFixed(1) + 's';
             color = '#aaa';
+            label = 'Hold for';
+
         } else {
-            val = '—';
+            val   = '—';
             color = '';
+            label = 'Hold for';
         }
+
         if (el)  { el.textContent  = val; el.style.color  = color; }
         if (pel) { pel.textContent = val; pel.style.color = color; }
+        if (labelEl)  labelEl.textContent  = label;
+        if (labelPel) labelPel.textContent = label;
     }, 50);
 })();
 
