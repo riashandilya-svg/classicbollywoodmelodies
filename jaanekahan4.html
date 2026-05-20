@@ -3244,6 +3244,21 @@ document.getElementById('pressedNoteCircle')
 
 document.getElementById('correctNoteCircle').textContent =
     currentTrainingNote;
+
+// Restart the current beat after a short pause so the user replays it from the top
+trainingActive = false;
+waitingForInput = false;
+if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+setTimeout(() => {
+    if (practiceNotes[trainingIndex]) {
+        feedback.textContent = '↩ Try that beat again';
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
+        spawnTrainingNote(practiceNotes[trainingIndex]);
+    }
+}, 900);
+
 return;
 }
 
