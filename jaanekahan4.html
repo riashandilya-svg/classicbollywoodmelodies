@@ -3821,6 +3821,7 @@ function spawnTrainingNote(noteObj) {
 
         _beatGroupNotes   = [];
         _beatGroupPressed = new Set();
+        _bgHeldNotes.clear();  // clear stale hold registry so retried chords require all notes fresh
         _beatGroupStartMs = null;
         _beatGroupIndex   = trainingIndex;
         _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time; // initialize to first slot's time
