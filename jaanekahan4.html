@@ -3471,13 +3471,6 @@ function _bgRestartHoldTimer(midi) {
     const held = _bgHeldNotes.get(midi);
     if (!held) return false;
 
-    // Only intercept if this note is still required in the CURRENT chord slot.
-    // Long bass notes carried from a previous sub-slot appear in _bgHeldNotes
-    // but are NOT in currentChordNotes once the slot has advanced past them.
-    // Without this guard, re-pressing such a note blocks _advanceBeatGroupSubNote
-    // and causes the group to loop back to re-spawn the same training index.
-    if (!currentChordNotes.has(midi)) return false;
-
     const now = performance.now();
     const remainingMs = Math.max(300, held.requiredUntilMs - now);
 
@@ -3611,22 +3604,6 @@ function _advanceBeatGroupSubNote() {
         if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
     }
 
-    // Purge _beatGroupPressed of notes that neither carry across into this slot
-    // nor belong to the new slot itself. Without this, old treble presses from a
-    // previous sub-slot immediately satisfy allNewPressed for the next sub-slot,
-    // causing _advanceBeatGroupSubNote to fire without any user input — the root
-    // cause of the infinite re-spawn loop seen at measure 10 (index 124).
-    const newSlotMidis = new Set();
-    for (const { note: n } of _beatGroupNotes) {
-        const t = n.playTime ?? n.time;
-        if (Math.abs(t - nextPlayTime) < 0.01) newSlotMidis.add(n.midi);
-    }
-    for (const midi of [..._beatGroupPressed]) {
-        if (!carriedAcrossMidis.has(midi) && !newSlotMidis.has(midi)) {
-            _beatGroupPressed.delete(midi);
-        }
-    }
-
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         const tEnd = t + n.duration;
@@ -3678,6 +3655,21 @@ function _advanceBeatGroupSubNote() {
         const allNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
         document.getElementById('scoreKeyboardLabel').textContent =
             currentChordNotes.size > 1 ? `Play: ${allNames}` : `Play: ${currentTrainingNote}`;
+
+        // Update SVG score highlight to the new sub-slot.
+        // onTrainingNoteSpawned only fires once at beat-group spawn (for the first sub-slot),
+        // so sub-slot advances here never update the score highlight — this fixes that.
+        const seen = new Set();
+        const allIndices = [];
+        for (const { note: n } of _beatGroupNotes) {
+            const t = n.playTime ?? n.time;
+            if (Math.abs(t - nextPlayTime) >= 0.01) continue; // only notes AT this new slot
+            const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
+            if (seen.has(k)) continue;
+            seen.add(k);
+            allIndices.push(..._svgIndicesForMidiNote(n, 'both'));
+        }
+        if (allIndices.length > 0) _applyHighlight(allIndices);
     }
 }
 
