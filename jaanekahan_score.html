@@ -2794,10 +2794,44 @@ let freeModeActiveNote = null;
 let mouseDown = false;
 let freeModeReleaseTimer = null;
 let lastMouseMidi = null;
-// Multi-note mouse: tracks every note currently held by the mouse/pointer
-let mouseHeldNotes = new Set();
 let touchActive = false;
 let activeTouches = new Map();
+
+// ====== MOUSE CLICK-TO-LATCH SYSTEM ======
+// Lets users click notes one-by-one to build up chords with a single mouse.
+// Each clicked note stays "latched" (sustained) for the entire beat.
+// All latches are cleared automatically when advancing to the next beat.
+const mouseLatchedNotes = new Set();
+
+function mouseReleaseLatch(midi) {
+    if (!mouseLatchedNotes.has(midi)) return;
+    mouseLatchedNotes.delete(midi);
+    midiPressedNotes.delete(midi);
+    if (synth) synth.triggerRelease(getNoteName(midi));
+}
+
+function mouseClearAllLatches() {
+    for (const midi of mouseLatchedNotes) {
+        midiPressedNotes.delete(midi);
+        if (synth) synth.triggerRelease(getNoteName(midi));
+    }
+    mouseLatchedNotes.clear();
+}
+
+function mouseToggleLatch(midiNote) {
+    // If already latched, unlatch (toggle off)
+    if (mouseLatchedNotes.has(midiNote)) {
+        mouseReleaseLatch(midiNote);
+        return;
+    }
+    // Latch the note: treat it as physically held for the whole beat
+    mouseLatchedNotes.add(midiNote);
+}
+
+function isMouseInputActive() {
+    // Returns true if input came from mouse (not touch/MIDI)
+    return !touchActive;
+}
     
 function hardStopUserNote() {
     if (!synth) return;
@@ -2811,6 +2845,7 @@ function hardStopUserNote() {
     activeMidiNote = null;
     noteHoldStartTime = null;
     sustainedNotes.clear();
+    mouseLatchedNotes.clear();
 }
 let failureCount = 0;
 let autoSlowed = false;
@@ -3046,10 +3081,14 @@ function drawKeyboard() {
         const x = whiteIndex * getWhiteKeyWidth();
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
+        const isLatched = mouseLatchedNotes.has(midi);
 
         // Premium gradient white key
         const wGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
-        if (isTreble) {
+        if (isLatched) {
+            wGrad.addColorStop(0, '#D1FAE5');
+            wGrad.addColorStop(1, '#6EE7B7');
+        } else if (isTreble) {
             wGrad.addColorStop(0, '#FFF9C4');
             wGrad.addColorStop(1, '#FFE082');
         } else if (isBass) {
@@ -3074,6 +3113,15 @@ function drawKeyboard() {
         innerGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = innerGrad;
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), 14);
+
+        // Glow for latched (mouse-clicked) key
+        if (isLatched) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(16,185,129,0.18)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
 
         // Glow for active treble key
         if (isTreble) {
@@ -3123,10 +3171,14 @@ function drawKeyboard() {
 
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
+        const isLatched = mouseLatchedNotes.has(midi);
 
         // Premium gradient black key
         const bGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + blackKeyHeight);
-        if (isTreble) {
+        if (isLatched) {
+            bGrad.addColorStop(0, '#A7F3D0');
+            bGrad.addColorStop(1, '#059669');
+        } else if (isTreble) {
             bGrad.addColorStop(0, '#FFF9C4');
             bGrad.addColorStop(1, '#F59E0B');
         } else if (isBass) {
@@ -3146,6 +3198,15 @@ function drawKeyboard() {
         ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
+
+        // Glow for latched (mouse-clicked) key
+        if (isLatched) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(16,185,129,0.45)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
 
         // Glow for active treble
         if (isTreble) {
@@ -3415,6 +3476,21 @@ if (clefMode === 'both') {
         const isChord = currentChordNotes.size > 1;
         feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
         noteHoldStartTime = performance.now();
+
+        // Mouse latch: auto-evaluate the hold after expectedHoldDuration elapses,
+        // since mouseup no longer fires an evaluation for latched notes.
+        if (isMouseInputActive() && !touchActive) {
+            const holdDur = expectedHoldDuration;
+            setTimeout(() => {
+                if (noteHoldStartTime !== null && !holdEvaluated) {
+                    // Simulate a note-off for each latched note
+                    const latchedArr = [...mouseLatchedNotes];
+                    if (latchedArr.length > 0) {
+                        evaluateHoldOnRelease(latchedArr[0]);
+                    }
+                }
+            }, holdDur + 50);
+        }
     } else if (!startHold) {
         const missingCurrent = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
         const missingSustained = [...sustainedNotes.keys()]
@@ -3707,6 +3783,7 @@ function _onBeatGroupComplete() {
     _beatGroupCurrentPlayTime = null;
     _bgHeldNotes.clear();
     sustainedNotes.clear();
+    mouseClearAllLatches();
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     noteHoldStartTime = null;
@@ -3763,6 +3840,9 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
 
 
 function spawnTrainingNote(noteObj) {
+    // Clear any mouse-latched notes from the previous beat
+    mouseClearAllLatches();
+
     if (!noteObj) {
         // trainingIndex walked off the end — treat as section complete
         // But only if there are no active sustained notes still requiring hold
@@ -3905,7 +3985,7 @@ function spawnTrainingNote(noteObj) {
         holdEl.innerHTML = totalGroupNotes > currentChordNotes.size
             ? `Play all notes across both hands (group: <span class="music-symbol">${groupLabel}</span>)`
             : isChord
-                ? `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (<span class="music-symbol">${groupLabel}</span>)`
+                ? `Click each note: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} &nbsp;<span style="opacity:0.6;font-size:0.85em">(clicks latch for the beat)</span>`
                 : `Hold for <span class="music-symbol">${groupLabel}</span>`;
 
         noteHoldStartTime = null;
@@ -3949,7 +4029,7 @@ function spawnTrainingNote(noteObj) {
             const sustainNames = sustainedActive.map(m => getNoteName(m)).join(' + ');
             holdEl.innerHTML = `Keep holding <strong>${sustainNames}</strong> + play ${newNoteNames} (hold <span class="music-symbol">${beatLabel}</span>)`;
         } else if (isChord) {
-            holdEl.innerHTML = `Play chord: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} (Hold for <span class="music-symbol">${beatLabel}</span>)`;
+            holdEl.innerHTML = `Click each note: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} &nbsp;<span style="opacity:0.6;font-size:0.85em">(clicks latch for the beat)</span>`;
         } else {
             holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
         }
@@ -4947,7 +5027,6 @@ function getMidiFromMouse(x, y) {
 
 // Registered once here (not inside processUserNoteOn) to avoid stacking
 // duplicate listeners every time a free-mode key is pressed.
-// ── Mouse leave: release everything ─────────────────────────────────────────
 canvas.addEventListener('mouseleave', () => {
     mouseDown = false;
     if (freeMode && freeModeActiveNote !== null) {
@@ -4956,15 +5035,9 @@ canvas.addEventListener('mouseleave', () => {
         expectedMidiNote = null;
         expectedMidiTreble.clear();
         expectedMidiBass.clear();
-    } else if (!freeMode && mouseHeldNotes.size > 0) {
-        // Release all held mouse notes on leave
-        _releaseAllMouseNotes();
     }
-    mouseHeldNotes.clear();
-    lastMouseMidi = null;
 });
 
-// ── Mouse down: begin holding a note ────────────────────────────────────────
 canvas.addEventListener('mousedown', async (e) => {
     if (previewMode) return;
     await Tone.start();
@@ -4977,12 +5050,22 @@ canvas.addEventListener('mousedown', async (e) => {
     const midiNote = getMidiFromMouse(x, y);
     if (midiNote === null) return;
     lastMouseMidi = midiNote;
-    // Add to the held-notes set so we sustain it for the full beat
-    mouseHeldNotes.add(midiNote);
+
+    // Click-to-latch: in training mode (non-free), latch the note so chord
+    // notes can be clicked one-by-one and held for the entire beat.
+    if (!freeMode && trainingActive) {
+        mouseToggleLatch(midiNote);
+        if (mouseLatchedNotes.has(midiNote)) {
+            // Note was just latched — treat as note-on
+            processUserNoteOn(midiNote);
+        }
+        // If toggled off: processUserNoteOn won't re-fire; the note was released above
+        return;
+    }
+
     processUserNoteOn(midiNote);
 });
 
-// ── Mouse move: glide in free mode only ─────────────────────────────────────
 canvas.addEventListener('mousemove', (e) => {
     if (!mouseDown || !freeMode) return;
 
@@ -5002,40 +5085,9 @@ canvas.addEventListener('mousemove', (e) => {
     processUserNoteOn(midiNote);
 });
 
-// ── Helper: release all mouse-held notes and evaluate hold ───────────────────
-function _releaseAllMouseNotes() {
-    // Evaluate hold on the primary (last) note
-    const primaryMidi = activeMidiNote ?? lastMouseMidi;
-
-    mouseHeldNotes.forEach(midi => {
-        if (clefMode === 'both' && _bgHeldNotes.has(midi)) {
-            midiPressedNotes.delete(midi);
-            if (synth) synth.triggerRelease(getNoteName(midi));
-            _bgCheckEarlyRelease(midi);
-        } else {
-            midiPressedNotes.delete(midi);
-            if (synth) synth.triggerRelease(getNoteName(midi));
-            handleSustainedNoteRelease(midi);
-        }
-    });
-
-    if (!holdEvaluated && primaryMidi !== null && noteHoldStartTime !== null) {
-        if (getNoteName(primaryMidi) === currentTrainingNote || currentChordNotes.has(primaryMidi)) {
-            evaluateHoldOnRelease(primaryMidi);
-        } else {
-            activeMidiNote = null;
-            noteHoldStartTime = null;
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
-        }
-    }
-}
-
-// ── Mouse up: release all held mouse notes at once ───────────────────────────
 canvas.addEventListener('mouseup', () => {
     mouseDown = false;
-    const snapshot = new Set(mouseHeldNotes);
-    mouseHeldNotes.clear();
+    const releasedMidi = lastMouseMidi;
     lastMouseMidi = null;
 
     if (freeMode && freeModeActiveNote !== null) {
@@ -5047,33 +5099,36 @@ canvas.addEventListener('mouseup', () => {
         return;
     }
 
-    // Release every note that was held by the mouse simultaneously
-    const primaryMidi = activeMidiNote;
-    snapshot.forEach(midi => {
-        if (clefMode === 'both' && _bgHeldNotes.has(midi)) {
-            midiPressedNotes.delete(midi);
-            if (synth) synth.triggerRelease(getNoteName(midi));
-            _bgCheckEarlyRelease(midi);
-        } else {
-            midiPressedNotes.delete(midi);
-            if (synth) synth.triggerRelease(getNoteName(midi));
-            handleSustainedNoteRelease(midi);
-        }
-    });
-
-    if (activeMidiNote !== null || noteHoldStartTime !== null) {
-        if (!holdEvaluated) {
-            if (primaryMidi !== null &&
-                (getNoteName(primaryMidi) === currentTrainingNote || currentChordNotes.has(primaryMidi))) {
-                evaluateHoldOnRelease(primaryMidi);
-            } else {
-                activeMidiNote = null;
-                noteHoldStartTime = null;
-                expectedMidiTreble.clear();
-                expectedMidiBass.clear();
-            }
-        }
+    // In latch mode: notes stay pressed until the beat is complete.
+    // Skip the normal release logic for latched notes.
+    if (!freeMode && trainingActive && releasedMidi !== null && mouseLatchedNotes.has(releasedMidi)) {
+        return;
     }
+
+    if (releasedMidi !== null) {
+        // In both-hands mode: always check the hold registry first
+        if (clefMode === 'both' && _bgHeldNotes.has(releasedMidi)) {
+            midiPressedNotes.delete(releasedMidi);
+            if (synth) synth.triggerRelease(getNoteName(releasedMidi));
+            _bgCheckEarlyRelease(releasedMidi);
+            return;
+        }
+        midiPressedNotes.delete(releasedMidi);
+        if (synth) synth.triggerRelease(getNoteName(releasedMidi));
+        // Check sustained note release first
+        if (handleSustainedNoteRelease(releasedMidi)) return;
+    }
+
+    if (activeMidiNote === null || noteHoldStartTime === null) return;
+    if (getNoteName(activeMidiNote) !== currentTrainingNote && !currentChordNotes.has(activeMidiNote)) {
+        activeMidiNote = null;
+        noteHoldStartTime = null;
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        return;
+    }
+
+    if (!holdEvaluated) evaluateHoldOnRelease(releasedMidi ?? activeMidiNote);
 });
 // ================================
 // TOUCH EVENTS
@@ -5592,6 +5647,8 @@ stopMetronome();
 if (synth) synth.releaseAll();
 Tone.Transport.stop();
 Tone.Transport.cancel();
+
+mouseClearAllLatches();
 
 playbackTimeouts.forEach(t => clearTimeout(t));
 playbackTimeouts = [];
