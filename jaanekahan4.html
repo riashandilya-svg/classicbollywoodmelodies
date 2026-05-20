@@ -3474,8 +3474,17 @@ function _bgRestartHoldTimer(midi) {
     const now = performance.now();
     const remainingMs = Math.max(300, held.requiredUntilMs - now);
 
-    // Only restart if the group timer isn't already running
-    if (_beatGroupTimer === null) {
+    // Only restart the completion timer if ALL sub-notes in the group have
+    // already been played. If there are still sub-notes pending (i.e. a later
+    // playTime exists in the group), do NOT start _onBeatGroupComplete — the
+    // user just re-pressed a carried bass note early; they still need to play
+    // the remaining treble sub-notes. Starting the timer here would skip them.
+    const allSubNotesDone = !_beatGroupNotes.some(({ note: n }) => {
+        const t = n.playTime ?? n.time;
+        return t > (_beatGroupCurrentPlayTime ?? -1) + 0.001;
+    });
+
+    if (_beatGroupTimer === null && allSubNotesDone) {
         _beatGroupTimer = setTimeout(() => {
             _beatGroupTimer = null;
             _onBeatGroupComplete();
