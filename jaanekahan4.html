@@ -3471,6 +3471,13 @@ function _bgRestartHoldTimer(midi) {
     const held = _bgHeldNotes.get(midi);
     if (!held) return false;
 
+    // Only intercept if this note is still required in the CURRENT chord slot.
+    // Long bass notes carried from a previous sub-slot appear in _bgHeldNotes
+    // but are NOT in currentChordNotes once the slot has advanced past them.
+    // Without this guard, re-pressing such a note blocks _advanceBeatGroupSubNote
+    // and causes the group to loop back to re-spawn the same training index.
+    if (!currentChordNotes.has(midi)) return false;
+
     const now = performance.now();
     const remainingMs = Math.max(300, held.requiredUntilMs - now);
 
@@ -3602,6 +3609,22 @@ function _advanceBeatGroupSubNote() {
     }
     for (const midi of [..._bgHeldNotes.keys()]) {
         if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
+    }
+
+    // Purge _beatGroupPressed of notes that neither carry across into this slot
+    // nor belong to the new slot itself. Without this, old treble presses from a
+    // previous sub-slot immediately satisfy allNewPressed for the next sub-slot,
+    // causing _advanceBeatGroupSubNote to fire without any user input — the root
+    // cause of the infinite re-spawn loop seen at measure 10 (index 124).
+    const newSlotMidis = new Set();
+    for (const { note: n } of _beatGroupNotes) {
+        const t = n.playTime ?? n.time;
+        if (Math.abs(t - nextPlayTime) < 0.01) newSlotMidis.add(n.midi);
+    }
+    for (const midi of [..._beatGroupPressed]) {
+        if (!carriedAcrossMidis.has(midi) && !newSlotMidis.has(midi)) {
+            _beatGroupPressed.delete(midi);
+        }
     }
 
     for (const { note: n } of _beatGroupNotes) {
