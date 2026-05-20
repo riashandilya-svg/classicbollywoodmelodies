@@ -3611,18 +3611,18 @@ function _advanceBeatGroupSubNote() {
         if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
     }
 
-    // Purge _beatGroupPressed of notes that neither carry across into this slot
-    // nor belong to the new slot itself. Without this, a treble note pressed in an
-    // earlier sub-slot (e.g. D6 at slot 7) remains in _beatGroupPressed when a later
-    // sub-slot reuses the same MIDI pitch (D6 at slot 13), making allNewPressed
-    // instantly true without user input — causing the user to have to press it twice.
+    // Purge _beatGroupPressed of notes that don't carry across into this slot.
+    // Notes in the new slot (newSlotMidis) must also be purged if they are NOT
+    // carried across — a repeated MIDI pitch (e.g. D6 appearing at slot 7 and
+    // again at slot 13) must require a fresh press in the new slot, not be treated
+    // as already satisfied from the earlier press.
     const newSlotMidis = new Set();
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         if (Math.abs(t - nextPlayTime) < 0.01) newSlotMidis.add(n.midi);
     }
     for (const midi of [..._beatGroupPressed]) {
-        if (!carriedAcrossMidis.has(midi) && !newSlotMidis.has(midi)) {
+        if (!carriedAcrossMidis.has(midi)) {
             _beatGroupPressed.delete(midi);
         }
     }
