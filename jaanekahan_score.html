@@ -1674,6 +1674,10 @@ body.score-mode #panelProgressWrap {
     </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
     <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fffde7!important;color:#B45309!important;border-color:#fde68a!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
+    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,193,7,0.10);border:1.5px dashed rgba(255,193,7,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:#B45309;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
+      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff8dc,#fef3c7)!important;color:#92400e!important;border-color:#fbbf24!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
+    </div>
   </div>
 
   <!-- PLAYBACK card -->
@@ -3471,13 +3475,6 @@ function _bgRestartHoldTimer(midi) {
     const held = _bgHeldNotes.get(midi);
     if (!held) return false;
 
-    // Only intercept if this note is still required in the CURRENT chord slot.
-    // Long bass notes carried from a previous sub-slot appear in _bgHeldNotes
-    // but are NOT in currentChordNotes once the slot has advanced past them.
-    // Without this guard, re-pressing such a note blocks _advanceBeatGroupSubNote
-    // and causes the group to loop back to re-spawn the same training index.
-    if (!currentChordNotes.has(midi)) return false;
-
     const now = performance.now();
     const remainingMs = Math.max(300, held.requiredUntilMs - now);
 
@@ -3611,22 +3608,6 @@ function _advanceBeatGroupSubNote() {
         if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
     }
 
-    // Purge _beatGroupPressed of notes that don't carry across into this slot.
-    // Notes in the new slot (newSlotMidis) must also be purged if they are NOT
-    // carried across — a repeated MIDI pitch (e.g. D6 appearing at slot 7 and
-    // again at slot 13) must require a fresh press in the new slot, not be treated
-    // as already satisfied from the earlier press.
-    const newSlotMidis = new Set();
-    for (const { note: n } of _beatGroupNotes) {
-        const t = n.playTime ?? n.time;
-        if (Math.abs(t - nextPlayTime) < 0.01) newSlotMidis.add(n.midi);
-    }
-    for (const midi of [..._beatGroupPressed]) {
-        if (!carriedAcrossMidis.has(midi)) {
-            _beatGroupPressed.delete(midi);
-        }
-    }
-
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         const tEnd = t + n.duration;
@@ -3637,15 +3618,6 @@ function _advanceBeatGroupSubNote() {
             const holdUntilSec = Math.min(tEnd, _beatGroupEndSec);
             const holdUntilMs = performance.now() + (holdUntilSec - nextPlayTime) * 1000 / speedMultiplier;
             _bgRegisterHold(n.midi, holdUntilMs);
-        }
-    }
-
-    // If a new-slot note is already physically held down (midiPressedNotes), the MIDI
-    // keyboard won't re-fire note-on for it — so we'd wait forever. Pre-populate
-    // _beatGroupPressed for any such note so it's counted as pressed immediately.
-    for (const midi of newSlotMidis) {
-        if (midiPressedNotes.has(midi)) {
-            _beatGroupPressed.add(midi);
         }
     }
 
@@ -4264,6 +4236,61 @@ const endTimeout = setTimeout(() => {
 previewTimeouts.push(endTimeout);
 
 }
+
+// ── Skip Preview helper ──────────────────────────────────────────────────────
+window._skipPreview = function() {
+    if (!previewMode) return;
+
+    // Cancel all pending preview timeouts/intervals
+    previewTimeouts.forEach(t => {
+        if (t && t._isFakeTimeout) {
+            t._clear();
+        } else {
+            clearTimeout(t);
+        }
+    });
+    previewTimeouts.length = 0;
+
+    // Kill the listen-countdown ticker if still running
+    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
+        clearInterval(_listenCountdownTimer);
+    }
+
+    // Reset preview state
+    previewMode = false;
+    speedLocked = false;
+    scoreKeysPlaying = false;
+    setSpeedButtonsEnabled(true);
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    if (scoreModeActive) clearScoreHighlight();
+    stopMetronome();
+    if (typeof _cancelCountAudio === 'function') _cancelCountAudio();
+
+    // Hide the skip box
+    const box = document.getElementById('skipPreviewBox');
+    if (box) box.style.display = 'none';
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Your turn';
+    feedback.classList.remove('correct', 'wrong', 'show');
+
+    spawnNextValidNote();
+};
+
+// Show/hide the skip-preview box whenever previewMode changes.
+(function _patchPreviewVisibility() {
+    const box = document.getElementById('skipPreviewBox');
+    if (!box) return;
+    let _prev = false;
+    setInterval(() => {
+        if (previewMode !== _prev) {
+            _prev = previewMode;
+            box.style.display = previewMode ? 'block' : 'none';
+        }
+    }, 150);
+})();
+// ─────────────────────────────────────────────────────────────────────────────
 
 function spawnNextValidNote() {
 
