@@ -3640,6 +3640,15 @@ function _advanceBeatGroupSubNote() {
         }
     }
 
+    // If a new-slot note is already physically held down (midiPressedNotes), the MIDI
+    // keyboard won't re-fire note-on for it — so we'd wait forever. Pre-populate
+    // _beatGroupPressed for any such note so it's counted as pressed immediately.
+    for (const midi of newSlotMidis) {
+        if (midiPressedNotes.has(midi)) {
+            _beatGroupPressed.add(midi);
+        }
+    }
+
     console.log('🔗 After slot advance: currentChord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName));
 
     // Update target display
