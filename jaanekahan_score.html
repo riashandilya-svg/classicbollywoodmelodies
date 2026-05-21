@@ -3795,11 +3795,17 @@ function _advanceBeatGroupSubNote() {
     // the visual update entirely and recurse. Without this, the transient state —
     // carry-across notes painted green, next note purple — flashes briefly before
     // the caller's noteOn handler fires _advanceBeatGroupSubNote() again.
+    //
+    // Also recurse immediately when newNotes.length === 0: this slot has no
+    // genuinely-new notes to press — only carried-across sustains. Rendering it
+    // would call rebuildKeyboardHighlights() (green keyboard flash) and then
+    // _applyHighlight([]) (blank score), producing a visible green flash with no
+    // score highlight before the next real slot is shown. Skip it entirely.
     const sustainedRequired = newNotes.filter(m => _bgHeldNotes.has(m));
     const newRequired = newNotes.filter(m => !_bgHeldNotes.has(m));
     const alreadySatisfied = newRequired.every(m => _beatGroupPressed.has(m));
-    if (alreadySatisfied && newNotes.length > 0) {
-        console.log('⏭ Slot at', nextPlayTime?.toFixed(4), 'already satisfied by current presses — skipping visual, recursing');
+    if (newNotes.length === 0 || (alreadySatisfied && newNotes.length > 0)) {
+        console.log('⏭ Slot at', nextPlayTime?.toFixed(4), newNotes.length === 0 ? '— no new notes, only carry-across — skipping visual, recursing' : 'already satisfied by current presses — skipping visual, recursing');
         _advanceBeatGroupSubNote();
         return;
     }
