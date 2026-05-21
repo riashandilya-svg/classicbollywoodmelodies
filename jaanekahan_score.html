@@ -3087,10 +3087,15 @@ function drawKeyboard() {
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
         const isLatched = mouseLatchedNotes.has(midi);
+        const _sustainedCarried = getSustainedCarriedMidis();
+        const isSustainedHold = _sustainedCarried.has(midi);
 
         // Premium gradient white key
         const wGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
-        if (isLatched) {
+        if (isSustainedHold) {
+            wGrad.addColorStop(0, '#D1FAE5');
+            wGrad.addColorStop(1, '#34D399');
+        } else if (isLatched) {
             wGrad.addColorStop(0, '#D1FAE5');
             wGrad.addColorStop(1, '#6EE7B7');
         } else if (isTreble) {
@@ -3119,8 +3124,17 @@ function drawKeyboard() {
         ctx.fillStyle = innerGrad;
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), 14);
 
+        // Glow for sustained-hold (green) key
+        if (isSustainedHold) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 22;
+            ctx.fillStyle = 'rgba(16,185,129,0.22)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
         // Glow for latched (mouse-clicked) key
-        if (isLatched) {
+        if (isLatched && !isSustainedHold) {
             ctx.shadowColor = '#10B981';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(16,185,129,0.18)';
@@ -3129,7 +3143,7 @@ function drawKeyboard() {
         }
 
         // Glow for active treble key
-        if (isTreble) {
+        if (isTreble && !isSustainedHold) {
             ctx.shadowColor = '#FFD54F';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(255,193,7,0.15)';
@@ -3138,7 +3152,7 @@ function drawKeyboard() {
         }
 
         // Glow for active bass key
-        if (isBass) {
+        if (isBass && !isSustainedHold) {
             ctx.shadowColor = '#FDE047';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(253,224,71,0.15)';
@@ -3177,10 +3191,14 @@ function drawKeyboard() {
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
         const isLatched = mouseLatchedNotes.has(midi);
+        const isSustainedHold = getSustainedCarriedMidis().has(midi);
 
         // Premium gradient black key
         const bGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + blackKeyHeight);
-        if (isLatched) {
+        if (isSustainedHold) {
+            bGrad.addColorStop(0, '#A7F3D0');
+            bGrad.addColorStop(1, '#059669');
+        } else if (isLatched) {
             bGrad.addColorStop(0, '#A7F3D0');
             bGrad.addColorStop(1, '#059669');
         } else if (isTreble) {
@@ -3204,8 +3222,17 @@ function drawKeyboard() {
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
 
+        // Glow for sustained-hold (green) key
+        if (isSustainedHold) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 22;
+            ctx.fillStyle = 'rgba(16,185,129,0.5)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
+
         // Glow for latched (mouse-clicked) key
-        if (isLatched) {
+        if (isLatched && !isSustainedHold) {
             ctx.shadowColor = '#10B981';
             ctx.shadowBlur = 20;
             ctx.fillStyle = 'rgba(16,185,129,0.45)';
@@ -3214,7 +3241,7 @@ function drawKeyboard() {
         }
 
         // Glow for active treble
-        if (isTreble) {
+        if (isTreble && !isSustainedHold) {
             ctx.shadowColor = '#FFD54F';
             ctx.shadowBlur = 20;
             ctx.fillStyle = 'rgba(255,193,7,0.4)';
@@ -3458,7 +3485,7 @@ if (clefMode === 'both') {
         const missingNew       = newRequired.filter(m => !_beatGroupPressed.has(m));
         const missingSustained = sustainedRequired.filter(m => !midiPressedNotes.has(m));
         if (missingSustained.length > 0) {
-            feedback.innerHTML = `Keep holding <strong>${missingSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
+            feedback.innerHTML = `🟢 KEEP holding the green note${missingSustained.length > 1 ? 's' : ''}: <strong style="color:#10B981">${missingSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
         } else {
             feedback.textContent = `Also play: ${missingNew.map(m => getNoteName(m)).join(' + ')}`;
         }
@@ -3524,6 +3551,24 @@ function _bgRegisterHold(midi, requiredUntilMs) {
     _bgHeldNotes.set(midi, { requiredUntilMs });
 }
 
+// Returns the Set of midi notes that are currently being SUSTAINED (carried across
+// from a previous sub-slot) — i.e. in _bgHeldNotes but NOT in the "new" notes of
+// the current slot. These are shown in GREEN on the keyboard to signal "keep holding".
+function getSustainedCarriedMidis() {
+    if (!_beatGroupNotes.length || _beatGroupCurrentPlayTime === null) return new Set();
+    const currentSlot = _beatGroupCurrentPlayTime;
+    const newAtSlot = new Set();
+    for (const { note: n } of _beatGroupNotes) {
+        const t = n.playTime ?? n.time;
+        if (Math.abs(t - currentSlot) < 0.01) newAtSlot.add(n.midi);
+    }
+    const sustained = new Set();
+    for (const [midi] of _bgHeldNotes) {
+        if (!newAtSlot.has(midi)) sustained.add(midi);
+    }
+    return sustained;
+}
+
 // Called on every note-off in both-hands mode.
 // Returns true if this was an early-release violation (caller must stop).
 function _bgCheckEarlyRelease(releasedMidi) {
@@ -3543,7 +3588,7 @@ function _bgCheckEarlyRelease(releasedMidi) {
     if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
 
     const feedback = document.getElementById('feedback');
-    feedback.innerHTML = `Keep holding <strong>${getNoteName(releasedMidi)}</strong>! ${remainingSec}s left`;
+    feedback.innerHTML = `🟢 KEEP holding the green note <strong>${getNoteName(releasedMidi)}</strong>! ${remainingSec}s left`;
     feedback.classList.remove('correct', 'wrong', 'show');
     void feedback.offsetWidth;
     feedback.classList.add('wrong', 'show');
@@ -3742,11 +3787,12 @@ function _advanceBeatGroupSubNote() {
     if (heldNotes.length > 0) {
         const holdStr = heldNotes.map(m => getNoteName(m)).join(' + ');
         const newStr  = newNotes.map(m => getNoteName(m)).join(' + ');
-        feedback.innerHTML = `Hold <strong>${holdStr}</strong> + play <strong>${newStr}</strong>`;
+        feedback.innerHTML = `🟢 KEEP holding <strong style="color:#10B981">${holdStr}</strong> &amp; play <strong>${newStr}</strong>`;
     } else {
         const nextNames = newNotes.map(m => getNoteName(m)).join(' + ');
         feedback.textContent = `Now: ${nextNames}`;
     }
+    document.getElementById('holdInfo').textContent = '';
     feedback.classList.remove('correct', 'wrong', 'show');
     void feedback.offsetWidth;
     feedback.classList.add('correct', 'show');
