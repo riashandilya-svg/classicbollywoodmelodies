@@ -1607,32 +1607,6 @@ body.score-mode #panelProgressWrap {
     <!-- Game Stage wrapping the canvas -->
     <div id="gameStage">
       <div id="hitLine"></div>
-      <!-- Sustained-note legend — appears whenever teal notes are falling -->
-      <div id="sustainedLegend" style="
-        display: none;
-        position: absolute;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(15,118,110,0.88);
-        color: #fff;
-        padding: 6px 18px;
-        border-radius: 20px;
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        z-index: 10;
-        pointer-events: none;
-        white-space: nowrap;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 4px 14px rgba(20,184,166,0.45);
-        backdrop-filter: blur(4px);
-      ">
-        <span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:linear-gradient(180deg,rgba(94,234,212,0.9),rgba(15,118,110,0.9));margin-right:4px;vertical-align:middle;"></span>
-        KEEP holding these colored notes
-      </div>
       <canvas id="canvas" width="1400"></canvas>
     </div>
 
@@ -3842,7 +3816,7 @@ function _onBeatGroupComplete() {
 
 function isBlackKey(noteName) { return noteName.includes("#"); }
 
-function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime, isSustained = false) {
+function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const x = noteToX(midiNumber);
 
     const height = Math.max(14, duration * 150 - NOTE_GAP_PX);
@@ -3852,17 +3826,11 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime, isS
 
     const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
 
-    if (isSustained) {
-        // Teal/cyan color — these notes must be KEPT HELD while other notes continue
-        gradient.addColorStop(0.00, "rgba(153,246,228,0.92)");
-        gradient.addColorStop(0.25, "rgba(94,234,212,0.88)");
-        gradient.addColorStop(0.65, "rgba(20,184,166,0.90)");
-        gradient.addColorStop(1.00, "rgba(15,118,110,0.94)");
-    } else if (track === TREBLE) {
-        gradient.addColorStop(0.00, "rgba(255,249,196,0.92)");
-        gradient.addColorStop(0.25, "rgba(255,236,155,0.88)");
-        gradient.addColorStop(0.65, "rgba(255,193,7,0.90)");
-        gradient.addColorStop(1.00, "rgba(245,158,11,0.94)");
+    if (track === TREBLE) {
+        gradient.addColorStop(0.00, "rgba(220,180,220,0.92)");
+        gradient.addColorStop(0.25, "rgba(168,100,160,0.88)");
+        gradient.addColorStop(0.65, "rgba(120,30,90,0.90)");
+        gradient.addColorStop(1.00, "rgba(80,10,50,0.94)");
     } else if (track === BASS) {
         gradient.addColorStop(0.00, "rgba(255,251,150,0.92)");
         gradient.addColorStop(0.25, "rgba(255,236,50,0.88)");
@@ -3875,7 +3843,6 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime, isS
         noteName: getNoteName(midiNumber),
         track,
         isMidi: true,
-        isSustained,
 
         x,
         y: startY,
@@ -4053,21 +4020,8 @@ function spawnTrainingNote(noteObj) {
                     ? `Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
                     : `Play: ${noteName}`;
         } else {
-            // Compute which notes are "sustained" — they start before a later slot
-            // and their duration spans INTO that later slot, meaning the player must
-            // keep holding them while pressing new notes.
-            const groupSlotTimes = [...new Set(
-                _beatGroupNotes.map(({note: n}) => (n.playTime ?? n.time).toFixed(4))
-            )].map(Number).sort((a, b) => a - b);
-
             _beatGroupNotes.forEach(({ note: n }) => {
-                const nStart = n.playTime ?? n.time;
-                const nEnd   = nStart + n.duration;
-                // A note is sustained if any LATER slot starts while this note is still playing
-                const isSustained = groupSlotTimes.some(slotTime =>
-                    slotTime > nStart + 0.001 && nEnd > slotTime + 0.05
-                );
-                addMidiFallingRectangle(n.midi, n.duration, n.track, performance.now(), isSustained);
+                addMidiFallingRectangle(n.midi, n.duration, n.track, performance.now());
             });
             rebuildKeyboardHighlights();
         }
@@ -4250,13 +4204,7 @@ const visualStart =
         note.midi,
         note.duration,
         note.track,
-        visualStart,
-        // A preview note is "sustained" if any other note starts while it is still playing
-        sectionNotes.some(other => {
-            const ot = other.playTime ?? other.time;
-            const t0 = note.playTime ?? note.time;
-            return ot > t0 + 0.05 && ot < (t0 + note.duration) - 0.05;
-        })
+        visualStart
     );
     const t = setTimeout(() => {
     synth.triggerAttackRelease(
@@ -4676,11 +4624,8 @@ if (rect.y > canvas.height) {
 ctx.fillStyle = rect.gradient;
 
 // Glow shadow for treble notes
-if (rect.isSustained) {
-    ctx.shadowColor = 'rgba(20,184,166,0.65)';
-    ctx.shadowBlur = 22;
-} else if (rect.track === TREBLE) {
-    ctx.shadowColor = 'rgba(255,193,7,0.55)';
+if (rect.track === TREBLE) {
+    ctx.shadowColor = 'rgba(160,40,120,0.60)';
     ctx.shadowBlur = 18;
 } else {
     ctx.shadowColor = 'rgba(245,158,11,0.4)';
@@ -4723,30 +4668,6 @@ ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
 
 ctx.restore();
 
-// ── Sustained-note stripe: a bright left-side bar so the player can
-//    immediately see "this one must be kept held" ──────────────────
-if (rect.isSustained) {
-    const stripeW = Math.max(5, rect.width * 0.13);
-    ctx.save();
-    ctx.globalAlpha = 0.75;
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    // rounded mini-bar on the left edge
-    const sr = Math.min(stripeW / 2, 4);
-    ctx.beginPath();
-    ctx.moveTo(rect.x + 3 + sr, rect.y + 4);
-    ctx.lineTo(rect.x + 3 + stripeW - sr, rect.y + 4);
-    ctx.quadraticCurveTo(rect.x + 3 + stripeW, rect.y + 4, rect.x + 3 + stripeW, rect.y + 4 + sr);
-    ctx.lineTo(rect.x + 3 + stripeW, rect.y + rect.height - 4 - sr);
-    ctx.quadraticCurveTo(rect.x + 3 + stripeW, rect.y + rect.height - 4, rect.x + 3 + stripeW - sr, rect.y + rect.height - 4);
-    ctx.lineTo(rect.x + 3 + sr, rect.y + rect.height - 4);
-    ctx.quadraticCurveTo(rect.x + 3, rect.y + rect.height - 4, rect.x + 3, rect.y + rect.height - 4 - sr);
-    ctx.lineTo(rect.x + 3, rect.y + 4 + sr);
-    ctx.quadraticCurveTo(rect.x + 3, rect.y + 4, rect.x + 3 + sr, rect.y + 4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-}
-
 const shimmerSpeed = 0.0015 * speedMultiplier;
 const shimmerPhase =
     (performance.now() * shimmerSpeed) % 1;
@@ -4781,8 +4702,8 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
             ctx.fillStyle = "rgba(255,255,255,0.95)";
             ctx.shadowColor = "rgba(0,0,0,0.5)";
         } else {
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.shadowColor = "rgba(255,255,255,0.7)";
+            ctx.fillStyle = "rgba(255,220,255,0.95)";
+            ctx.shadowColor = "rgba(0,0,0,0.6)";
         }
         
         ctx.font = "bold 15px Arial";
@@ -4803,14 +4724,6 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
 } 
 drawKeyboard();
     drawBlackKeyArrow();
-
-    // ── Sustained-note legend banner ──────────────────────────────────────
-    const _sustainLegend = document.getElementById('sustainedLegend');
-    if (_sustainLegend) {
-        const hasSustained = fallingRectangles.some(r => r.isSustained);
-        _sustainLegend.style.display = (visualsPlaying && hasSustained) ? 'flex' : 'none';
-    }
-
     requestAnimationFrame(animate);
 }
 function drawBlackKeyArrow() {
