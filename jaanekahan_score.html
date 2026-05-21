@@ -3815,6 +3815,9 @@ function _advanceBeatGroupSubNote() {
         // so sub-slot advances here never update the score highlight — this fixes that.
         const seen = new Set();
         const allIndices = [];
+        const colorMap = new Map();
+
+        // New sub-slot notes → purple/gold (default clef color, no entry in colorMap needed)
         for (const { note: n } of _beatGroupNotes) {
             const t = n.playTime ?? n.time;
             if (Math.abs(t - nextPlayTime) >= 0.01) continue; // only notes AT this new slot
@@ -3823,7 +3826,27 @@ function _advanceBeatGroupSubNote() {
             seen.add(k);
             allIndices.push(..._svgIndicesForMidiNote(n, 'both'));
         }
-        if (allIndices.length > 0) _applyHighlight(allIndices);
+
+        // Sustained carry-across notes (still held from a previous sub-slot) → green,
+        // matching the green keyboard keys shown by rebuildKeyboardHighlights().
+        for (const [sustainedMidi] of _bgHeldNotes) {
+            // Only paint notes NOT already in the new slot (those would be purple above)
+            const inNewSlot = [..._beatGroupNotes].some(({ note: n }) => {
+                const t = n.playTime ?? n.time;
+                return n.midi === sustainedMidi && Math.abs(t - nextPlayTime) < 0.01;
+            });
+            if (inNewSlot) continue;
+            // Find the beat-group note object for this midi to look up its SVG index
+            const noteEntry = _beatGroupNotes.find(({ note: n }) => n.midi === sustainedMidi);
+            if (!noteEntry) continue;
+            const sustainedIndices = _svgIndicesForMidiNote(noteEntry.note, 'both');
+            for (const idx of sustainedIndices) {
+                if (!allIndices.includes(idx)) allIndices.push(idx);
+                colorMap.set(idx, '#16a34a'); // green — matches keyboard sustained color
+            }
+        }
+
+        if (allIndices.length > 0) _applyHighlight(allIndices, colorMap);
     }
 }
 
@@ -6534,7 +6557,10 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
 let _currentHighlightEls = [];
 
-function _applyHighlight(indices) {
+// colorMap: optional Map<index, cssColor> — overrides the default clef-based color for
+// specific indices. Used to paint sustained carry-across notes green while the new
+// sub-slot notes remain purple/gold.
+function _applyHighlight(indices, colorMap) {
     // Clear previous highlights
     for (const el of _currentHighlightEls) {
         el.removeAttribute('fill');
@@ -6547,8 +6573,9 @@ function _applyHighlight(indices) {
         const el   = typeof x === 'number' ? _svgNoteElements[x]?.el : x;
         const clef = typeof x === 'number' ? _svgNoteElements[x]?.clef : null;
         if (!el) return;
-        // Treble clef → purple-maroon, Bass clef → gold
-        const color = clef === 'bass' ? '#B45309' : '#9B2C6E';
+        // colorMap override → clef default (treble: purple-maroon, bass: gold)
+        const color = (colorMap && colorMap.has(x)) ? colorMap.get(x)
+                    : clef === 'bass' ? '#B45309' : '#9B2C6E';
         el.setAttribute('fill', color);
         el.setAttribute('filter', 'url(#hlGlow)');
     });
