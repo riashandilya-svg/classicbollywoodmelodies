@@ -2613,6 +2613,18 @@ function ensureSynth() {
     freeModeSynth = synth;
 }
 
+// Fully tears down the shared synth and frees all Web Audio nodes.
+// Call on resetAll() — NOT on stopPlayback(), because disposing forces
+// a full Salamander sample reload on the next session (slow).
+function disposeSynth() {
+    if (synth) {
+        try { synth.releaseAll(); } catch(e) {}
+        try { synth.dispose();    } catch(e) {}
+        synth = null;
+    }
+    freeModeSynth = null;
+}
+
 let secondsPerBeat = 0.5;
 let MEASURE_TIME_MAP = {};
 
@@ -5812,7 +5824,7 @@ function resetAll() {
 
     // ── 2. Stop all audio & transport ────────────────────────────────────
     stopMetronome();
-    if (synth) synth.releaseAll();
+    disposeSynth();
     try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch(e) {}
 
     // ── 3. Kill every active state flag ──────────────────────────────────
