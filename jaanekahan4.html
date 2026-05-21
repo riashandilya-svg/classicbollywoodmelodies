@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
+
+
 <style>
 
 /* Fixed brand bar */
@@ -3931,6 +3932,34 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
+    const width = getWhiteKeyWidth() * 0.86;
+    const gloss = ctx.createLinearGradient(x, 0, x + width, 0);
+    gloss.addColorStop(0.0, "rgba(255,255,255,0.05)");
+    gloss.addColorStop(0.4, "rgba(255,255,255,0.35)");
+    gloss.addColorStop(0.6, "rgba(255,255,255,0.35)");
+    gloss.addColorStop(1.0, "rgba(255,255,255,0.05)");
+
+    // Body gradient — normalised 0→height so it can be cached at spawn.
+    // Drawn via ctx.translate(0, rect.y) so no per-frame recreation needed.
+    const bodyGrad = ctx.createLinearGradient(0, 0, 0, height);
+    if (track === TREBLE) {
+        bodyGrad.addColorStop(0.00, "rgba(220,180,220,0.92)");
+        bodyGrad.addColorStop(0.25, "rgba(168,100,160,0.88)");
+        bodyGrad.addColorStop(0.65, "rgba(120,30,90,0.90)");
+        bodyGrad.addColorStop(1.00, "rgba(80,10,50,0.94)");
+    } else {
+        bodyGrad.addColorStop(0.00, "rgba(255,251,150,0.92)");
+        bodyGrad.addColorStop(0.25, "rgba(255,236,50,0.88)");
+        bodyGrad.addColorStop(0.65, "rgba(250,204,21,0.90)");
+        bodyGrad.addColorStop(1.00, "rgba(202,138,4,0.94)");
+    }
+
+    // Shimmer gradient — normalised -20→+20 around y=0; translated to shimmerY each frame.
+    const shimmerGrad = ctx.createLinearGradient(0, -20, 0, 20);
+    shimmerGrad.addColorStop(0,   "rgba(255,255,255,0)");
+    shimmerGrad.addColorStop(0.5, "rgba(255,255,255,0.8)");
+    shimmerGrad.addColorStop(1,   "rgba(255,255,255,0)");
+
     fallingRectangles.push({
         midi: midiNumber,
         noteName: getNoteName(midiNumber),
@@ -3941,10 +3970,12 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         y: startY,
         startY,
         endY,
-        width: getWhiteKeyWidth() * 0.86,
+        width,
         height,
 
-        gradient: null, // recomputed per-frame at actual rect.y so colours show correctly
+        bodyGrad,       // normalised vertical gradient — cached at spawn, used with translate
+        shimmerGrad,    // normalised shimmer band — cached at spawn, used with translate
+        gloss,          // horizontal — depends only on x/width, safe to cache at spawn
         startTime: noteStartTime,
         landed: false,
     });
@@ -4718,24 +4749,12 @@ if (rect.y > canvas.height) {
     return false;
 }
 
-// Recompute gradient each frame at rect's actual y so colours render correctly
-{
-    const g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.height);
-    if (rect.track === TREBLE) {
-        g.addColorStop(0.00, "rgba(220,180,220,0.92)");
-        g.addColorStop(0.25, "rgba(168,100,160,0.88)");
-        g.addColorStop(0.65, "rgba(120,30,90,0.90)");
-        g.addColorStop(1.00, "rgba(80,10,50,0.94)");
-    } else {
-        g.addColorStop(0.00, "rgba(255,251,150,0.92)");
-        g.addColorStop(0.25, "rgba(255,236,50,0.88)");
-        g.addColorStop(0.65, "rgba(250,204,21,0.90)");
-        g.addColorStop(1.00, "rgba(202,138,4,0.94)");
-    }
-    ctx.fillStyle = g;
-}
+// ── Draw rect in translated space (origin = rect's top-left Y) ─────────────
+// Both bodyGrad and shimmerGrad are normalised at spawn — no per-frame allocation.
+ctx.save();
+ctx.translate(0, rect.y);
 
-// Glow shadow for treble notes
+// Glow shadow
 if (rect.track === TREBLE) {
     ctx.shadowColor = 'rgba(160,40,120,0.60)';
     ctx.shadowBlur = 18;
@@ -4744,70 +4763,45 @@ if (rect.track === TREBLE) {
     ctx.shadowBlur = 10;
 }
 
+// Rounded-rect body — y-coords are now relative (0 = top of rect)
 const r = 12;
+ctx.fillStyle = rect.bodyGrad;
 ctx.beginPath();
-ctx.moveTo(rect.x + r, rect.y);
-ctx.lineTo(rect.x + rect.width - r, rect.y);
-ctx.quadraticCurveTo(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y + r);
-ctx.lineTo(rect.x + rect.width, rect.y + rect.height - r);
-ctx.quadraticCurveTo(rect.x + rect.width, rect.y + rect.height, rect.x + rect.width - r, rect.y + rect.height);
-ctx.lineTo(rect.x + r, rect.y + rect.height);
-ctx.quadraticCurveTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - r);
-ctx.lineTo(rect.x, rect.y + r);
-ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
+ctx.moveTo(rect.x + r,             0);
+ctx.lineTo(rect.x + rect.width - r, 0);
+ctx.quadraticCurveTo(rect.x + rect.width, 0,             rect.x + rect.width, r);
+ctx.lineTo(rect.x + rect.width,          rect.height - r);
+ctx.quadraticCurveTo(rect.x + rect.width, rect.height,   rect.x + rect.width - r, rect.height);
+ctx.lineTo(rect.x + r,                   rect.height);
+ctx.quadraticCurveTo(rect.x,             rect.height,    rect.x, rect.height - r);
+ctx.lineTo(rect.x,                       r);
+ctx.quadraticCurveTo(rect.x,             0,               rect.x + r, 0);
 ctx.closePath();
 ctx.fill();
 ctx.shadowBlur = 0;
 
+// Gloss overlay (horizontal gradient — cached at spawn)
 ctx.save();
 ctx.globalCompositeOperation = "screen";
 ctx.globalAlpha = 0.22;
-
-const gloss = ctx.createLinearGradient(
-    rect.x,
-    rect.y,
-    rect.x + rect.width,
-    rect.y
-);
-
-gloss.addColorStop(0.0, "rgba(255,255,255,0.05)");
-gloss.addColorStop(0.4, "rgba(255,255,255,0.35)");
-gloss.addColorStop(0.6, "rgba(255,255,255,0.35)");
-gloss.addColorStop(1.0, "rgba(255,255,255,0.05)");
-
-ctx.fillStyle = gloss;
-ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-
+ctx.fillStyle = rect.gloss;
+ctx.fillRect(rect.x, 0, rect.width, rect.height);
 ctx.restore();
 
+// Shimmer band — cached shimmerGrad translated to its Y position within the rect
 const shimmerSpeed = 0.0015 * speedMultiplier;
-const shimmerPhase =
-    (performance.now() * shimmerSpeed) % 1;
-
-const shimmerY =
-    rect.y + shimmerPhase * rect.height;
+const shimmerPhase = (performance.now() * shimmerSpeed) % 1;
+const shimmerLocalY = shimmerPhase * rect.height;  // relative to translated origin
 
 const isDownbeat = metronomeRunning && (metroBeat % SONG_CONFIG.timeSignature[0] === 0);
-
 ctx.save();
 ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
 ctx.globalCompositeOperation = "lighter";
+ctx.translate(0, shimmerLocalY);   // shimmerGrad is normalised to -20→+20 around y=0
+ctx.fillStyle = rect.shimmerGrad;
+ctx.fillRect(rect.x, -20, rect.width, 40);  // only need to fill the shimmer band height
 
-const shimmerGradient = ctx.createLinearGradient(
-    0,
-    shimmerY - 20,
-    0,
-    shimmerY + 20
-);
-
-shimmerGradient.addColorStop(0, "rgba(255,255,255,0)");
-shimmerGradient.addColorStop(0.5, "rgba(255,255,255,0.8)");
-shimmerGradient.addColorStop(1, "rgba(255,255,255,0)");
-
-ctx.fillStyle = shimmerGradient;
-ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-
-ctx.restore();
+ctx.restore();  // pop shimmer translate
 
 if (showNoteNames && rect.isMidi && rect.noteName) {
         if (rect.track === BASS) {
@@ -4826,10 +4820,12 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
         ctx.fillText(
             rect.noteName,
             rect.x + rect.width / 2,
-            rect.y + rect.height / 2
+            rect.height / 2   // relative — outer translate puts us at rect.y
         );
         ctx.shadowBlur = 0;
     }
+
+ctx.restore();  // pop outer translate(0, rect.y)
 
     return true;
 });
