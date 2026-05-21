@@ -3798,22 +3798,20 @@ function _advanceBeatGroupSubNote() {
         }
     }
 
-    // If every new note for this slot is already in _beatGroupPressed (because the
-    // key press that triggered this call satisfies the next slot immediately), skip
-    // the visual update entirely and recurse. Without this, the transient state —
-    // carry-across notes painted green, next note purple — flashes briefly before
-    // the caller's noteOn handler fires _advanceBeatGroupSubNote() again.
-    //
     // Also recurse immediately when newNotes.length === 0: this slot has no
     // genuinely-new notes to press — only carried-across sustains. Rendering it
     // would call rebuildKeyboardHighlights() (green keyboard flash) and then
     // _applyHighlight([]) (blank score), producing a visible green flash with no
     // score highlight before the next real slot is shown. Skip it entirely.
-    const sustainedRequired = newNotes.filter(m => _bgHeldNotes.has(m));
-    const newRequired = newNotes.filter(m => !_bgHeldNotes.has(m));
-    const alreadySatisfied = newRequired.every(m => _beatGroupPressed.has(m));
-    if (newNotes.length === 0 || (alreadySatisfied && newNotes.length > 0)) {
-        console.log('⏭ Slot at', nextPlayTime?.toFixed(4), newNotes.length === 0 ? '— no new notes, only carry-across — skipping visual, recursing' : 'already satisfied by current presses — skipping visual, recursing');
+    //
+    // NOTE: We intentionally do NOT skip when newRequired notes happen to already
+    // be in _beatGroupPressed. The press that triggered _advanceBeatGroupSubNote
+    // was added to _beatGroupPressed (line ~3452) BEFORE this function ran, so
+    // it would falsely satisfy the next slot immediately — causing the double-press
+    // bug on semiquavers (sixteenth notes). Each new slot must always wait for a
+    // fresh physical press by the user.
+    if (newNotes.length === 0) {
+        console.log('⏭ Slot at', nextPlayTime?.toFixed(4), '— no new notes, only carry-across — skipping visual, recursing');
         _advanceBeatGroupSubNote();
         return;
     }
