@@ -3841,24 +3841,9 @@ function _advanceBeatGroupSubNote() {
             allIndices.push(..._svgIndicesForMidiNote(n, 'both'));
         }
 
-        // Sustained carry-across notes (still held from a previous sub-slot) → green,
-        // matching the green keyboard keys shown by rebuildKeyboardHighlights().
-        for (const [sustainedMidi] of _bgHeldNotes) {
-            // Only paint notes NOT already in the new slot (those would be purple above)
-            const inNewSlot = [..._beatGroupNotes].some(({ note: n }) => {
-                const t = n.playTime ?? n.time;
-                return n.midi === sustainedMidi && Math.abs(t - nextPlayTime) < 0.01;
-            });
-            if (inNewSlot) continue;
-            // Find the beat-group note object for this midi to look up its SVG index
-            const noteEntry = _beatGroupNotes.find(({ note: n }) => n.midi === sustainedMidi);
-            if (!noteEntry) continue;
-            const sustainedIndices = _svgIndicesForMidiNote(noteEntry.note, 'both');
-            for (const idx of sustainedIndices) {
-                if (!allIndices.includes(idx)) allIndices.push(idx);
-                colorMap.set(idx, '#16a34a'); // green — matches keyboard sustained color
-            }
-        }
+        // Sustained carry-across notes are already indicated by green keyboard keys.
+        // Do NOT re-highlight them on the score at their old position — that causes
+        // stray green highlights on notes that are no longer the "current" chord.
 
         if (allIndices.length > 0) _applyHighlight(allIndices, colorMap);
     }
