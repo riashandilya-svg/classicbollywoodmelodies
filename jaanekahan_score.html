@@ -3870,20 +3870,6 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
-    const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
-
-    if (track === TREBLE) {
-        gradient.addColorStop(0.00, "rgba(220,180,220,0.92)");
-        gradient.addColorStop(0.25, "rgba(168,100,160,0.88)");
-        gradient.addColorStop(0.65, "rgba(120,30,90,0.90)");
-        gradient.addColorStop(1.00, "rgba(80,10,50,0.94)");
-    } else if (track === BASS) {
-        gradient.addColorStop(0.00, "rgba(255,251,150,0.92)");
-        gradient.addColorStop(0.25, "rgba(255,236,50,0.88)");
-        gradient.addColorStop(0.65, "rgba(250,204,21,0.90)");
-        gradient.addColorStop(1.00, "rgba(202,138,4,0.94)");
-    }
-
     fallingRectangles.push({
         midi: midiNumber,
         noteName: getNoteName(midiNumber),
@@ -3897,7 +3883,7 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         width: getWhiteKeyWidth() * 0.86,
         height,
 
-        gradient,
+        gradient: null, // recomputed per-frame at actual rect.y so colours show correctly
         startTime: noteStartTime,
         landed: false,
     });
@@ -4667,7 +4653,22 @@ if (rect.y > canvas.height) {
     return false;
 }
 
-ctx.fillStyle = rect.gradient;
+// Recompute gradient each frame at rect's actual y so colours render correctly
+{
+    const g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.height);
+    if (rect.track === TREBLE) {
+        g.addColorStop(0.00, "rgba(220,180,220,0.92)");
+        g.addColorStop(0.25, "rgba(168,100,160,0.88)");
+        g.addColorStop(0.65, "rgba(120,30,90,0.90)");
+        g.addColorStop(1.00, "rgba(80,10,50,0.94)");
+    } else {
+        g.addColorStop(0.00, "rgba(255,251,150,0.92)");
+        g.addColorStop(0.25, "rgba(255,236,50,0.88)");
+        g.addColorStop(0.65, "rgba(250,204,21,0.90)");
+        g.addColorStop(1.00, "rgba(202,138,4,0.94)");
+    }
+    ctx.fillStyle = g;
+}
 
 // Glow shadow for treble notes
 if (rect.track === TREBLE) {
