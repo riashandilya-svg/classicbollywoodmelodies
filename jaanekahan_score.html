@@ -3616,7 +3616,14 @@ function _bgRestartHoldTimer(midi) {
         return t > (_beatGroupCurrentPlayTime ?? -1) + 0.001;
     });
 
-    if (_beatGroupTimer === null && allSubNotesDone) {
+    // Additional guard: the hold timer must only fire after _advanceBeatGroupSubNote
+    // has already started it (i.e. noteHoldStartTime is set for the current group).
+    // If noteHoldStartTime is null or predates the current group, the hold phase has
+    // not officially started yet — a re-press here is a carried note replayed during
+    // sub-note traversal, not a valid hold restart.
+    const holdPhaseStarted = noteHoldStartTime !== null && noteHoldStartTime >= (_beatGroupStartMs ?? 0);
+
+    if (_beatGroupTimer === null && allSubNotesDone && holdPhaseStarted) {
         _beatGroupTimer = setTimeout(() => {
             _beatGroupTimer = null;
             _onBeatGroupComplete();
@@ -6511,10 +6518,16 @@ function _svgIndicesForMidiNote(noteObj, hand) {
         return [];
     }
 
-    // Return the matched note AND all chord-mates at the same X position
+    // Return the matched note AND all chord-mates at the same X position.
+    // Strategy: try a tight 2px tolerance first (catches true chord-mates that
+    // are pixel-aligned). If that returns only the matched note itself, widen to
+    // 6px to handle minor SVG rounding across staves. This prevents grace notes
+    // placed just a few pixels away from accidentally being co-highlighted.
     const matchedIdx = bucket[entry.rank];
     const matchedTx  = _svgNoteElements[matchedIdx].tx;
-    const result = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 4);
+    const tight  = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 2);
+    const result = tight.length > 1 ? tight
+                 : bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 6);
     return result;
 }
 
