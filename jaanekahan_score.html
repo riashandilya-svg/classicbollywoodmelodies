@@ -3099,8 +3099,8 @@ function drawKeyboard() {
             wGrad.addColorStop(0, '#D1FAE5');
             wGrad.addColorStop(1, '#6EE7B7');
         } else if (isTreble) {
-            wGrad.addColorStop(0, '#FFF9C4');
-            wGrad.addColorStop(1, '#FFE082');
+            wGrad.addColorStop(0, '#E8C8E8');
+            wGrad.addColorStop(1, '#7B1F5A');
         } else if (isBass) {
             wGrad.addColorStop(0, '#FFECB3');
             wGrad.addColorStop(1, '#FFB300');
@@ -3144,9 +3144,9 @@ function drawKeyboard() {
 
         // Glow for active treble key
         if (isTreble && !isSustainedHold) {
-            ctx.shadowColor = '#FFD54F';
+            ctx.shadowColor = '#C060A0';
             ctx.shadowBlur = 18;
-            ctx.fillStyle = 'rgba(255,193,7,0.15)';
+            ctx.fillStyle = 'rgba(160,40,120,0.18)';
             ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
             ctx.shadowBlur = 0;
         }
@@ -3161,7 +3161,7 @@ function drawKeyboard() {
         }
 
         if (showNoteNames) {
-            ctx.fillStyle = isBass ? '#78350F' : '#555';
+            ctx.fillStyle = isBass ? '#78350F' : (isTreble ? '#F5D0F0' : '#555');
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -3202,8 +3202,8 @@ function drawKeyboard() {
             bGrad.addColorStop(0, '#A7F3D0');
             bGrad.addColorStop(1, '#059669');
         } else if (isTreble) {
-            bGrad.addColorStop(0, '#FFF9C4');
-            bGrad.addColorStop(1, '#F59E0B');
+            bGrad.addColorStop(0, '#E8C8E8');
+            bGrad.addColorStop(1, '#7B1F5A');
         } else if (isBass) {
             bGrad.addColorStop(0, '#FEF9C3');
             bGrad.addColorStop(1, '#CA8A04');
@@ -3242,9 +3242,9 @@ function drawKeyboard() {
 
         // Glow for active treble
         if (isTreble && !isSustainedHold) {
-            ctx.shadowColor = '#FFD54F';
+            ctx.shadowColor = '#C060A0';
             ctx.shadowBlur = 20;
-            ctx.fillStyle = 'rgba(255,193,7,0.4)';
+            ctx.fillStyle = 'rgba(160,40,120,0.45)';
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
             ctx.shadowBlur = 0;
         }
@@ -6534,8 +6534,8 @@ function _applyHighlight(indices) {
         const el   = typeof x === 'number' ? _svgNoteElements[x]?.el : x;
         const clef = typeof x === 'number' ? _svgNoteElements[x]?.clef : null;
         if (!el) return;
-        // Treble clef → blue, Bass clef → yellow
-        const color = clef === 'bass' ? '#B45309' : '#FFC107';
+        // Treble clef → purple-maroon, Bass clef → gold
+        const color = clef === 'bass' ? '#B45309' : '#9B2C6E';
         el.setAttribute('fill', color);
         el.setAttribute('filter', 'url(#hlGlow)');
     });
