@@ -6636,7 +6636,6 @@ function onTrainingNoteSpawned(noteObj) {
     const beats    = noteObj.duration / secondsPerBeat;
     showScoreNoteDisplay(noteName, beatsToNoteName(beats));
 
-    const allIndices = [];
     const notePlayTime = noteObj.playTime ?? noteObj.time;
 
     // If this note is from the repeat pass, mirror to the first-pass equivalent notes
@@ -6652,8 +6651,6 @@ function onTrainingNoteSpawned(noteObj) {
             Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
         );
         if (!simultaneousNotes.length) {
-            // First-pass measures are not in the current range (e.g. range 36→37).
-            // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
             const firstPassRawTime = noteObj.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
             simultaneousNotes = allMidiNotes.filter(n =>
                 Math.abs(n.time - firstPassRawTime) < 0.01
@@ -6672,24 +6669,54 @@ function onTrainingNoteSpawned(noteObj) {
 
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
-    // Deduplicate by time+midi+track so we don't double-lookup
+    // ── Collect SVG indices for the NEW active notes (current slot) ──
+    const activeIndices = [];
     const seen = new Set();
     for (const n of simultaneousNotes) {
         const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
         if (seen.has(k)) continue;
         seen.add(k);
         const indices = _svgIndicesForMidiNote(n, 'both');
-        allIndices.push(...indices);
+        activeIndices.push(...indices);
+    }
+    // Fallback: just use the primary noteObj
+    if (activeIndices.length === 0) {
+        const fallback = _svgIndicesForMidiNote(noteObj, clefMode);
+        activeIndices.push(...fallback);
     }
 
-    // Fallback: just use the primary noteObj
-    if (allIndices.length === 0) {
-        const fallback = _svgIndicesForMidiNote(noteObj, clefMode);
-        allIndices.push(...fallback);
+    // ── Collect SVG indices for SUSTAINED (carried) notes ──
+    // These are notes from a previous slot still within their required hold window.
+    // They should stay GREEN so the player knows to keep holding them.
+    const sustainedIndices = [];
+    if (clefMode === 'both') {
+        for (const [midi, s] of sustainedNotes) {
+            if (sustainedNoteExpired(midi)) continue;
+            // Find the matching allMidiNotes entry so we can look it up in the rank map
+            const sustainedNoteObj = allMidiNotes.find(n =>
+                n.midi === midi && n.track === s.track
+            );
+            if (!sustainedNoteObj) continue;
+            const indices = _svgIndicesForMidiNote(sustainedNoteObj, 'both');
+            sustainedIndices.push(...indices);
+        }
     }
+
+    // ── Build a colorMap: sustained → green, active → purple/gold (default) ──
+    // Active indices take priority: if a note is both active and sustained,
+    // it shows as the active color (it's the new note to focus on).
+    const activeSet = new Set(activeIndices);
+    const colorMap = new Map();
+    for (const idx of sustainedIndices) {
+        if (!activeSet.has(idx)) {
+            colorMap.set(idx, '#15803D'); // green for sustained-hold notes
+        }
+    }
+
+    const allIndices = [...new Set([...sustainedIndices, ...activeIndices])];
 
     if (allIndices.length > 0) {
-        _applyHighlight(allIndices);
+        _applyHighlight(allIndices, colorMap);
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
@@ -6790,8 +6817,8 @@ scoreModeToggle.addEventListener('change', async () => {
             const noteObj = practiceNotes[trainingIndex];
             showScoreNoteDisplay(currentTrainingNote);
             if (noteObj) {
-                const indices = _svgIndicesForMidiNote(noteObj, clefMode);
-                if (indices.length > 0) _applyHighlight(indices);
+                // Use onTrainingNoteSpawned so sustained notes are painted green correctly
+                onTrainingNoteSpawned(noteObj);
             }
         }
     } else {
