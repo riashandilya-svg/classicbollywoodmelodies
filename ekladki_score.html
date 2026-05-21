@@ -2742,15 +2742,9 @@ function rebuildKeyboardHighlights() {
     setInterval(() => {
         let val, color, label;
 
-        if (holdEvaluated) {
-            // ── Hold just evaluated (success or fail) — reset to idle immediately ──
-            val   = '—';
-            color = '';
-            label = 'Hold for';
-
-        } else if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+        if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
             // ── Active hold phase: count down remaining time ──
-            // Timer starts the moment the correct note is pressed (noteHoldStartTime = performance.now())
+            // noteHoldStartTime is set the moment the correct note is pressed.
             const remaining = Math.max(0,
                 (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
             );
@@ -3626,10 +3620,7 @@ function _advanceBeatGroupSubNote() {
         if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
         _beatGroupStartMs = performance.now();
         const holdDurMs = Math.max((_beatGroupEndSec - currentPlayTime) * 1000 / speedMultiplier, 300);
-        // Hook into the stat-bar countdown (it watches noteHoldStartTime + expectedHoldDuration).
-        // Must reset holdEvaluated first — otherwise the countdown loop's guard sees true
-        // and immediately shows "—" instead of counting down.
-        holdEvaluated = false;
+        // Hook into the stat-bar countdown (it watches noteHoldStartTime + expectedHoldDuration)
         noteHoldStartTime = _beatGroupStartMs;
         expectedHoldDuration = holdDurMs;
         _beatGroupTimer = setTimeout(() => {
