@@ -3684,11 +3684,19 @@ function _advanceBeatGroupSubNote() {
             _onBeatGroupComplete();
         }, holdDurMs);
 
-        // Register every pressed group note as "must hold" until the group completes.
-        // This covers both bass notes (pressed first) and any treble notes still held.
-        // _bgCheckEarlyRelease() will cancel the timer if any of them are released early.
+        // Register notes that must be held through the final hold phase.
+        // IMPORTANT: only register notes still active at the final slot (i.e. in
+        // currentChordNotes). Registering ALL _beatGroupPressed notes would include
+        // notes from earlier sub-slots that have already completed (e.g. a treble
+        // quaver played at slot 1 when the final slot is slot 2). Those stale notes
+        // would appear in getSustainedCarriedMidis() — which returns _bgHeldNotes
+        // entries NOT at the current slot — and get rendered GREEN on the keyboard,
+        // creating a spurious green flash immediately after the final input press.
+        // _bgCheckEarlyRelease() will cancel the timer if any held note is released early.
         const requiredUntilMs = performance.now() + holdDurMs;
-        _beatGroupPressed.forEach(midi => _bgRegisterHold(midi, requiredUntilMs));
+        _beatGroupPressed.forEach(midi => {
+            if (currentChordNotes.has(midi)) _bgRegisterHold(midi, requiredUntilMs);
+        });
 
         const feedback = document.getElementById('feedback');
         feedback.textContent = 'Hold...';
