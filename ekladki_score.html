@@ -3626,7 +3626,10 @@ function _advanceBeatGroupSubNote() {
         if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
         _beatGroupStartMs = performance.now();
         const holdDurMs = Math.max((_beatGroupEndSec - currentPlayTime) * 1000 / speedMultiplier, 300);
-        // Hook into the stat-bar countdown (it watches noteHoldStartTime + expectedHoldDuration)
+        // Hook into the stat-bar countdown (it watches noteHoldStartTime + expectedHoldDuration).
+        // Must reset holdEvaluated first — otherwise the countdown loop's guard sees true
+        // and immediately shows "—" instead of counting down.
+        holdEvaluated = false;
         noteHoldStartTime = _beatGroupStartMs;
         expectedHoldDuration = holdDurMs;
         _beatGroupTimer = setTimeout(() => {
