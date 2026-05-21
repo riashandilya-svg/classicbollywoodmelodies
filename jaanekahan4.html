@@ -7,8 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-
+  
 <style>
 
 /* Fixed brand bar */
@@ -5412,7 +5411,9 @@ async function initMIDI() {
     if(!navigator.requestMIDIAccess){ console.log('Web MIDI API not supported'); return; }
     try {
         const midiAccess = await navigator.requestMIDIAccess();
+        if (DEBUG) console.log('✅ MIDI Access granted');
         for(const input of midiAccess.inputs.values()){
+            if (DEBUG) console.log('🔌 Connected:', input.name);
             midiInputs.push(input);
             input.onmidimessage = handleMIDIMessage;
         }
@@ -5529,21 +5530,7 @@ startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
     
     if (midiInputs.length === 0) {
-        try {
-            const midiAccess = await navigator.requestMIDIAccess();
-            console.log('✅ MIDI Access granted');
-            
-            for (const input of midiAccess.inputs.values()) {
-                console.log('🔌 Connected:', input.name);
-                midiInputs.push(input);
-                
-                input.onmidimessage = (event) => {
-                    handleMIDIMessage(event);
-                };
-            }
-        } catch (err) {
-            console.error('❌ MIDI Error:', err);
-        }
+        await initMIDI();
     }
     
     hardStopUserNote();
@@ -7223,7 +7210,7 @@ async function detectCurrency() {
       // Return currency for country, or INR as fallback
       return currencyMap[countryCode] || 'INR';
     } catch (fetchError) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId);  // covers both abort and network errors
       throw fetchError;
     }
   } catch (error) {
@@ -7664,7 +7651,7 @@ window.location.reload();
       console.log("[PAYWALL] 🚫 ACCESS DENIED - Showing paywall");
       
       const currency = await detectCurrency();
-      const currencySymbol = CURRENCY_SYMBOLS[currency];
+      const currencySymbol = CURRENCY_SYMBOLS[currency] || currency;
       
       const [pricingData, credits] = await Promise.all([
         fetchPricing(productId, currency),
