@@ -3751,17 +3751,22 @@ function _advanceBeatGroupSubNote() {
         if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
     }
 
-    // Remove NEW notes (not carried across) from _beatGroupPressed so that
-    // midi numbers reused across slots (e.g. D6 at slot 0.9231 AND slot 1.6154)
-    // must be physically re-pressed in the new slot. Without this, allNewPressed
-    // evaluates true immediately (from the earlier press) and the slot
-    // auto-advances without any user input — causing the "double press" symptom
-    // where the hold fires prematurely then the user's real press triggers
-    // an unexpected second evaluation.
+    // Remove NEW notes (not carried across) from _beatGroupPressed AND midiPressedNotes
+    // so that midi numbers reused across slots (e.g. A4 at slot 0.0000 AND slot 0.3462)
+    // must be physically re-pressed in the new slot.
+    //
+    // Without removing from _beatGroupPressed: allNewPressed evaluates true immediately
+    // (from the earlier press) and the slot auto-advances without user input.
+    //
+    // Without removing from midiPressedNotes: the guard at the top of processUserNoteOn
+    // ("if midiPressedNotes.has(midiNote) return") fires and silently swallows the user's
+    // press — they have to physically release and re-press the key (the "double press" bug
+    // on semiquaver clusters where the same note appears in consecutive slots).
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         if (Math.abs(t - nextPlayTime) < 0.01 && !carriedAcrossMidis.has(n.midi)) {
             _beatGroupPressed.delete(n.midi);
+            midiPressedNotes.delete(n.midi);
         }
     }
 
