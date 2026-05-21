@@ -6709,9 +6709,14 @@ function onTrainingNoteSpawned(noteObj) {
 
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
-    // Deduplicate by time+midi+track so we don't double-lookup
+    // Deduplicate by time+midi+track so we don't double-lookup.
+    // Also skip notes that are carried-across sustains (_bgHeldNotes) — those are
+    // already physically held from a previous slot and do NOT need a new score
+    // highlight. Highlighting them here causes a stray green/purple flash right
+    // after a successful press before the app moves to the next musical event.
     const seen = new Set();
     for (const n of simultaneousNotes) {
+        if (_bgHeldNotes && _bgHeldNotes.has(n.midi)) continue; // carried-across sustain — skip
         const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
         if (seen.has(k)) continue;
         seen.add(k);
