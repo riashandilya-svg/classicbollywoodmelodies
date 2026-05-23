@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piano Riyaaz 🎹</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #FF6B9D;
+  --text-main: #2D1B5E;
+  --text-muted: #9B7FBF;
+  --border-soft: rgba(255,107,157,0.25);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background:
+    radial-gradient(800px 500px at 10% 0%, rgba(255,180,220,0.35), transparent 60%),
+    radial-gradient(700px 450px at 90% 5%, rgba(180,220,255,0.30), transparent 60%),
+    #fff9f0;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 20px 40px;
+}
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(90deg, #FF6B9D, #FF9A3C, #FFD93D, #6BCB77, #4D96FF, #C77DFF);
+  background-size: 300% 100%;
+  animation: rainbowShift 6s linear infinite;
+  z-index: 100;
+}
+@keyframes rainbowShift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+header span {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700; font-size: 1.35rem; letter-spacing: 1px;
+  color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+h1 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  background: linear-gradient(90deg, #FF6B9D, #FF9A3C, #FFD93D, #6BCB77, #4D96FF, #C77DFF);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  text-align: center; margin-bottom: 8px;
+}
+.subtitle {
+  color: var(--text-muted); font-size: 1rem; text-align: center; margin-bottom: 48px;
+}
+.level-section { width: 100%; max-width: 760px; margin-bottom: 40px; }
+.level-title {
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 16px; padding-left: 4px;
+}
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.lesson-card {
+  background: rgba(255,255,255,0.88);
+  border: 2px solid rgba(255,107,157,0.18);
+  border-radius: 20px;
+  padding: 20px;
+  text-decoration: none;
+  color: var(--text-main);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 4px 16px rgba(199,125,255,0.08);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.lesson-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 12px 32px rgba(199,125,255,0.18);
+}
+.lesson-emoji { font-size: 2rem; }
+.lesson-name { font-weight: 800; font-size: 1rem; }
+.lesson-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+.lesson-tag {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 3px 10px; border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255,107,157,0.12), rgba(199,125,255,0.12));
+  color: #7B2FBE; width: fit-content;
+}
+</style>
+</head>
+<body>
+
+<header><span>🎹 Ria Om Shandilya</span></header>
+
+<h1>Piano Riyaaz</h1>
+<p class="subtitle">Choose a lesson to begin</p>
+
+<div class="level-section">
+  <div class="level-title">🌱 Beginner</div>
+  <div class="lesson-grid">
+
+    <a href="beginner/cde.html" class="lesson-card">
+      <span class="lesson-emoji">🎵</span>
+      <span class="lesson-name">Introduction to C D E</span>
+      <span class="lesson-desc">Learn your first three notes on the piano with falling notes and sheet music.</span>
+      <span class="lesson-tag">Lesson 1</span>
+    </a>
+
+    <!-- Add more lessons below — copy the card above and change the href, name, desc -->
+    <!--
+    <a href="beginner/lesson2.html" class="lesson-card">
+      <span class="lesson-emoji">🎶</span>
+      <span class="lesson-name">F G A</span>
+      <span class="lesson-desc">Expand your range with three more notes.</span>
+      <span class="lesson-tag">Lesson 2</span>
+    </a>
+    -->
+
+  </div>
+</div>
+
+</body>
+</html>
