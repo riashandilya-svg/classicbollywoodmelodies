@@ -2173,7 +2173,10 @@ function highlightSvgNote(noteObj) {
   if (_svgHighlightEls.length) _scrollToSvgNote(_svgHighlightEls[0]);
 }
 
+let svgScrollEnabled = false; // set to true to re-enable SVG auto-scroll
+
 function _scrollToSvgNote(item) {
+  if (!svgScrollEnabled) return;
   if (!item || item.ty == null) return;
   const svgEl = document.getElementById('svgScrollWrapper')?.querySelector('svg');
   if (!svgEl || !_staffRows.length) return;
