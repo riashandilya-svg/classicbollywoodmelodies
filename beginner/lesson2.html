@@ -1782,8 +1782,9 @@ function loadSvgScore(svgText) {
   let cropX = vbX, cropY = vbY, cropW = vbW, cropH = vbH;
   if (isFinite(minX) && maxX > minX && maxY > minY) {
     const pad = 60;
+    const padTop = 120;
     cropX = Math.max(vbX, minX - pad);
-    cropY = Math.max(vbY, minY - pad);
+    cropY = Math.max(vbY, minY - padTop);
     cropW = Math.min(vbW, maxX + pad) - cropX;
     // Find biggest Y gap to isolate first staff row only
     let bigGap = 0, gapMid = (minY + maxY) / 2;
