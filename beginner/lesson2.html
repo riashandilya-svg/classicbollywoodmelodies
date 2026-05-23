@@ -1803,11 +1803,20 @@ function loadSvgScore(svgText) {
   svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
   // KEY: set explicit height in px so height:auto works correctly
-  // Natural height = containerWidth * cropH / cropW
+  // Natural height = containerWidth * cropH / cropW, but clamped so score
+  // never exceeds 60% of available viewport — always leaving ≥40% buffer
+  // for the falling zone + keyboard below it.
   const containerW = scoreZone.clientWidth || 860;
-  const naturalH = Math.round(containerW * cropH / cropW);
+  const naturalH   = Math.round(containerW * cropH / cropW);
+  const headingEl2  = document.querySelector('h1');
+  const subtitleEl2 = document.getElementById('subtitle');
+  const headingH2   = (headingEl2  ? headingEl2.offsetHeight  : 36) +
+                      (subtitleEl2 ? subtitleEl2.offsetHeight : 20) + 12;
+  const availH2     = window.innerHeight - 60 - 8 - headingH2 - 8;
+  const maxScoreH   = Math.round(availH2 * 0.60);
+  const clampedH    = Math.min(naturalH, maxScoreH);
   svgEl.style.width  = '100%';
-  svgEl.style.height = naturalH + 'px';
+  svgEl.style.height = clampedH + 'px';
   svgEl.style.display = 'block';
 
   console.log('[SVG] viewBox:', cropX.toFixed(0), cropY.toFixed(0), cropW.toFixed(0), cropH.toFixed(0));
