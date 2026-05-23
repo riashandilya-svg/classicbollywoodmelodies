@@ -2212,9 +2212,27 @@ function clearSvgHighlight() {
 /* ══════════════════════════════════════════════════════
    PRACTICE MODE
 ══════════════════════════════════════════════════════ */
+// ── Exercise flow ────────────────────────────────────────────────────────
+const EXERCISES = [
+  { label: 'Exercise 1', measures: [1,  4], doneMsg: '\u{1F44F} Good! Ready for the next one?', nextDelay: 2400 },
+  { label: 'Exercise 2', measures: [5,  8], doneMsg: '\u{1F31F} Wow! Ready for the last one?',  nextDelay: 2400 },
+  { label: 'Exercise 3', measures: [9, 12], doneMsg: '\u{1F389} Amazing! You did it all!',       nextDelay: null },
+];
+let currentExerciseIdx = 0;
+
+function getNoteMeasure(n) {
+  return secondsPerMeasure > 0 ? Math.floor(n.time / secondsPerMeasure) + 1 : 1;
+}
+
 function buildPracticeNotes() {
-  practiceNotes = allNotes
-    .map(n => ({ ...n, playTime: n.time }));
+  const ex = EXERCISES[currentExerciseIdx];
+  const [mStart, mEnd] = ex.measures;
+  const slice = allNotes.filter(n => {
+    const m = getNoteMeasure(n);
+    return m >= mStart && m <= mEnd;
+  });
+  const offset = slice.length ? slice[0].time : 0;
+  practiceNotes = slice.map(n => ({ ...n, playTime: n.time - offset }));
   practiceNotes.sort((a,b) => a.playTime - b.playTime);
 }
 
@@ -2236,10 +2254,17 @@ function updateProgressDot(idx, state) {
 
 function startPractice() {
   if (!allNotes.length) return;
+  currentExerciseIdx = 0;
+  startExercise();
+}
+
+function startExercise() {
   stopPractice(false);
   buildPracticeNotes();
   buildProgressDots();
   if (!practiceNotes.length) { showFeedback('No notes in that range!', 'wrong'); return; }
+  const ex = EXERCISES[currentExerciseIdx];
+  showFeedback('\u{1F3B5} ' + ex.label + ' — Listen first…', 'info');
   trainingActive = true;
   trainingIdx = 0;
   waitingForInput = false;
@@ -2302,11 +2327,11 @@ function startPreview() {
   practiceTimeouts.push(setTimeout(() => {
     if (!previewPhase) return;
     previewPhase = false;
-    showFeedback('🎹 Your turn!', 'info');
+    showFeedback('🎵 Now you try ' + EXERCISES[currentExerciseIdx].label + '!', 'info');
     spawnNextNote();
   }, endDelay));
   runAnimLoop();
-  showFeedback('👂 Listen first…', 'info');
+  showFeedback('👂 Listen to ' + EXERCISES[currentExerciseIdx].label + '…', 'info');
 }
 
 function spawnNextNote() {
@@ -2568,10 +2593,23 @@ function processNoteOff(midi) {
 function finishPractice() {
   trainingActive = false; waitingForInput = false;
   document.getElementById('noteBadge').classList.remove('show');
-  showFeedback('🌟 Amazing! You did it!', 'correct');
   document.querySelectorAll('.pdot').forEach(p => p.classList.add('done'));
   clearSvgHighlight(); drawKeyboard();
-  if (loopEnabled) setTimeout(() => { if (loopEnabled) startPractice(); }, 1200);
+
+  const ex = EXERCISES[currentExerciseIdx];
+  showFeedback(ex.doneMsg, 'correct');
+  burstStars();
+
+  const nextIdx = currentExerciseIdx + 1;
+  if (ex.nextDelay !== null && nextIdx < EXERCISES.length) {
+    setTimeout(() => {
+      currentExerciseIdx = nextIdx;
+      startExercise();
+    }, ex.nextDelay);
+  } else {
+    // All done
+    if (loopEnabled) setTimeout(() => { if (loopEnabled) startPractice(); }, 1200);
+  }
 }
 
 function stopPractice(resetVis = true) {
