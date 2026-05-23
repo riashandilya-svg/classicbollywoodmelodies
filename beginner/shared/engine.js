@@ -541,16 +541,64 @@ function loadSvgScore(svgText) {
 }
 
 // ── SVG ↔ MIDI SYNC ──────────────────────────────────────────
-const _TREBLE_BOTTOM_TY   = 698.031;
-const _BASS_BOTTOM_TY     = 1008.07;
-const _STEP_PX            = 12.401;
+// NOTE: These are runtime-computed per SVG — see _initSvgCoords()
+let _svgStaffRows  = [];   // sorted list of { centerY, bottomY, halfH } per staff row
+let _STEP_PX       = 12.401;
 const _TREBLE_DIATONIC_UP   = [64,65,67,69,71,72,74,76,77,79,81,83,84];
 const _TREBLE_DIATONIC_DOWN = [64,62,60,59,57,55,53,52,50,48,47,45,43];
 const _BASS_DIATONIC_UP     = [43,45,47,48,50,52,53,55,57,59,60,62,64];
 const _BASS_DIATONIC_DOWN   = [43,41,40,38,36,35,33,31,29,28,26,24];
 
-function _pitchFromTy(ty, clef) {
-  const bottomTy = ty < 800 ? _TREBLE_BOTTOM_TY : _BASS_BOTTOM_TY;
+// Auto-detect staff rows from barlines — works for any SVG coordinate system
+function _initSvgCoords(svgEl) {
+  const ySet = new Set();
+  svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
+    const pts = (bl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length >= 4) {
+      // each barline has two Y values — use their midpoint as row center
+      ySet.add(Math.round((pts[1] + pts[3]) / 2));
+    }
+  });
+  // Cluster Y midpoints that are within 150px of each other into staff rows
+  const ys = [...ySet].sort((a, b) => a - b);
+  const clusters = [];
+  for (const y of ys) {
+    const last = clusters[clusters.length - 1];
+    if (last && y - last[last.length - 1] < 150) last.push(y);
+    else clusters.push([y]);
+  }
+  _svgStaffRows = clusters.map(cl => {
+    const centerY = cl.reduce((a, b) => a + b, 0) / cl.length;
+    return { centerY, halfH: 200 };  // ±200px around center covers the staff notes
+  });
+
+  // Auto-detect step size from StaffLines if available
+  const staffLineYs = [];
+  svgEl.querySelectorAll('polyline.StaffLines').forEach(sl => {
+    const pts = (sl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length >= 2) staffLineYs.push(pts[1]);
+  });
+  if (staffLineYs.length >= 2) {
+    const sorted = [...new Set(staffLineYs.map(y => Math.round(y)))].sort((a, b) => a - b);
+    const gaps = [];
+    for (let i = 1; i < sorted.length && i < 6; i++) {
+      const g = sorted[i] - sorted[i - 1];
+      if (g > 5 && g < 50) gaps.push(g);
+    }
+    if (gaps.length) _STEP_PX = gaps.reduce((a, b) => a + b) / gaps.length / 2;
+  }
+}
+
+function _pitchFromTy(ty) {
+  // Find which staff row this note belongs to
+  let row = _svgStaffRows.find(r => Math.abs(ty - r.centerY) < r.halfH);
+  if (!row && _svgStaffRows.length) {
+    // fallback: nearest row
+    row = _svgStaffRows.reduce((best, r) =>
+      Math.abs(ty - r.centerY) < Math.abs(ty - best.centerY) ? r : best
+    );
+  }
+  const bottomTy = row ? row.centerY + _STEP_PX * 2 : ty;
   const step = Math.round((ty - bottomTy) / _STEP_PX);
   if (step <= 0) return _TREBLE_DIATONIC_UP[Math.min(-step, _TREBLE_DIATONIC_UP.length - 1)];
   return _TREBLE_DIATONIC_DOWN[Math.min(step, _TREBLE_DIATONIC_DOWN.length - 1)];
@@ -577,16 +625,10 @@ function initSvgScore(svgEl) {
     </filter>`;
   }
 
-  const trebleBarlineXs = [];
-  const bassBarlineXs   = [];
-  svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
-    const pts = (bl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
-    if (pts.length < 2) return;
-    const x = pts[0], y = pts[1];
-    if (y < 800) trebleBarlineXs.push(x);
-    else          bassBarlineXs.push(x);
-  });
+  // Auto-detect staff coordinate system from this SVG
+  _initSvgCoords(svgEl);
 
+  // Build per-row barline X dividers using auto-detected staff rows
   function internalDividers(xs) {
     const sorted = [...new Set(xs)].sort((a, b) => a - b);
     if (sorted.length === 0) return [];
@@ -596,10 +638,28 @@ function initSvgScore(svgEl) {
     sorted.pop();
     return sorted;
   }
-  const trebleDividers = internalDividers(trebleBarlineXs);
-  const bassDividers   = internalDividers(bassBarlineXs);
 
-  const topRowMeasureCount = trebleDividers.length + 1;
+  // Group barlines by which staff row they belong to
+  const rowBarlineXs = _svgStaffRows.map(() => []);
+  svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
+    const pts = (bl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length < 2) return;
+    const x = pts[0], y = pts[1];
+    let bestRowIdx = 0, bestDist = Infinity;
+    _svgStaffRows.forEach((row, i) => {
+      const d = Math.abs(y - row.centerY);
+      if (d < bestDist) { bestDist = d; bestRowIdx = i; }
+    });
+    rowBarlineXs[bestRowIdx].push(x);
+  });
+  const rowDividers = rowBarlineXs.map(xs => internalDividers(xs));
+
+  // Count total measures per row so we can give each note a global measure number
+  const rowMeasureCounts = rowDividers.map(d => d.length + 1);
+  const rowMeasureOffsets = [0];
+  for (let i = 0; i < rowMeasureCounts.length - 1; i++) {
+    rowMeasureOffsets.push(rowMeasureOffsets[i] + rowMeasureCounts[i]);
+  }
 
   svgEl.querySelectorAll('path.Note').forEach(el => {
     const tf = el.getAttribute('transform') || '';
@@ -608,20 +668,21 @@ function initSvgScore(svgEl) {
     const tx = parseFloat(mm[5]);
     const ty = parseFloat(mm[6]);
 
-    let svgMeasure;
-    if (ty >= 560 && ty <= 760) {
-      let local = 1;
-      for (const bx of trebleDividers) { if (tx > bx) local++; }
-      svgMeasure = local;
-    } else if (ty >= 860 && ty <= 1070) {
-      let local = 1;
-      for (const bx of bassDividers) { if (tx > bx) local++; }
-      svgMeasure = topRowMeasureCount + local;
-    } else {
-      return;
-    }
+    // Find which row this note belongs to
+    let rowIdx = -1, bestDist = Infinity;
+    _svgStaffRows.forEach((row, i) => {
+      const d = Math.abs(ty - row.centerY);
+      if (d < row.halfH && d < bestDist) { bestDist = d; rowIdx = i; }
+    });
+    if (rowIdx < 0) return;
 
-    const pitch = _pitchFromTy(ty, 'treble');
+    // Local measure within row
+    const dividers = rowDividers[rowIdx] || [];
+    let local = 1;
+    for (const bx of dividers) { if (tx > bx) local++; }
+    const svgMeasure = rowMeasureOffsets[rowIdx] + local;
+
+    const pitch = _pitchFromTy(ty);
     if (!_svgBuckets[svgMeasure]) _svgBuckets[svgMeasure] = { treble: [], bass: [] };
     _svgBuckets[svgMeasure].treble.push({ el, tx, ty, pitch, origFill: el.getAttribute('fill') || 'black' });
   });
