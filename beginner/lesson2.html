@@ -1251,6 +1251,7 @@ let fallingRects = [], animFrame = null;
 let previewPhase = false, practiceTimeouts = [];
 let previewGroups = [];  // frame-accurate highlight schedule for preview
 let svgNoteEls = [], svgHighlighted = [];
+let _staffRows = [], _rowThresholds = []; // dynamic SVG staff geometry
 let currentSongIdx = -1;
 
 const SPEED_STEPS = [0.25, 0.5, 0.6, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -1449,7 +1450,7 @@ function spawnFalling(midi, durationSec, spawnTime_ms, track) {
   const TOP_GAP = 10;
   const startY  = -height - TOP_GAP;
   // endY: note bottom just touches the hit-line (top of keyboard)
-  const endY    = FALL_ZONE_HEIGHT - height;
+  const endY    = fallingCanvas.height - height;
 
   // ── Body gradient (vertical, normalised 0→height; drawn via translate) ──
   const bodyGrad = fctx.createLinearGradient(0, 0, 0, height);
@@ -1490,17 +1491,18 @@ function spawnFalling(midi, durationSec, spawnTime_ms, track) {
 }
 
 function drawFalling(nowMs) {
-  fctx.clearRect(0, 0, fallingCanvas.width, FALL_ZONE_HEIGHT);
+  const _fzh = fallingCanvas.height;
+  fctx.clearRect(0, 0, fallingCanvas.width, _fzh);
 
   // Subtle vertical lane guides
   fctx.strokeStyle = 'rgba(180,130,220,0.06)';
   fctx.lineWidth   = 1;
   for (let i = 0; i <= TOTAL_WHITE; i++) {
     const x = i * ww();
-    fctx.beginPath(); fctx.moveTo(x, 0); fctx.lineTo(x, FALL_ZONE_HEIGHT); fctx.stroke();
+    fctx.beginPath(); fctx.moveTo(x, 0); fctx.lineTo(x, _fzh); fctx.stroke();
   }
 
-  const fallDurationMs = (FALL_ZONE_HEIGHT / (FALL_SPEED * speedMult)) * 1000;
+  const fallDurationMs = (_fzh / (FALL_SPEED * speedMult)) * 1000;
 
   fallingRects = fallingRects.filter(r => {
     // Progress: 0 = just spawned at top, 1 = bottom of note touches hit-line
@@ -1511,7 +1513,7 @@ function drawFalling(nowMs) {
     if (!r.landed && r.y >= r.endY) r.landed = true;
 
     // Remove once fully off the bottom
-    if (r.y > FALL_ZONE_HEIGHT + 20) return false;
+    if (r.y > _fzh + 20) return false;
 
     // ── Draw in translated space (origin = rect top-left) ──────────────────
     fctx.save();
@@ -1843,11 +1845,14 @@ const _BASS_DIATONIC_UP     = [43,45,47,48,50,52,53,55,57,59,60,62,64]; // G2 A2
 const _BASS_DIATONIC_DOWN   = [43,41,40,38,36,35,33,31,29,28,26,24];    // G2 F2 E2 D2…
 
 function _pitchFromTy(ty, clef) {
-  // Both staves use treble clef pitch mapping — the score has two treble staves
-  // stacked vertically (top row = measures 1-2, bottom row = measures 3-4).
-  // We always use the treble diatonic tables; only the reference bottom-line
-  // ty differs between the two rows.
-  const bottomTy = ty < 800 ? _TREBLE_BOTTOM_TY : _BASS_BOTTOM_TY; // _BASS_BOTTOM_TY is the 2nd treble row
+  // Dynamically find which staff row this ty belongs to.
+  // Each row's .maxY = bottom staff line Y = reference for E4 (treble clef).
+  let rowIdx = 0;
+  for (let i = 0; i < _rowThresholds.length; i++) {
+    if (ty > _rowThresholds[i]) rowIdx = i + 1;
+  }
+  const row = _staffRows[rowIdx];
+  const bottomTy = row ? row.maxY : _TREBLE_BOTTOM_TY; // fallback to lesson1 constant
   const step = Math.round((ty - bottomTy) / _STEP_PX);
   if (step <= 0) return _TREBLE_DIATONIC_UP[Math.min(-step, _TREBLE_DIATONIC_UP.length - 1)];
   return _TREBLE_DIATONIC_DOWN[Math.min(step, _TREBLE_DIATONIC_DOWN.length - 1)];
@@ -1878,44 +1883,57 @@ function initSvgScore(svgEl) {
     </filter>`;
   }
 
-  // ── Parse barline X positions from polyline.BarLine elements ─────────────
-  // Each clef has its own set of barlines at different Y positions.
-  // We split them by Y: treble barlines have Y < 800, bass have Y > 800.
-  // Then discard the final end-barline(s) — only keep internal dividers.
-  const trebleBarlineXs = [];
-  const bassBarlineXs   = [];
+  // ── Step 1: Detect staff rows from StaffLines polylines ─────────────────
+  // Groups of 5 staff lines close in Y = one staff row. Bottom line = E4 reference.
+  const _allStaffYs = [];
+  svgEl.querySelectorAll('polyline.StaffLines').forEach(sl => {
+    const pts = (sl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length >= 2) _allStaffYs.push(pts[1]);
+  });
+  _allStaffYs.sort((a, b) => a - b);
+  _staffRows = [];
+  let _curRow = null;
+  for (const y of _allStaffYs) {
+    if (!_curRow || y - _curRow.maxY > 100) {
+      _curRow = { minY: y, maxY: y };
+      _staffRows.push(_curRow);
+    } else {
+      _curRow.maxY = y;
+    }
+  }
+  _rowThresholds = [];
+  for (let i = 0; i < _staffRows.length - 1; i++) {
+    _rowThresholds.push((_staffRows[i].maxY + _staffRows[i + 1].minY) / 2);
+  }
+  console.log('[SVG] Detected', _staffRows.length, 'staff rows, thresholds:', _rowThresholds.map(t => t.toFixed(0)));
+
+  // ── Step 2: Parse barlines per staff row ──────────────────────────────────
+  function internalDividers(xs) {
+    const sorted = [...new Set(xs)].sort((a, b) => a - b);
+    if (sorted.length === 0) return [];
+    while (sorted.length >= 2 && sorted[sorted.length - 1] - sorted[sorted.length - 2] < 40) sorted.pop();
+    sorted.pop();
+    return sorted;
+  }
+  const _rowBarlineXs = _staffRows.map(() => []);
   svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
     const pts = (bl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
     if (pts.length < 2) return;
     const x = pts[0], y = pts[1];
-    if (y < 800) trebleBarlineXs.push(x);
-    else          bassBarlineXs.push(x);
+    let rIdx = 0;
+    for (let i = 0; i < _rowThresholds.length; i++) { if (y > _rowThresholds[i]) rIdx = i + 1; }
+    _rowBarlineXs[rIdx].push(x);
   });
-
-  // Sort and remove the rightmost barline (final barline / double barline).
-  // For a double barline (two lines < 40px apart), remove both.
-  function internalDividers(xs) {
-    const sorted = [...new Set(xs)].sort((a, b) => a - b);
-    if (sorted.length === 0) return [];
-    // Remove trailing double-barline
-    while (sorted.length >= 2 && sorted[sorted.length-1] - sorted[sorted.length-2] < 40) {
-      sorted.pop();
-    }
-    sorted.pop(); // remove the final single end-barline
-    return sorted;
+  const _rowDividers = _rowBarlineXs.map(xs => internalDividers(xs));
+  const _rowMeasureOffsets = [0];
+  for (let i = 0; i < _staffRows.length - 1; i++) {
+    _rowMeasureOffsets.push(_rowMeasureOffsets[i] + _rowDividers[i].length + 1);
   }
-  const trebleDividers = internalDividers(trebleBarlineXs);
-  const bassDividers   = internalDividers(bassBarlineXs);
-  console.log('[SVG] treble dividers:', trebleDividers, '| bass dividers:', bassDividers);
+  console.log('[SVG] Row dividers:', _rowDividers, '| measure offsets:', _rowMeasureOffsets);
 
-  // ── Collect all path.Note noteheads ──────────────────────────────────────
-  // The SVG has TWO TREBLE STAVES stacked vertically:
-  //   Top row    (ty 560-760):  measures 1, 2  — barlines from trebleDividers
-  //   Bottom row (ty 860-1070): measures 3, 4  — barlines from bassDividers
-  // Both rows use treble-clef pitch mapping (same diatonic tables, different bottom ty).
-  // Bottom row measures are offset by the top row's measure count.
-  const topRowMeasureCount = trebleDividers.length + 1;
-
+  // ── Step 3: Collect path.Note noteheads across all staff rows ─────────────
+  // Noteheads can extend up to 200px above/below their staff (ledger lines etc.)
+  const NOTE_TY_MARGIN = 200;
   svgEl.querySelectorAll('path.Note').forEach(el => {
     const tf = el.getAttribute('transform') || '';
     const mm = tf.match(/matrix\(\s*([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)\s*\)/);
@@ -1923,20 +1941,17 @@ function initSvgScore(svgEl) {
     const tx = parseFloat(mm[5]);
     const ty = parseFloat(mm[6]);
 
-    let svgMeasure;
-    if (ty >= 560 && ty <= 760) {
-      // Top treble row
-      let local = 1;
-      for (const bx of trebleDividers) { if (tx > bx) local++; }
-      svgMeasure = local;
-    } else if (ty >= 860 && ty <= 1070) {
-      // Bottom treble row — measures continue after top row
-      let local = 1;
-      for (const bx of bassDividers) { if (tx > bx) local++; }
-      svgMeasure = topRowMeasureCount + local;
-    } else {
-      return; // clef symbol or other non-note element
-    }
+    // Which row does this ty belong to?
+    let rIdx = 0;
+    for (let i = 0; i < _rowThresholds.length; i++) { if (ty > _rowThresholds[i]) rIdx = i + 1; }
+    const row = _staffRows[rIdx];
+    // Reject elements far from any staff (clef symbols, ornaments, etc.)
+    if (!row || ty < row.minY - NOTE_TY_MARGIN || ty > row.maxY + NOTE_TY_MARGIN) return;
+
+    // Local measure within this row, then global measure number
+    let localMeasure = 1;
+    for (const bx of _rowDividers[rIdx]) { if (tx > bx) localMeasure++; }
+    const svgMeasure = _rowMeasureOffsets[rIdx] + localMeasure;
 
     const pitch = _pitchFromTy(ty, 'treble');
     if (!_svgBuckets[svgMeasure]) _svgBuckets[svgMeasure] = { treble: [], bass: [] };
@@ -2153,7 +2168,21 @@ function highlightSvgNote(noteObj) {
 }
 
 function _scrollToSvgNote(item) {
-  // Score stays static — no panning.
+  if (!item || item.ty == null) return;
+  const svgEl = document.getElementById('svgScrollWrapper')?.querySelector('svg');
+  if (!svgEl || !_staffRows.length) return;
+  // Find which row this note lives in
+  let rIdx = 0;
+  for (let i = 0; i < _rowThresholds.length; i++) { if (item.ty > _rowThresholds[i]) rIdx = i + 1; }
+  const row = _staffRows[rIdx];
+  if (!row) return;
+  // Shift the viewBox Y to reveal this row, keeping W and H constant
+  const vbParts = (svgEl.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+  if (vbParts.length < 4) return;
+  const [cropX, , cropW, cropH] = vbParts;
+  const rowPad = 80;
+  const newCropY = Math.max(0, row.minY - rowPad);
+  svgEl.setAttribute('viewBox', `${cropX} ${newCropY} ${cropW} ${cropH}`);
 }
 
 function clearSvgHighlight() {
@@ -2213,7 +2242,7 @@ function startPractice() {
 
 function startPreview() {
   ensureSynth();
-  const prerollMs = (FALL_ZONE_HEIGHT / (FALL_SPEED * speedMult)) * 1000;
+  const prerollMs = (fallingCanvas.height / (FALL_SPEED * speedMult)) * 1000;
   const nowMs = performance.now();
 
   // Group notes by playTime so we can highlight all simultaneous notes together
