@@ -1977,8 +1977,14 @@ function initSvgScore(svgEl) {
   });
   for (const m of Object.keys(_svgBuckets)) {
     for (const entry of _svgBuckets[m].treble) {
+      // Find which row this notehead is in, so we only consider stems in the same row
+      let rIdx = 0;
+      for (let i = 0; i < _rowThresholds.length; i++) { if (entry.ty > _rowThresholds[i]) rIdx = i + 1; }
+      const row = _staffRows[rIdx];
       let best = null, bestDist = Infinity;
       for (const s of stemTips) {
+        // Stem must be in the same staff row (base Y within row bounds ±200px)
+        if (row && (s.baseY < row.minY - 200 || s.baseY > row.maxY + 200)) continue;
         const dist = Math.abs(s.x - (entry.tx + 16));
         if (dist < bestDist) { bestDist = dist; best = s; }
       }
@@ -2142,9 +2148,9 @@ function highlightSvgNote(noteObj) {
     // Top of rect: stem tip if known, else fallback to ~90px above notehead centre
     const noteheadCentreY = nh.ty + noteH / 2 - 4;
     const stemTopY  = (nh.stemTipY != null) ? nh.stemTipY - 6 : noteheadCentreY - 90;
-    const rectTop   = stemTopY;
+    const rectTop   = Math.min(stemTopY, noteheadCentreY - 10); // guard: never below notehead
     const rectBot   = noteheadCentreY + noteH / 2 + padBottom;
-    const rectH     = rectBot - rectTop;
+    const rectH     = Math.max(30, rectBot - rectTop); // always positive
 
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('x',      (nh.tx - padX).toString());
