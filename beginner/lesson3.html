@@ -1,0 +1,2737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Piano Riyaaz 🎹 — Lesson 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════
+   CSS VARIABLES & PALETTE
+═══════════════════════════════════════ */
+:root {
+  --bg-main:        #fff9f0;
+  --bg-surface:     rgba(255,255,255,0.90);
+  --yellow1:        rgba(255, 220, 50, 0.30);
+  --yellow2:        rgba(255, 100, 180, 0.18);
+  --softBlack:      rgba(0, 0, 0, 0.06);
+  --accent:         #FF6B9D;
+  --accent-light:   #FFB3D1;
+  --accent-success: #22C55E;
+  --accent-error:   #EF4444;
+  --accent-info:    #4D96FF;
+  --text-main:      #2D1B5E;
+  --text-muted:     #9B7FBF;
+  --border-soft:    rgba(255, 107, 157, 0.25);
+
+  /* Dark mode */
+  --dm-bg:     #0f0a1e;
+  --dm-panel:  #1a1030;
+  --dm-accent: #FF9FCC;
+  --dm-text:   #f0e8ff;
+  --dm-border: rgba(255,107,157,0.30);
+
+  /* Note colours (kids rainbow) */
+  --c0:  #FF6B9D;
+  --c1:  #C77DFF;
+  --c2:  #FF9A3C;
+  --c3:  #FFD93D;
+  --c4:  #6BCB77;
+  --c5:  #4D96FF;
+  --c6:  #FF6060;
+  --c7:  #00C9A7;
+  --c8:  #A78BFA;
+  --c9:  #FFA552;
+  --c10: #F472B6;
+  --c11: #34D399;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ═══════════════════════════════════════
+   AMBIENT BACKGROUND GLOW
+═══════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, #ffb3d1 0%, transparent 70%);
+  filter: blur(100px);
+  opacity: 0.50;
+  top: -250px; left: -150px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+body::after {
+  content: '';
+  position: fixed;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #b3e0ff 0%, transparent 70%);
+  filter: blur(90px);
+  opacity: 0.45;
+  bottom: -100px; right: -100px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+
+/* ═══════════════════════════════════════
+   BODY
+═══════════════════════════════════════ */
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background:
+    radial-gradient(800px 500px at 10% 0%,  rgba(255,180,220,0.35), transparent 60%),
+    radial-gradient(700px 450px at 90% 5%,  rgba(180,220,255,0.30), transparent 60%),
+    radial-gradient(600px 400px at 50% 85%, rgba(200,255,210,0.28), transparent 60%),
+    radial-gradient(400px 300px at 75% 50%, rgba(255,220,120,0.20), transparent 60%),
+    radial-gradient(400px 300px at 20% 60%, rgba(220,180,255,0.22), transparent 60%),
+    #fff9f0;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 12px 8px 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition: background 0.4s, color 0.4s;
+}
+
+/* ═══════════════════════════════════════
+   TWO-COLUMN LAYOUT WRAPPER
+═══════════════════════════════════════ */
+#appLayout {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: "left-spacer main right-panel";
+  align-items: start;
+  gap: 0 20px;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Centre column: piano + sheet music */
+#leftCol {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(76vw, 860px);
+}
+
+/* Right column: controls — sits in right-panel cell */
+#rightCol {
+  grid-area: right-panel;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 240px;
+  flex-shrink: 0;
+  padding-top: 4px;
+  justify-self: start;
+}
+
+/* ── DARK MODE ── */
+body.dark-mode {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+body.dark-mode::before { opacity: 0.18; background: radial-gradient(circle, #f59e0b 0%, transparent 70%); }
+body.dark-mode::after  { opacity: 0.10; background: radial-gradient(circle, #fcd34d 0%, transparent 70%); }
+body.dark-mode #brandBar     { background: linear-gradient(90deg, #c05070, #c07020, #c0a000, #207040, #2050c0, #8030c0) !important; }
+body.dark-mode .ctrl-card    { background: rgba(24,16,40,0.92) !important; border-color: rgba(255,107,157,0.25) !important; }
+body.dark-mode .ctrl-btn     { background: rgba(30,20,50,0.9) !important; color: #ddb8ff !important; border-color: rgba(199,125,255,0.18) !important; }
+body.dark-mode .ctrl-btn:hover { background: rgba(255,107,157,0.12) !important; color: var(--dm-accent) !important; }
+body.dark-mode .ctrl-card-title { background: linear-gradient(90deg, #FF9FCC, #C77DFF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+body.dark-mode h1            { background: linear-gradient(90deg, #FF9FCC, #FFB87A, #FFEC70, #7FEEA0, #7FBDFF, #DFB0FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+body.dark-mode #scoreZone    { background: rgba(240,232,255,0.92) !important; border-color: rgba(199,125,255,0.40) !important; }
+body.dark-mode #songList     { background: rgba(24,16,40,0.92) !important; border-color: rgba(255,107,157,0.25) !important; }
+body.dark-mode .song-btn     { background: rgba(30,20,50,0.9) !important; border-color: rgba(255,107,157,0.18) !important; color: var(--dm-text) !important; }
+body.dark-mode .song-btn:hover { background: rgba(255,107,157,0.1) !important; border-color: rgba(255,107,157,0.45) !important; }
+body.dark-mode .song-btn.active { background: rgba(199,125,255,0.2) !important; border-color: var(--dm-accent) !important; color: var(--dm-accent) !important; }
+body.dark-mode #speedDisplay { background: rgba(30,20,50,0.9) !important; border-color: rgba(199,125,255,0.25) !important; color: var(--dm-text) !important; }
+body.dark-mode #noteBadge    { background: linear-gradient(135deg, #c0507a, #8030c0); }
+body.dark-mode #feedbackBubble.correct { background: linear-gradient(135deg, #22c55e, #16a34a); }
+body.dark-mode #feedbackBubble.wrong   { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+/* ═══════════════════════════════════════
+   BRAND BAR
+═══════════════════════════════════════ */
+#brandBar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #FF6B9D, #FF9A3C, #FFD93D, #6BCB77, #4D96FF, #C77DFF);
+  background-size: 300% 100%;
+  animation: rainbowShift 6s linear infinite;
+  z-index: 10000;
+}
+@keyframes rainbowShift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+#brandBar span {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  letter-spacing: 1px;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* ═══════════════════════════════════════
+   DARK MODE TOGGLE
+═══════════════════════════════════════ */
+#darkModeToggle {
+  position: fixed;
+  top: 68px; right: 14px;
+  z-index: 9999;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 0;
+}
+#darkModeToggle:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+body.dark-mode #darkModeToggle { background: rgba(24,28,37,0.92); border-color: var(--dm-border); }
+
+/* ═══════════════════════════════════════
+   HEADING
+═══════════════════════════════════════ */
+h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #FF6B9D, #FF9A3C, #FFD93D, #6BCB77, #4D96FF, #C77DFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  line-height: 1.15;
+  animation: fadeUp 0.7s ease both;
+  filter: drop-shadow(0 2px 8px rgba(199, 125, 255, 0.25));
+}
+#subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 8px;
+  animation: fadeUp 0.7s ease 0.08s both;
+  letter-spacing: 0.02em;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════
+   CONTROL CARDS  (JaaneKahan style)
+═══════════════════════════════════════ */
+.ctrl-card {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255,107,157,0.20);
+  border-radius: 20px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 32px rgba(199,125,255,0.10), 0 2px 8px rgba(255,107,157,0.08);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.ctrl-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(199,125,255,0.18), 0 4px 12px rgba(255,107,157,0.12); }
+.ctrl-card-title {
+  text-align: center;
+  background: linear-gradient(90deg, #FF6B9D, #C77DFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════
+   SONG SELECTOR
+═══════════════════════════════════════ */
+#songPanel {
+  width: 100%;
+  animation: fadeUp 0.55s ease 0.1s both;
+  margin-bottom: 10px;
+}
+#songList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 0;
+}
+.song-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.9);
+  border: 1.5px solid rgba(255,193,7,0.25);
+  border-radius: 12px;
+  padding: 9px 18px;
+  cursor: pointer;
+  color: var(--text-main);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  white-space: nowrap;
+}
+.song-btn:hover {
+  border-color: var(--accent);
+  background: rgba(255,193,7,0.07);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255,193,7,0.15);
+}
+.song-btn.active {
+  background: linear-gradient(135deg, rgba(255,213,79,0.25), rgba(255,193,7,0.18));
+  border-color: var(--accent);
+  color: #92400E;
+  box-shadow: 0 0 0 1px rgba(255,193,7,0.3), 0 6px 16px rgba(255,193,7,0.2);
+}
+.song-btn .song-emoji { font-size: 16px; }
+
+#noSongsMsg {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 12px;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════
+   MAIN STAGE
+═══════════════════════════════════════ */
+#mainStage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  animation: fadeUp 0.6s ease 0.15s both;
+}
+
+/* ── SVG SCORE ZONE ── */
+#scoreZone {
+  width: 100%;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(255,107,157,0.22);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  overflow: visible;
+  position: relative;
+  margin-top: 18px;
+  box-shadow: 0 4px 20px rgba(199,125,255,0.12);
+  transition: border-color 0.2s;
+}
+#scoreZone:hover { border-color: rgba(255,107,157,0.45); }
+#scorePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ccc;
+  gap: 10px;
+  letter-spacing: 0.02em;
+}
+#svgScrollWrapper {
+  width: 100%;
+  display: block;
+  position: relative;
+}
+#svgScrollWrapper svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top left;
+}
+
+/* ── FALLING NOTES CANVAS ── */
+#canvasWrap {
+  width: 100%;
+  position: relative;
+  background: linear-gradient(180deg, #0d0a1a 0%, #1a0d2e 40%, #0f0a18 100%);
+  overflow: hidden;
+  border-left: 2px solid rgba(255,107,157,0.22);
+  border-right: 2px solid rgba(255,107,157,0.22);
+}
+#fallingCanvas { display: block; width: 100%; }
+#hitLine {
+  display: none;
+  position: absolute; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, transparent 2%, #D4B0E8 15%, #9B2C6E 40%, #FFD54F 50%, #9B2C6E 60%, #D4B0E8 85%, transparent 98%);
+  box-shadow: 0 0 12px #D4B0E8, 0 0 28px rgba(155,44,110,0.5), 0 0 48px rgba(255,213,79,0.25);
+  pointer-events: none; z-index: 5;
+}
+#starsContainer {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 10; overflow: hidden;
+}
+
+/* ── KEYBOARD CANVAS ── */
+#keyboardWrap {
+  width: 100%;
+  border: 2px solid rgba(255,107,157,0.22);
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  overflow: hidden;
+  background: #1A1025;
+  box-shadow: 0 10px 40px rgba(199,125,255,0.18), 0 4px 16px rgba(0,0,0,0.06);
+}
+#keyboardCanvas { display: block; width: 100%; }
+
+/* ═══════════════════════════════════════
+   FEEDBACK BUBBLE
+═══════════════════════════════════════ */
+#feedbackBubble {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: clamp(0.72rem, 1.8vw, 0.92rem);
+  letter-spacing: 0.01em;
+  text-align: center;
+  padding: 6px 16px;
+  border-radius: 999px;
+  width: 100%;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  opacity: 0;
+  transform: scale(0.85) translateY(6px);
+  background: var(--accent-success);
+  color: white;
+  box-shadow: 0 6px 20px rgba(34,197,94,0.35);
+  white-space: normal;
+  line-height: 1.35;
+  min-height: 2em;
+}
+#feedbackBubble.show { opacity: 1; transform: scale(1) translateY(0); }
+#feedbackBubble.correct { background: linear-gradient(135deg,#22c55e,#16a34a); box-shadow: 0 8px 24px rgba(34,197,94,0.4); }
+#feedbackBubble.wrong   { background: linear-gradient(135deg,#ef4444,#dc2626); box-shadow: 0 8px 24px rgba(239,68,68,0.4); }
+#feedbackBubble.info    { background: linear-gradient(135deg,#4D96FF,#2563EB); box-shadow: 0 8px 24px rgba(77,150,255,0.4); }
+
+/* Note badge */
+#noteBadge {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(135deg,#FF6B9D,#C77DFF);
+  padding: 4px 18px;
+  border-radius: 999px;
+  text-align: center;
+  width: 100%;
+  box-shadow: 0 6px 18px rgba(255,107,157,0.40);
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  transform: scale(0.9);
+}
+#noteBadge.show { opacity: 1; transform: scale(1); }
+
+/* Progress dots */
+#progressDots {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  justify-content: flex-start;
+  width: 100%;
+}
+.pdot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  transition: all 0.25s;
+}
+.pdot.done   { background: linear-gradient(135deg, #6BCB77, #4D96FF); }
+.pdot.active { background: linear-gradient(135deg, #FF6B9D, #C77DFF); transform: scale(1.7); box-shadow: 0 0 10px rgba(255,107,157,0.6); }
+
+/* ═══════════════════════════════════════
+   CONTROLS PANEL (right column)
+═══════════════════════════════════════ */
+#controlPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+#panelPlaybackCard,
+#panelSpeedCard,
+#panelLoopCard { width: 100%; }
+
+/* Generic ctrl button */
+.ctrl-btn {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  background: rgba(255,255,255,0.92);
+  color: #5B21B6;
+  border: 2px solid rgba(199,125,255,0.25);
+  border-radius: 12px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.ctrl-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255,107,157,0.12), rgba(199,125,255,0.12));
+  border-color: #FF6B9D;
+  color: #FF6B9D;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 18px rgba(255,107,157,0.20);
+}
+.ctrl-btn:active:not(:disabled) { transform: translateY(0) scale(1); }
+.ctrl-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.ctrl-btn.active {
+  background: linear-gradient(135deg, rgba(255,107,157,0.22), rgba(199,125,255,0.18));
+  border-color: #C77DFF;
+  color: #7B2FBE;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px rgba(199,125,255,0.30), 0 4px 12px rgba(199,125,255,0.20);
+}
+.ctrl-btn.stop-btn { border-color: rgba(239,68,68,0.30); }
+.ctrl-btn.stop-btn:hover:not(:disabled) {
+  background: rgba(239,68,68,0.08);
+  border-color: var(--accent-error);
+  color: var(--accent-error);
+  box-shadow: 0 4px 12px rgba(239,68,68,0.15);
+}
+
+/* Button row inside card */
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
+
+/* Speed display pill */
+#speedDisplay {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #5B21B6;
+  min-width: 64px;
+  text-align: center;
+  background: rgba(255,255,255,0.9);
+  border: 2px solid rgba(199,125,255,0.35);
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+
+/* Loop section */
+#loopSection {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.88);
+  border: 1.5px solid rgba(77,150,255,0.3);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 0.88rem;
+}
+#loopSection input[type="number"] {
+  width: 50px;
+  border: 1.5px solid rgba(255,193,7,0.25);
+  border-radius: 8px;
+  padding: 4px 8px;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.9);
+  color: var(--text-main);
+}
+body.dark-mode #loopSection input[type="number"] { background: rgba(30,34,48,0.9); color: var(--dm-text); border-color: rgba(255,193,7,0.2); }
+
+/* ── STAR BURST ── */
+.star {
+  position: absolute;
+  font-size: 1.4rem;
+  animation: starBurst 0.85s forwards;
+  pointer-events: none;
+}
+@keyframes starBurst {
+  0%   { opacity: 1; transform: scale(0.5) translate(0,0) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.5) translate(var(--dx), var(--dy)) rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════
+   NEXT LECTURE BUTTON
+═══════════════════════════════════════ */
+#btnNextLecture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 13px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border-radius: 16px;
+  border: 2.5px solid transparent;
+  background: linear-gradient(135deg, #4D96FF, #6BCB77);
+  color: white;
+  cursor: pointer;
+  text-decoration: none;
+  gap: 8px;
+  box-shadow: 0 6px 24px rgba(77,150,255,0.40), 0 2px 8px rgba(107,203,119,0.25);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+#btnNextLecture:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 36px rgba(77,150,255,0.55), 0 4px 16px rgba(107,203,119,0.35);
+}
+#btnNextLecture:active { transform: scale(0.97); }
+body.dark-mode #btnNextLecture {
+  box-shadow: 0 6px 28px rgba(77,150,255,0.50), 0 2px 10px rgba(107,203,119,0.30);
+}
+
+/* ═══════════════════════════════════════
+   WATCH FIRST BUTTON
+═══════════════════════════════════════ */
+#btnWatchFirst {
+  width: 100%;
+  padding: 13px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border-radius: 16px;
+  border: 2.5px solid transparent;
+  background: linear-gradient(135deg, #FF6B9D, #C77DFF);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 24px rgba(199,125,255,0.45), 0 2px 8px rgba(255,107,157,0.3);
+  transition: transform 0.18s, box-shadow 0.18s;
+  animation: watchPulse 2.8s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+#btnWatchFirst::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0));
+  border-radius: inherit;
+}
+#btnWatchFirst:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 36px rgba(199,125,255,0.55), 0 4px 16px rgba(255,107,157,0.4);
+  animation: none;
+}
+#btnWatchFirst:active { transform: scale(0.97); }
+@keyframes watchPulse {
+  0%, 100% { box-shadow: 0 6px 24px rgba(199,125,255,0.45), 0 2px 8px rgba(255,107,157,0.3); }
+  50%       { box-shadow: 0 8px 32px rgba(199,125,255,0.70), 0 4px 14px rgba(255,107,157,0.5); }
+}
+body.dark-mode #btnWatchFirst {
+  box-shadow: 0 6px 28px rgba(199,125,255,0.55), 0 2px 10px rgba(255,107,157,0.35);
+}
+
+/* ═══════════════════════════════════════
+   VIDEO MODAL
+═══════════════════════════════════════ */
+#videoModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#videoModal.open { display: flex; }
+
+#videoModalBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 5, 25, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fadeInBackdrop 0.25s ease;
+}
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#videoModalBox {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,0.97);
+  border-radius: 28px;
+  padding: 28px;
+  width: min(700px, 100%);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.45), 0 0 0 1.5px rgba(199,125,255,0.3);
+  animation: modalPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+body.dark-mode #videoModalBox {
+  background: rgba(22, 12, 42, 0.97);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.65), 0 0 0 1.5px rgba(199,125,255,0.4);
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.88) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+#videoModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#videoModalTitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #FF6B9D, #C77DFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
+}
+#videoModalSubtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+#btnCloseModal {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(199,125,255,0.25);
+  background: rgba(199,125,255,0.08);
+  color: var(--text-main);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.18s, transform 0.18s;
+  font-family: 'Inter', sans-serif;
+}
+#btnCloseModal:hover { background: rgba(255,107,157,0.15); transform: scale(1.1); }
+body.dark-mode #btnCloseModal { color: var(--dm-text); }
+
+#videoModalPlayer {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0d0a1a;
+  position: relative;
+  border: 2px solid rgba(199,125,255,0.2);
+}
+#videoModalPlayer video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder shown when no video src is set */
+#videoPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'Inter', sans-serif;
+}
+#videoPlaceholder .play-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(199,125,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+#videoPlaceholder p { font-size: 0.82rem; text-align: center; line-height: 1.5; max-width: 260px; }
+#videoPlaceholder code {
+  font-family: monospace;
+  font-size: 0.78rem;
+  background: rgba(199,125,255,0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #C77DFF;
+}
+
+#videoModalClose {
+  display: flex;
+  justify-content: flex-end;
+}
+#btnDoneWatching {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 11px 28px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #6BCB77, #4D96FF);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(77,150,255,0.3);
+  transition: transform 0.18s, box-shadow 0.18s;
+  letter-spacing: 0.02em;
+}
+#btnDoneWatching:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(77,150,255,0.4); }
+#btnDoneWatching:active { transform: scale(0.97); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  body { height: auto; overflow-y: auto; }
+  #appLayout { display: flex; flex-direction: column; align-items: center; }
+  #leftCol { width: 100%; height: auto; }
+  #rightCol { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  #controlPanel { flex-direction: row; flex-wrap: wrap; }
+  #panelPlaybackCard,
+  #panelSpeedCard,
+  #panelLoopCard { min-width: 100%; }
+  .song-btn { font-size: 12px; padding: 7px 14px; }
+  #feedbackBubble, #noteBadge, #progressDots { margin-left: auto; margin-right: auto; }
+}
+
+/* ── DESKTOP FULL-HEIGHT ── */
+@media (min-width: 861px) {
+  #appLayout { height: 100%; }
+  #leftCol { height: 100%; }
+  #mainStage { flex: 1; min-height: 0; height: 100%; }
+  #canvasWrap { flex: 1; min-height: 0; }
+  #fallingCanvas { height: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── BRAND BAR ── -->
+<div id="brandBar">
+  <span>🎹 Ria Om Shandilya</span>
+</div>
+
+<!-- ── DARK MODE TOGGLE ── -->
+<button id="darkModeToggle" title="Toggle dark mode">🌙</button>
+
+<div id="appLayout">
+
+<!-- ════════════ LEFT COLUMN ════════════ -->
+<div id="leftCol">
+
+<!-- ── HEADING ── -->
+<h1>C D E Songs</h1>
+<p id="subtitle">Listen · Learn · Play</p>
+
+<div id="songList">
+    <!-- Populated by JS from SONGS array below -->
+  </div>
+
+<!-- ══════════════════════════════
+     MAIN STAGE
+══════════════════════════════ -->
+<div id="mainStage">
+
+  <!-- SVG score zone — click/drag to load SVG sheet music -->
+  <div id="scoreZone">
+    <div class="placeholder" id="scorePlaceholder">🎼 Sheet music will appear here</div>
+    <div id="svgScrollWrapper" style="display:none;"></div>
+  </div>
+
+  <!-- Falling notes -->
+  <div id="canvasWrap">
+    <canvas id="fallingCanvas"></canvas>
+    <div id="hitLine"></div>
+    <div id="starsContainer"></div>
+  </div>
+
+  <!-- Keyboard -->
+  <div id="keyboardWrap">
+    <canvas id="keyboardCanvas"></canvas>
+  </div>
+
+</div><!-- /#mainStage -->
+
+</div><!-- /#leftCol -->
+
+<!-- ════════════ RIGHT COLUMN ════════════ -->
+<div id="rightCol">
+
+  <!-- FEEDBACK -->
+  <div id="feedbackBubble">🎉 Great!</div>
+  <div id="noteBadge">C4</div>
+  <div id="progressDots"></div>
+
+  <!-- ══════════════════════════════
+       CONTROLS
+  ══════════════════════════════ -->
+  <div id="controlPanel">
+
+    <!-- Watch First button -->
+    <button id="btnWatchFirst" onclick="openVideoModal()">
+      🎬 Rewatch The Walkthrough
+    </button>
+
+    <!-- Playback card -->
+    <div class="ctrl-card" id="panelPlaybackCard">
+      <div class="ctrl-card-title">Playback</div>
+      <div class="btn-row">
+        <button class="ctrl-btn" id="btnStart" disabled>▶ Start</button>
+        <button class="ctrl-btn stop-btn" id="btnStop" disabled>■ Stop</button>
+        <button class="ctrl-btn" id="btnReset">↺ Reset</button>
+        <button class="ctrl-btn" id="btnFree" disabled>🎹 Free Play</button>
+        <button class="ctrl-btn" id="btnLoop">🔁 Loop</button>
+      </div>
+    </div>
+
+  <!-- Speed card -->
+  <div class="ctrl-card" id="panelSpeedCard">
+    <div class="ctrl-card-title">Speed</div>
+    <div class="btn-row" style="align-items:center;">
+      <button class="ctrl-btn" id="btnSpeedDown" style="font-size:1.3rem;padding:7px 18px;">−</button>
+      <div id="speedDisplay">1.0×</div>
+      <button class="ctrl-btn" id="btnSpeedUp" style="font-size:1.3rem;padding:7px 18px;">+</button>
+    </div>
+  </div>
+
+  <!-- Next Lecture button -->
+  <a href="#" id="btnNextLecture">
+    🎓 Go to Next Lecture
+  </a>
+
+</div><!-- /#controlPanel -->
+
+
+
+</div><!-- /#rightCol -->
+
+</div><!-- /#appLayout -->
+
+<!-- ══════════════════════════════
+     VIDEO MODAL
+══════════════════════════════ -->
+<div id="videoModal" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle">
+  <div id="videoModalBackdrop" onclick="closeVideoModal()"></div>
+  <div id="videoModalBox">
+
+    <div id="videoModalHeader">
+      <div>
+        <div id="videoModalTitle">🎬 Watch First — C D E Songs</div>
+        <div id="videoModalSubtitle">Watch this before you start playing. You can reopen it any time!</div>
+      </div>
+      <button id="btnCloseModal" onclick="closeVideoModal()" aria-label="Close video">✕</button>
+    </div>
+
+    <div id="videoModalPlayer">
+      <!-- ★ TO ADD YOUR VIDEO: paste your YouTube embed URL below
+           Example: https://www.youtube.com/embed/dQw4w9WgXcQ
+           Get it from YouTube → Share → Embed → copy the src="..." value only -->
+      <iframe id="lessonVideo"
+        src=""
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        style="width:100%;height:100%;display:none;border-radius:14px;">
+      </iframe>
+      <!-- Placeholder shown when no video is loaded -->
+      <div id="videoPlaceholder">
+        <div class="play-icon">🎬</div>
+        <p>Your intro video goes here!</p>
+        <p>On YouTube: <strong>Share → Embed</strong>, then copy just the URL from <code>src="..."</code> and paste it into the <code>iframe src=""</code> in this file.</p>
+      </div>
+    </div>
+
+    <div id="videoModalClose">
+      <button id="btnDoneWatching" onclick="closeVideoModal()">
+        ✅ Got it — let me try!
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCRIPTS
+══════════════════════════════ -->
+<script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+<script type="module">
+import { Midi } from 'https://esm.sh/@tonejs/midi@2.0.28';
+
+/* ══════════════════════════════════════════════════════
+   EMBEDDED MIDI & SVG (base64 inline — no fetch needed)
+══════════════════════════════════════════════════════ */
+const EMBEDDED_MIDI_B64 = `TVRoZAAAAAYAAQABAeBNVHJrAAABMwD/AwVQaWFubwD/WAQEAhgIAP9ZAgAAAP9RAwehIACweQAAZAAAZQAABgwAZH8AZX8AwAAAsAdkAApAAFsAAF0AAP8hAQAAkEBQAP8FA0Zsb4NHkEAAGT5QAP8FBXdlcnMgg0eQPgAZQFAA/wUDQmxvg0eQQAAZPlAA/wUFbWluZyCDR5A+ABk8UAD/BQNJbiCDR5A8ABk+UAD/BQR0aGUgg0eQPgAZQFAA/wUHU3ByaW5nIIcPkEAAMTxQAP8FCFNwcmVhZHMgg0eQPAAZPlAA/wUEdG9vIINHkD4AGUBQAP8FAm1hg0eQQAAZPlAA/wUDbnkgg0eQPgAZPFAA/wUHc21pbGVzIINHkDwAGT5QAP8FBGFuZCCDR5A+ABk8UAD/BQZncmlucyCHD5A8AAH/LwA=`;
+const EMBEDDED_SVG = `<svg width="210.06mm" height="148.08mm" viewBox="0 0 2977.23 2098.77"
+ xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2" baseProfile="full">
+<title>Flowers_CDE</title>
+<desc>Generated by MuseScore Studio 4.6.5</desc>
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="478.346,738.454 2622.9,738.454" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="478.346,763.257 2622.9,763.257" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="478.346,788.06 2622.9,788.06" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="478.346,812.863 2622.9,812.863" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="478.346,837.666 2622.9,837.666" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="354.331,1095.14 2622.9,1095.14" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="354.331,1119.94 2622.9,1119.94" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="354.331,1144.74 2622.9,1144.74" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="354.331,1169.55 2622.9,1169.55" />
+<polyline class="StaffLines" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="354.331,1194.35 2622.9,1194.35" />
+<path class="Text" d="M2427.16,518.241 L2425.26,518.241 L2423.26,521.191 C2419.61,518.541 2417.76,517.841 2414.31,517.841 C2409.56,517.841 2405.51,519.841 2402.16,523.841 C2398.96,527.641 2397.46,531.841 2397.46,536.991 C2397.46,547.791 2404.51,555.441 2414.36,555.441 C2422.36,555.441 2427.46,550.741 2428.61,542.341 L2426.26,541.941 C2424.91,549.391 2421.11,553.091 2414.96,553.091 C2407.56,553.091 2404.06,547.991 2404.06,537.191 C2404.06,531.491 2404.81,527.741 2406.51,524.741 C2408.06,521.941 2411.11,520.191 2414.36,520.191 C2417.86,520.191 2420.96,522.041 2422.86,525.241 C2423.81,526.891 2424.51,528.741 2425.71,532.691 L2427.91,532.691 L2427.16,518.241 M2443.7,530.641 C2437.55,530.641 2432.8,536.091 2432.8,543.091 C2432.8,549.941 2437.6,555.441 2443.6,555.441 C2449.6,555.441 2454.4,549.941 2454.4,543.041 C2454.4,536.191 2449.6,530.641 2443.7,530.641 M2443.7,532.791 C2447.2,532.791 2449.15,536.441 2449.15,543.041 C2449.15,549.691 2447.2,553.291 2443.6,553.291 C2440,553.291 2438.05,549.691 2438.05,543.091 C2438.05,536.291 2439.95,532.791 2443.7,532.791 M2466.15,531.391 L2457.25,531.941 L2457.25,534.091 L2459.3,534.091 C2461.2,534.141 2461.45,534.441 2461.45,536.591 L2461.45,550.891 C2461.4,551.641 2461.35,551.941 2461.15,552.191 C2460.8,552.641 2459.85,552.841 2457.7,552.891 L2457.5,552.891 L2457.5,554.691 L2470.1,554.691 L2470.1,552.891 L2469.9,552.891 C2466.6,552.791 2466.15,552.541 2466.15,550.691 L2466.15,541.441 C2466.15,536.991 2468.6,533.691 2471.85,533.691 C2474.7,533.691 2476.15,535.741 2476.15,539.791 L2476.15,550.941 C2476.1,551.591 2476.05,551.941 2475.8,552.191 C2475.5,552.641 2474.5,552.841 2472.35,552.891 L2472.15,552.891 L2472.15,554.691 L2484.8,554.691 L2484.8,552.891 L2484.6,552.891 C2481.3,552.791 2480.85,552.541 2480.85,550.741 L2480.85,541.891 C2480.85,536.891 2483.1,533.691 2486.6,533.691 C2489.45,533.691 2490.85,535.841 2490.85,540.341 L2490.85,550.891 C2490.8,551.591 2490.75,551.941 2490.5,552.191 C2490.2,552.641 2489.2,552.841 2487.05,552.891 L2486.85,552.891 L2486.85,554.691 L2499.5,554.691 L2499.5,552.891 L2499.3,552.891 C2496,552.791 2495.55,552.541 2495.55,550.691 L2495.55,539.341 C2495.55,536.241 2495.25,535.191 2493.95,533.491 C2492.5,531.641 2490.45,530.641 2488.05,530.641 C2484.8,530.641 2482.4,532.191 2480.25,535.641 C2479.4,532.641 2476.7,530.641 2473.35,530.641 C2470.3,530.641 2468.1,532.091 2466.15,535.241 L2466.15,531.391 M2509.08,531.391 L2500.43,531.941 L2500.43,534.091 L2502.23,534.091 C2504.13,534.141 2504.38,534.441 2504.38,536.591 L2504.38,561.041 C2504.33,561.741 2504.28,562.041 2504.08,562.291 C2503.73,562.741 2502.78,562.941 2500.63,562.991 L2500.43,562.991 L2500.43,564.791 L2513.43,564.791 L2513.43,562.991 L2512.88,562.991 C2509.53,562.891 2509.08,562.641 2509.08,560.841 L2509.08,551.391 C2510.73,554.291 2512.58,555.441 2515.68,555.441 C2522.33,555.441 2525.78,548.891 2525.78,542.941 C2525.78,537.291 2522.33,530.641 2515.98,530.641 C2512.88,530.641 2510.83,531.941 2509.08,534.941 L2509.08,531.391 M2515.08,533.341 C2518.53,533.341 2520.53,536.791 2520.53,542.641 C2520.53,549.091 2518.53,552.741 2514.93,552.741 C2511.33,552.741 2509.03,549.041 2509.03,543.291 C2509.03,537.041 2511.28,533.341 2515.08,533.341 M2540.32,530.641 C2534.17,530.641 2529.42,536.091 2529.42,543.091 C2529.42,549.941 2534.22,555.441 2540.22,555.441 C2546.22,555.441 2551.02,549.941 2551.02,543.041 C2551.02,536.191 2546.22,530.641 2540.32,530.641 M2540.32,532.791 C2543.82,532.791 2545.77,536.441 2545.77,543.041 C2545.77,549.691 2543.82,553.291 2540.22,553.291 C2536.62,553.291 2534.67,549.691 2534.67,543.091 C2534.67,536.291 2536.57,532.791 2540.32,532.791 M2572.22,530.841 L2570.47,530.841 L2569.02,532.641 C2567.22,531.241 2565.42,530.641 2562.92,530.641 C2558.52,530.641 2555.62,533.491 2555.62,537.891 C2555.62,542.591 2558.67,543.791 2562.67,544.741 L2565.32,545.341 C2569.27,546.291 2570.67,547.291 2570.67,549.291 C2570.67,551.641 2568.62,553.291 2565.72,553.291 C2561.47,553.291 2558.47,550.591 2557.27,545.591 L2555.27,545.591 L2555.27,555.041 L2557.02,555.041 L2558.77,552.991 C2560.82,554.641 2563.07,555.441 2565.62,555.441 C2570.52,555.441 2573.77,552.391 2573.77,547.741 C2573.77,545.541 2573.07,543.841 2571.67,542.691 C2570.47,541.641 2569.47,541.241 2566.42,540.591 L2563.92,540.041 C2561.17,539.441 2561.17,539.441 2560.27,538.941 C2559.17,538.441 2558.52,537.391 2558.52,536.291 C2558.52,534.241 2560.42,532.841 2563.17,532.841 C2567.27,532.841 2569.27,535.741 2570.47,539.241 L2572.22,539.241 L2572.22,530.841 M2599.11,543.441 C2599.16,535.941 2594.91,530.641 2588.81,530.641 C2582.41,530.641 2577.61,536.191 2577.61,543.691 C2577.61,550.741 2582.16,555.441 2588.91,555.441 C2593.71,555.441 2597.06,553.091 2599.11,548.341 L2597.36,547.391 C2595.31,551.241 2593.21,552.741 2589.86,552.741 C2587.31,552.741 2585.46,551.691 2584.16,549.441 C2583.26,547.941 2582.86,546.191 2582.91,543.441 L2599.11,543.441 M2582.96,541.291 C2582.96,537.791 2584.56,532.791 2588.76,532.791 C2591.76,532.791 2593.76,535.441 2593.76,539.491 C2593.76,540.891 2593.31,541.291 2591.71,541.291 L2582.96,541.291 M2610.76,531.391 L2601.91,531.941 L2601.91,534.091 L2603.96,534.091 C2605.86,534.141 2606.11,534.441 2606.11,536.591 L2606.11,550.891 C2606.06,551.641 2606.01,551.941 2605.81,552.191 C2605.46,552.641 2604.46,552.841 2602.31,552.891 L2602.11,552.891 L2602.11,554.691 L2615.46,554.691 L2615.46,552.891 L2614.56,552.891 C2611.21,552.791 2610.76,552.541 2610.76,550.741 L2610.76,548.041 C2610.81,539.641 2613.81,533.241 2617.71,533.041 C2617.01,533.841 2616.81,534.341 2616.81,535.291 C2616.81,536.891 2617.96,538.041 2619.56,538.041 C2621.41,538.041 2622.61,536.691 2622.61,534.691 C2622.61,532.241 2620.91,530.641 2618.26,530.641 C2615.11,530.641 2612.41,533.141 2610.76,537.591 L2610.76,531.391 "/>
+<path class="Text" d="M1223.78,318.458 L1158.33,318.458 L1158.33,323.628 L1160.31,323.628 C1166.58,323.738 1168.67,324.068 1169.55,325.168 C1170.21,326.158 1170.21,326.378 1170.21,331.988 L1170.21,384.348 C1170.21,389.958 1170.21,390.178 1169.55,391.168 C1168.67,392.268 1166.58,392.708 1160.31,392.708 L1158.33,392.708 L1158.33,397.878 L1196.06,397.878 L1196.06,392.708 L1192.43,392.708 C1186.16,392.708 1184.07,392.268 1183.19,391.168 C1182.53,390.178 1182.53,389.848 1182.53,384.348 L1182.53,359.378 L1184.73,359.378 C1196.06,358.938 1200.13,363.008 1200.57,375.218 L1205.74,375.218 L1205.74,339.138 L1200.57,339.138 C1199.91,349.918 1195.62,354.098 1185.17,354.208 L1182.53,354.208 L1182.53,329.128 C1182.42,324.508 1183.52,323.738 1189.46,323.628 L1194.52,323.628 C1212.56,323.518 1217.07,327.588 1220.48,346.508 L1225.32,346.508 L1223.78,318.458 M1251.93,316.808 L1231.58,318.018 L1231.58,322.748 L1236.97,322.748 C1241.04,322.858 1241.59,323.518 1241.59,328.248 L1241.59,389.518 C1241.48,391.168 1241.37,391.828 1240.93,392.378 C1240.16,393.368 1238.07,393.808 1233.34,393.918 L1232.57,393.918 L1232.57,397.878 L1261.06,397.878 L1261.06,393.918 L1260.29,393.918 C1252.92,393.698 1251.93,393.148 1251.93,389.188 L1251.93,316.808 M1291.85,344.968 C1278.32,344.968 1267.87,356.958 1267.87,372.358 C1267.87,387.428 1278.43,399.528 1291.63,399.528 C1304.83,399.528 1315.39,387.428 1315.39,372.248 C1315.39,357.178 1304.83,344.968 1291.85,344.968 M1291.85,349.698 C1299.55,349.698 1303.84,357.728 1303.84,372.248 C1303.84,386.878 1299.55,394.798 1291.63,394.798 C1283.71,394.798 1279.42,386.878 1279.42,372.358 C1279.42,357.398 1283.6,349.698 1291.85,349.698 M1376.44,383.688 L1365.66,355.418 C1365.33,354.648 1365.22,353.988 1365.22,353.108 C1365.22,351.128 1366.21,350.578 1369.84,350.578 L1372.48,350.578 L1372.48,346.618 L1347.84,346.618 L1347.84,350.578 L1349.71,350.578 C1353.23,350.688 1354.66,351.568 1355.54,354.648 L1356.42,357.508 L1346.74,383.138 L1336.07,355.528 C1335.85,354.758 1335.63,353.768 1335.63,353.108 C1335.63,351.238 1336.84,350.578 1340.14,350.578 L1342.12,350.578 L1342.12,346.618 L1317.92,346.618 L1317.92,350.578 L1319.9,350.578 C1322.98,350.688 1324.41,352.008 1325.62,355.968 L1342.12,399.528 L1345.97,399.528 L1359.06,364.768 L1372.48,399.528 L1375.89,399.528 L1391.29,358.938 C1393.71,352.448 1395.36,350.688 1399.43,350.578 L1400.2,350.578 L1400.2,346.618 L1379.41,346.618 L1379.41,350.578 L1381.28,350.578 C1385.13,350.578 1386.67,351.678 1386.67,354.648 C1386.67,355.748 1386.34,357.178 1385.79,358.608 L1376.44,383.688 M1450.03,373.128 C1450.14,356.628 1440.79,344.968 1427.37,344.968 C1413.29,344.968 1402.73,357.178 1402.73,373.678 C1402.73,389.188 1412.74,399.528 1427.59,399.528 C1438.15,399.528 1445.52,394.358 1450.03,383.908 L1446.18,381.818 C1441.67,390.288 1437.05,393.588 1429.68,393.588 C1424.07,393.588 1420,391.278 1417.14,386.328 C1415.16,383.028 1414.28,379.178 1414.39,373.128 L1450.03,373.128 M1414.5,368.398 C1414.5,360.698 1418.02,349.698 1427.26,349.698 C1433.86,349.698 1438.26,355.528 1438.26,364.438 C1438.26,367.518 1437.27,368.398 1433.75,368.398 L1414.5,368.398 M1475.66,346.618 L1456.19,347.828 L1456.19,352.558 L1460.7,352.558 C1464.88,352.668 1465.43,353.328 1465.43,358.058 L1465.43,389.518 C1465.32,391.168 1465.21,391.828 1464.77,392.378 C1464,393.368 1461.8,393.808 1457.07,393.918 L1456.63,393.918 L1456.63,397.878 L1486,397.878 L1486,393.918 L1484.02,393.918 C1476.65,393.698 1475.66,393.148 1475.66,389.188 L1475.66,383.248 C1475.77,364.768 1482.37,350.688 1490.95,350.248 C1489.41,352.008 1488.97,353.108 1488.97,355.198 C1488.97,358.718 1491.5,361.248 1495.02,361.248 C1499.09,361.248 1501.73,358.278 1501.73,353.878 C1501.73,348.488 1497.99,344.968 1492.16,344.968 C1485.23,344.968 1479.29,350.468 1475.66,360.258 L1475.66,346.618 M1545.28,345.408 L1541.43,345.408 L1538.24,349.368 C1534.28,346.288 1530.32,344.968 1524.82,344.968 C1515.14,344.968 1508.76,351.238 1508.76,360.918 C1508.76,371.258 1515.47,373.898 1524.27,375.988 L1530.1,377.308 C1538.79,379.398 1541.87,381.598 1541.87,385.998 C1541.87,391.168 1537.36,394.798 1530.98,394.798 C1521.63,394.798 1515.03,388.858 1512.39,377.858 L1507.99,377.858 L1507.99,398.648 L1511.84,398.648 L1515.69,394.138 C1520.2,397.768 1525.15,399.528 1530.76,399.528 C1541.54,399.528 1548.69,392.818 1548.69,382.588 C1548.69,377.748 1547.15,374.008 1544.07,371.478 C1541.43,369.168 1539.23,368.288 1532.52,366.858 L1527.02,365.648 C1520.97,364.328 1520.97,364.328 1518.99,363.228 C1516.57,362.128 1515.14,359.818 1515.14,357.398 C1515.14,352.888 1519.32,349.808 1525.37,349.808 C1534.39,349.808 1538.79,356.188 1541.43,363.888 L1545.28,363.888 L1545.28,345.408 M1654.17,317.688 L1649.99,317.688 L1645.59,324.178 C1637.56,318.348 1633.49,316.808 1625.9,316.808 C1615.45,316.808 1606.54,321.208 1599.17,330.008 C1592.13,338.368 1588.83,347.608 1588.83,358.938 C1588.83,382.698 1604.34,399.528 1626.01,399.528 C1643.61,399.528 1654.83,389.188 1657.36,370.708 L1652.19,369.828 C1649.22,386.218 1640.86,394.358 1627.33,394.358 C1611.05,394.358 1603.35,383.138 1603.35,359.378 C1603.35,346.838 1605,338.588 1608.74,331.988 C1612.15,325.828 1618.86,321.978 1626.01,321.978 C1633.71,321.978 1640.53,326.048 1644.71,333.088 C1646.8,336.718 1648.34,340.788 1650.98,349.478 L1655.82,349.478 L1654.17,317.688 M1665.38,397.878 L1702.34,397.878 C1712.13,397.878 1719.61,396.338 1725.44,393.038 C1736.55,386.768 1742.71,374.228 1742.71,357.728 C1742.71,342.548 1737.21,330.668 1727.09,324.068 C1721.04,320.218 1712.9,318.458 1700.36,318.458 L1665.38,318.458 L1665.38,323.628 L1667.47,323.628 C1673.63,323.738 1675.72,324.068 1676.6,325.168 C1677.26,326.158 1677.26,326.378 1677.26,331.988 L1677.26,384.348 C1677.26,389.958 1677.26,390.178 1676.6,391.168 C1675.72,392.268 1673.63,392.598 1667.47,392.708 L1665.38,392.708 L1665.38,397.878 M1695.85,392.708 C1690.24,392.708 1689.58,392.048 1689.58,386.658 L1689.58,329.788 C1689.58,324.398 1690.35,323.628 1695.85,323.628 L1701.57,323.628 C1720.38,323.628 1728.19,333.858 1728.19,358.168 C1728.19,382.808 1721.15,392.708 1703.33,392.708 L1695.85,392.708 M1814.65,318.458 L1748.54,318.458 L1748.54,323.628 L1750.52,323.628 C1756.79,323.738 1758.88,324.068 1759.76,325.168 C1760.42,326.158 1760.42,326.378 1760.42,331.988 L1760.42,384.348 C1760.42,389.958 1760.42,390.178 1759.76,391.168 C1758.88,392.268 1756.79,392.708 1750.52,392.708 L1748.54,392.708 L1748.54,397.878 L1816.08,397.878 L1818.28,368.508 L1813.44,368.508 C1809.26,388.088 1804.75,392.268 1787.92,392.708 L1780.66,392.708 C1774.06,392.488 1772.41,391.388 1772.74,387.428 L1772.74,359.378 L1774.94,359.378 C1786.27,358.938 1790.34,363.008 1790.78,375.218 L1795.95,375.218 L1795.95,339.138 L1790.78,339.138 C1790.12,349.918 1785.83,354.208 1775.38,354.208 L1772.74,354.208 L1772.74,329.128 C1772.63,324.508 1773.73,323.738 1779.67,323.628 L1785.39,323.628 C1803.43,323.518 1807.94,327.478 1811.46,346.508 L1816.19,346.508 L1814.65,318.458 "/>
+<path class="MeasureNumber" d="M368.009,1030.97 C369.889,1030.37 370.649,1030.05 371.609,1029.41 C373.489,1028.17 374.649,1025.97 374.649,1023.73 C374.649,1019.93 371.609,1017.37 367.129,1017.37 C362.769,1017.37 359.089,1020.09 359.089,1023.37 C359.089,1025.01 360.089,1026.13 361.609,1026.13 C362.929,1026.13 363.889,1025.17 363.889,1023.85 C363.889,1023.17 363.689,1022.69 363.049,1022.05 C362.649,1021.69 362.489,1021.41 362.489,1021.13 C362.489,1020.17 364.489,1019.17 366.369,1019.17 C369.049,1019.17 370.649,1020.65 370.649,1023.13 C370.649,1026.69 368.129,1030.05 365.449,1030.05 C365.329,1030.05 364.969,1030.01 364.529,1029.97 C363.369,1029.89 363.369,1029.89 363.129,1029.89 C362.249,1029.89 361.769,1030.29 361.769,1031.01 C361.769,1031.65 362.209,1032.05 362.929,1032.05 C363.129,1032.05 363.409,1032.01 363.729,1031.97 C364.289,1031.85 364.889,1031.81 365.249,1031.81 C367.129,1031.81 368.409,1033.49 368.409,1035.97 C368.409,1040.29 366.289,1044.45 361.449,1044.45 C359.209,1044.45 357.289,1043.33 357.289,1042.05 C357.289,1041.61 357.449,1041.45 358.089,1041.17 C359.249,1040.65 359.729,1039.93 359.729,1038.85 C359.729,1037.45 358.609,1036.37 357.169,1036.37 C355.449,1036.37 354.329,1037.73 354.329,1039.81 C354.329,1043.69 357.289,1046.13 362.089,1046.13 C368.129,1046.13 372.729,1042.09 372.729,1036.73 C372.729,1033.61 370.809,1031.85 368.009,1030.97"/>
+<polyline class="BarLine" fill="none" stroke="#000000" stroke-width="4.46" stroke-linejoin="bevel" points="2589.66,1093.77 2589.66,1195.71" />
+<polyline class="BarLine" fill="none" stroke="#000000" stroke-width="13.64" stroke-linejoin="bevel" points="2616.08,1093.77 2616.08,1195.71" />
+<polyline class="BarLine" fill="none" stroke="#000000" stroke-width="4.46" stroke-linejoin="bevel" points="2620.66,737.089 2620.66,839.03" />
+<polyline class="BarLine" fill="none" stroke="#000000" stroke-width="4.46" stroke-linejoin="bevel" points="1595.79,1093.77 1595.79,1195.71" />
+<polyline class="BarLine" fill="none" stroke="#000000" stroke-width="4.46" stroke-linejoin="bevel" points="1695.8,737.089 1695.8,839.03" />
+<polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="3.97" stroke-linejoin="bevel" points="490.981,1219.15 540.571,1219.15" />
+<polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="3.97" stroke-linejoin="bevel" points="2168.53,1219.15 2218.13,1219.15" />
+<polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="3.97" stroke-linejoin="bevel" points="1721.6,862.469 1771.19,862.469" />
+<polyline class="LedgerLine" fill="none" stroke="#000000" stroke-width="3.97" stroke-linejoin="bevel" points="1621.59,1219.15 1671.18,1219.15" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="2014.92,846.099 2014.92,763.257" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="804.016,1202.78 804.016,1119.94" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1470.69,846.099 1470.69,763.257" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="530.542,1215.18 530.542,1132.34" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1077.49,1190.38 1077.49,1107.54" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1216.93,833.698 1216.93,750.855" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1350.96,1202.78 1350.96,1119.94" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="963.177,846.099 963.177,763.257" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1661.15,1215.18 1661.15,1132.34" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1761.16,858.501 1761.16,775.658" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="709.419,833.698 709.419,750.855" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="1934.62,1202.78 1934.62,1119.94" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="2208.1,1215.18 2208.1,1132.34" />
+<polyline class="Stem" fill="none" stroke="#000000" stroke-width="2.73" stroke-linejoin="bevel" points="2268.67,833.698 2268.67,750.855" />
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,2177.22,1219.15)" d="M21.3,-13.2 C11.6,-13.2 0,-5.1 0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 M7.5,8.6 C4.2,8.6 3.5,5.9 3.5,5 C3.5,0.1 20.3,-8.5 25,-8.5 C27.4,-8.5 29,-7.1 29,-4.9 C29,0.1 12.1,8.6 7.5,8.6"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1439.81,850.068)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1903.74,1206.75)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1630.27,1219.15)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,678.539,837.666)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,2237.79,837.666)" d="M21.3,-13.2 C11.6,-13.2 0,-5.1 0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 M7.5,8.6 C4.2,8.6 3.5,5.9 3.5,5 C3.5,0.1 20.3,-8.5 25,-8.5 C27.4,-8.5 29,-7.1 29,-4.9 C29,0.1 12.1,8.6 7.5,8.6"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,932.297,850.068)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1320.08,1206.75)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1046.61,1194.35)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1186.05,837.666)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1730.28,862.469)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,773.136,1206.75)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,499.662,1219.15)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Note" transform="matrix(0.992126,0,0,0.992126,1984.04,850.068)" d="M0,4.2 C0,8.5 3.1,13.3 11.2,13.3 C21.6,13.3 32.5,4.8 32.5,-4 C32.5,-9.9 27.5,-13.2 21.3,-13.2 C11.6,-13.2 0,-5 0,4.2"/>
+<path class="Clef" transform="matrix(0.992126,0,0,0.992126,374.173,1169.55)" d="M12.3,51.3 C12.3,57.9 17.3,66.6 30.8,66.6 C35.5,66.6 39.6,65.4 43.2,63.2 C48.6,59.4 50,52.8 50,46.5 C50,42.6 49.4,38.1 48.4,32.4 C48.1,30.4 47.5,27.4 46.9,23.5 C56.7,20.3 64,10.1 64,-0.2 C64,-15.3 53.3,-25.5 38.7,-25.5 C37.7,-31.5 36.7,-37.4 35.9,-43 C46.4,-54.1 53.7,-66.6 53.7,-82.5 C53.7,-91.6 50.9,-99 49.3,-102.6 C46.9,-107.7 44,-111.2 42.2,-111.2 C41.5,-111.2 38.4,-110 35.1,-106.1 C28.7,-98.5 26.9,-85.7 26.9,-77.3 C26.9,-71.9 27.4,-67 29.1,-55.8 C29,-55.7 23.8,-50.4 21.7,-48.7 C12.6,-40.3 0,-28.1 0,-8.1 C0,10.6 16.3,25.3 34.9,25.3 C37.8,25.3 40.5,25 42.8,24.6 C44.7,34.2 45.9,41.2 45.9,46.5 C45.9,56.9 40.5,62.4 30.4,62.4 C28,62.4 25.9,61.9 25.7,61.9 C25.6,61.8 25.4,61.7 25.4,61.6 C25.4,61.4 25.6,61.3 25.9,61.3 C30.6,60.5 35.3,56.5 35.3,50.1 C35.3,44.7 31.2,39 23.7,39 C16.7,39 12.3,44.7 12.3,51.3 M33.2,-82.2 C34.1,-86.2 38.7,-96.7 43.9,-96.7 C45.4,-96.7 47.8,-91.9 47.8,-84.9 C47.8,-74.5 40.1,-66.7 33.2,-59.9 C32.6,-63.9 32.1,-67.8 32.1,-72 C32.1,-75.7 32.4,-79.1 33.2,-82.2 M42,20.6 C40,21 38.1,21.2 36.2,21.2 C21.9,21.2 9.7,11.2 9.7,-3.9 C9.7,-16.1 18.3,-27 27.1,-34.6 C28.8,-36.1 30.4,-37.5 31.9,-39 C32.8,-33.6 33.5,-28.9 34.2,-24.8 C25.1,-22.1 18.9,-12.5 18.9,-3.1 C18.9,3.9 24.4,13.5 32.4,13.5 C33.2,13.5 34.1,13.1 34.1,12.2 C34.1,11.3 33.1,10.8 31.9,10 C28,7.6 25.8,5 25.8,0.1 C25.8,-6 30.4,-10.9 36.2,-12.3 L42,20.6 M56.2,2.1 C56.2,9.2 53.3,16.5 46.2,19.4 C44.1,7.4 41.4,-8.5 40.7,-12.9 C49.7,-12.9 56.2,-6.8 56.2,2.1"/>
+<path class="Clef" transform="matrix(0.992126,0,0,0.992126,498.189,812.863)" d="M12.3,51.3 C12.3,57.9 17.3,66.6 30.8,66.6 C35.5,66.6 39.6,65.4 43.2,63.2 C48.6,59.4 50,52.8 50,46.5 C50,42.6 49.4,38.1 48.4,32.4 C48.1,30.4 47.5,27.4 46.9,23.5 C56.7,20.3 64,10.1 64,-0.2 C64,-15.3 53.3,-25.5 38.7,-25.5 C37.7,-31.5 36.7,-37.4 35.9,-43 C46.4,-54.1 53.7,-66.6 53.7,-82.5 C53.7,-91.6 50.9,-99 49.3,-102.6 C46.9,-107.7 44,-111.2 42.2,-111.2 C41.5,-111.2 38.4,-110 35.1,-106.1 C28.7,-98.5 26.9,-85.7 26.9,-77.3 C26.9,-71.9 27.4,-67 29.1,-55.8 C29,-55.7 23.8,-50.4 21.7,-48.7 C12.6,-40.3 0,-28.1 0,-8.1 C0,10.6 16.3,25.3 34.9,25.3 C37.8,25.3 40.5,25 42.8,24.6 C44.7,34.2 45.9,41.2 45.9,46.5 C45.9,56.9 40.5,62.4 30.4,62.4 C28,62.4 25.9,61.9 25.7,61.9 C25.6,61.8 25.4,61.7 25.4,61.6 C25.4,61.4 25.6,61.3 25.9,61.3 C30.6,60.5 35.3,56.5 35.3,50.1 C35.3,44.7 31.2,39 23.7,39 C16.7,39 12.3,44.7 12.3,51.3 M33.2,-82.2 C34.1,-86.2 38.7,-96.7 43.9,-96.7 C45.4,-96.7 47.8,-91.9 47.8,-84.9 C47.8,-74.5 40.1,-66.7 33.2,-59.9 C32.6,-63.9 32.1,-67.8 32.1,-72 C32.1,-75.7 32.4,-79.1 33.2,-82.2 M42,20.6 C40,21 38.1,21.2 36.2,21.2 C21.9,21.2 9.7,11.2 9.7,-3.9 C9.7,-16.1 18.3,-27 27.1,-34.6 C28.8,-36.1 30.4,-37.5 31.9,-39 C32.8,-33.6 33.5,-28.9 34.2,-24.8 C25.1,-22.1 18.9,-12.5 18.9,-3.1 C18.9,3.9 24.4,13.5 32.4,13.5 C33.2,13.5 34.1,13.1 34.1,12.2 C34.1,11.3 33.1,10.8 31.9,10 C28,7.6 25.8,5 25.8,0.1 C25.8,-6 30.4,-10.9 36.2,-12.3 L42,20.6 M56.2,2.1 C56.2,9.2 53.3,16.5 46.2,19.4 C44.1,7.4 41.4,-8.5 40.7,-12.9 C49.7,-12.9 56.2,-6.8 56.2,2.1"/>
+<path class="TimeSig" transform="matrix(0.992126,0,0,0.992126,585.093,763.257)" d="M20.8,12.7 L20.8,20.1 L12.5,20.1 C11.8,20.1 11.1,20.7 11.1,21.5 L11.1,23.4 C11.1,24.2 11.8,24.8 12.5,24.8 L42.8,24.8 C43.6,24.8 44.2,24.2 44.2,23.4 L44.2,21.5 C44.2,20.7 43.6,20.1 42.8,20.1 L33.9,20.1 L33.9,12.7 L42.8,12.7 C43.6,12.7 44.2,12 44.2,11.2 L44.2,9.3 C44.2,8.6 43.6,7.9 42.8,7.9 L33.9,7.9 L33.9,-8 C33.9,-8.6 33.6,-9.1 33.1,-9.3 L31.9,-9.9 C31.7,-10 31.4,-10.1 31.2,-10.1 C30.9,-10 30.5,-9.9 30.3,-9.7 L21.2,-1.4 C20.9,-1.1 20.8,-0.7 20.8,-0.3 L20.8,7.9 L9.3,7.9 C9.3,7.9 20.4,-4.1 32.2,-19.9 C32.6,-20.4 32.7,-20.9 32.7,-21.3 C32.7,-21.8 32.5,-22.2 32.4,-22.3 L30.2,-24.5 C30,-24.7 29.6,-24.9 29.2,-24.9 C28.6,-24.9 15.1,-24.9 14.4,-24.9 C13.6,-24.9 13.1,-24.3 13,-23.7 C13,-23.7 12.5,-16.3 9.9,-8.2 C7.3,-0.1 4.3,4.9 1.7,8.6 C1.7,8.6 1.4,9.1 1.4,9.7 C1.4,9.9 1.4,10.1 1.5,10.3 C1.9,11 2.5,12.1 2.5,12.1 C2.5,12.1 2.7,12.7 3.6,12.7 L20.8,12.7 "/>
+<path class="TimeSig" transform="matrix(0.992126,0,0,0.992126,585.093,812.863)" d="M20.8,12.7 L20.8,20.1 L12.5,20.1 C11.8,20.1 11.1,20.7 11.1,21.5 L11.1,23.4 C11.1,24.2 11.8,24.8 12.5,24.8 L42.8,24.8 C43.6,24.8 44.2,24.2 44.2,23.4 L44.2,21.5 C44.2,20.7 43.6,20.1 42.8,20.1 L33.9,20.1 L33.9,12.7 L42.8,12.7 C43.6,12.7 44.2,12 44.2,11.2 L44.2,9.3 C44.2,8.6 43.6,7.9 42.8,7.9 L33.9,7.9 L33.9,-8 C33.9,-8.6 33.6,-9.1 33.1,-9.3 L31.9,-9.9 C31.7,-10 31.4,-10.1 31.2,-10.1 C30.9,-10 30.5,-9.9 30.3,-9.7 L21.2,-1.4 C20.9,-1.1 20.8,-0.7 20.8,-0.3 L20.8,7.9 L9.3,7.9 C9.3,7.9 20.4,-4.1 32.2,-19.9 C32.6,-20.4 32.7,-20.9 32.7,-21.3 C32.7,-21.8 32.5,-22.2 32.4,-22.3 L30.2,-24.5 C30,-24.7 29.6,-24.9 29.2,-24.9 C28.6,-24.9 15.1,-24.9 14.4,-24.9 C13.6,-24.9 13.1,-24.3 13,-23.7 C13,-23.7 12.5,-16.3 9.9,-8.2 C7.3,-0.1 4.3,4.9 1.7,8.6 C1.7,8.6 1.4,9.1 1.4,9.7 C1.4,9.9 1.4,10.1 1.5,10.3 C1.9,11 2.5,12.1 2.5,12.1 C2.5,12.1 2.7,12.7 3.6,12.7 L20.8,12.7 "/>
+<path class="Lyrics" d="M664.618,935.885 L664.618,900.655 L686.005,900.655 L686.005,904.61 L669.013,904.61 L669.013,916.72 L684.613,916.72 L684.613,920.626 L669.013,920.626 L669.013,935.885 L664.618,935.885 M691.507,935.885 L691.507,900.655 L695.755,900.655 L695.755,935.885 L691.507,935.885 M712.966,936.373 C710.622,936.373 708.567,935.836 706.801,934.762 C705.035,933.688 703.66,932.162 702.675,930.184 C701.69,928.207 701.198,925.875 701.198,923.19 L701.198,923.141 C701.198,920.439 701.69,918.107 702.675,916.146 C703.66,914.185 705.035,912.671 706.801,911.605 C708.567,910.539 710.614,910.006 712.941,910.006 C715.285,910.006 717.34,910.539 719.106,911.605 C720.872,912.671 722.247,914.185 723.232,916.146 C724.216,918.107 724.709,920.439 724.709,923.141 L724.709,923.19 C724.709,925.891 724.216,928.227 723.232,930.196 C722.247,932.166 720.876,933.688 719.118,934.762 C717.36,935.836 715.309,936.373 712.966,936.373 M712.99,932.613 C714.487,932.613 715.786,932.243 716.884,931.503 C717.983,930.762 718.837,929.688 719.448,928.28 C720.058,926.872 720.363,925.175 720.363,923.19 L720.363,923.141 C720.363,921.155 720.058,919.462 719.448,918.063 C718.837,916.663 717.975,915.597 716.86,914.864 C715.745,914.132 714.439,913.766 712.941,913.766 C711.476,913.766 710.187,914.136 709.072,914.877 C707.957,915.617 707.09,916.683 706.472,918.075 C705.853,919.466 705.544,921.155 705.544,923.141 L705.544,923.19 C705.544,925.175 705.853,926.872 706.472,928.28 C707.09,929.688 707.957,930.762 709.072,931.503 C710.187,932.243 711.493,932.613 712.99,932.613"/>
+<path class="Lyrics" d="M1172.33,935.885 L1172.33,932.003 L1182.78,932.003 C1185.42,932.003 1187.42,931.478 1188.8,930.428 C1190.17,929.379 1190.86,927.845 1190.86,925.826 L1190.86,925.777 C1190.86,924.41 1190.54,923.271 1189.91,922.36 C1189.27,921.448 1188.33,920.764 1187.06,920.309 C1185.8,919.853 1184.24,919.625 1182.37,919.625 L1172.33,919.625 L1172.33,915.841 L1181.12,915.841 C1183.72,915.841 1185.71,915.336 1187.09,914.327 C1188.46,913.318 1189.15,911.861 1189.15,909.957 L1189.15,909.908 C1189.15,908.167 1188.57,906.836 1187.42,905.917 C1186.26,904.997 1184.62,904.537 1182.49,904.537 L1172.33,904.537 L1172.33,900.655 L1183.49,900.655 C1185.51,900.655 1187.27,901.022 1188.79,901.754 C1190.3,902.486 1191.48,903.512 1192.33,904.83 C1193.17,906.149 1193.6,907.687 1193.6,909.444 L1193.6,909.493 C1193.6,910.714 1193.32,911.878 1192.77,912.985 C1192.21,914.091 1191.46,915.023 1190.5,915.78 C1189.53,916.537 1188.44,917.005 1187.22,917.184 L1187.22,917.281 C1188.92,917.477 1190.37,917.965 1191.59,918.746 C1192.81,919.527 1193.75,920.533 1194.4,921.761 C1195.05,922.99 1195.38,924.386 1195.38,925.948 L1195.38,925.997 C1195.38,928.064 1194.9,929.834 1193.95,931.307 C1193,932.78 1191.63,933.911 1189.86,934.701 C1188.09,935.49 1185.95,935.885 1183.44,935.885 L1172.33,935.885 M1170.13,935.885 L1170.13,900.655 L1174.53,900.655 L1174.53,935.885 L1170.13,935.885 M1200.87,935.885 L1200.87,900.655 L1205.11,900.655 L1205.11,935.885 L1200.87,935.885 M1222.33,936.373 C1219.98,936.373 1217.93,935.836 1216.16,934.762 C1214.39,933.688 1213.02,932.162 1212.03,930.184 C1211.05,928.207 1210.56,925.875 1210.56,923.19 L1210.56,923.141 C1210.56,920.439 1211.05,918.107 1212.03,916.146 C1213.02,914.185 1214.39,912.671 1216.16,911.605 C1217.93,910.539 1219.97,910.006 1222.3,910.006 C1224.64,910.006 1226.7,910.539 1228.47,911.605 C1230.23,912.671 1231.61,914.185 1232.59,916.146 C1233.58,918.107 1234.07,920.439 1234.07,923.141 L1234.07,923.19 C1234.07,925.891 1233.58,928.227 1232.59,930.196 C1231.61,932.166 1230.24,933.688 1228.48,934.762 C1226.72,935.836 1224.67,936.373 1222.33,936.373 M1222.35,932.613 C1223.85,932.613 1225.14,932.243 1226.24,931.503 C1227.34,930.762 1228.2,929.688 1228.81,928.28 C1229.42,926.872 1229.72,925.175 1229.72,923.19 L1229.72,923.141 C1229.72,921.155 1229.42,919.462 1228.81,918.063 C1228.2,916.663 1227.33,915.597 1226.22,914.864 C1225.1,914.132 1223.8,913.766 1222.3,913.766 C1220.84,913.766 1219.55,914.136 1218.43,914.877 C1217.32,915.617 1216.45,916.683 1215.83,918.075 C1215.21,919.466 1214.9,921.155 1214.9,923.141 L1214.9,923.19 C1214.9,925.175 1215.21,926.872 1215.83,928.28 C1216.45,929.688 1217.32,930.762 1218.43,931.503 C1219.55,932.243 1220.85,932.613 1222.35,932.613"/>
+<path class="Lyrics" d="M441.374,1296.93 C438.835,1296.93 436.601,1296.53 434.672,1295.74 C432.743,1294.95 431.213,1293.82 430.082,1292.36 C428.951,1290.9 428.312,1289.16 428.166,1287.16 L428.141,1286.82 L432.536,1286.82 L432.585,1287.16 C432.764,1288.33 433.244,1289.34 434.025,1290.2 C434.806,1291.05 435.844,1291.71 437.138,1292.18 C438.432,1292.64 439.925,1292.87 441.618,1292.87 C443.31,1292.87 444.775,1292.63 446.012,1292.15 C447.249,1291.67 448.205,1290.98 448.881,1290.09 C449.556,1289.19 449.894,1288.14 449.894,1286.94 L449.894,1286.92 C449.894,1285.37 449.357,1284.13 448.283,1283.2 C447.209,1282.28 445.459,1281.54 443.034,1281.01 L439.128,1280.15 C436.833,1279.65 434.941,1278.96 433.451,1278.09 C431.962,1277.22 430.851,1276.15 430.119,1274.87 C429.386,1273.59 429.02,1272.1 429.02,1270.39 L429.02,1270.36 C429.036,1268.43 429.573,1266.72 430.631,1265.25 C431.689,1263.78 433.15,1262.62 435.014,1261.78 C436.877,1260.94 439.014,1260.52 441.422,1260.52 C443.717,1260.52 445.768,1260.94 447.575,1261.76 C449.381,1262.58 450.826,1263.72 451.908,1265.19 C452.991,1266.65 453.597,1268.34 453.727,1270.27 L453.752,1270.63 L449.357,1270.63 L449.308,1270.29 C449.129,1269.09 448.69,1268.06 447.99,1267.21 C447.29,1266.37 446.374,1265.72 445.243,1265.26 C444.112,1264.8 442.798,1264.58 441.3,1264.58 C439.738,1264.58 438.371,1264.81 437.199,1265.28 C436.027,1265.76 435.12,1266.42 434.477,1267.26 C433.834,1268.11 433.512,1269.1 433.512,1270.24 L433.512,1270.27 C433.512,1271.23 433.752,1272.07 434.233,1272.8 C434.713,1273.54 435.449,1274.16 436.442,1274.67 C437.435,1275.18 438.696,1275.61 440.226,1275.95 L444.132,1276.81 C446.541,1277.33 448.498,1278.02 450.004,1278.88 C451.51,1279.75 452.616,1280.82 453.324,1282.09 C454.032,1283.37 454.386,1284.91 454.386,1286.7 L454.386,1286.72 C454.386,1288.8 453.861,1290.61 452.812,1292.14 C451.762,1293.67 450.264,1294.85 448.319,1295.68 C446.374,1296.51 444.059,1296.93 441.374,1296.93 M459.8,1304.88 L459.8,1270.95 L464.048,1270.95 L464.048,1275.25 L464.146,1275.25 C464.683,1274.25 465.346,1273.4 466.136,1272.69 C466.925,1271.99 467.833,1271.44 468.858,1271.05 C469.883,1270.66 470.998,1270.46 472.203,1270.46 C474.367,1270.46 476.26,1271 477.879,1272.08 C479.498,1273.17 480.756,1274.7 481.651,1276.67 C482.546,1278.65 482.994,1280.97 482.994,1283.64 L482.994,1283.67 C482.994,1286.34 482.542,1288.66 481.639,1290.63 C480.735,1292.6 479.482,1294.12 477.879,1295.2 C476.276,1296.29 474.408,1296.83 472.276,1296.83 C471.088,1296.83 469.973,1296.64 468.931,1296.25 C467.89,1295.87 466.966,1295.33 466.16,1294.62 C465.355,1293.91 464.683,1293.07 464.146,1292.09 L464.048,1292.09 L464.048,1304.88 L459.8,1304.88 M471.373,1293.07 C472.87,1293.07 474.164,1292.69 475.254,1291.92 C476.345,1291.16 477.183,1290.07 477.769,1288.66 C478.355,1287.25 478.648,1285.59 478.648,1283.67 L478.648,1283.64 C478.648,1281.69 478.355,1280.01 477.769,1278.6 C477.183,1277.19 476.345,1276.11 475.254,1275.36 C474.164,1274.6 472.87,1274.22 471.373,1274.22 C469.94,1274.22 468.671,1274.61 467.564,1275.39 C466.457,1276.17 465.591,1277.27 464.964,1278.68 C464.337,1280.08 464.024,1281.74 464.024,1283.64 L464.024,1283.67 C464.024,1285.56 464.341,1287.2 464.976,1288.61 C465.611,1290.02 466.478,1291.11 467.576,1291.9 C468.675,1292.68 469.94,1293.07 471.373,1293.07 M488.207,1296.34 L488.207,1270.95 L492.455,1270.95 L492.455,1275.25 L492.552,1275.25 C492.976,1273.78 493.708,1272.62 494.75,1271.75 C495.791,1270.89 497.028,1270.46 498.461,1270.46 C498.835,1270.46 499.173,1270.48 499.474,1270.52 C499.775,1270.56 500.007,1270.6 500.17,1270.63 L500.17,1274.76 C500.007,1274.69 499.718,1274.64 499.303,1274.59 C498.888,1274.54 498.42,1274.51 497.899,1274.51 C496.809,1274.51 495.852,1274.76 495.03,1275.25 C494.208,1275.73 493.574,1276.44 493.126,1277.36 C492.678,1278.28 492.455,1279.38 492.455,1280.67 L492.455,1296.34 L488.207,1296.34 M513.781,1296.83 C511.356,1296.83 509.268,1296.29 507.519,1295.22 C505.769,1294.14 504.426,1292.62 503.49,1290.66 C502.554,1288.7 502.087,1286.39 502.087,1283.74 L502.087,1283.72 C502.087,1281.1 502.559,1278.79 503.503,1276.8 C504.447,1274.8 505.773,1273.25 507.482,1272.13 C509.191,1271.02 511.201,1270.46 513.512,1270.46 C515.823,1270.46 517.813,1270.99 519.482,1272.06 C521.15,1273.13 522.432,1274.62 523.327,1276.54 C524.222,1278.46 524.67,1280.69 524.67,1283.23 L524.67,1284.79 L504.211,1284.79 L504.211,1281.47 L522.57,1281.47 L520.421,1284.55 L520.421,1282.91 C520.421,1280.94 520.124,1279.31 519.53,1278.03 C518.936,1276.74 518.118,1275.79 517.077,1275.16 C516.035,1274.53 514.839,1274.22 513.488,1274.22 C512.137,1274.22 510.924,1274.55 509.85,1275.21 C508.776,1275.87 507.93,1276.84 507.311,1278.14 C506.693,1279.43 506.383,1281.02 506.383,1282.91 L506.383,1284.55 C506.383,1286.34 506.689,1287.87 507.299,1289.14 C507.909,1290.41 508.776,1291.38 509.899,1292.05 C511.022,1292.73 512.349,1293.07 513.879,1293.07 C514.953,1293.07 515.913,1292.91 516.759,1292.58 C517.606,1292.25 518.314,1291.81 518.883,1291.24 C519.453,1290.67 519.86,1290.02 520.104,1289.28 L520.177,1289.06 L524.352,1289.06 L524.303,1289.31 C524.092,1290.35 523.689,1291.33 523.095,1292.24 C522.501,1293.15 521.74,1293.95 520.812,1294.64 C519.884,1295.33 518.826,1295.87 517.638,1296.25 C516.45,1296.64 515.164,1296.83 513.781,1296.83 M537.3,1296.83 C535.624,1296.83 534.151,1296.51 532.881,1295.88 C531.612,1295.24 530.623,1294.35 529.915,1293.19 C529.207,1292.03 528.853,1290.69 528.853,1289.16 L528.853,1289.11 C528.853,1287.66 529.215,1286.41 529.94,1285.35 C530.664,1284.3 531.714,1283.46 533.089,1282.84 C534.464,1282.22 536.12,1281.85 538.057,1281.74 L547.457,1281.2 L547.457,1284.5 L538.546,1285.04 C536.853,1285.13 535.539,1285.54 534.603,1286.26 C533.667,1286.97 533.199,1287.92 533.199,1289.11 L533.199,1289.16 C533.199,1290.38 533.659,1291.35 534.578,1292.07 C535.498,1292.78 536.723,1293.14 538.253,1293.14 C539.587,1293.14 540.788,1292.86 541.854,1292.3 C542.92,1291.74 543.766,1290.97 544.393,1289.99 C545.019,1289.02 545.333,1287.92 545.333,1286.7 L545.333,1279.2 C545.333,1277.65 544.848,1276.44 543.88,1275.55 C542.912,1274.66 541.54,1274.22 539.766,1274.22 C538.139,1274.22 536.824,1274.57 535.823,1275.28 C534.822,1275.99 534.2,1276.91 533.956,1278.05 L533.907,1278.27 L529.805,1278.27 L529.83,1278 C529.96,1276.6 530.436,1275.34 531.258,1274.2 C532.08,1273.06 533.215,1272.15 534.664,1271.47 C536.112,1270.8 537.829,1270.46 539.815,1270.46 C541.817,1270.46 543.546,1270.8 545.003,1271.49 C546.46,1272.17 547.587,1273.13 548.384,1274.38 C549.182,1275.62 549.581,1277.09 549.581,1278.79 L549.581,1296.34 L545.333,1296.34 L545.333,1292.21 L545.235,1292.21 C544.747,1293.14 544.096,1293.95 543.282,1294.64 C542.468,1295.33 541.553,1295.87 540.535,1296.25 C539.518,1296.64 538.44,1296.83 537.3,1296.83 M565.471,1296.83 C563.307,1296.83 561.414,1296.29 559.795,1295.2 C558.176,1294.12 556.918,1292.59 556.023,1290.61 C555.128,1288.64 554.68,1286.31 554.68,1283.64 L554.68,1283.62 C554.68,1280.95 555.132,1278.63 556.035,1276.66 C556.939,1274.69 558.196,1273.17 559.807,1272.08 C561.419,1271 563.282,1270.46 565.398,1270.46 C566.602,1270.46 567.721,1270.65 568.755,1271.03 C569.789,1271.42 570.712,1271.96 571.526,1272.67 C572.34,1273.38 573.007,1274.22 573.528,1275.2 L573.626,1275.2 L573.626,1261.11 L577.874,1261.11 L577.874,1296.34 L573.626,1296.34 L573.626,1292.04 L573.528,1292.04 C573.007,1293.04 572.348,1293.89 571.55,1294.59 C570.753,1295.3 569.845,1295.85 568.828,1296.24 C567.811,1296.63 566.692,1296.83 565.471,1296.83 M566.301,1293.07 C567.734,1293.07 569.003,1292.68 570.11,1291.9 C571.217,1291.11 572.083,1290.02 572.71,1288.6 C573.337,1287.18 573.65,1285.53 573.65,1283.64 L573.65,1283.62 C573.65,1281.73 573.333,1280.08 572.698,1278.68 C572.063,1277.27 571.196,1276.17 570.098,1275.39 C568.999,1274.61 567.734,1274.22 566.301,1274.22 C564.804,1274.22 563.51,1274.6 562.42,1275.37 C561.329,1276.13 560.491,1277.22 559.905,1278.61 C559.319,1280.01 559.026,1281.68 559.026,1283.62 L559.026,1283.64 C559.026,1285.58 559.319,1287.26 559.905,1288.67 C560.491,1290.09 561.329,1291.18 562.42,1291.93 C563.51,1292.69 564.804,1293.07 566.301,1293.07 M593.559,1296.83 C591.573,1296.83 589.856,1296.51 588.408,1295.88 C586.959,1295.24 585.816,1294.35 584.978,1293.21 C584.139,1292.08 583.631,1290.75 583.452,1289.24 L583.427,1289.02 L587.675,1289.02 L587.724,1289.26 C587.985,1290.53 588.595,1291.52 589.555,1292.23 C590.516,1292.93 591.858,1293.29 593.584,1293.29 C594.739,1293.29 595.724,1293.14 596.538,1292.84 C597.351,1292.54 597.978,1292.1 598.418,1291.54 C598.857,1290.98 599.077,1290.32 599.077,1289.55 L599.077,1289.53 C599.077,1288.62 598.8,1287.88 598.247,1287.33 C597.693,1286.78 596.692,1286.32 595.244,1285.96 L591.215,1284.99 C589.62,1284.6 588.298,1284.09 587.248,1283.46 C586.198,1282.83 585.413,1282.07 584.892,1281.15 C584.371,1280.24 584.111,1279.18 584.111,1277.96 L584.111,1277.93 C584.111,1276.47 584.506,1275.17 585.295,1274.05 C586.084,1272.93 587.183,1272.05 588.591,1271.41 C589.999,1270.78 591.614,1270.46 593.437,1270.46 C595.293,1270.46 596.908,1270.79 598.283,1271.45 C599.659,1272.11 600.741,1273 601.53,1274.13 C602.32,1275.27 602.763,1276.54 602.861,1277.96 L602.885,1278.27 L598.833,1278.27 L598.808,1278.1 C598.645,1276.87 598.104,1275.87 597.185,1275.12 C596.265,1274.38 595.016,1274 593.437,1274 C592.412,1274 591.525,1274.16 590.776,1274.46 C590.027,1274.77 589.454,1275.21 589.055,1275.77 C588.656,1276.33 588.457,1276.99 588.457,1277.74 L588.457,1277.76 C588.457,1278.33 588.591,1278.85 588.859,1279.31 C589.128,1279.77 589.555,1280.18 590.141,1280.52 C590.727,1280.86 591.484,1281.15 592.412,1281.37 L596.44,1282.35 C598.149,1282.76 599.512,1283.27 600.529,1283.89 C601.547,1284.51 602.283,1285.25 602.739,1286.12 C603.195,1286.99 603.422,1288.03 603.422,1289.24 L603.422,1289.26 C603.422,1290.74 602.995,1292.05 602.141,1293.19 C601.286,1294.33 600.114,1295.22 598.625,1295.86 C597.136,1296.51 595.447,1296.83 593.559,1296.83"/>
+<path class="Lyrics" d="M1890.08,1296.83 C1888.41,1296.83 1886.93,1296.51 1885.66,1295.88 C1884.4,1295.24 1883.41,1294.35 1882.7,1293.19 C1881.99,1292.03 1881.64,1290.69 1881.64,1289.16 L1881.64,1289.11 C1881.64,1287.66 1882,1286.41 1882.72,1285.35 C1883.45,1284.3 1884.5,1283.46 1885.87,1282.84 C1887.25,1282.22 1888.9,1281.85 1890.84,1281.74 L1900.24,1281.2 L1900.24,1284.5 L1891.33,1285.04 C1889.64,1285.13 1888.32,1285.54 1887.39,1286.26 C1886.45,1286.97 1885.98,1287.92 1885.98,1289.11 L1885.98,1289.16 C1885.98,1290.38 1886.44,1291.35 1887.36,1292.07 C1888.28,1292.78 1889.51,1293.14 1891.04,1293.14 C1892.37,1293.14 1893.57,1292.86 1894.64,1292.3 C1895.7,1291.74 1896.55,1290.97 1897.18,1289.99 C1897.8,1289.02 1898.12,1287.92 1898.12,1286.7 L1898.12,1279.2 C1898.12,1277.65 1897.63,1276.44 1896.66,1275.55 C1895.69,1274.66 1894.32,1274.22 1892.55,1274.22 C1890.92,1274.22 1889.61,1274.57 1888.61,1275.28 C1887.61,1275.99 1886.98,1276.91 1886.74,1278.05 L1886.69,1278.27 L1882.59,1278.27 L1882.61,1278 C1882.74,1276.6 1883.22,1275.34 1884.04,1274.2 C1884.86,1273.06 1886,1272.15 1887.45,1271.47 C1888.9,1270.8 1890.61,1270.46 1892.6,1270.46 C1894.6,1270.46 1896.33,1270.8 1897.79,1271.49 C1899.24,1272.17 1900.37,1273.13 1901.17,1274.38 C1901.97,1275.62 1902.36,1277.09 1902.36,1278.79 L1902.36,1296.34 L1898.12,1296.34 L1898.12,1292.21 L1898.02,1292.21 C1897.53,1293.14 1896.88,1293.95 1896.07,1294.64 C1895.25,1295.33 1894.34,1295.87 1893.32,1296.25 C1892.3,1296.64 1891.22,1296.83 1890.08,1296.83 M1908.71,1296.34 L1908.71,1270.95 L1912.96,1270.95 L1912.96,1274.56 L1913.05,1274.56 C1913.74,1273.37 1914.73,1272.39 1916.03,1271.62 C1917.33,1270.85 1918.95,1270.46 1920.87,1270.46 C1923.65,1270.46 1925.81,1271.3 1927.35,1272.99 C1928.89,1274.67 1929.66,1276.96 1929.66,1279.86 L1929.66,1296.34 L1925.41,1296.34 L1925.41,1280.62 C1925.41,1278.55 1924.92,1276.97 1923.96,1275.87 C1922.99,1274.77 1921.53,1274.22 1919.57,1274.22 C1918.24,1274.22 1917.07,1274.52 1916.08,1275.11 C1915.09,1275.71 1914.32,1276.54 1913.77,1277.61 C1913.23,1278.69 1912.96,1279.95 1912.96,1281.4 L1912.96,1296.34 L1908.71,1296.34 M1945.54,1296.83 C1943.37,1296.83 1941.48,1296.29 1939.86,1295.2 C1938.24,1294.12 1936.98,1292.59 1936.09,1290.61 C1935.19,1288.64 1934.74,1286.31 1934.74,1283.64 L1934.74,1283.62 C1934.74,1280.95 1935.2,1278.63 1936.1,1276.66 C1937,1274.69 1938.26,1273.17 1939.87,1272.08 C1941.48,1271 1943.35,1270.46 1945.46,1270.46 C1946.67,1270.46 1947.79,1270.65 1948.82,1271.03 C1949.85,1271.42 1950.78,1271.96 1951.59,1272.67 C1952.4,1273.38 1953.07,1274.22 1953.59,1275.2 L1953.69,1275.2 L1953.69,1261.11 L1957.94,1261.11 L1957.94,1296.34 L1953.69,1296.34 L1953.69,1292.04 L1953.59,1292.04 C1953.07,1293.04 1952.41,1293.89 1951.61,1294.59 C1950.82,1295.3 1949.91,1295.85 1948.89,1296.24 C1947.88,1296.63 1946.76,1296.83 1945.54,1296.83 M1946.37,1293.07 C1947.8,1293.07 1949.07,1292.68 1950.17,1291.9 C1951.28,1291.11 1952.15,1290.02 1952.77,1288.6 C1953.4,1287.18 1953.71,1285.53 1953.71,1283.64 L1953.71,1283.62 C1953.71,1281.73 1953.4,1280.08 1952.76,1278.68 C1952.13,1277.27 1951.26,1276.17 1950.16,1275.39 C1949.06,1274.61 1947.8,1274.22 1946.37,1274.22 C1944.87,1274.22 1943.57,1274.6 1942.48,1275.37 C1941.39,1276.13 1940.56,1277.22 1939.97,1278.61 C1939.38,1280.01 1939.09,1281.68 1939.09,1283.62 L1939.09,1283.64 C1939.09,1285.58 1939.38,1287.26 1939.97,1288.67 C1940.56,1290.09 1941.39,1291.18 1942.48,1291.93 C1943.57,1292.69 1944.87,1293.07 1946.37,1293.07"/>
+<path class="Lyrics" d="M1404.72,935.885 L1404.72,910.494 L1408.96,910.494 L1408.96,914.205 L1409.06,914.205 C1409.63,912.952 1410.53,911.939 1411.75,911.166 C1412.97,910.393 1414.39,910.006 1416.02,910.006 C1417.18,910.006 1418.22,910.197 1419.16,910.58 C1420.09,910.962 1420.9,911.516 1421.59,912.24 C1422.27,912.964 1422.79,913.847 1423.15,914.889 L1423.25,914.889 C1423.72,913.863 1424.35,912.989 1425.14,912.264 C1425.93,911.54 1426.84,910.983 1427.87,910.592 C1428.91,910.201 1430.02,910.006 1431.21,910.006 C1432.88,910.006 1434.34,910.352 1435.58,911.044 C1436.81,911.735 1437.77,912.704 1438.46,913.949 C1439.14,915.194 1439.48,916.663 1439.48,918.356 L1439.48,935.885 L1435.23,935.885 L1435.23,919.332 C1435.23,918.16 1435.03,917.159 1434.61,916.329 C1434.2,915.499 1433.6,914.864 1432.82,914.425 C1432.04,913.985 1431.08,913.766 1429.96,913.766 C1428.84,913.766 1427.85,914.022 1426.98,914.535 C1426.12,915.047 1425.44,915.755 1424.96,916.659 C1424.47,917.562 1424.22,918.592 1424.22,919.747 L1424.22,935.885 L1419.98,935.885 L1419.98,918.868 C1419.98,917.843 1419.76,916.948 1419.33,916.183 C1418.9,915.418 1418.3,914.824 1417.52,914.401 C1416.75,913.977 1415.83,913.766 1414.78,913.766 C1413.65,913.766 1412.66,914.038 1411.78,914.584 C1410.91,915.129 1410.23,915.865 1409.72,916.793 C1409.22,917.721 1408.96,918.779 1408.96,919.967 L1408.96,935.885 L1404.72,935.885 M1446.09,935.885 L1446.09,910.494 L1450.34,910.494 L1450.34,935.885 L1446.09,935.885 M1448.22,906.197 C1447.49,906.197 1446.86,905.937 1446.34,905.416 C1445.82,904.895 1445.56,904.269 1445.56,903.536 C1445.56,902.788 1445.82,902.157 1446.34,901.644 C1446.86,901.131 1447.49,900.875 1448.22,900.875 C1448.97,900.875 1449.6,901.131 1450.11,901.644 C1450.62,902.157 1450.88,902.788 1450.88,903.536 C1450.88,904.269 1450.62,904.895 1450.11,905.416 C1449.6,905.937 1448.97,906.197 1448.22,906.197 M1457.08,935.885 L1457.08,910.494 L1461.32,910.494 L1461.32,914.108 L1461.42,914.108 C1462.11,912.919 1463.1,911.939 1464.4,911.166 C1465.7,910.393 1467.31,910.006 1469.23,910.006 C1472.02,910.006 1474.18,910.848 1475.72,912.533 C1477.25,914.217 1478.02,916.508 1478.02,919.405 L1478.02,935.885 L1473.78,935.885 L1473.78,920.162 C1473.78,918.095 1473.29,916.512 1472.32,915.414 C1471.35,914.315 1469.89,913.766 1467.94,913.766 C1466.61,913.766 1465.44,914.063 1464.45,914.657 C1463.46,915.251 1462.69,916.085 1462.14,917.159 C1461.6,918.234 1461.32,919.495 1461.32,920.943 L1461.32,935.885 L1457.08,935.885 M1495.1,944.918 C1493.02,944.918 1491.2,944.621 1489.64,944.027 C1488.09,943.433 1486.84,942.627 1485.88,941.61 C1484.93,940.593 1484.32,939.457 1484.04,938.204 L1483.99,937.985 L1488.26,937.985 L1488.36,938.204 C1488.77,939.116 1489.55,939.836 1490.72,940.365 C1491.88,940.894 1493.33,941.158 1495.05,941.158 C1497.28,941.158 1499.01,940.585 1500.23,939.437 C1501.45,938.29 1502.06,936.731 1502.06,934.762 L1502.06,931.515 L1501.96,931.515 C1501.46,932.459 1500.8,933.273 1500.01,933.956 C1499.21,934.64 1498.29,935.173 1497.26,935.555 C1496.23,935.938 1495.1,936.129 1493.88,936.129 C1491.75,936.129 1489.87,935.588 1488.25,934.505 C1486.63,933.423 1485.37,931.901 1484.47,929.94 C1483.56,927.979 1483.11,925.68 1483.11,923.043 L1483.11,923.019 C1483.11,920.382 1483.57,918.091 1484.49,916.146 C1485.41,914.201 1486.68,912.692 1488.31,911.617 C1489.94,910.543 1491.83,910.006 1493.98,910.006 C1495.18,910.006 1496.29,910.209 1497.3,910.616 C1498.31,911.023 1499.21,911.585 1499.99,912.301 C1500.78,913.017 1501.44,913.847 1501.96,914.791 L1502.06,914.791 L1502.06,910.494 L1506.31,910.494 L1506.31,935.177 C1506.31,937.146 1505.85,938.859 1504.94,940.316 C1504.03,941.773 1502.73,942.904 1501.06,943.71 C1499.38,944.515 1497.39,944.918 1495.1,944.918 M1494.81,932.369 C1496.26,932.369 1497.52,931.983 1498.6,931.21 C1499.69,930.436 1500.53,929.35 1501.14,927.95 C1501.75,926.551 1502.06,924.915 1502.06,923.043 L1502.06,923.019 C1502.06,921.147 1501.75,919.519 1501.14,918.136 C1500.53,916.752 1499.68,915.678 1498.59,914.913 C1497.5,914.148 1496.24,913.766 1494.81,913.766 C1493.31,913.766 1492.01,914.144 1490.9,914.901 C1489.79,915.658 1488.94,916.728 1488.35,918.111 C1487.75,919.495 1487.46,921.131 1487.46,923.019 L1487.46,923.043 C1487.46,924.964 1487.75,926.62 1488.35,928.011 C1488.94,929.403 1489.79,930.477 1490.9,931.234 C1492.01,931.991 1493.31,932.369 1494.81,932.369"/>
+<path class="Lyrics" d="M765.855,1296.83 C763.527,1296.83 761.786,1296.27 760.63,1295.17 C759.475,1294.06 758.897,1292.29 758.897,1289.87 L758.897,1274.46 L755.186,1274.46 L755.186,1270.95 L758.897,1270.95 L758.897,1264.09 L763.291,1264.09 L763.291,1270.95 L768.125,1270.95 L768.125,1274.46 L763.291,1274.46 L763.291,1289.85 C763.291,1291.2 763.584,1292.11 764.17,1292.59 C764.756,1293.07 765.619,1293.31 766.758,1293.31 C767.018,1293.31 767.267,1293.3 767.503,1293.28 C767.739,1293.25 767.946,1293.23 768.125,1293.21 L768.125,1296.66 C767.865,1296.69 767.527,1296.73 767.112,1296.77 C766.697,1296.81 766.278,1296.83 765.855,1296.83 M783.391,1296.83 C781.047,1296.83 778.992,1296.29 777.226,1295.22 C775.46,1294.14 774.085,1292.62 773.1,1290.64 C772.116,1288.66 771.623,1286.33 771.623,1283.64 L771.623,1283.6 C771.623,1280.89 772.116,1278.56 773.1,1276.6 C774.085,1274.64 775.46,1273.13 777.226,1272.06 C778.992,1270.99 781.039,1270.46 783.366,1270.46 C785.71,1270.46 787.765,1270.99 789.531,1272.06 C791.297,1273.13 792.672,1274.64 793.657,1276.6 C794.642,1278.56 795.134,1280.89 795.134,1283.6 L795.134,1283.64 C795.134,1286.35 794.642,1288.68 793.657,1290.65 C792.672,1292.62 791.301,1294.14 789.543,1295.22 C787.785,1296.29 785.735,1296.83 783.391,1296.83 M783.415,1293.07 C784.913,1293.07 786.211,1292.7 787.309,1291.96 C788.408,1291.22 789.262,1290.14 789.873,1288.73 C790.483,1287.33 790.788,1285.63 790.788,1283.64 L790.788,1283.6 C790.788,1281.61 790.483,1279.92 789.873,1278.52 C789.262,1277.12 788.4,1276.05 787.285,1275.32 C786.17,1274.59 784.864,1274.22 783.366,1274.22 C781.902,1274.22 780.612,1274.59 779.497,1275.33 C778.382,1276.07 777.515,1277.14 776.897,1278.53 C776.278,1279.92 775.969,1281.61 775.969,1283.6 L775.969,1283.64 C775.969,1285.63 776.278,1287.33 776.897,1288.73 C777.515,1290.14 778.382,1291.22 779.497,1291.96 C780.612,1292.7 781.918,1293.07 783.415,1293.07 M810.875,1296.83 C808.531,1296.83 806.477,1296.29 804.711,1295.22 C802.945,1294.14 801.569,1292.62 800.585,1290.64 C799.6,1288.66 799.108,1286.33 799.108,1283.64 L799.108,1283.6 C799.108,1280.89 799.6,1278.56 800.585,1276.6 C801.569,1274.64 802.945,1273.13 804.711,1272.06 C806.477,1270.99 808.523,1270.46 810.851,1270.46 C813.195,1270.46 815.249,1270.99 817.015,1272.06 C818.781,1273.13 820.157,1274.64 821.141,1276.6 C822.126,1278.56 822.618,1280.89 822.618,1283.6 L822.618,1283.64 C822.618,1286.35 822.126,1288.68 821.141,1290.65 C820.157,1292.62 818.785,1294.14 817.028,1295.22 C815.27,1296.29 813.219,1296.83 810.875,1296.83 M810.9,1293.07 C812.397,1293.07 813.695,1292.7 814.794,1291.96 C815.892,1291.22 816.747,1290.14 817.357,1288.73 C817.968,1287.33 818.273,1285.63 818.273,1283.64 L818.273,1283.6 C818.273,1281.61 817.968,1279.92 817.357,1278.52 C816.747,1277.12 815.884,1276.05 814.769,1275.32 C813.654,1274.59 812.348,1274.22 810.851,1274.22 C809.386,1274.22 808.096,1274.59 806.981,1275.33 C805.866,1276.07 805,1277.14 804.381,1278.53 C803.763,1279.92 803.453,1281.61 803.453,1283.6 L803.453,1283.64 C803.453,1285.63 803.763,1287.33 804.381,1288.73 C805,1290.14 805.866,1291.22 806.981,1291.96 C808.096,1292.7 809.402,1293.07 810.9,1293.07"/>
+<path class="Lyrics" d="M2153.6,1305.37 C2151.51,1305.37 2149.69,1305.08 2148.14,1304.48 C2146.59,1303.89 2145.33,1303.08 2144.38,1302.06 C2143.43,1301.05 2142.81,1299.91 2142.54,1298.66 L2142.49,1298.44 L2146.76,1298.44 L2146.86,1298.66 C2147.27,1299.57 2148.05,1300.29 2149.21,1300.82 C2150.38,1301.35 2151.82,1301.61 2153.55,1301.61 C2155.78,1301.61 2157.5,1301.04 2158.72,1299.89 C2159.94,1298.74 2160.55,1297.19 2160.55,1295.22 L2160.55,1291.97 L2160.46,1291.97 C2159.95,1292.91 2159.3,1293.73 2158.5,1294.41 C2157.71,1295.09 2156.79,1295.63 2155.76,1296.01 C2154.72,1296.39 2153.6,1296.58 2152.38,1296.58 C2150.24,1296.58 2148.37,1296.04 2146.75,1294.96 C2145.13,1293.88 2143.87,1292.36 2142.96,1290.39 C2142.06,1288.43 2141.61,1286.13 2141.61,1283.5 L2141.61,1283.47 C2141.61,1280.84 2142.07,1278.55 2142.99,1276.6 C2143.91,1274.66 2145.18,1273.15 2146.81,1272.07 C2148.44,1271 2150.33,1270.46 2152.47,1270.46 C2153.68,1270.46 2154.79,1270.66 2155.79,1271.07 C2156.8,1271.48 2157.7,1272.04 2158.49,1272.76 C2159.28,1273.47 2159.94,1274.3 2160.46,1275.25 L2160.55,1275.25 L2160.55,1270.95 L2164.8,1270.95 L2164.8,1295.63 C2164.8,1297.6 2164.35,1299.31 2163.44,1300.77 C2162.52,1302.23 2161.23,1303.36 2159.55,1304.16 C2157.88,1304.97 2155.89,1305.37 2153.6,1305.37 M2153.3,1292.82 C2154.75,1292.82 2156.02,1292.44 2157.1,1291.66 C2158.18,1290.89 2159.03,1289.8 2159.64,1288.4 C2160.25,1287.01 2160.55,1285.37 2160.55,1283.5 L2160.55,1283.47 C2160.55,1281.6 2160.25,1279.97 2159.64,1278.59 C2159.03,1277.21 2158.18,1276.13 2157.09,1275.37 C2156,1274.6 2154.74,1274.22 2153.3,1274.22 C2151.81,1274.22 2150.5,1274.6 2149.4,1275.36 C2148.29,1276.11 2147.44,1277.18 2146.85,1278.57 C2146.25,1279.95 2145.96,1281.59 2145.96,1283.47 L2145.96,1283.5 C2145.96,1285.42 2146.25,1287.07 2146.85,1288.47 C2147.44,1289.86 2148.29,1290.93 2149.4,1291.69 C2150.5,1292.45 2151.81,1292.82 2153.3,1292.82 M2171.25,1296.34 L2171.25,1270.95 L2175.49,1270.95 L2175.49,1275.25 L2175.59,1275.25 C2176.01,1273.78 2176.75,1272.62 2177.79,1271.75 C2178.83,1270.89 2180.07,1270.46 2181.5,1270.46 C2181.87,1270.46 2182.21,1270.48 2182.51,1270.52 C2182.81,1270.56 2183.05,1270.6 2183.21,1270.63 L2183.21,1274.76 C2183.05,1274.69 2182.76,1274.64 2182.34,1274.59 C2181.93,1274.54 2181.46,1274.51 2180.94,1274.51 C2179.85,1274.51 2178.89,1274.76 2178.07,1275.25 C2177.25,1275.73 2176.61,1276.44 2176.16,1277.36 C2175.72,1278.28 2175.49,1279.38 2175.49,1280.67 L2175.49,1296.34 L2171.25,1296.34 M2187.86,1296.34 L2187.86,1270.95 L2192.11,1270.95 L2192.11,1296.34 L2187.86,1296.34 M2189.98,1266.65 C2189.25,1266.65 2188.62,1266.39 2188.1,1265.87 C2187.58,1265.35 2187.32,1264.72 2187.32,1263.99 C2187.32,1263.24 2187.58,1262.61 2188.1,1262.1 C2188.62,1261.59 2189.25,1261.33 2189.98,1261.33 C2190.73,1261.33 2191.36,1261.59 2191.87,1262.1 C2192.39,1262.61 2192.64,1263.24 2192.64,1263.99 C2192.64,1264.72 2192.39,1265.35 2191.87,1265.87 C2191.36,1266.39 2190.73,1266.65 2189.98,1266.65 M2198.84,1296.34 L2198.84,1270.95 L2203.09,1270.95 L2203.09,1274.56 L2203.18,1274.56 C2203.87,1273.37 2204.86,1272.39 2206.16,1271.62 C2207.47,1270.85 2209.08,1270.46 2211,1270.46 C2213.78,1270.46 2215.94,1271.3 2217.48,1272.99 C2219.02,1274.67 2219.79,1276.96 2219.79,1279.86 L2219.79,1296.34 L2215.54,1296.34 L2215.54,1280.62 C2215.54,1278.55 2215.05,1276.97 2214.09,1275.87 C2213.12,1274.77 2211.66,1274.22 2209.7,1274.22 C2208.37,1274.22 2207.2,1274.52 2206.21,1275.11 C2205.22,1275.71 2204.45,1276.54 2203.91,1277.61 C2203.36,1278.69 2203.09,1279.95 2203.09,1281.4 L2203.09,1296.34 L2198.84,1296.34 M2235.13,1296.83 C2233.14,1296.83 2231.43,1296.51 2229.98,1295.88 C2228.53,1295.24 2227.39,1294.35 2226.55,1293.21 C2225.71,1292.08 2225.2,1290.75 2225.02,1289.24 L2225,1289.02 L2229.25,1289.02 L2229.29,1289.26 C2229.55,1290.53 2230.16,1291.52 2231.13,1292.23 C2232.09,1292.93 2233.43,1293.29 2235.15,1293.29 C2236.31,1293.29 2237.29,1293.14 2238.11,1292.84 C2238.92,1292.54 2239.55,1292.1 2239.99,1291.54 C2240.43,1290.98 2240.65,1290.32 2240.65,1289.55 L2240.65,1289.53 C2240.65,1288.62 2240.37,1287.88 2239.82,1287.33 C2239.26,1286.78 2238.26,1286.32 2236.81,1285.96 L2232.79,1284.99 C2231.19,1284.6 2229.87,1284.09 2228.82,1283.46 C2227.77,1282.83 2226.98,1282.07 2226.46,1281.15 C2225.94,1280.24 2225.68,1279.18 2225.68,1277.96 L2225.68,1277.93 C2225.68,1276.47 2226.08,1275.17 2226.86,1274.05 C2227.65,1272.93 2228.75,1272.05 2230.16,1271.41 C2231.57,1270.78 2233.18,1270.46 2235.01,1270.46 C2236.86,1270.46 2238.48,1270.79 2239.85,1271.45 C2241.23,1272.11 2242.31,1273 2243.1,1274.13 C2243.89,1275.27 2244.33,1276.54 2244.43,1277.96 L2244.46,1278.27 L2240.4,1278.27 L2240.38,1278.1 C2240.22,1276.87 2239.67,1275.87 2238.75,1275.12 C2237.84,1274.38 2236.59,1274 2235.01,1274 C2233.98,1274 2233.09,1274.16 2232.35,1274.46 C2231.6,1274.77 2231.02,1275.21 2230.62,1275.77 C2230.23,1276.33 2230.03,1276.99 2230.03,1277.74 L2230.03,1277.76 C2230.03,1278.33 2230.16,1278.85 2230.43,1279.31 C2230.7,1279.77 2231.13,1280.18 2231.71,1280.52 C2232.3,1280.86 2233.05,1281.15 2233.98,1281.37 L2238.01,1282.35 C2239.72,1282.76 2241.08,1283.27 2242.1,1283.89 C2243.12,1284.51 2243.85,1285.25 2244.31,1286.12 C2244.76,1286.99 2244.99,1288.03 2244.99,1289.24 L2244.99,1289.26 C2244.99,1290.74 2244.57,1292.05 2243.71,1293.19 C2242.86,1294.33 2241.68,1295.22 2240.2,1295.86 C2238.71,1296.51 2237.02,1296.83 2235.13,1296.83"/>
+<path class="Lyrics" d="M1589.35,1296.83 C1587.37,1296.83 1585.65,1296.51 1584.2,1295.88 C1582.75,1295.24 1581.61,1294.35 1580.77,1293.21 C1579.93,1292.08 1579.42,1290.75 1579.25,1289.24 L1579.22,1289.02 L1583.47,1289.02 L1583.52,1289.26 C1583.78,1290.53 1584.39,1291.52 1585.35,1292.23 C1586.31,1292.93 1587.65,1293.29 1589.38,1293.29 C1590.53,1293.29 1591.52,1293.14 1592.33,1292.84 C1593.14,1292.54 1593.77,1292.1 1594.21,1291.54 C1594.65,1290.98 1594.87,1290.32 1594.87,1289.55 L1594.87,1289.53 C1594.87,1288.62 1594.59,1287.88 1594.04,1287.33 C1593.49,1286.78 1592.49,1286.32 1591.04,1285.96 L1587.01,1284.99 C1585.41,1284.6 1584.09,1284.09 1583.04,1283.46 C1581.99,1282.83 1581.21,1282.07 1580.69,1281.15 C1580.16,1280.24 1579.9,1279.18 1579.9,1277.96 L1579.9,1277.93 C1579.9,1276.47 1580.3,1275.17 1581.09,1274.05 C1581.88,1272.93 1582.98,1272.05 1584.38,1271.41 C1585.79,1270.78 1587.41,1270.46 1589.23,1270.46 C1591.09,1270.46 1592.7,1270.79 1594.08,1271.45 C1595.45,1272.11 1596.53,1273 1597.32,1274.13 C1598.11,1275.27 1598.56,1276.54 1598.65,1277.96 L1598.68,1278.27 L1594.63,1278.27 L1594.6,1278.1 C1594.44,1276.87 1593.9,1275.87 1592.98,1275.12 C1592.06,1274.38 1590.81,1274 1589.23,1274 C1588.2,1274 1587.32,1274.16 1586.57,1274.46 C1585.82,1274.77 1585.25,1275.21 1584.85,1275.77 C1584.45,1276.33 1584.25,1276.99 1584.25,1277.74 L1584.25,1277.76 C1584.25,1278.33 1584.38,1278.85 1584.65,1279.31 C1584.92,1279.77 1585.35,1280.18 1585.93,1280.52 C1586.52,1280.86 1587.28,1281.15 1588.2,1281.37 L1592.23,1282.35 C1593.94,1282.76 1595.31,1283.27 1596.32,1283.89 C1597.34,1284.51 1598.08,1285.25 1598.53,1286.12 C1598.99,1286.99 1599.22,1288.03 1599.22,1289.24 L1599.22,1289.26 C1599.22,1290.74 1598.79,1292.05 1597.93,1293.19 C1597.08,1294.33 1595.91,1295.22 1594.42,1295.86 C1592.93,1296.51 1591.24,1296.83 1589.35,1296.83 M1604.55,1296.34 L1604.55,1270.95 L1608.79,1270.95 L1608.79,1274.66 L1608.89,1274.66 C1609.46,1273.41 1610.36,1272.39 1611.58,1271.62 C1612.8,1270.85 1614.22,1270.46 1615.85,1270.46 C1617.01,1270.46 1618.05,1270.65 1618.99,1271.03 C1619.92,1271.42 1620.73,1271.97 1621.42,1272.69 C1622.1,1273.42 1622.62,1274.3 1622.98,1275.34 L1623.08,1275.34 C1623.55,1274.32 1624.18,1273.44 1624.97,1272.72 C1625.76,1271.99 1626.67,1271.44 1627.7,1271.05 C1628.74,1270.66 1629.85,1270.46 1631.04,1270.46 C1632.71,1270.46 1634.17,1270.81 1635.41,1271.5 C1636.64,1272.19 1637.6,1273.16 1638.29,1274.4 C1638.97,1275.65 1639.31,1277.12 1639.31,1278.81 L1639.31,1296.34 L1635.06,1296.34 L1635.06,1279.79 C1635.06,1278.61 1634.86,1277.61 1634.44,1276.78 C1634.03,1275.95 1633.43,1275.32 1632.65,1274.88 C1631.87,1274.44 1630.91,1274.22 1629.79,1274.22 C1628.67,1274.22 1627.68,1274.48 1626.81,1274.99 C1625.95,1275.5 1625.27,1276.21 1624.79,1277.11 C1624.3,1278.02 1624.05,1279.05 1624.05,1280.2 L1624.05,1296.34 L1619.81,1296.34 L1619.81,1279.32 C1619.81,1278.3 1619.59,1277.4 1619.16,1276.64 C1618.73,1275.87 1618.13,1275.28 1617.35,1274.86 C1616.58,1274.43 1615.66,1274.22 1614.61,1274.22 C1613.48,1274.22 1612.49,1274.49 1611.61,1275.04 C1610.74,1275.58 1610.06,1276.32 1609.55,1277.25 C1609.05,1278.18 1608.79,1279.23 1608.79,1280.42 L1608.79,1296.34 L1604.55,1296.34 M1645.92,1296.34 L1645.92,1270.95 L1650.17,1270.95 L1650.17,1296.34 L1645.92,1296.34 M1648.05,1266.65 C1647.32,1266.65 1646.69,1266.39 1646.17,1265.87 C1645.65,1265.35 1645.39,1264.72 1645.39,1263.99 C1645.39,1263.24 1645.65,1262.61 1646.17,1262.1 C1646.69,1261.59 1647.32,1261.33 1648.05,1261.33 C1648.8,1261.33 1649.43,1261.59 1649.94,1262.1 C1650.45,1262.61 1650.71,1263.24 1650.71,1263.99 C1650.71,1264.72 1650.45,1265.35 1649.94,1265.87 C1649.43,1266.39 1648.8,1266.65 1648.05,1266.65 M1657.13,1296.34 L1657.13,1261.11 L1661.37,1261.11 L1661.37,1296.34 L1657.13,1296.34 M1678.51,1296.83 C1676.09,1296.83 1674,1296.29 1672.25,1295.22 C1670.5,1294.14 1669.16,1292.62 1668.22,1290.66 C1667.29,1288.7 1666.82,1286.39 1666.82,1283.74 L1666.82,1283.72 C1666.82,1281.1 1667.29,1278.79 1668.23,1276.8 C1669.18,1274.8 1670.5,1273.25 1672.21,1272.13 C1673.92,1271.02 1675.93,1270.46 1678.24,1270.46 C1680.55,1270.46 1682.54,1270.99 1684.21,1272.06 C1685.88,1273.13 1687.16,1274.62 1688.06,1276.54 C1688.95,1278.46 1689.4,1280.69 1689.4,1283.23 L1689.4,1284.79 L1668.94,1284.79 L1668.94,1281.47 L1687.3,1281.47 L1685.15,1284.55 L1685.15,1282.91 C1685.15,1280.94 1684.86,1279.31 1684.26,1278.03 C1683.67,1276.74 1682.85,1275.79 1681.81,1275.16 C1680.77,1274.53 1679.57,1274.22 1678.22,1274.22 C1676.87,1274.22 1675.66,1274.55 1674.58,1275.21 C1673.51,1275.87 1672.66,1276.84 1672.04,1278.14 C1671.42,1279.43 1671.11,1281.02 1671.11,1282.91 L1671.11,1284.55 C1671.11,1286.34 1671.42,1287.87 1672.03,1289.14 C1672.64,1290.41 1673.51,1291.38 1674.63,1292.05 C1675.75,1292.73 1677.08,1293.07 1678.61,1293.07 C1679.68,1293.07 1680.64,1292.91 1681.49,1292.58 C1682.34,1292.25 1683.04,1291.81 1683.61,1291.24 C1684.18,1290.67 1684.59,1290.02 1684.83,1289.28 L1684.91,1289.06 L1689.08,1289.06 L1689.03,1289.31 C1688.82,1290.35 1688.42,1291.33 1687.83,1292.24 C1687.23,1293.15 1686.47,1293.95 1685.54,1294.64 C1684.62,1295.33 1683.56,1295.87 1682.37,1296.25 C1681.18,1296.64 1679.9,1296.83 1678.51,1296.83 M1703.62,1296.83 C1701.63,1296.83 1699.92,1296.51 1698.47,1295.88 C1697.02,1295.24 1695.87,1294.35 1695.04,1293.21 C1694.2,1292.08 1693.69,1290.75 1693.51,1289.24 L1693.49,1289.02 L1697.73,1289.02 L1697.78,1289.26 C1698.04,1290.53 1698.65,1291.52 1699.61,1292.23 C1700.57,1292.93 1701.92,1293.29 1703.64,1293.29 C1704.8,1293.29 1705.78,1293.14 1706.6,1292.84 C1707.41,1292.54 1708.04,1292.1 1708.48,1291.54 C1708.92,1290.98 1709.14,1290.32 1709.14,1289.55 L1709.14,1289.53 C1709.14,1288.62 1708.86,1287.88 1708.31,1287.33 C1707.75,1286.78 1706.75,1286.32 1705.3,1285.96 L1701.27,1284.99 C1699.68,1284.6 1698.36,1284.09 1697.31,1283.46 C1696.26,1282.83 1695.47,1282.07 1694.95,1281.15 C1694.43,1280.24 1694.17,1279.18 1694.17,1277.96 L1694.17,1277.93 C1694.17,1276.47 1694.56,1275.17 1695.35,1274.05 C1696.14,1272.93 1697.24,1272.05 1698.65,1271.41 C1700.06,1270.78 1701.67,1270.46 1703.5,1270.46 C1705.35,1270.46 1706.97,1270.79 1708.34,1271.45 C1709.72,1272.11 1710.8,1273 1711.59,1274.13 C1712.38,1275.27 1712.82,1276.54 1712.92,1277.96 L1712.94,1278.27 L1708.89,1278.27 L1708.87,1278.1 C1708.7,1276.87 1708.16,1275.87 1707.24,1275.12 C1706.32,1274.38 1705.07,1274 1703.5,1274 C1702.47,1274 1701.58,1274.16 1700.83,1274.46 C1700.09,1274.77 1699.51,1275.21 1699.11,1275.77 C1698.71,1276.33 1698.52,1276.99 1698.52,1277.74 L1698.52,1277.76 C1698.52,1278.33 1698.65,1278.85 1698.92,1279.31 C1699.19,1279.77 1699.61,1280.18 1700.2,1280.52 C1700.79,1280.86 1701.54,1281.15 1702.47,1281.37 L1706.5,1282.35 C1708.21,1282.76 1709.57,1283.27 1710.59,1283.89 C1711.61,1284.51 1712.34,1285.25 1712.8,1286.12 C1713.25,1286.99 1713.48,1288.03 1713.48,1289.24 L1713.48,1289.26 C1713.48,1290.74 1713.05,1292.05 1712.2,1293.19 C1711.35,1294.33 1710.17,1295.22 1708.68,1295.86 C1707.19,1296.51 1705.51,1296.83 1703.62,1296.83"/>
+<path class="Lyrics" d="M1976.71,936.373 C1974.38,936.373 1972.64,935.82 1971.48,934.713 C1970.33,933.606 1969.75,931.84 1969.75,929.415 L1969.75,914.01 L1966.04,914.01 L1966.04,910.494 L1969.75,910.494 L1969.75,903.634 L1974.15,903.634 L1974.15,910.494 L1978.98,910.494 L1978.98,914.01 L1974.15,914.01 L1974.15,929.391 C1974.15,930.742 1974.44,931.657 1975.02,932.137 C1975.61,932.617 1976.47,932.858 1977.61,932.858 C1977.87,932.858 1978.12,932.845 1978.36,932.821 C1978.59,932.797 1978.8,932.776 1978.98,932.76 L1978.98,936.202 C1978.72,936.235 1978.38,936.271 1977.97,936.312 C1977.55,936.353 1977.13,936.373 1976.71,936.373 M1984.68,935.885 L1984.68,900.655 L1988.92,900.655 L1988.92,914.547 L1989.02,914.547 C1989.71,913.115 1990.72,912 1992.07,911.202 C1993.42,910.405 1995.04,910.006 1996.93,910.006 C1998.74,910.006 2000.32,910.441 2001.68,911.312 C2003.04,912.183 2004.1,913.391 2004.87,914.938 C2005.63,916.484 2006.01,918.282 2006.01,920.333 L2006.01,935.885 L2001.77,935.885 L2001.77,921.066 C2001.77,918.771 2001.21,916.98 2000.11,915.694 C1999,914.409 1997.45,913.766 1995.47,913.766 C1994.17,913.766 1993.02,914.075 1992.04,914.693 C1991.05,915.312 1990.29,916.166 1989.74,917.257 C1989.2,918.347 1988.92,919.617 1988.92,921.066 L1988.92,935.885 L1984.68,935.885 M2022.8,936.373 C2020.37,936.373 2018.28,935.836 2016.53,934.762 C2014.78,933.688 2013.44,932.17 2012.51,930.209 C2011.57,928.247 2011.1,925.94 2011.1,923.287 L2011.1,923.263 C2011.1,920.642 2011.57,918.335 2012.52,916.341 C2013.46,914.348 2014.79,912.793 2016.5,911.678 C2018.21,910.563 2020.22,910.006 2022.53,910.006 C2024.84,910.006 2026.83,910.539 2028.5,911.605 C2030.17,912.671 2031.45,914.165 2032.34,916.085 C2033.24,918.006 2033.69,920.235 2033.69,922.775 L2033.69,924.337 L2013.23,924.337 L2013.23,921.017 L2031.59,921.017 L2029.44,924.093 L2029.44,922.457 C2029.44,920.488 2029.14,918.86 2028.55,917.574 C2027.95,916.289 2027.13,915.332 2026.09,914.706 C2025.05,914.079 2023.85,913.766 2022.5,913.766 C2021.15,913.766 2019.94,914.095 2018.87,914.755 C2017.79,915.414 2016.95,916.39 2016.33,917.684 C2015.71,918.978 2015.4,920.569 2015.4,922.457 L2015.4,924.093 C2015.4,925.883 2015.7,927.413 2016.31,928.683 C2016.92,929.952 2017.79,930.925 2018.91,931.6 C2020.04,932.276 2021.36,932.613 2022.89,932.613 C2023.97,932.613 2024.93,932.451 2025.78,932.125 C2026.62,931.8 2027.33,931.352 2027.9,930.782 C2028.47,930.213 2028.88,929.562 2029.12,928.829 L2029.19,928.61 L2033.37,928.61 L2033.32,928.854 C2033.11,929.895 2032.7,930.872 2032.11,931.783 C2031.52,932.695 2030.76,933.496 2029.83,934.188 C2028.9,934.88 2027.84,935.417 2026.65,935.799 C2025.47,936.182 2024.18,936.373 2022.8,936.373"/>
+<path class="Lyrics" d="M1032.25,1296.34 L1032.25,1270.95 L1036.5,1270.95 L1036.5,1274.66 L1036.59,1274.66 C1037.16,1273.41 1038.06,1272.39 1039.28,1271.62 C1040.5,1270.85 1041.93,1270.46 1043.55,1270.46 C1044.71,1270.46 1045.75,1270.65 1046.69,1271.03 C1047.63,1271.42 1048.44,1271.97 1049.12,1272.69 C1049.8,1273.42 1050.32,1274.3 1050.68,1275.34 L1050.78,1275.34 C1051.25,1274.32 1051.88,1273.44 1052.67,1272.72 C1053.46,1271.99 1054.37,1271.44 1055.41,1271.05 C1056.44,1270.66 1057.55,1270.46 1058.74,1270.46 C1060.41,1270.46 1061.87,1270.81 1063.11,1271.5 C1064.35,1272.19 1065.31,1273.16 1065.99,1274.4 C1066.67,1275.65 1067.01,1277.12 1067.01,1278.81 L1067.01,1296.34 L1062.77,1296.34 L1062.77,1279.79 C1062.77,1278.61 1062.56,1277.61 1062.14,1276.78 C1061.73,1275.95 1061.13,1275.32 1060.35,1274.88 C1059.57,1274.44 1058.62,1274.22 1057.49,1274.22 C1056.37,1274.22 1055.38,1274.48 1054.51,1274.99 C1053.65,1275.5 1052.98,1276.21 1052.49,1277.11 C1052,1278.02 1051.76,1279.05 1051.76,1280.2 L1051.76,1296.34 L1047.51,1296.34 L1047.51,1279.32 C1047.51,1278.3 1047.29,1277.4 1046.86,1276.64 C1046.43,1275.87 1045.83,1275.28 1045.05,1274.86 C1044.28,1274.43 1043.37,1274.22 1042.31,1274.22 C1041.18,1274.22 1040.19,1274.49 1039.32,1275.04 C1038.45,1275.58 1037.76,1276.32 1037.25,1277.25 C1036.75,1278.18 1036.5,1279.23 1036.5,1280.42 L1036.5,1296.34 L1032.25,1296.34 M1080.78,1296.83 C1079.1,1296.83 1077.63,1296.51 1076.36,1295.88 C1075.09,1295.24 1074.1,1294.35 1073.39,1293.19 C1072.69,1292.03 1072.33,1290.69 1072.33,1289.16 L1072.33,1289.11 C1072.33,1287.66 1072.7,1286.41 1073.42,1285.35 C1074.14,1284.3 1075.19,1283.46 1076.57,1282.84 C1077.94,1282.22 1079.6,1281.85 1081.54,1281.74 L1090.94,1281.2 L1090.94,1284.5 L1082.03,1285.04 C1080.33,1285.13 1079.02,1285.54 1078.08,1286.26 C1077.15,1286.97 1076.68,1287.92 1076.68,1289.11 L1076.68,1289.16 C1076.68,1290.38 1077.14,1291.35 1078.06,1292.07 C1078.98,1292.78 1080.2,1293.14 1081.73,1293.14 C1083.07,1293.14 1084.27,1292.86 1085.33,1292.3 C1086.4,1291.74 1087.25,1290.97 1087.87,1289.99 C1088.5,1289.02 1088.81,1287.92 1088.81,1286.7 L1088.81,1279.2 C1088.81,1277.65 1088.33,1276.44 1087.36,1275.55 C1086.39,1274.66 1085.02,1274.22 1083.25,1274.22 C1081.62,1274.22 1080.3,1274.57 1079.3,1275.28 C1078.3,1275.99 1077.68,1276.91 1077.44,1278.05 L1077.39,1278.27 L1073.29,1278.27 L1073.31,1278 C1073.44,1276.6 1073.92,1275.34 1074.74,1274.2 C1075.56,1273.06 1076.69,1272.15 1078.14,1271.47 C1079.59,1270.8 1081.31,1270.46 1083.29,1270.46 C1085.3,1270.46 1087.03,1270.8 1088.48,1271.49 C1089.94,1272.17 1091.07,1273.13 1091.86,1274.38 C1092.66,1275.62 1093.06,1277.09 1093.06,1278.79 L1093.06,1296.34 L1088.81,1296.34 L1088.81,1292.21 L1088.71,1292.21 C1088.23,1293.14 1087.58,1293.95 1086.76,1294.64 C1085.95,1295.33 1085.03,1295.87 1084.02,1296.25 C1083,1296.64 1081.92,1296.83 1080.78,1296.83"/>
+<path class="Lyrics" d="M904.871,935.885 L897.766,910.494 L901.99,910.494 L907.068,931.149 L907.166,931.149 L912.903,910.494 L917.005,910.494 L922.766,931.149 L922.864,931.149 L927.942,910.494 L932.141,910.494 L925.061,935.885 L920.74,935.885 L915.003,916.232 L914.905,916.232 L909.192,935.885 L904.871,935.885 M946.994,936.373 C944.569,936.373 942.482,935.836 940.732,934.762 C938.982,933.688 937.639,932.17 936.704,930.209 C935.768,928.247 935.3,925.94 935.3,923.287 L935.3,923.263 C935.3,920.642 935.772,918.335 936.716,916.341 C937.66,914.348 938.986,912.793 940.695,911.678 C942.404,910.563 944.414,910.006 946.725,910.006 C949.037,910.006 951.026,910.539 952.695,911.605 C954.363,912.671 955.645,914.165 956.54,916.085 C957.435,918.006 957.883,920.235 957.883,922.775 L957.883,924.337 L937.424,924.337 L937.424,921.017 L955.783,921.017 L953.635,924.093 L953.635,922.457 C953.635,920.488 953.338,918.86 952.744,917.574 C952.149,916.289 951.332,915.332 950.29,914.706 C949.248,914.079 948.052,913.766 946.701,913.766 C945.35,913.766 944.138,914.095 943.063,914.755 C941.989,915.414 941.143,916.39 940.524,917.684 C939.906,918.978 939.597,920.569 939.597,922.457 L939.597,924.093 C939.597,925.883 939.902,927.413 940.512,928.683 C941.122,929.952 941.989,930.925 943.112,931.6 C944.235,932.276 945.562,932.613 947.092,932.613 C948.166,932.613 949.126,932.451 949.973,932.125 C950.819,931.8 951.527,931.352 952.097,930.782 C952.666,930.213 953.073,929.562 953.317,928.829 L953.391,928.61 L957.565,928.61 L957.516,928.854 C957.305,929.895 956.902,930.872 956.308,931.783 C955.714,932.695 954.953,933.496 954.025,934.188 C953.098,934.88 952.04,935.417 950.851,935.799 C949.663,936.182 948.377,936.373 946.994,936.373 M963.092,935.885 L963.092,910.494 L967.34,910.494 L967.34,914.791 L967.437,914.791 C967.861,913.326 968.593,912.163 969.635,911.3 C970.676,910.437 971.913,910.006 973.346,910.006 C973.72,910.006 974.058,910.026 974.359,910.067 C974.66,910.108 974.892,910.144 975.055,910.177 L975.055,914.303 C974.892,914.238 974.603,914.181 974.188,914.132 C973.773,914.083 973.305,914.059 972.784,914.059 C971.694,914.059 970.737,914.303 969.915,914.791 C969.093,915.279 968.459,915.983 968.011,916.903 C967.564,917.823 967.34,918.925 967.34,920.211 L967.34,935.885 L963.092,935.885 M988.444,936.373 C986.459,936.373 984.741,936.056 983.293,935.421 C981.844,934.786 980.701,933.899 979.863,932.76 C979.024,931.621 978.516,930.294 978.337,928.78 L978.312,928.561 L982.56,928.561 L982.609,928.805 C982.87,930.074 983.48,931.063 984.44,931.771 C985.401,932.479 986.743,932.833 988.469,932.833 C989.624,932.833 990.609,932.683 991.423,932.381 C992.237,932.08 992.863,931.649 993.303,931.088 C993.742,930.526 993.962,929.863 993.962,929.098 L993.962,929.073 C993.962,928.162 993.685,927.429 993.132,926.876 C992.578,926.323 991.577,925.867 990.129,925.509 L986.1,924.532 C984.505,924.142 983.183,923.633 982.133,923.006 C981.083,922.38 980.298,921.611 979.777,920.699 C979.256,919.788 978.996,918.722 978.996,917.501 L978.996,917.477 C978.996,916.012 979.391,914.718 980.18,913.595 C980.969,912.472 982.068,911.593 983.476,910.958 C984.884,910.323 986.499,910.006 988.322,910.006 C990.178,910.006 991.793,910.336 993.168,910.995 C994.544,911.654 995.626,912.549 996.415,913.68 C997.205,914.811 997.648,916.085 997.746,917.501 L997.77,917.818 L993.718,917.818 L993.693,917.648 C993.53,916.411 992.989,915.418 992.07,914.669 C991.15,913.92 989.901,913.546 988.322,913.546 C987.297,913.546 986.41,913.701 985.661,914.01 C984.912,914.319 984.339,914.755 983.94,915.316 C983.541,915.878 983.342,916.533 983.342,917.281 L983.342,917.306 C983.342,917.875 983.476,918.392 983.745,918.856 C984.013,919.32 984.44,919.723 985.026,920.065 C985.612,920.406 986.369,920.691 987.297,920.919 L991.325,921.896 C993.034,922.303 994.397,922.815 995.414,923.434 C996.432,924.052 997.168,924.797 997.624,925.668 C998.08,926.538 998.308,927.576 998.308,928.78 L998.308,928.805 C998.308,930.286 997.88,931.596 997.026,932.735 C996.171,933.875 994.999,934.766 993.51,935.409 C992.021,936.052 990.332,936.373 988.444,936.373"/>
+<path class="Lyrics" d="M2198.41,936.471 C2195.87,936.471 2193.64,936.076 2191.71,935.287 C2189.78,934.497 2188.25,933.37 2187.12,931.905 C2185.99,930.441 2185.35,928.707 2185.2,926.705 L2185.18,926.363 L2189.57,926.363 L2189.62,926.705 C2189.8,927.877 2190.28,928.89 2191.06,929.745 C2191.85,930.599 2192.88,931.258 2194.18,931.722 C2195.47,932.186 2196.96,932.418 2198.66,932.418 C2200.35,932.418 2201.81,932.178 2203.05,931.698 C2204.29,931.218 2205.24,930.53 2205.92,929.635 C2206.6,928.74 2206.93,927.69 2206.93,926.485 L2206.93,926.461 C2206.93,924.915 2206.4,923.678 2205.32,922.75 C2204.25,921.822 2202.5,921.09 2200.07,920.553 L2196.17,919.698 C2193.87,919.194 2191.98,918.506 2190.49,917.635 C2189,916.765 2187.89,915.69 2187.16,914.413 C2186.43,913.135 2186.06,911.642 2186.06,909.933 L2186.06,909.908 C2186.08,907.971 2186.61,906.267 2187.67,904.794 C2188.73,903.321 2190.19,902.165 2192.05,901.327 C2193.92,900.489 2196.05,900.069 2198.46,900.069 C2200.76,900.069 2202.81,900.48 2204.61,901.302 C2206.42,902.124 2207.87,903.268 2208.95,904.733 C2210.03,906.197 2210.64,907.89 2210.77,909.811 L2210.79,910.177 L2206.4,910.177 L2206.35,909.835 C2206.17,908.631 2205.73,907.605 2205.03,906.759 C2204.33,905.913 2203.41,905.262 2202.28,904.806 C2201.15,904.35 2199.84,904.122 2198.34,904.122 C2196.78,904.122 2195.41,904.358 2194.24,904.83 C2193.07,905.302 2192.16,905.961 2191.52,906.808 C2190.87,907.654 2190.55,908.647 2190.55,909.786 L2190.55,909.811 C2190.55,910.771 2190.79,911.617 2191.27,912.35 C2191.75,913.082 2192.49,913.705 2193.48,914.217 C2194.47,914.73 2195.74,915.157 2197.27,915.499 L2201.17,916.354 C2203.58,916.874 2205.54,917.566 2207.04,918.429 C2208.55,919.291 2209.66,920.362 2210.36,921.639 C2211.07,922.917 2211.43,924.451 2211.43,926.241 L2211.43,926.266 C2211.43,928.349 2210.9,930.156 2209.85,931.686 C2208.8,933.216 2207.3,934.396 2205.36,935.226 C2203.41,936.056 2201.1,936.471 2198.41,936.471 M2216.84,944.43 L2216.84,910.494 L2221.09,910.494 L2221.09,914.791 L2221.19,914.791 C2221.72,913.798 2222.39,912.948 2223.18,912.24 C2223.96,911.532 2224.87,910.983 2225.9,910.592 C2226.92,910.201 2228.04,910.006 2229.24,910.006 C2231.41,910.006 2233.3,910.547 2234.92,911.63 C2236.54,912.712 2237.79,914.242 2238.69,916.219 C2239.59,918.197 2240.03,920.52 2240.03,923.19 L2240.03,923.214 C2240.03,925.883 2239.58,928.203 2238.68,930.172 C2237.77,932.141 2236.52,933.667 2234.92,934.75 C2233.31,935.832 2231.45,936.373 2229.32,936.373 C2228.13,936.373 2227.01,936.182 2225.97,935.799 C2224.93,935.417 2224.01,934.872 2223.2,934.164 C2222.39,933.456 2221.72,932.613 2221.19,931.637 L2221.09,931.637 L2221.09,944.43 L2216.84,944.43 M2228.41,932.613 C2229.91,932.613 2231.2,932.231 2232.29,931.466 C2233.38,930.701 2234.22,929.615 2234.81,928.207 C2235.39,926.799 2235.69,925.135 2235.69,923.214 L2235.69,923.19 C2235.69,921.236 2235.39,919.556 2234.81,918.148 C2234.22,916.74 2233.38,915.658 2232.29,914.901 C2231.2,914.144 2229.91,913.766 2228.41,913.766 C2226.98,913.766 2225.71,914.156 2224.6,914.938 C2223.5,915.719 2222.63,916.813 2222,918.221 C2221.38,919.629 2221.06,921.285 2221.06,923.19 L2221.06,923.214 C2221.06,925.102 2221.38,926.75 2222.02,928.158 C2222.65,929.566 2223.52,930.66 2224.62,931.442 C2225.71,932.223 2226.98,932.613 2228.41,932.613 M2245.25,935.885 L2245.25,910.494 L2249.49,910.494 L2249.49,914.791 L2249.59,914.791 C2250.01,913.326 2250.75,912.163 2251.79,911.3 C2252.83,910.437 2254.07,910.006 2255.5,910.006 C2255.87,910.006 2256.21,910.026 2256.51,910.067 C2256.81,910.108 2257.05,910.144 2257.21,910.177 L2257.21,914.303 C2257.05,914.238 2256.76,914.181 2256.34,914.132 C2255.93,914.083 2255.46,914.059 2254.94,914.059 C2253.85,914.059 2252.89,914.303 2252.07,914.791 C2251.25,915.279 2250.61,915.983 2250.17,916.903 C2249.72,917.823 2249.49,918.925 2249.49,920.211 L2249.49,935.885 L2245.25,935.885 M2261.86,935.885 L2261.86,910.494 L2266.11,910.494 L2266.11,935.885 L2261.86,935.885 M2263.98,906.197 C2263.25,906.197 2262.62,905.937 2262.1,905.416 C2261.58,904.895 2261.32,904.269 2261.32,903.536 C2261.32,902.788 2261.58,902.157 2262.1,901.644 C2262.62,901.131 2263.25,900.875 2263.98,900.875 C2264.73,900.875 2265.36,901.131 2265.87,901.644 C2266.39,902.157 2266.64,902.788 2266.64,903.536 C2266.64,904.269 2266.39,904.895 2265.87,905.416 C2265.36,905.937 2264.73,906.197 2263.98,906.197 M2272.84,935.885 L2272.84,910.494 L2277.09,910.494 L2277.09,914.108 L2277.19,914.108 C2277.87,912.919 2278.86,911.939 2280.16,911.166 C2281.47,910.393 2283.08,910.006 2285,910.006 C2287.78,910.006 2289.94,910.848 2291.48,912.533 C2293.02,914.217 2293.79,916.508 2293.79,919.405 L2293.79,935.885 L2289.54,935.885 L2289.54,920.162 C2289.54,918.095 2289.05,916.512 2288.09,915.414 C2287.12,914.315 2285.66,913.766 2283.7,913.766 C2282.37,913.766 2281.21,914.063 2280.21,914.657 C2279.22,915.251 2278.45,916.085 2277.91,917.159 C2277.36,918.234 2277.09,919.495 2277.09,920.943 L2277.09,935.885 L2272.84,935.885 M2310.86,944.918 C2308.78,944.918 2306.96,944.621 2305.41,944.027 C2303.85,943.433 2302.6,942.627 2301.65,941.61 C2300.69,940.593 2300.08,939.457 2299.8,938.204 L2299.75,937.985 L2304.03,937.985 L2304.12,938.204 C2304.53,939.116 2305.32,939.836 2306.48,940.365 C2307.64,940.894 2309.09,941.158 2310.81,941.158 C2313.04,941.158 2314.77,940.585 2315.99,939.437 C2317.21,938.29 2317.82,936.731 2317.82,934.762 L2317.82,931.515 L2317.72,931.515 C2317.22,932.459 2316.57,933.273 2315.77,933.956 C2314.97,934.64 2314.06,935.173 2313.02,935.555 C2311.99,935.938 2310.86,936.129 2309.64,936.129 C2307.51,936.129 2305.63,935.588 2304.01,934.505 C2302.4,933.423 2301.13,931.901 2300.23,929.94 C2299.33,927.979 2298.88,925.68 2298.88,923.043 L2298.88,923.019 C2298.88,920.382 2299.34,918.091 2300.26,916.146 C2301.17,914.201 2302.45,912.692 2304.08,911.617 C2305.7,910.543 2307.59,910.006 2309.74,910.006 C2310.94,910.006 2312.05,910.209 2313.06,910.616 C2314.07,911.023 2314.97,911.585 2315.76,912.301 C2316.55,913.017 2317.2,913.847 2317.72,914.791 L2317.82,914.791 L2317.82,910.494 L2322.07,910.494 L2322.07,935.177 C2322.07,937.146 2321.61,938.859 2320.7,940.316 C2319.79,941.773 2318.5,942.904 2316.82,943.71 C2315.14,944.515 2313.16,944.918 2310.86,944.918 M2310.57,932.369 C2312.02,932.369 2313.28,931.983 2314.37,931.21 C2315.45,930.436 2316.3,929.35 2316.91,927.95 C2317.52,926.551 2317.82,924.915 2317.82,923.043 L2317.82,923.019 C2317.82,921.147 2317.52,919.519 2316.91,918.136 C2316.3,916.752 2315.44,915.678 2314.35,914.913 C2313.26,914.148 2312,913.766 2310.57,913.766 C2309.07,913.766 2307.77,914.144 2306.66,914.901 C2305.56,915.658 2304.71,916.728 2304.11,918.111 C2303.52,919.495 2303.22,921.131 2303.22,923.019 L2303.22,923.043 C2303.22,924.964 2303.52,926.62 2304.11,928.011 C2304.71,929.403 2305.56,930.477 2306.66,931.234 C2307.77,931.991 2309.07,932.369 2310.57,932.369"/>
+<path class="Lyrics" d="M1312.02,1296.34 L1312.02,1270.95 L1316.27,1270.95 L1316.27,1274.56 L1316.37,1274.56 C1317.05,1273.37 1318.04,1272.39 1319.34,1271.62 C1320.65,1270.85 1322.26,1270.46 1324.18,1270.46 C1326.96,1270.46 1329.12,1271.3 1330.66,1272.99 C1332.2,1274.67 1332.97,1276.96 1332.97,1279.86 L1332.97,1296.34 L1328.72,1296.34 L1328.72,1280.62 C1328.72,1278.55 1328.24,1276.97 1327.27,1275.87 C1326.3,1274.77 1324.84,1274.22 1322.88,1274.22 C1321.55,1274.22 1320.39,1274.52 1319.39,1275.11 C1318.4,1275.71 1317.63,1276.54 1317.09,1277.61 C1316.54,1278.69 1316.27,1279.95 1316.27,1281.4 L1316.27,1296.34 L1312.02,1296.34 M1341.74,1304.88 C1341.34,1304.88 1340.92,1304.86 1340.51,1304.82 C1340.09,1304.78 1339.75,1304.74 1339.47,1304.69 L1339.47,1301.22 C1339.65,1301.25 1339.86,1301.29 1340.09,1301.32 C1340.33,1301.35 1340.58,1301.37 1340.84,1301.37 C1342.19,1301.37 1343.27,1301.13 1344.07,1300.66 C1344.88,1300.19 1345.54,1299.24 1346.04,1297.8 L1346.55,1296.36 L1337.13,1270.95 L1341.67,1270.95 L1348.99,1293.07 L1348.09,1292.09 L1349.36,1292.09 L1348.46,1293.07 L1355.81,1270.95 L1360.27,1270.95 L1350.36,1297.93 C1349.76,1299.54 1349.08,1300.86 1348.33,1301.88 C1347.59,1302.91 1346.68,1303.66 1345.62,1304.15 C1344.57,1304.64 1343.27,1304.88 1341.74,1304.88"/>
+<path class="Lyrics" d="M1730.14,935.885 L1730.14,900.655 L1734.53,900.655 L1734.53,935.885 L1730.14,935.885 M1741.65,935.885 L1741.65,910.494 L1745.9,910.494 L1745.9,914.108 L1746,914.108 C1746.68,912.919 1747.67,911.939 1748.98,911.166 C1750.28,910.393 1751.89,910.006 1753.81,910.006 C1756.59,910.006 1758.75,910.848 1760.29,912.533 C1761.83,914.217 1762.6,916.508 1762.6,919.405 L1762.6,935.885 L1758.35,935.885 L1758.35,920.162 C1758.35,918.095 1757.87,916.512 1756.9,915.414 C1755.93,914.315 1754.47,913.766 1752.52,913.766 C1751.18,913.766 1750.02,914.063 1749.03,914.657 C1748.03,915.251 1747.26,916.085 1746.72,917.159 C1746.17,918.234 1745.9,919.495 1745.9,920.943 L1745.9,935.885 L1741.65,935.885 "/>
+<path class="Fingering" d="M1324.52,1081.92 L1324.52,1078.9 L1336.93,1065.96 C1338.52,1064.3 1339.74,1062.92 1340.58,1061.84 C1341.41,1060.76 1341.99,1059.79 1342.31,1058.92 C1342.63,1058.06 1342.79,1057.14 1342.79,1056.17 L1342.79,1056.12 C1342.79,1054.91 1342.5,1053.85 1341.94,1052.92 C1341.38,1051.99 1340.61,1051.26 1339.62,1050.73 C1338.64,1050.2 1337.5,1049.94 1336.22,1049.94 C1334.75,1049.94 1333.44,1050.25 1332.29,1050.86 C1331.13,1051.47 1330.22,1052.28 1329.55,1053.31 C1328.89,1054.33 1328.55,1055.48 1328.55,1056.75 L1328.55,1056.87 L1324.3,1056.87 L1324.3,1056.73 C1324.3,1054.69 1324.83,1052.87 1325.89,1051.27 C1326.95,1049.67 1328.38,1048.41 1330.18,1047.49 C1331.97,1046.57 1333.96,1046.11 1336.15,1046.11 C1338.28,1046.11 1340.17,1046.54 1341.83,1047.4 C1343.49,1048.26 1344.8,1049.44 1345.75,1050.92 C1346.7,1052.4 1347.18,1054.06 1347.18,1055.9 L1347.18,1055.95 C1347.18,1057.23 1346.94,1058.48 1346.46,1059.68 C1345.98,1060.89 1345.15,1062.24 1343.96,1063.75 C1342.77,1065.25 1341.09,1067.11 1338.93,1069.32 L1329.26,1079.24 L1330.55,1076.53 L1330.55,1079.24 L1329.26,1078.02 L1347.77,1078.02 L1347.77,1081.92 L1324.52,1081.92 "/>
+<path class="Fingering" d="M2253.66,725.247 C2251.24,725.247 2249.12,724.832 2247.31,724.002 C2245.51,723.172 2244.08,722.033 2243.03,720.584 C2241.98,719.136 2241.37,717.484 2241.21,715.628 L2241.19,715.335 L2245.41,715.335 L2245.43,715.579 C2245.56,716.735 2245.98,717.752 2246.69,718.631 C2247.4,719.51 2248.35,720.198 2249.54,720.694 C2250.72,721.19 2252.1,721.439 2253.66,721.439 C2255.21,721.439 2256.56,721.17 2257.73,720.633 C2258.89,720.096 2259.8,719.351 2260.45,718.399 C2261.1,717.447 2261.43,716.352 2261.43,715.115 L2261.43,715.067 C2261.43,712.902 2260.71,711.238 2259.26,710.074 C2257.82,708.91 2255.87,708.328 2253.39,708.328 L2248.97,708.328 L2248.97,704.617 L2253.2,704.617 C2254.6,704.617 2255.83,704.353 2256.91,703.824 C2257.98,703.295 2258.82,702.571 2259.42,701.651 C2260.03,700.731 2260.33,699.686 2260.33,698.514 L2260.33,698.465 C2260.33,697.228 2260.07,696.178 2259.55,695.316 C2259.02,694.453 2258.26,693.794 2257.26,693.338 C2256.26,692.882 2255.05,692.655 2253.61,692.655 C2252.23,692.655 2251,692.886 2249.91,693.35 C2248.83,693.814 2247.97,694.477 2247.31,695.34 C2246.66,696.203 2246.27,697.228 2246.14,698.416 L2246.12,698.66 L2241.89,698.66 L2241.92,698.416 C2242.11,696.496 2242.72,694.819 2243.74,693.387 C2244.75,691.955 2246.11,690.84 2247.79,690.042 C2249.47,689.245 2251.42,688.846 2253.61,688.846 C2255.86,688.846 2257.82,689.232 2259.48,690.006 C2261.15,690.779 2262.45,691.845 2263.37,693.204 C2264.29,694.563 2264.75,696.138 2264.75,697.928 L2264.75,697.977 C2264.75,699.425 2264.43,700.711 2263.79,701.834 C2263.16,702.957 2262.28,703.893 2261.16,704.642 C2260.03,705.391 2258.74,705.919 2257.28,706.229 L2257.28,706.326 C2259.85,706.538 2261.93,707.405 2263.51,708.926 C2265.1,710.448 2265.89,712.462 2265.89,714.969 L2265.89,715.018 C2265.89,716.971 2265.36,718.721 2264.31,720.267 C2263.25,721.813 2261.8,723.03 2259.96,723.917 C2258.12,724.804 2256.02,725.247 2253.66,725.247"/>
+<path class="Fingering" d="M694.406,725.247 C691.981,725.247 689.865,724.832 688.058,724.002 C686.252,723.172 684.824,722.033 683.774,720.584 C682.724,719.136 682.118,717.484 681.955,715.628 L681.931,715.335 L686.154,715.335 L686.179,715.579 C686.309,716.735 686.728,717.752 687.436,718.631 C688.144,719.51 689.092,720.198 690.28,720.694 C691.468,721.19 692.844,721.439 694.406,721.439 C695.952,721.439 697.307,721.17 698.471,720.633 C699.635,720.096 700.542,719.351 701.193,718.399 C701.844,717.447 702.17,716.352 702.17,715.115 L702.17,715.067 C702.17,712.902 701.45,711.238 700.009,710.074 C698.569,708.91 696.612,708.328 694.138,708.328 L689.719,708.328 L689.719,704.617 L693.942,704.617 C695.342,704.617 696.579,704.353 697.653,703.824 C698.727,703.295 699.566,702.571 700.168,701.651 C700.77,700.731 701.071,699.686 701.071,698.514 L701.071,698.465 C701.071,697.228 700.811,696.178 700.29,695.316 C699.769,694.453 699.008,693.794 698.007,693.338 C697.006,692.882 695.79,692.655 694.357,692.655 C692.974,692.655 691.741,692.886 690.659,693.35 C689.576,693.814 688.71,694.477 688.058,695.34 C687.407,696.203 687.017,697.228 686.887,698.416 L686.862,698.66 L682.639,698.66 L682.663,698.416 C682.858,696.496 683.465,694.819 684.482,693.387 C685.499,691.955 686.85,690.84 688.535,690.042 C690.219,689.245 692.16,688.846 694.357,688.846 C696.603,688.846 698.561,689.232 700.229,690.006 C701.897,690.779 703.191,691.845 704.111,693.204 C705.03,694.563 705.49,696.138 705.49,697.928 L705.49,697.977 C705.49,699.425 705.173,700.711 704.538,701.834 C703.903,702.957 703.024,703.893 701.901,704.642 C700.778,705.391 699.484,705.919 698.019,706.229 L698.019,706.326 C700.591,706.538 702.67,707.405 704.257,708.926 C705.844,710.448 706.638,712.462 706.638,714.969 L706.638,715.018 C706.638,716.971 706.109,718.721 705.051,720.267 C703.993,721.813 702.544,723.03 700.705,723.917 C698.866,724.804 696.766,725.247 694.406,725.247"/>
+<path class="Fingering" d="M936.736,725.239 L936.736,722.212 L949.139,709.273 C950.734,707.613 951.95,706.241 952.788,705.159 C953.627,704.077 954.204,703.104 954.522,702.241 C954.839,701.379 954.998,700.459 954.998,699.483 L954.998,699.434 C954.998,698.229 954.717,697.163 954.156,696.236 C953.594,695.308 952.821,694.579 951.836,694.051 C950.852,693.522 949.716,693.257 948.431,693.257 C946.966,693.257 945.655,693.562 944.5,694.173 C943.344,694.783 942.433,695.601 941.766,696.626 C941.098,697.652 940.765,698.799 940.765,700.069 L940.765,700.191 L936.516,700.191 L936.516,700.044 C936.516,698.01 937.045,696.191 938.103,694.588 C939.161,692.984 940.59,691.723 942.388,690.803 C944.187,689.884 946.176,689.424 948.357,689.424 C950.489,689.424 952.386,689.855 954.046,690.718 C955.706,691.581 957.012,692.752 957.964,694.234 C958.916,695.715 959.392,697.375 959.392,699.214 L959.392,699.263 C959.392,700.549 959.152,701.794 958.672,702.998 C958.192,704.203 957.358,705.558 956.17,707.063 C954.982,708.569 953.305,710.428 951.141,712.642 L941.473,722.554 L942.766,719.844 L942.766,722.554 L941.473,721.333 L959.978,721.333 L959.978,725.239 L936.736,725.239 "/>
+<path class="Fingering" d="M1062.48,1081.93 C1060.05,1081.93 1057.94,1081.52 1056.13,1080.69 C1054.32,1079.86 1052.89,1078.72 1051.85,1077.27 C1050.8,1075.82 1050.19,1074.17 1050.03,1072.31 L1050,1072.02 L1054.23,1072.02 L1054.25,1072.26 C1054.38,1073.42 1054.8,1074.44 1055.51,1075.31 C1056.22,1076.19 1057.16,1076.88 1058.35,1077.38 C1059.54,1077.87 1060.91,1078.12 1062.48,1078.12 C1064.02,1078.12 1065.38,1077.85 1066.54,1077.32 C1067.71,1076.78 1068.61,1076.03 1069.26,1075.08 C1069.92,1074.13 1070.24,1073.04 1070.24,1071.8 L1070.24,1071.75 C1070.24,1069.58 1069.52,1067.92 1068.08,1066.76 C1066.64,1065.59 1064.68,1065.01 1062.21,1065.01 L1057.79,1065.01 L1057.79,1061.3 L1062.01,1061.3 C1063.41,1061.3 1064.65,1061.04 1065.72,1060.51 C1066.8,1059.98 1067.64,1059.25 1068.24,1058.33 C1068.84,1057.41 1069.14,1056.37 1069.14,1055.2 L1069.14,1055.15 C1069.14,1053.91 1068.88,1052.86 1068.36,1052 C1067.84,1051.14 1067.08,1050.48 1066.08,1050.02 C1065.08,1049.57 1063.86,1049.34 1062.43,1049.34 C1061.05,1049.34 1059.81,1049.57 1058.73,1050.03 C1057.65,1050.5 1056.78,1051.16 1056.13,1052.02 C1055.48,1052.89 1055.09,1053.91 1054.96,1055.1 L1054.93,1055.34 L1050.71,1055.34 L1050.73,1055.1 C1050.93,1053.18 1051.54,1051.5 1052.55,1050.07 C1053.57,1048.64 1054.92,1047.52 1056.61,1046.73 C1058.29,1045.93 1060.23,1045.53 1062.43,1045.53 C1064.67,1045.53 1066.63,1045.92 1068.3,1046.69 C1069.97,1047.46 1071.26,1048.53 1072.18,1049.89 C1073.1,1051.25 1073.56,1052.82 1073.56,1054.61 L1073.56,1054.66 C1073.56,1056.11 1073.24,1057.39 1072.61,1058.52 C1071.97,1059.64 1071.1,1060.58 1069.97,1061.32 C1068.85,1062.07 1067.56,1062.6 1066.09,1062.91 L1066.09,1063.01 C1068.66,1063.22 1070.74,1064.09 1072.33,1065.61 C1073.92,1067.13 1074.71,1069.15 1074.71,1071.65 L1074.71,1071.7 C1074.71,1073.65 1074.18,1075.4 1073.12,1076.95 C1072.06,1078.5 1070.62,1079.71 1068.78,1080.6 C1066.94,1081.49 1064.84,1081.93 1062.48,1081.93"/>
+<path class="Fingering" d="M1648.69,1082.52 L1648.69,1051.95 L1648.59,1051.95 L1639.27,1058.44 L1639.27,1054.03 L1648.64,1047.29 L1652.94,1047.29 L1652.94,1082.52 L1648.69,1082.52 "/>
+<path class="Fingering" d="M1748.7,725.833 L1748.7,695.267 L1748.61,695.267 L1739.28,701.761 L1739.28,697.342 L1748.65,690.604 L1752.95,690.604 L1752.95,725.833 L1748.7,725.833 "/>
+<path class="Fingering" d="M777.575,1081.92 L777.575,1078.9 L789.978,1065.96 C791.573,1064.3 792.789,1062.92 793.628,1061.84 C794.466,1060.76 795.044,1059.79 795.361,1058.92 C795.678,1058.06 795.837,1057.14 795.837,1056.17 L795.837,1056.12 C795.837,1054.91 795.556,1053.85 794.995,1052.92 C794.433,1051.99 793.66,1051.26 792.676,1050.73 C791.691,1050.2 790.556,1049.94 789.27,1049.94 C787.805,1049.94 786.495,1050.25 785.339,1050.86 C784.184,1051.47 783.272,1052.28 782.605,1053.31 C781.937,1054.33 781.604,1055.48 781.604,1056.75 L781.604,1056.87 L777.356,1056.87 L777.356,1056.73 C777.356,1054.69 777.885,1052.87 778.943,1051.27 C780.001,1049.67 781.429,1048.41 783.227,1047.49 C785.026,1046.57 787.016,1046.11 789.197,1046.11 C791.329,1046.11 793.225,1046.54 794.885,1047.4 C796.545,1048.26 797.851,1049.44 798.803,1050.92 C799.756,1052.4 800.232,1054.06 800.232,1055.9 L800.232,1055.95 C800.232,1057.23 799.992,1058.48 799.511,1059.68 C799.031,1060.89 798.197,1062.24 797.009,1063.75 C795.821,1065.25 794.144,1067.11 791.98,1069.32 L782.312,1079.24 L783.606,1076.53 L783.606,1079.24 L782.312,1078.02 L800.818,1078.02 L800.818,1081.92 L777.575,1081.92 "/>
+<path class="Fingering" d="M1988.48,725.239 L1988.48,722.212 L2000.88,709.273 C2002.47,707.613 2003.69,706.241 2004.53,705.159 C2005.37,704.077 2005.94,703.104 2006.26,702.241 C2006.58,701.379 2006.74,700.459 2006.74,699.483 L2006.74,699.434 C2006.74,698.229 2006.46,697.163 2005.9,696.236 C2005.33,695.308 2004.56,694.579 2003.58,694.051 C2002.59,693.522 2001.46,693.257 2000.17,693.257 C1998.71,693.257 1997.4,693.562 1996.24,694.173 C1995.08,694.783 1994.17,695.601 1993.51,696.626 C1992.84,697.652 1992.5,698.799 1992.5,700.069 L1992.5,700.191 L1988.26,700.191 L1988.26,700.044 C1988.26,698.01 1988.79,696.191 1989.84,694.588 C1990.9,692.984 1992.33,691.723 1994.13,690.803 C1995.93,689.884 1997.92,689.424 2000.1,689.424 C2002.23,689.424 2004.13,689.855 2005.79,690.718 C2007.45,691.581 2008.75,692.752 2009.7,694.234 C2010.66,695.715 2011.13,697.375 2011.13,699.214 L2011.13,699.263 C2011.13,700.549 2010.89,701.794 2010.41,702.998 C2009.93,704.203 2009.1,705.558 2007.91,707.063 C2006.72,708.569 2005.05,710.428 2002.88,712.642 L1993.21,722.554 L1994.51,719.844 L1994.51,722.554 L1993.21,721.333 L2011.72,721.333 L2011.72,725.239 L1988.48,725.239 "/>
+<path class="Fingering" d="M1908.18,1081.92 L1908.18,1078.9 L1920.58,1065.96 C1922.18,1064.3 1923.4,1062.92 1924.23,1061.84 C1925.07,1060.76 1925.65,1059.79 1925.97,1058.92 C1926.28,1058.06 1926.44,1057.14 1926.44,1056.17 L1926.44,1056.12 C1926.44,1054.91 1926.16,1053.85 1925.6,1052.92 C1925.04,1051.99 1924.27,1051.26 1923.28,1050.73 C1922.3,1050.2 1921.16,1049.94 1919.88,1049.94 C1918.41,1049.94 1917.1,1050.25 1915.94,1050.86 C1914.79,1051.47 1913.88,1052.28 1913.21,1053.31 C1912.54,1054.33 1912.21,1055.48 1912.21,1056.75 L1912.21,1056.87 L1907.96,1056.87 L1907.96,1056.73 C1907.96,1054.69 1908.49,1052.87 1909.55,1051.27 C1910.61,1049.67 1912.03,1048.41 1913.83,1047.49 C1915.63,1046.57 1917.62,1046.11 1919.8,1046.11 C1921.93,1046.11 1923.83,1046.54 1925.49,1047.4 C1927.15,1048.26 1928.46,1049.44 1929.41,1050.92 C1930.36,1052.4 1930.84,1054.06 1930.84,1055.9 L1930.84,1055.95 C1930.84,1057.23 1930.6,1058.48 1930.12,1059.68 C1929.64,1060.89 1928.8,1062.24 1927.61,1063.75 C1926.43,1065.25 1924.75,1067.11 1922.59,1069.32 L1912.92,1079.24 L1914.21,1076.53 L1914.21,1079.24 L1912.92,1078.02 L1931.42,1078.02 L1931.42,1081.92 L1908.18,1081.92 "/>
+<path class="Fingering" d="M1201.92,725.247 C1199.5,725.247 1197.38,724.832 1195.57,724.002 C1193.77,723.172 1192.34,722.033 1191.29,720.584 C1190.24,719.136 1189.63,717.484 1189.47,715.628 L1189.45,715.335 L1193.67,715.335 L1193.69,715.579 C1193.82,716.735 1194.24,717.752 1194.95,718.631 C1195.66,719.51 1196.61,720.198 1197.8,720.694 C1198.98,721.19 1200.36,721.439 1201.92,721.439 C1203.47,721.439 1204.82,721.17 1205.99,720.633 C1207.15,720.096 1208.06,719.351 1208.71,718.399 C1209.36,717.447 1209.69,716.352 1209.69,715.115 L1209.69,715.067 C1209.69,712.902 1208.97,711.238 1207.52,710.074 C1206.08,708.91 1204.13,708.328 1201.65,708.328 L1197.23,708.328 L1197.23,704.617 L1201.46,704.617 C1202.86,704.617 1204.09,704.353 1205.17,703.824 C1206.24,703.295 1207.08,702.571 1207.68,701.651 C1208.29,700.731 1208.59,699.686 1208.59,698.514 L1208.59,698.465 C1208.59,697.228 1208.33,696.178 1207.81,695.316 C1207.28,694.453 1206.52,693.794 1205.52,693.338 C1204.52,692.882 1203.31,692.655 1201.87,692.655 C1200.49,692.655 1199.26,692.886 1198.17,693.35 C1197.09,693.814 1196.23,694.477 1195.57,695.34 C1194.92,696.203 1194.53,697.228 1194.4,698.416 L1194.38,698.66 L1190.15,698.66 L1190.18,698.416 C1190.37,696.496 1190.98,694.819 1192,693.387 C1193.01,691.955 1194.37,690.84 1196.05,690.042 C1197.73,689.245 1199.68,688.846 1201.87,688.846 C1204.12,688.846 1206.08,689.232 1207.74,690.006 C1209.41,690.779 1210.71,691.845 1211.63,693.204 C1212.55,694.563 1213.01,696.138 1213.01,697.928 L1213.01,697.977 C1213.01,699.425 1212.69,700.711 1212.05,701.834 C1211.42,702.957 1210.54,703.893 1209.42,704.642 C1208.29,705.391 1207,705.919 1205.54,706.229 L1205.54,706.326 C1208.11,706.538 1210.19,707.405 1211.77,708.926 C1213.36,710.448 1214.15,712.462 1214.15,714.969 L1214.15,715.018 C1214.15,716.971 1213.62,718.721 1212.57,720.267 C1211.51,721.813 1210.06,723.03 1208.22,723.917 C1206.38,724.804 1204.28,725.247 1201.92,725.247"/>
+<path class="Fingering" d="M518.086,1082.52 L518.086,1051.95 L517.988,1051.95 L508.662,1058.44 L508.662,1054.03 L518.037,1047.29 L522.334,1047.29 L522.334,1082.52 L518.086,1082.52 "/>
+<path class="Fingering" d="M1444.25,725.239 L1444.25,722.212 L1456.65,709.273 C1458.25,707.613 1459.47,706.241 1460.3,705.159 C1461.14,704.077 1461.72,703.104 1462.04,702.241 C1462.35,701.379 1462.51,700.459 1462.51,699.483 L1462.51,699.434 C1462.51,698.229 1462.23,697.163 1461.67,696.236 C1461.11,695.308 1460.34,694.579 1459.35,694.051 C1458.37,693.522 1457.23,693.257 1455.95,693.257 C1454.48,693.257 1453.17,693.562 1452.02,694.173 C1450.86,694.783 1449.95,695.601 1449.28,696.626 C1448.61,697.652 1448.28,698.799 1448.28,700.069 L1448.28,700.191 L1444.03,700.191 L1444.03,700.044 C1444.03,698.01 1444.56,696.191 1445.62,694.588 C1446.68,692.984 1448.11,691.723 1449.9,690.803 C1451.7,689.884 1453.69,689.424 1455.87,689.424 C1458.01,689.424 1459.9,689.855 1461.56,690.718 C1463.22,691.581 1464.53,692.752 1465.48,694.234 C1466.43,695.715 1466.91,697.375 1466.91,699.214 L1466.91,699.263 C1466.91,700.549 1466.67,701.794 1466.19,702.998 C1465.71,704.203 1464.87,705.558 1463.69,707.063 C1462.5,708.569 1460.82,710.428 1458.66,712.642 L1448.99,722.554 L1450.28,719.844 L1450.28,722.554 L1448.99,721.333 L1467.49,721.333 L1467.49,725.239 L1444.25,725.239 "/>
+<path class="Fingering" d="M2195.64,1082.52 L2195.64,1051.95 L2195.54,1051.95 L2186.22,1058.44 L2186.22,1054.03 L2195.59,1047.29 L2199.89,1047.29 L2199.89,1082.52 L2195.64,1082.52 "/>
+<polyline class="LyricsLineSegment" fill="none" stroke="#000000" stroke-width="3.72" stroke-linejoin="bevel" points="801.306,922.184 821.149,922.184" />
+<polyline class="LyricsLineSegment" fill="none" stroke="#000000" stroke-width="3.72" stroke-linejoin="bevel" points="1309.54,922.184 1329.38,922.184" />
+<polyline class="LyricsLineSegment" fill="none" stroke="#000000" stroke-width="3.72" stroke-linejoin="bevel" points="1192.68,1282.64 1212.53,1282.64" />
+</svg>
+`;
+
+/* decode base64 to ArrayBuffer */
+function b64ToArrayBuffer(b64) {
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+
+const SONGS = []; // kept for compatibility — not used
+
+/* ══════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════ */
+const START_MIDI = 48;   // C3
+const END_MIDI   = 72;   // C5
+const TREBLE = 'treble';
+const BASS   = 'bass';
+
+const NOTE_COLORS = {
+  0:'#FF6B9D', 1:'#C77DFF', 2:'#FF9A3C', 3:'#FFD93D',
+  4:'#6BCB77', 5:'#4D96FF', 6:'#FF6060', 7:'#00C9A7',
+  8:'#A78BFA', 9:'#FFA552', 10:'#F472B6', 11:'#34D399',
+};
+// JaaneKahan gradient pairs: [topColor, bottomColor]
+const TREBLE_GRAD = ['#D4B0E8', '#7B2FBE'];  // mauve → deep purple
+const BASS_GRAD   = ['#FFE066', '#B45309'];   // yellow → amber
+
+
+const WHITE_KEY_COLOR  = '#F5F0E8';
+const BLACK_KEY_COLOR  = '#1A1025';
+const KEYBOARD_HEIGHT  = 145;
+const FALL_ZONE_HEIGHT = 210;
+const NOTE_GAP         = 0.025;
+const FALL_SPEED       = 180;  // px/sec at 1×
+
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let allNotes = [], practiceNotes = [], synth = null;
+let secondsPerBeat = 0.5, secondsPerMeasure = 2.0;
+let totalMeasures = 1, originalBPM = 120;
+let speedMult = 1.0, speedIdx = 4;
+let loopEnabled = false, freeMode = false;
+let trainingActive = false, trainingIdx = 0;
+let waitingForInput = false;
+let expectedMidis = new Set(), pressedMidis = new Set();
+let fallingRects = [], animFrame = null;
+let previewPhase = false, practiceTimeouts = [];
+let previewGroups = [];  // frame-accurate highlight schedule for preview
+let svgNoteEls = [], svgHighlighted = [];
+let _staffRows = [], _rowThresholds = []; // dynamic SVG staff geometry
+let currentSongIdx = -1;
+
+const SPEED_STEPS = [0.25, 0.5, 0.6, 0.75, 1.0, 1.25, 1.5, 2.0];
+
+/* ══════════════════════════════════════════════════════
+   CANVAS REFS
+══════════════════════════════════════════════════════ */
+const fallingCanvas = document.getElementById('fallingCanvas');
+const kbdCanvas     = document.getElementById('keyboardCanvas');
+const fctx = fallingCanvas.getContext('2d');
+const kctx = kbdCanvas.getContext('2d');
+
+/* ══════════════════════════════════════════════════════
+   KEYBOARD LAYOUT
+══════════════════════════════════════════════════════ */
+function isBlack(midi) { return [1,3,6,8,10].includes(midi % 12); }
+const WHITE_KEYS = [];
+for (let m = START_MIDI; m <= END_MIDI; m++) if (!isBlack(m)) WHITE_KEYS.push(m);
+const TOTAL_WHITE = WHITE_KEYS.length;
+
+function getNoteName(midi) {
+  const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  return names[midi % 12] + Math.floor(midi / 12 - 1);
+}
+
+function ww()    { return fallingCanvas.width / TOTAL_WHITE; }
+function wwKbd() { return kbdCanvas.width / TOTAL_WHITE; }
+
+function noteToX(midi) {
+  // Returns LEFT edge of the falling rect for this note (matches Jaane Kahan)
+  let whiteIndex = 0;
+  for (let m = START_MIDI; m < midi; m++) {
+    if (!isBlack(m)) whiteIndex++;
+  }
+  let x = whiteIndex * ww();
+  if (isBlack(midi)) x -= ww() * 0.35;  // shift black key rect left by ~35% of white key width
+  return x;
+}
+function noteRectWidth(midi) {
+  return isBlack(midi) ? ww() * 0.55 : ww() * 0.88;
+}
+
+/* ══════════════════════════════════════════════════════
+   CANVAS RESIZE
+══════════════════════════════════════════════════════ */
+function resizeCanvases() {
+  const W = document.getElementById('canvasWrap').clientWidth;
+
+  // available = viewport minus body top padding (60) minus body bottom padding (8) minus heading
+  const headingEl = document.querySelector('h1');
+  const subtitleEl = document.getElementById('subtitle');
+  const headingH = (headingEl ? headingEl.offsetHeight : 36) +
+                   (subtitleEl ? subtitleEl.offsetHeight : 20) + 12;
+  const available = window.innerHeight - 60 - 8 - headingH - 8; // 8px extra breathing room
+
+  // Keyboard gets ~20% of available, falling zone fills whatever remains
+  const kbdH  = Math.max(KEYBOARD_HEIGHT, Math.round(available * 0.20));
+  const scoreEl = document.getElementById('scoreZone');
+  const scoreH  = scoreEl ? scoreEl.offsetHeight : 0;
+  const fallH = Math.max(60, available - kbdH - scoreH);
+
+  fallingCanvas.width  = W;
+  fallingCanvas.height = fallH;
+  document.getElementById('canvasWrap').style.height = fallH + 'px';
+  kbdCanvas.width  = W;
+  kbdCanvas.height = kbdH;
+  document.getElementById('keyboardWrap').style.height = kbdH + 'px';
+  document.getElementById('hitLine').style.top = (fallH - 4) + 'px';
+  drawKeyboard();
+}
+
+/* ══════════════════════════════════════════════════════
+   DRAW KEYBOARD  (Jaane Kahan premium style)
+══════════════════════════════════════════════════════ */
+function drawKeyboard(highlightSet = new Set(), pressedSet = new Set()) {
+  const W = kbdCanvas.width, H = kbdCanvas.height;
+  const w = W / TOTAL_WHITE;          // white key width
+  const blackKeyWidth  = w * 0.6;
+  const blackKeyHeight = H * 0.62;
+
+  kctx.clearRect(0, 0, W, H);
+
+  // ── WHITE KEYS ──────────────────────────────────────────────────────────
+  let whiteIndex = 0;
+  for (let midi = START_MIDI; midi <= END_MIDI; midi++) {
+    if (isBlack(midi)) continue;
+    const x   = whiteIndex * w;
+    const lit = highlightSet.has(midi) || pressedSet.has(midi);
+
+    // Premium gradient fill (matches Jaane Kahan exactly)
+    const wGrad = kctx.createLinearGradient(x, 0, x, H);
+    if (lit) {
+      wGrad.addColorStop(0, '#E8C8E8');
+      wGrad.addColorStop(1, '#7B1F5A');
+    } else {
+      wGrad.addColorStop(0, '#ffffff');
+      wGrad.addColorStop(0.7, '#f5f5f5');
+      wGrad.addColorStop(1, '#e8e8e8');
+    }
+    kctx.fillStyle = wGrad;
+    kctx.fillRect(x, 0, w, H);
+
+    // Key border
+    kctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    kctx.lineWidth = 0.8;
+    kctx.strokeRect(x + 0.4, 0, w - 0.8, H);
+
+    // Inner shadow at top
+    const innerGrad = kctx.createLinearGradient(x, 0, x, 14);
+    innerGrad.addColorStop(0, 'rgba(0,0,0,0.08)');
+    innerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    kctx.fillStyle = innerGrad;
+    kctx.fillRect(x, 0, w, 14);
+
+    // Glow overlay when lit
+    if (lit) {
+      kctx.shadowColor = '#C060A0';
+      kctx.shadowBlur  = 18;
+      kctx.fillStyle   = 'rgba(160,40,120,0.18)';
+      kctx.fillRect(x, 0, w, H);
+      kctx.shadowBlur  = 0;
+    }
+
+    // Note label
+    kctx.fillStyle    = lit ? '#F5D0F0' : '#555';
+    kctx.font         = `bold ${Math.max(9, Math.min(12, w * 0.55))}px Inter, Arial`;
+    kctx.textAlign    = 'center';
+    kctx.textBaseline = 'bottom';
+    kctx.fillText(getNoteName(midi), x + w / 2, H - 5);
+
+    whiteIndex++;
+  }
+
+  // ── BLACK KEYS ──────────────────────────────────────────────────────────
+  whiteIndex = 0;
+  for (let midi = START_MIDI; midi <= END_MIDI; midi++) {
+    if (!isBlack(midi)) { whiteIndex++; continue; }
+
+    const x   = (whiteIndex - 1) * w + w * 0.7;
+    const lit = highlightSet.has(midi) || pressedSet.has(midi);
+
+    // Premium gradient black key
+    const bGrad = kctx.createLinearGradient(x, 0, x, blackKeyHeight);
+    if (lit) {
+      bGrad.addColorStop(0, '#E8C8E8');
+      bGrad.addColorStop(1, '#7B1F5A');
+    } else {
+      bGrad.addColorStop(0, '#333');
+      bGrad.addColorStop(0.5, '#111');
+      bGrad.addColorStop(1, '#000');
+    }
+
+    // Drop shadow
+    kctx.shadowColor   = 'rgba(0,0,0,0.45)';
+    kctx.shadowBlur    = 8;
+    kctx.shadowOffsetY = 4;
+    kctx.fillStyle     = bGrad;
+    kctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
+    kctx.shadowBlur    = 0;
+    kctx.shadowOffsetY = 0;
+
+    // Glow overlay when lit
+    if (lit) {
+      kctx.shadowColor = '#C060A0';
+      kctx.shadowBlur  = 20;
+      kctx.fillStyle   = 'rgba(160,40,120,0.45)';
+      kctx.fillRect(x, 0, blackKeyWidth, blackKeyHeight);
+      kctx.shadowBlur  = 0;
+    }
+
+    // Glossy highlight strip on black key
+    const glossGrad = kctx.createLinearGradient(x, 0, x + blackKeyWidth, blackKeyHeight * 0.4);
+    glossGrad.addColorStop(0, 'rgba(255,255,255,0.18)');
+    glossGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    kctx.fillStyle = glossGrad;
+    kctx.fillRect(x + blackKeyWidth * 0.1, 0, blackKeyWidth * 0.8, blackKeyHeight * 0.35);
+
+    // Note label
+    kctx.fillStyle    = lit ? '#fff' : 'rgba(255,255,255,0.55)';
+    kctx.font         = `bold ${Math.max(8, Math.min(10, blackKeyWidth * 0.55))}px Inter, Arial`;
+    kctx.textAlign    = 'center';
+    kctx.textBaseline = 'bottom';
+    kctx.fillText(getNoteName(midi), x + blackKeyWidth / 2, blackKeyHeight - 3);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   FALLING NOTES
+══════════════════════════════════════════════════════ */
+function spawnFalling(midi, durationSec, spawnTime_ms, track) {
+  const x      = noteToX(midi);
+  const width  = ww() * 0.86;   // same proportion as Jaane Kahan
+  const height = Math.max(14, durationSec * FALL_SPEED * speedMult - 4);
+
+  // startY: above the canvas so the rect enters from the top
+  const TOP_GAP = 10;
+  const startY  = -height - TOP_GAP;
+  // endY: note bottom just touches the hit-line (top of keyboard)
+  const endY    = fallingCanvas.height - height;
+
+  // ── Body gradient (vertical, normalised 0→height; drawn via translate) ──
+  const bodyGrad = fctx.createLinearGradient(0, 0, 0, height);
+  if (track === TREBLE) {
+    bodyGrad.addColorStop(0.00, 'rgba(220,180,220,0.92)');
+    bodyGrad.addColorStop(0.25, 'rgba(168,100,160,0.88)');
+    bodyGrad.addColorStop(0.65, 'rgba(120,30,90,0.90)');
+    bodyGrad.addColorStop(1.00, 'rgba(80,10,50,0.94)');
+  } else {
+    bodyGrad.addColorStop(0.00, 'rgba(255,251,150,0.92)');
+    bodyGrad.addColorStop(0.25, 'rgba(255,236,50,0.88)');
+    bodyGrad.addColorStop(0.65, 'rgba(250,204,21,0.90)');
+    bodyGrad.addColorStop(1.00, 'rgba(202,138,4,0.94)');
+  }
+
+  // ── Gloss (horizontal, cached once — safe because x/width never change) ──
+  const gloss = fctx.createLinearGradient(x, 0, x + width, 0);
+  gloss.addColorStop(0.0, 'rgba(255,255,255,0.05)');
+  gloss.addColorStop(0.4, 'rgba(255,255,255,0.35)');
+  gloss.addColorStop(0.6, 'rgba(255,255,255,0.35)');
+  gloss.addColorStop(1.0, 'rgba(255,255,255,0.05)');
+
+  // ── Shimmer band (normalised -20→+20 around y=0; translated each frame) ──
+  const shimmerGrad = fctx.createLinearGradient(0, -20, 0, 20);
+  shimmerGrad.addColorStop(0,   'rgba(255,255,255,0)');
+  shimmerGrad.addColorStop(0.5, 'rgba(255,255,255,0.8)');
+  shimmerGrad.addColorStop(1,   'rgba(255,255,255,0)');
+
+  fallingRects.push({
+    midi, track,
+    noteName: getNoteName(midi),
+    x, width, height,
+    y: startY, startY, endY,
+    bodyGrad, gloss, shimmerGrad,
+    spawnMs: spawnTime_ms,
+    landed: false,
+  });
+}
+
+function drawFalling(nowMs) {
+  const _fzh = fallingCanvas.height;
+  fctx.clearRect(0, 0, fallingCanvas.width, _fzh);
+
+  // Subtle vertical lane guides
+  fctx.strokeStyle = 'rgba(180,130,220,0.06)';
+  fctx.lineWidth   = 1;
+  for (let i = 0; i <= TOTAL_WHITE; i++) {
+    const x = i * ww();
+    fctx.beginPath(); fctx.moveTo(x, 0); fctx.lineTo(x, _fzh); fctx.stroke();
+  }
+
+  const fallDurationMs = (_fzh / (FALL_SPEED * speedMult)) * 1000;
+
+  fallingRects = fallingRects.filter(r => {
+    // Progress: 0 = just spawned at top, 1 = bottom of note touches hit-line
+    const elapsed  = nowMs - r.spawnMs;
+    const progress = elapsed / fallDurationMs;
+    r.y = r.startY + progress * (r.endY - r.startY);
+
+    if (!r.landed && r.y >= r.endY) r.landed = true;
+
+    // Remove once fully off the bottom
+    if (r.y > _fzh + 20) return false;
+
+    // ── Draw in translated space (origin = rect top-left) ──────────────────
+    fctx.save();
+    fctx.translate(0, r.y);
+
+    // Glow shadow
+    if (r.track === TREBLE) {
+      fctx.shadowColor = 'rgba(160,40,120,0.60)';
+      fctx.shadowBlur  = 18;
+    } else {
+      fctx.shadowColor = 'rgba(245,158,11,0.4)';
+      fctx.shadowBlur  = 10;
+    }
+
+    // Rounded-rect body
+    const rad = 12;
+    fctx.fillStyle = r.bodyGrad;
+    fctx.beginPath();
+    fctx.moveTo(r.x + rad,             0);
+    fctx.lineTo(r.x + r.width - rad,   0);
+    fctx.quadraticCurveTo(r.x + r.width, 0,          r.x + r.width, rad);
+    fctx.lineTo(r.x + r.width,          r.height - rad);
+    fctx.quadraticCurveTo(r.x + r.width, r.height,   r.x + r.width - rad, r.height);
+    fctx.lineTo(r.x + rad,              r.height);
+    fctx.quadraticCurveTo(r.x,          r.height,    r.x, r.height - rad);
+    fctx.lineTo(r.x,                    rad);
+    fctx.quadraticCurveTo(r.x,          0,            r.x + rad, 0);
+    fctx.closePath();
+    fctx.fill();
+    fctx.shadowBlur = 0;
+
+    // Gloss overlay (screen blend)
+    fctx.save();
+    fctx.globalCompositeOperation = 'screen';
+    fctx.globalAlpha = 0.22;
+    fctx.fillStyle   = r.gloss;
+    fctx.fillRect(r.x, 0, r.width, r.height);
+    fctx.restore();
+
+    // Travelling shimmer band
+    const shimmerSpeed = 0.0015 * speedMult;
+    const shimmerPhase = (nowMs * shimmerSpeed) % 1;
+    const shimmerLocalY = shimmerPhase * r.height;
+    fctx.save();
+    fctx.globalAlpha = 0.18;
+    fctx.globalCompositeOperation = 'lighter';
+    fctx.translate(0, shimmerLocalY);
+    fctx.fillStyle = r.shimmerGrad;
+    fctx.fillRect(r.x, -20, r.width, 40);
+    fctx.restore();
+
+    // Note name label
+    if (r.height > 24 && r.noteName) {
+      fctx.fillStyle    = r.track === TREBLE ? 'rgba(255,220,255,0.95)' : 'rgba(255,255,255,0.95)';
+      fctx.shadowColor  = 'rgba(0,0,0,0.5)';
+      fctx.shadowBlur   = 2;
+      fctx.font         = 'bold 15px Arial';
+      fctx.textAlign    = 'center';
+      fctx.textBaseline = 'middle';
+      fctx.fillText(r.noteName, r.x + r.width / 2, r.height / 2);
+      fctx.shadowBlur   = 0;
+    }
+
+    fctx.restore();   // pop translate
+    return true;
+  });
+
+  // During preview: check each group's landMs against nowMs each frame — no setTimeout drift.
+  // During practice: keep expected keys lit every frame until the user presses them.
+  if (previewPhase) {
+    let activeSet = null;
+    for (const grp of previewGroups) {
+      if (nowMs >= grp.landMs && nowMs < grp.litUntilMs) {
+        if (!grp.fired) {
+          grp.fired = true;
+          grp.cleared = false;
+          highlightSvgNote(grp.notes[0]);
+        }
+        activeSet = new Set(grp.notes.map(n => n.midi));
+        break;
+      } else if (grp.fired && !grp.cleared && nowMs >= grp.litUntilMs) {
+        grp.cleared = true;
+        clearSvgHighlight();
+      }
+    }
+    drawKeyboard(activeSet ?? new Set(), pressedMidis);
+  } else {
+    drawKeyboard(expectedMidis, pressedMidis);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   ANIMATION LOOP
+══════════════════════════════════════════════════════ */
+function runAnimLoop() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  function tick() { drawFalling(performance.now()); animFrame = requestAnimationFrame(tick); }
+  tick();
+}
+
+/* ══════════════════════════════════════════════════════
+   SYNTH
+══════════════════════════════════════════════════════ */
+function ensureSynth() {
+  if (synth) return;
+  synth = new Tone.Sampler({
+    urls: {
+      "C3":"C3.mp3","D#3":"Ds3.mp3","F#3":"Fs3.mp3","A3":"A3.mp3",
+      "C4":"C4.mp3","D#4":"Ds4.mp3","F#4":"Fs4.mp3","A4":"A4.mp3",
+      "C5":"C5.mp3","D#5":"Ds5.mp3","F#5":"Fs5.mp3","A5":"A5.mp3",
+    },
+    release: 1,
+    baseUrl: "https://tonejs.github.io/audio/salamander/"
+  }).toDestination();
+}
+
+/* ══════════════════════════════════════════════════════
+   LOAD MIDI FROM ARRAYBUFFER
+══════════════════════════════════════════════════════ */
+function splitRepeated(notes) {
+  const result = [];
+  for (const n of notes) {
+    const prev = result[result.length - 1];
+    if (prev && prev.midi === n.midi && prev.track === n.track &&
+        Math.abs((prev.time + prev.duration) - n.time) < 0.002) {
+      prev.duration = Math.max(0, prev.duration - NOTE_GAP);
+      result.push({ ...n, time: n.time + NOTE_GAP });
+    } else { result.push({ ...n }); }
+  }
+  return result;
+}
+
+async function loadMidiBuffer(buf) {
+  try {
+    const midi = new Midi(buf);
+    allNotes = [];
+    midi.tracks.forEach((track, ti) => {
+      const clef = ti === 0 ? TREBLE : BASS;
+      track.notes.forEach(n => {
+        if (n.midi < START_MIDI || n.midi > END_MIDI) return;
+        allNotes.push({ midi: n.midi, time: n.time, duration: n.duration, track: clef });
+      });
+    });
+    allNotes.sort((a,b) => a.time - b.time);
+    allNotes = splitRepeated(allNotes);
+    const bpm = midi.header.tempos.length ? midi.header.tempos[0].bpm : 120;
+    secondsPerBeat    = 60 / bpm;
+    secondsPerMeasure = secondsPerBeat * 4;
+    originalBPM = Math.round(bpm);
+    totalMeasures = Math.ceil(allNotes[allNotes.length - 1]?.time / secondsPerMeasure) + 1 || 4;
+    document.getElementById('btnStart').disabled = false;
+    document.getElementById('btnFree').disabled  = false;
+    ensureSynth();
+    showFeedback(`🎵 ${allNotes.length} notes · ${Math.round(bpm)} BPM`, 'info');
+    buildProgressDots();
+  } catch(err) {
+    showFeedback('❌ Could not load MIDI', 'wrong');
+    console.error(err);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SONG SELECTOR UI
+══════════════════════════════════════════════════════ */
+function buildSongList() { /* removed — song is embedded */ }
+
+async function selectSong(idx) {
+  if (idx === currentSongIdx) return;
+  stopPractice(true);
+  fallingRects = [];
+  drawFalling(performance.now());
+
+  // Update active state
+  document.querySelectorAll('.song-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  currentSongIdx = idx;
+  const song = SONGS[idx];
+
+  showFeedback('⏳ Loading…', 'info');
+
+  try {
+    // Load MIDI
+    const midiRes = await fetch(song.midiUrl);
+    if (!midiRes.ok) throw new Error('MIDI fetch failed: ' + midiRes.status);
+    const buf = await midiRes.arrayBuffer();
+    await loadMidiBuffer(buf);
+
+    // Load SVG score if provided
+    if (song.svgUrl) {
+      try {
+        const svgRes = await fetch(song.svgUrl);
+        if (svgRes.ok) {
+          const svgText = await svgRes.text();
+          loadSvgScore(svgText);
+        }
+      } catch(e) {
+        console.warn('SVG load failed:', e);
+      }
+    }
+
+    showFeedback(`🎵 ${song.name} loaded!`, 'correct');
+  } catch(err) {
+    showFeedback('❌ Could not load song', 'wrong');
+    console.error(err);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   SVG SCORE
+══════════════════════════════════════════════════════ */
+const scoreZone   = document.getElementById('scoreZone');
+const svgWrapper  = document.getElementById('svgScrollWrapper');
+const placeholder = document.getElementById('scorePlaceholder');
+
+// Score is embedded — no click/drop loading
+
+function parseSvgBounds(svgText) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const ySet = {};
+  // Use polyline points for staff lines - most reliable
+  const polyRe = /points="([^"]+)"/g;
+  let m;
+  while ((m = polyRe.exec(svgText)) !== null) {
+    const nums = m[1].trim().split(/[\s,]+/).map(Number);
+    for (let i = 0; i + 1 < nums.length; i += 2) {
+      const x = nums[i], y = nums[i+1];
+      if (isFinite(x) && isFinite(y)) {
+        minX = Math.min(minX,x); maxX = Math.max(maxX,x);
+        minY = Math.min(minY,y); maxY = Math.max(maxY,y);
+        ySet[Math.round(y/5)*5] = true;
+      }
+    }
+  }
+  // For paths, only extract M and L command coordinates (not bezier control points)
+  const pathRe = /d="([^"]+)"/g;
+  while ((m = pathRe.exec(svgText)) !== null) {
+    const d = m[1];
+    const mlRe = /[ML]\s*([\d.]+)[,\s]+([\d.]+)/g;
+    let cm;
+    while ((cm = mlRe.exec(d)) !== null) {
+      const x = parseFloat(cm[1]), y = parseFloat(cm[2]);
+      // Only accept coords clearly within music content range
+      if (x > 200 && x < 4000 && y > 200 && y < 2000) {
+        minX = Math.min(minX,x); maxX = Math.max(maxX,x);
+        minY = Math.min(minY,y); maxY = Math.max(maxY,y);
+        ySet[Math.round(y/5)*5] = true;
+      }
+    }
+  }
+  return { minX, maxX, minY, maxY, yMids: Object.keys(ySet).map(Number).sort((a,b)=>a-b) };
+}
+
+function loadSvgScore(svgText) {
+  placeholder.style.display = 'none';
+  svgWrapper.style.display  = 'block';
+  svgWrapper.innerHTML = svgText;
+  const svgEl = svgWrapper.querySelector('svg');
+  if (!svgEl) return;
+
+  svgEl.removeAttribute('width');
+  svgEl.removeAttribute('height');
+  svgEl.querySelectorAll('title').forEach(t => t.remove());
+
+  // Crop viewBox using polyline points only (staff lines) — reliable, no rendering needed
+  const { minX, maxX, minY, maxY, yMids } = parseSvgBounds(svgText);
+  const [vbX, vbY, vbW, vbH] = (svgEl.getAttribute('viewBox') || '0 0 2977.23 2098.77').split(/\s+/).map(Number);
+
+  let cropX = vbX, cropY = vbY, cropW = vbW, cropH = vbH;
+  if (isFinite(minX) && maxX > minX && maxY > minY) {
+    const pad = 60;
+    const padTop = 120;
+    cropX = Math.max(vbX, minX - pad);
+    cropY = Math.max(vbY, minY - padTop);
+    cropW = Math.min(vbW, maxX + pad) - cropX;
+    // Find biggest Y gap to isolate first staff row only
+    let bigGap = 0, gapMid = (minY + maxY) / 2;
+    for (let i = 1; i < yMids.length; i++) {
+      const g = yMids[i] - yMids[i-1];
+      if (g > bigGap) { bigGap = g; gapMid = (yMids[i-1] + yMids[i]) / 2; }
+    }
+    const firstRowMaxY = bigGap > 80 ? gapMid : maxY;
+    cropH = Math.min(vbH, firstRowMaxY + pad) - cropY;
+    // Store full bounds for scroll pan
+    svgEl._fullVbY = cropY;
+    svgEl._fullVbH = Math.min(vbH, maxY + pad) - cropY;
+  }
+
+  svgEl.setAttribute('viewBox', `${cropX} ${cropY} ${cropW} ${cropH}`);
+  svgEl._vbW = cropW;
+  svgEl._vbH = cropH;
+  svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // KEY: set explicit height in px so height:auto works correctly
+  // Natural height = containerWidth * cropH / cropW
+  const containerW = scoreZone.clientWidth || 860;
+  const naturalH = Math.round(containerW * cropH / cropW);
+  svgEl.style.width  = '100%';
+  svgEl.style.height = naturalH + 'px';
+  svgEl.style.display = 'block';
+
+  console.log('[SVG] viewBox:', cropX.toFixed(0), cropY.toFixed(0), cropW.toFixed(0), cropH.toFixed(0));
+  console.log('[SVG] naturalH:', naturalH, 'containerW:', containerW);
+
+  initSvgScore(svgEl);
+}
+
+// ============================================================
+// SVG ↔ MIDI SYNC
+//
+// The SVG has fewer written measures than the MIDI (e.g. 2 SVG measures
+// that repeat to make 4 MIDI measures). Each MIDI note maps to a SVG
+// notehead by:
+//   1. svgMeasure = ((midiMeasure-1) % svgMeasureCount) + 1
+//   2. Within that SVG measure+clef bucket, find the notehead whose
+//      inferred pitch (from ty position) matches the MIDI note pitch.
+//
+// Pitch inference from ty is reliable: each diatonic step = 12.4px.
+// A minim (half note) has ONE notehead in the SVG even if MIDI plays
+// it twice — both MIDI events correctly map to the same SVG notehead.
+// ============================================================
+
+// ── Pitch inference from ty ───────────────────────────────────────────────
+// Treble: bottom staff line = E4 (midi 64) at ty≈698, each step down = +12.4px
+// Bass:   bottom staff line = G2 (midi 43) at ty≈1008, each step down = +12.4px
+const _TREBLE_BOTTOM_TY   = 698.031;
+const _BASS_BOTTOM_TY     = 1008.07;
+const _STEP_PX            = 12.401;
+const _TREBLE_DIATONIC_UP   = [64,65,67,69,71,72,74,76,77,79,81,83,84]; // E4 F4 G4 A4 B4 C5…
+const _TREBLE_DIATONIC_DOWN = [64,62,60,59,57,55,53,52,50,48,47,45,43]; // E4 D4 C4 B3…
+const _BASS_DIATONIC_UP     = [43,45,47,48,50,52,53,55,57,59,60,62,64]; // G2 A2 B2 C3…
+const _BASS_DIATONIC_DOWN   = [43,41,40,38,36,35,33,31,29,28,26,24];    // G2 F2 E2 D2…
+
+function _pitchFromTy(ty, clef) {
+  // Dynamically find which staff row this ty belongs to.
+  // Each row's .maxY = bottom staff line Y = reference for E4 (treble clef).
+  let rowIdx = 0;
+  for (let i = 0; i < _rowThresholds.length; i++) {
+    if (ty > _rowThresholds[i]) rowIdx = i + 1;
+  }
+  const row = _staffRows[rowIdx];
+  const bottomTy = row ? row.maxY : _TREBLE_BOTTOM_TY; // fallback to lesson1 constant
+  const step = Math.round((ty - bottomTy) / _STEP_PX);
+  if (step <= 0) return _TREBLE_DIATONIC_UP[Math.min(-step, _TREBLE_DIATONIC_UP.length - 1)];
+  return _TREBLE_DIATONIC_DOWN[Math.min(step, _TREBLE_DIATONIC_DOWN.length - 1)];
+}
+
+// ── Runtime state ─────────────────────────────────────────────────────────
+// _svgBuckets[svgMeasure][clef] = array of { el, tx, ty, pitch, origFill }
+// sorted left→right by tx, one entry per visible notehead.
+let _svgBuckets      = {};
+let _svgMeasureCount = 0;
+let _svgHighlightEls = [];
+
+function initSvgScore(svgEl) {
+  _svgBuckets      = {};
+  _svgMeasureCount = 0;
+  _svgHighlightEls = [];
+  svgNoteEls       = []; // legacy compat
+
+  // Inject glow filter
+  let defs = svgEl.querySelector('defs');
+  if (!defs) { defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs'); svgEl.prepend(defs); }
+  if (!defs.querySelector('#kidsGlow')) {
+    defs.innerHTML += `<filter id="kidsGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#FFC107" flood-opacity="1" result="col"/>
+      <feComposite in="col" in2="blur" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>`;
+  }
+
+  // ── Step 1: Detect staff rows from StaffLines polylines ─────────────────
+  // Groups of 5 staff lines close in Y = one staff row. Bottom line = E4 reference.
+  const _allStaffYs = [];
+  svgEl.querySelectorAll('polyline.StaffLines').forEach(sl => {
+    const pts = (sl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length >= 2) _allStaffYs.push(pts[1]);
+  });
+  _allStaffYs.sort((a, b) => a - b);
+  _staffRows = [];
+  let _curRow = null;
+  for (const y of _allStaffYs) {
+    if (!_curRow || y - _curRow.maxY > 100) {
+      _curRow = { minY: y, maxY: y };
+      _staffRows.push(_curRow);
+    } else {
+      _curRow.maxY = y;
+    }
+  }
+  _rowThresholds = [];
+  for (let i = 0; i < _staffRows.length - 1; i++) {
+    _rowThresholds.push((_staffRows[i].maxY + _staffRows[i + 1].minY) / 2);
+  }
+  console.log('[SVG] Detected', _staffRows.length, 'staff rows, thresholds:', _rowThresholds.map(t => t.toFixed(0)));
+
+  // ── Step 2: Parse barlines per staff row ──────────────────────────────────
+  function internalDividers(xs) {
+    const sorted = [...new Set(xs)].sort((a, b) => a - b);
+    if (sorted.length === 0) return [];
+    while (sorted.length >= 2 && sorted[sorted.length - 1] - sorted[sorted.length - 2] < 40) sorted.pop();
+    sorted.pop();
+    return sorted;
+  }
+  const _rowBarlineXs = _staffRows.map(() => []);
+  svgEl.querySelectorAll('polyline.BarLine').forEach(bl => {
+    const pts = (bl.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length < 2) return;
+    const x = pts[0], y = pts[1];
+    let rIdx = 0;
+    for (let i = 0; i < _rowThresholds.length; i++) { if (y > _rowThresholds[i]) rIdx = i + 1; }
+    _rowBarlineXs[rIdx].push(x);
+  });
+  const _rowDividers = _rowBarlineXs.map(xs => internalDividers(xs));
+  const _rowMeasureOffsets = [0];
+  for (let i = 0; i < _staffRows.length - 1; i++) {
+    _rowMeasureOffsets.push(_rowMeasureOffsets[i] + _rowDividers[i].length + 1);
+  }
+  console.log('[SVG] Row dividers:', _rowDividers, '| measure offsets:', _rowMeasureOffsets);
+
+  // ── Step 3: Collect path.Note noteheads across all staff rows ─────────────
+  // Noteheads can extend up to 200px above/below their staff (ledger lines etc.)
+  const NOTE_TY_MARGIN = 200;
+  svgEl.querySelectorAll('path.Note').forEach(el => {
+    const tf = el.getAttribute('transform') || '';
+    const mm = tf.match(/matrix\(\s*([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)\s*\)/);
+    if (!mm) return;
+    const tx = parseFloat(mm[5]);
+    const ty = parseFloat(mm[6]);
+
+    // Which row does this ty belong to?
+    let rIdx = 0;
+    for (let i = 0; i < _rowThresholds.length; i++) { if (ty > _rowThresholds[i]) rIdx = i + 1; }
+    const row = _staffRows[rIdx];
+    // Reject elements far from any staff (clef symbols, ornaments, etc.)
+    if (!row || ty < row.minY - NOTE_TY_MARGIN || ty > row.maxY + NOTE_TY_MARGIN) return;
+
+    // Local measure within this row, then global measure number
+    let localMeasure = 1;
+    for (const bx of _rowDividers[rIdx]) { if (tx > bx) localMeasure++; }
+    const svgMeasure = _rowMeasureOffsets[rIdx] + localMeasure;
+
+    const pitch = _pitchFromTy(ty, 'treble');
+    if (!_svgBuckets[svgMeasure]) _svgBuckets[svgMeasure] = { treble: [], bass: [] };
+    _svgBuckets[svgMeasure].treble.push({ el, tx, ty, pitch, origFill: el.getAttribute('fill') || 'black' });
+  });
+
+  // Sort each bucket left→right
+  for (const m of Object.keys(_svgBuckets)) {
+    for (const c of ['treble', 'bass']) {
+      _svgBuckets[m][c].sort((a, b) => a.tx - b.tx);
+    }
+  }
+
+  _svgMeasureCount = Math.max(...Object.keys(_svgBuckets).map(Number), 0);
+
+  // ── Parse stem tip Y positions for each notehead (by nearest X match) ────
+  const stemTips = [];
+  svgEl.querySelectorAll('polyline.Stem').forEach(st => {
+    const pts = (st.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number);
+    if (pts.length < 4) return;
+    const x1 = pts[0], y1 = pts[1], y2 = pts[3];
+    stemTips.push({ x: x1, tipY: Math.min(y1, y2), baseY: Math.max(y1, y2) });
+  });
+  for (const m of Object.keys(_svgBuckets)) {
+    for (const entry of _svgBuckets[m].treble) {
+      // Find which row this notehead is in, so we only consider stems in the same row
+      let rIdx = 0;
+      for (let i = 0; i < _rowThresholds.length; i++) { if (entry.ty > _rowThresholds[i]) rIdx = i + 1; }
+      const row = _staffRows[rIdx];
+      let best = null, bestDist = Infinity;
+      for (const s of stemTips) {
+        // Stem must be in the same staff row (base Y within row bounds ±200px)
+        if (row && (s.baseY < row.minY - 200 || s.baseY > row.maxY + 200)) continue;
+        const dist = Math.abs(s.x - (entry.tx + 16));
+        if (dist < bestDist) { bestDist = dist; best = s; }
+      }
+      entry.stemTipY = (best && bestDist < 40) ? best.tipY : null;
+    }
+  }
+
+  // Store viewBox
+  const vb = (svgEl.getAttribute('viewBox') || '0 0 2977 2099').split(/\s+/).map(Number);
+  svgEl._vbW = vb[2] || 2977;
+  svgEl._vbH = vb[3] || 2099;
+
+  console.log(`[SVG] ${Object.values(_svgBuckets).reduce((s,b)=>s+b.treble.length+b.bass.length,0)} noteheads across ${_svgMeasureCount} SVG measure(s)`);
+  for (const m of Object.keys(_svgBuckets).sort((a,b)=>+a-+b)) {
+    for (const c of ['treble','bass']) {
+      const b = _svgBuckets[m][c];
+      if (b.length) console.log(`  SVG m${m} ${c}:`, b.map(n=>`${['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'][n.pitch%12]}(tx${n.tx.toFixed(0)})`).join(' '));
+    }
+  }
+}
+
+// ── Core lookup: MIDI note → SVG notehead ────────────────────────────────
+// Match by pitch inside the correct SVG bucket.
+// MIDI measures wrap modulo _svgMeasureCount so that e.g. MIDI m3 → SVG m1.
+//
+// DUPLICATE PITCH: when the same pitch appears multiple times in one SVG measure
+// (e.g. two D4 crotchets), find() always returns the first. Instead we track
+// which occurrence of this pitch this note is *within the SVG measure* and
+// return the Nth matching notehead left→right.
+function _svgNoteheadFor(noteObj) {
+  if (!_svgMeasureCount) return null;
+  const midiMeasure = secondsPerMeasure > 0
+    ? Math.floor(noteObj.time / secondsPerMeasure) + 1 : 1;
+  const svgMeasure  = ((midiMeasure - 1) % _svgMeasureCount) + 1;
+
+  // Which occurrence of this pitch is this note within its MIDI measure?
+  // (MIDI measure boundaries, not SVG, since multiple MIDI measures may map to same SVG measure)
+  const mStart = (midiMeasure - 1) * secondsPerMeasure;
+  const mEnd   =  midiMeasure      * secondsPerMeasure;
+  const sameInMidiMeasure = practiceNotes
+    .filter(n => n.time >= mStart && n.time < mEnd && n.midi === noteObj.midi)
+    .sort((a, b) => a.time - b.time);
+  const occurrenceIdx = Math.max(0, sameInMidiMeasure.findIndex(n => Math.abs(n.time - noteObj.time) < 0.001));
+
+  const bucket = _svgBuckets[svgMeasure]?.treble || [];
+  const pitchMatches = bucket.filter(n => n.pitch === noteObj.midi);
+  if (pitchMatches.length > 0) {
+    return pitchMatches[Math.min(occurrenceIdx, pitchMatches.length - 1)];
+  }
+
+  // Fallback: closest pitch in the treble bucket
+  let best = null, bestDist = Infinity;
+  for (const n of bucket) {
+    const d = Math.abs(n.pitch - noteObj.midi);
+    if (d < bestDist) { bestDist = d; best = n; }
+  }
+  return best;
+}
+
+// ── Debug helpers ─────────────────────────────────────────────────────────
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function _noteName(midi) { return NOTE_NAMES[midi % 12] + Math.floor(midi/12 - 1); }
+
+function dbgLog(msg, color) {
+  const log = document.getElementById('svgDebugLog');
+  if (!log) return;
+  const line = document.createElement('div');
+  line.style.color = color || '#58a6ff';
+  line.textContent = msg;
+  log.prepend(line);
+  while (log.children.length > 120) log.removeChild(log.lastChild);
+}
+
+function svgDebugDump() {
+  const log = document.getElementById('svgDebugLog');
+  if (!log) return;
+  log.innerHTML = '';
+  const totalNotes = Object.values(_svgBuckets).reduce((s,b)=>s+b.treble.length+b.bass.length,0);
+  dbgLog(`── SVG: ${totalNotes} noteheads, ${_svgMeasureCount} SVG measure(s) ──`, '#e6edf3');
+
+  const svgEl = document.getElementById('svgScrollWrapper')?.querySelector('svg');
+  if (svgEl) {
+    dbgLog(`   viewBox: ${svgEl.getAttribute('viewBox')}`, '#8b949e');
+    dbgLog(`   rendered size: ${svgEl.clientWidth}×${svgEl.clientHeight}px`, '#8b949e');
+  }
+
+  // Dump SVG buckets
+  for (const mStr of Object.keys(_svgBuckets).sort((a,b)=>+a-+b)) {
+    for (const clef of ['treble','bass']) {
+      const bucket = _svgBuckets[mStr][clef];
+      if (!bucket.length) continue;
+      dbgLog(`\n── SVG m${mStr} ${clef} (${bucket.length} notes) ──`, '#d2a679');
+      bucket.forEach((n, rank) => {
+        dbgLog(`   rank${rank} | tx=${n.tx.toFixed(1).padStart(7)} | pitch=${n.pitch} (${_noteName(n.pitch)})`, '#58a6ff');
+      });
+    }
+  }
+
+  if (!allNotes.length) { dbgLog('\n(no MIDI loaded)', '#f85149'); return; }
+
+  dbgLog(`\n── MIDI: ${allNotes.length} notes, ${secondsPerMeasure.toFixed(3)}s/measure ──`, '#e6edf3');
+  const maxMidiM = Math.max(...allNotes.map(n => Math.floor(n.time/secondsPerMeasure)+1));
+  for (let m = 1; m <= maxMidiM; m++) {
+    const mn = allNotes.filter(n => Math.floor(n.time/secondsPerMeasure)+1 === m);
+    const svgM = ((m-1) % _svgMeasureCount) + 1;
+    dbgLog(`\n   MIDI m${m} → SVG m${svgM} (${mn.length} notes):`, '#d2a679');
+    mn.sort((a,b)=>a.time-b.time).forEach(n => {
+      const nh = _svgNoteheadFor(n);
+      const match = nh ? `→ ${_noteName(nh.pitch)} tx=${nh.tx.toFixed(0)}` : '→ ❌ NO MATCH';
+      dbgLog(`     t=${n.time.toFixed(3)}s ${_noteName(n.midi).padEnd(4)} ${n.track} ${match}`,
+             nh ? '#3fb950' : '#f85149');
+    });
+  }
+}
+
+function highlightSvgNote(noteObj) {
+  clearSvgHighlight();
+  if (!_svgMeasureCount) return;
+
+  // Collect all simultaneous notes at this playTime
+  const simultaneousNotes = practiceNotes.filter(n =>
+    Math.abs(n.playTime - noteObj.playTime) < 0.015
+  );
+
+  const toHighlight = new Set();
+  for (const n of (simultaneousNotes.length ? simultaneousNotes : [noteObj])) {
+    const nh = _svgNoteheadFor(n);
+    if (nh) toHighlight.add(nh);
+  }
+
+  // Debug log
+  const panel = document.getElementById('svgDebugPanel');
+  if (panel && panel.style.display !== 'none') {
+    const midiM = secondsPerMeasure > 0 ? Math.floor(noteObj.time/secondsPerMeasure)+1 : 1;
+    const svgM  = ((midiM-1) % _svgMeasureCount) + 1;
+    const matched = [...toHighlight].map(nh => `${_noteName(nh.pitch)} tx=${nh.tx.toFixed(0)}`);
+    dbgLog(
+      `▶ t=${noteObj.time.toFixed(3)}s ${_noteName(noteObj.midi)} | midiM=${midiM}→svgM=${svgM} | ${toHighlight.size ? matched.join(', ') : '❌ no match'}`,
+      toHighlight.size ? '#3fb950' : '#f85149'
+    );
+  }
+
+  // Highlight colours cycle through the rainbow palette
+  const hlColours = ['#FF6B9D','#FFD93D','#6BCB77','#4D96FF','#FF9A3C','#C77DFF','#00C9A7'];
+  let colIdx = 0;
+
+  toHighlight.forEach(nh => {
+    // Keep the notehead its original colour (no fill change)
+    const svgEl = nh.el.closest('svg');
+    if (!svgEl) { _svgHighlightEls.push(nh); return; }
+
+    const colour = hlColours[colIdx % hlColours.length];
+    colIdx++;
+
+    // NOTE_W / NOTE_H in SVG viewBox units — the note path spans roughly 32×27 px
+    // Rect extends from stem tip (top) down to bottom of notehead.
+    const noteW = 32 * 0.992126;  // same scale factor as the transform matrix
+    const noteH = 27 * 0.992126;
+    const padX  = 18, padBottom = 16;
+
+    // Top of rect: stem tip if known, else fallback to ~90px above notehead centre
+    const noteheadCentreY = nh.ty + noteH / 2 - 4;
+    const stemTopY  = (nh.stemTipY != null) ? nh.stemTipY - 6 : noteheadCentreY - 90;
+    const rectTop   = Math.min(stemTopY, noteheadCentreY - 10); // guard: never below notehead
+    const rectBot   = noteheadCentreY + noteH / 2 + padBottom;
+    const rectH     = Math.max(30, rectBot - rectTop); // always positive
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x',      (nh.tx - padX).toString());
+    rect.setAttribute('y',      rectTop.toString());
+    rect.setAttribute('width',  (noteW + padX * 2).toString());
+    rect.setAttribute('height', rectH.toString());
+    rect.setAttribute('rx',     '20');
+    rect.setAttribute('ry',     '20');
+    rect.setAttribute('fill',   colour);
+    rect.setAttribute('opacity','0.45');
+    rect.setAttribute('pointer-events', 'none');
+    rect.classList.add('svg-note-highlight');
+
+    // Insert the rect BEFORE the notehead so it appears behind the note
+    nh.el.parentNode.insertBefore(rect, nh.el);
+    nh._hlRect = rect;
+    _svgHighlightEls.push(nh);
+  });
+
+  if (_svgHighlightEls.length) _scrollToSvgNote(_svgHighlightEls[0]);
+}
+
+let svgScrollEnabled = false; // set to true to re-enable SVG auto-scroll
+
+function _scrollToSvgNote(item) {
+  if (!svgScrollEnabled) return;
+  if (!item || item.ty == null) return;
+  const svgEl = document.getElementById('svgScrollWrapper')?.querySelector('svg');
+  if (!svgEl || !_staffRows.length) return;
+  // Find which row this note lives in
+  let rIdx = 0;
+  for (let i = 0; i < _rowThresholds.length; i++) { if (item.ty > _rowThresholds[i]) rIdx = i + 1; }
+  const row = _staffRows[rIdx];
+  if (!row) return;
+  // Shift the viewBox Y to reveal this row, keeping W and H constant
+  const vbParts = (svgEl.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+  if (vbParts.length < 4) return;
+  const [cropX, , cropW, cropH] = vbParts;
+  const rowPad = 80;
+  const newCropY = Math.max(0, row.minY - rowPad);
+  svgEl.setAttribute('viewBox', `${cropX} ${newCropY} ${cropW} ${cropH}`);
+}
+
+function clearSvgHighlight() {
+  _svgHighlightEls.forEach(nh => {
+    // Remove the highlight rectangle if one was added
+    if (nh._hlRect && nh._hlRect.parentNode) {
+      nh._hlRect.parentNode.removeChild(nh._hlRect);
+      delete nh._hlRect;
+    }
+    // Restore original note appearance (no filter was set in new approach, but keep safe)
+    nh.el.removeAttribute('filter');
+    nh.el.setAttribute('fill', nh.origFill || 'black');
+  });
+  _svgHighlightEls = [];
+  svgHighlighted   = []; // legacy compat
+}
+
+/* ══════════════════════════════════════════════════════
+   PRACTICE MODE
+══════════════════════════════════════════════════════ */
+// ── Exercise flow ────────────────────────────────────────────────────────
+const EXERCISES = [
+  { label: 'Exercise 1', measures: [1,  4], doneMsg: '\u{1F44F} Good! Ready for the next one?', nextDelay: 2400 },
+  { label: 'Exercise 2', measures: [5,  8], doneMsg: '\u{1F31F} Wow! Ready for the last one?',  nextDelay: 2400 },
+  { label: 'Exercise 3', measures: [9, 12], doneMsg: '\u{1F389} Amazing! You did it all!',       nextDelay: null },
+];
+let currentExerciseIdx = 0;
+
+function getNoteMeasure(n) {
+  return secondsPerMeasure > 0 ? Math.floor(n.time / secondsPerMeasure) + 1 : 1;
+}
+
+function buildPracticeNotes() {
+  const ex = EXERCISES[currentExerciseIdx];
+  const [mStart, mEnd] = ex.measures;
+  const slice = allNotes.filter(n => {
+    const m = getNoteMeasure(n);
+    return m >= mStart && m <= mEnd;
+  });
+  const offset = slice.length ? slice[0].time : 0;
+  practiceNotes = slice.map(n => ({ ...n, playTime: n.time - offset }));
+  practiceNotes.sort((a,b) => a.playTime - b.playTime);
+}
+
+function buildProgressDots() {
+  const pd = document.getElementById('progressDots');
+  pd.innerHTML = '';
+  practiceNotes.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'pdot'; d.id = 'pdot' + i;
+    pd.appendChild(d);
+  });
+}
+
+function updateProgressDot(idx, state) {
+  document.querySelectorAll('.pdot').forEach(p => p.classList.remove('active','done'));
+  for (let i = 0; i < idx; i++) { document.getElementById('pdot' + i)?.classList.add('done'); }
+  document.getElementById('pdot' + idx)?.classList.add(state === 'active' ? 'active' : 'done');
+}
+
+function startPractice() {
+  if (!allNotes.length) return;
+  currentExerciseIdx = 0;
+  startExercise();
+}
+
+function startExercise() {
+  stopPractice(false);
+  buildPracticeNotes();
+  buildProgressDots();
+  if (!practiceNotes.length) { showFeedback('No notes in that range!', 'wrong'); return; }
+  const ex = EXERCISES[currentExerciseIdx];
+  showFeedback('\u{1F3B5} ' + ex.label + ' — Listen first…', 'info');
+  trainingActive = true;
+  trainingIdx = 0;
+  waitingForInput = false;
+  fallingRects = [];
+  expectedMidis.clear();
+  previewPhase = true;
+  startPreview();
+}
+
+function startPreview() {
+  ensureSynth();
+  const prerollMs = (fallingCanvas.height / (FALL_SPEED * speedMult)) * 1000;
+  const nowMs = performance.now();
+
+  // Group notes by playTime so we can highlight all simultaneous notes together
+  // and know when each group ends (= start of next group, or note duration).
+  const groups = [];
+  practiceNotes.forEach(n => {
+    const last = groups[groups.length - 1];
+    if (last && Math.abs(n.playTime - last.playTime) < 0.015) {
+      last.notes.push(n);
+      last.endTime = Math.max(last.endTime, n.playTime + n.duration);
+    } else {
+      groups.push({ playTime: n.playTime, notes: [n], endTime: n.playTime + n.duration });
+    }
+  });
+
+  practiceNotes.forEach(n => {
+    const visualSpawnMs = nowMs + (n.playTime * 1000 / speedMult);
+    const audioDelayMs  = prerollMs + (n.playTime * 1000 / speedMult);
+    spawnFalling(n.midi, n.duration, visualSpawnMs, n.track);
+    const t = setTimeout(() => {
+      if (!previewPhase) return;
+      synth.triggerAttackRelease(getNoteName(n.midi), n.duration / speedMult);
+    }, audioDelayMs);
+    practiceTimeouts.push(t);
+  });
+
+  // Schedule SVG + keyboard highlights driven by the animation loop (frame-accurate)
+  // Instead of setTimeout, we attach highlight metadata to each group and let
+  // drawFalling trigger them the moment the note's bottom pixel crosses the hit-line.
+  previewGroups = groups.map((grp, gi) => {
+    const nextGrpTime = groups[gi + 1]?.playTime ?? grp.endTime;
+    const litDurMs = Math.min(
+      (grp.endTime - grp.playTime) * 1000 / speedMult,
+      (nextGrpTime  - grp.playTime) * 1000 / speedMult - 40
+    );
+    return {
+      notes: grp.notes,
+      // wall-clock ms when this note's bottom reaches the hit-line
+      landMs: nowMs + (grp.playTime * 1000 / speedMult) + prerollMs,
+      litUntilMs: nowMs + (grp.playTime * 1000 / speedMult) + prerollMs + Math.max(litDurMs, 80),
+      fired: false,
+      cleared: false,
+    };
+  });
+
+  const lastNote = practiceNotes[practiceNotes.length - 1];
+  const endDelay = prerollMs + (lastNote.playTime + lastNote.duration) * 1000 / speedMult + 600;
+  practiceTimeouts.push(setTimeout(() => {
+    if (!previewPhase) return;
+    previewPhase = false;
+    showFeedback('🎵 Now you try ' + EXERCISES[currentExerciseIdx].label + '!', 'info');
+    spawnNextNote();
+  }, endDelay));
+  runAnimLoop();
+  showFeedback('👂 Listen to ' + EXERCISES[currentExerciseIdx].label + '…', 'info');
+}
+
+function spawnNextNote() {
+  if (!trainingActive) return;
+  if (trainingIdx >= practiceNotes.length) { finishPractice(); return; }
+  waitingForHold = false;
+  holdPressTime  = {};
+  clearTimeout(holdCheckTimer);
+  stopHoldAnimation();
+  const noteObj = practiceNotes[trainingIdx];
+  expectedMidis.clear();
+  for (let i = trainingIdx; i < practiceNotes.length; i++) {
+    if (Math.abs(practiceNotes[i].playTime - noteObj.playTime) < 0.015) expectedMidis.add(practiceNotes[i].midi);
+    else break;
+  }
+  const now = performance.now();
+  expectedMidis.forEach(midi => {
+    const dur = practiceNotes.find(n => n.midi === midi && Math.abs(n.playTime - noteObj.playTime) < 0.015)?.duration || 0.3;
+    spawnFalling(midi, dur, now, practiceNotes.find(n => n.midi === midi && Math.abs(n.playTime - noteObj.playTime) < 0.015)?.track || TREBLE);
+  });
+  waitingForInput = true;
+  updateProgressDot(trainingIdx, 'active');
+  const names = [...expectedMidis].map(getNoteName).join(' + ');
+  const badge = document.getElementById('noteBadge');
+  badge.textContent = '🎵 ' + names;
+  badge.classList.add('show');
+  highlightSvgNote(noteObj);
+  drawKeyboard(expectedMidis, pressedMidis);
+}
+
+/* ══════════════════════════════════════════════════════
+   HOLD DETECTION
+   Each note type requires a minimum hold time:
+     crotchet  (~1 beat)  → hold 1 beat
+     minim     (~2 beats) → hold 2 beats
+     whole     (~4 beats) → hold 4 beats
+   We use 85% of the note's actual duration (at current
+   speed) as the required hold so it feels fair.
+══════════════════════════════════════════════════════ */
+const HOLD_FRACTION   = 0.82;   // fraction of note duration player must hold
+const HOLD_MIN_MS     = 120;    // absolute floor (ms) — so even slow BPMs feel responsive
+
+// State for hold tracking
+let holdPressTime    = {};   // midi → timestamp when key was pressed
+let holdRequired     = 0;    // ms the player must hold the current note(s)
+let holdCheckTimer   = null; // timeout that fires when hold is complete
+let holdAnimFrame    = null; // rAF for drawing the hold ring
+
+// Draw hold-progress ring on each expected key
+function drawHoldRings(progress) {
+  // progress: 0.0 → 1.0
+  // We overdraw on top of the keyboard canvas
+  const W = kbdCanvas.width, H = kbdCanvas.height;
+  const w = W / TOTAL_WHITE;
+
+  expectedMidis.forEach(midi => {
+    const x = noteToX(midi);
+    const bw  = noteRectWidth(midi);
+    const isB = isBlack(midi);
+    const cx  = x + bw / 2;
+    const cy  = isB ? H * 0.58 : H * 0.82;
+    const r   = isB ? Math.min(bw * 0.38, 10) : Math.min(w * 0.30, 16);
+
+    // Background ring
+    kctx.beginPath();
+    kctx.arc(cx, cy, r, 0, Math.PI * 2);
+    kctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    kctx.lineWidth   = Math.max(2, r * 0.38);
+    kctx.stroke();
+
+    // Progress arc (clockwise from top)
+    const endAngle = -Math.PI / 2 + progress * Math.PI * 2;
+    kctx.beginPath();
+    kctx.arc(cx, cy, r, -Math.PI / 2, endAngle);
+    const col = progress >= 1 ? '#22C55E' : '#FFD93D';
+    kctx.strokeStyle = col;
+    kctx.lineWidth   = Math.max(2, r * 0.38);
+    kctx.stroke();
+  });
+}
+
+function startHoldAnimation() {
+  const startTime = performance.now();
+  function frame(now) {
+    if (!waitingForHold) return;
+    const progress = Math.min(1, (now - startTime) / holdRequired);
+    drawKeyboard(expectedMidis, pressedMidis);
+    drawHoldRings(progress);
+    holdAnimFrame = requestAnimationFrame(frame);
+  }
+  holdAnimFrame = requestAnimationFrame(frame);
+}
+
+function stopHoldAnimation() {
+  if (holdAnimFrame) { cancelAnimationFrame(holdAnimFrame); holdAnimFrame = null; }
+}
+
+let waitingForHold = false;   // true while player must keep holding
+
+function advanceAfterHold() {
+  // Called when the player has held long enough
+  if (!waitingForHold) return;
+  waitingForHold = false;
+  waitingForInput = false;
+  stopHoldAnimation();
+  showFeedback('⭐ Brilliant!', 'correct');
+  burstStars();
+  fallingRects = fallingRects.filter(r => !expectedMidis.has(r.midi));
+  clearSvgHighlight();
+  // Release synth notes
+  pressedMidis.forEach(m => { if (synth) synth.triggerRelease(getNoteName(m)); });
+  let adv = trainingIdx;
+  while (adv < practiceNotes.length &&
+         Math.abs(practiceNotes[adv].playTime - practiceNotes[trainingIdx].playTime) < 0.015) adv++;
+  trainingIdx = adv;
+  updateProgressDot(trainingIdx - 1, 'done');
+  setTimeout(() => { pressedMidis.clear(); holdPressTime = {}; drawKeyboard(); spawnNextNote(); }, 400);
+}
+
+/* ══════════════════════════════════════════════════════
+   TEACHER HINT  — explains wrong notes kindly
+══════════════════════════════════════════════════════ */
+function getTeacherHint(playedMidi, expectedSet) {
+  const played   = getNoteName(playedMidi);
+  const expected = [...expectedSet].map(getNoteName);
+  const targetMidi = [...expectedSet][0];
+  const diff = playedMidi - targetMidi;
+
+  // Direction cue
+  const directionHint = diff > 0
+    ? `Go lower → try ${expected.join(' + ')}`
+    : `Go higher → try ${expected.join(' + ')}`;
+
+  // How far off?
+  const semitones = Math.abs(diff);
+
+  // Is it the right letter name but wrong octave?
+  const playedLetter   = played.replace(/\d/g, '');
+  const expectedLetter = expected[0].replace(/\d/g, '');
+  if (playedLetter === expectedLetter && semitones !== 0) {
+    const oct = diff > 0 ? 'lower' : 'higher';
+    return `Almost! That's ${played}... you need the ${oct} ${expectedLetter}. ${expected.join(' + ')}`;
+  }
+
+  // Very close (1–2 semitones)
+  if (semitones === 1) {
+    return `One key ${diff > 0 ? 'down' : 'up'}! You played ${played}, need ${expected.join(' + ')}`;
+  }
+  if (semitones === 2) {
+    return `Close! Shift ${diff > 0 ? 'left' : 'right'} 2 keys → ${expected.join(' + ')}`;
+  }
+
+  // Black vs white key confusion
+  if (isBlack(playedMidi) && !isBlack(targetMidi)) {
+    return `That's a sharp/flat key! Find the white key ${expected.join(' + ')} 🎹`;
+  }
+  if (!isBlack(playedMidi) && isBlack(targetMidi)) {
+    return `Need the black key ${expected.join(' + ')}! Look for the dark key 🖤`;
+  }
+
+  // Multiple notes expected (chord)
+  if (expectedSet.size > 1) {
+    const missing = [...expectedSet].filter(m => !pressedMidis.has(m)).map(getNoteName);
+    return `You need both ${expected.join(' and ')}! Still need: ${missing.join(', ')}`;
+  }
+
+  // Generic fallback with direction
+  return `That was ${played}. ${directionHint}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   NOTE INPUT  (mouse / touch on keyboard canvas only)
+══════════════════════════════════════════════════════ */
+function processNoteOn(midi) {
+  if (freeMode) {
+    pressedMidis.add(midi);
+    ensureSynth();
+    synth.triggerAttack(getNoteName(midi));
+    drawKeyboard(new Set(), pressedMidis);
+    return;
+  }
+  if (!trainingActive || (!waitingForInput && !waitingForHold)) return;
+
+  if (!expectedMidis.has(midi)) {
+    // Wrong note — if we were mid-hold, reset
+    if (waitingForHold) {
+      waitingForHold = false;
+      waitingForInput = true;
+      stopHoldAnimation();
+      clearTimeout(holdCheckTimer);
+      pressedMidis.forEach(m => { if (synth) synth.triggerRelease(getNoteName(m)); });
+      pressedMidis.clear();
+      holdPressTime = {};
+    }
+    showFeedback(getTeacherHint(midi, expectedMidis), 'wrong');
+    pressedMidis.add(midi);
+    drawKeyboard(expectedMidis, pressedMidis);
+    ensureSynth();
+    synth.triggerAttackRelease(getNoteName(midi), 0.2);
+    setTimeout(() => { pressedMidis.delete(midi); drawKeyboard(expectedMidis, pressedMidis); }, 300);
+    return;
+  }
+
+  if (!waitingForInput) return; // already in hold phase, ignore re-press of same key
+
+  pressedMidis.add(midi);
+  holdPressTime[midi] = performance.now();
+  ensureSynth();
+  synth.triggerAttack(getNoteName(midi));
+  drawKeyboard(expectedMidis, pressedMidis);
+
+  // Check if all expected keys are now down
+  if ([...expectedMidis].every(m => pressedMidis.has(m))) {
+    waitingForInput = false;
+    waitingForHold  = true;
+
+    // Calculate required hold duration from the note's actual MIDI duration
+    const noteObj = practiceNotes[trainingIdx];
+    const noteDurMs = (noteObj.duration / speedMult) * 1000;
+    holdRequired = Math.max(HOLD_MIN_MS, noteDurMs * HOLD_FRACTION);
+
+    // Show hold hint based on note type
+    const beats = noteObj.duration / secondsPerBeat;
+    let hint = '🎵 Hold…';
+    if (beats >= 3.5)      hint = '𝅝 Hold... whole note!';
+    else if (beats >= 1.5) hint = '𝅗𝅥 Hold... minim!';
+    else                   hint = '♩ Hold... crotchet!';
+    showFeedback(hint, 'info');
+
+    startHoldAnimation();
+    holdCheckTimer = setTimeout(advanceAfterHold, holdRequired);
+  }
+}
+
+function processNoteOff(midi) {
+  // In hold mode, releasing early = fail
+  if (waitingForHold && expectedMidis.has(midi)) {
+    const elapsed = performance.now() - (holdPressTime[midi] || performance.now());
+    if (elapsed < holdRequired * 0.92) {
+      // Released too early — reset back to waiting for press
+      waitingForHold = false;
+      waitingForInput = true;
+      stopHoldAnimation();
+      clearTimeout(holdCheckTimer);
+      pressedMidis.forEach(m => { if (synth) synth.triggerRelease(getNoteName(m)); });
+      pressedMidis.clear();
+      holdPressTime = {};
+      showFeedback('⏳ Keep holding! Don\'t let go yet! Feel the full note length', 'wrong');
+      drawKeyboard(expectedMidis, pressedMidis);
+      return;
+    }
+  }
+
+  pressedMidis.delete(midi);
+  if (freeMode && synth) synth.triggerRelease(getNoteName(midi));
+  drawKeyboard(freeMode ? new Set() : expectedMidis, pressedMidis);
+}
+
+function finishPractice() {
+  trainingActive = false; waitingForInput = false;
+  document.getElementById('noteBadge').classList.remove('show');
+  document.querySelectorAll('.pdot').forEach(p => p.classList.add('done'));
+  clearSvgHighlight(); drawKeyboard();
+
+  const ex = EXERCISES[currentExerciseIdx];
+  showFeedback(ex.doneMsg, 'correct');
+  burstStars();
+
+  const nextIdx = currentExerciseIdx + 1;
+  if (ex.nextDelay !== null && nextIdx < EXERCISES.length) {
+    setTimeout(() => {
+      currentExerciseIdx = nextIdx;
+      startExercise();
+    }, ex.nextDelay);
+  } else {
+    // All done
+    if (loopEnabled) setTimeout(() => { if (loopEnabled) startPractice(); }, 1200);
+  }
+}
+
+function stopPractice(resetVis = true) {
+  previewPhase = false; trainingActive = false; waitingForInput = false;
+  waitingForHold = false;
+  stopHoldAnimation();
+  clearTimeout(holdCheckTimer);
+  holdPressTime = {};
+  practiceTimeouts.forEach(t => clearTimeout(t)); practiceTimeouts = [];
+  previewGroups = [];
+  expectedMidis.clear(); pressedMidis.clear();
+  if (resetVis) {
+    fallingRects = []; clearSvgHighlight(); drawKeyboard();
+    document.getElementById('noteBadge').classList.remove('show');
+    document.getElementById('feedbackBubble').classList.remove('show');
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   KEYBOARD POINTER HIT TEST
+══════════════════════════════════════════════════════ */
+function hitTestKeyboard(x, y) {
+  const W = kbdCanvas.width, H = kbdCanvas.height;
+  const w = W / TOTAL_WHITE;
+  const bw = w * 0.58, bh = H * 0.62;
+  for (let midi = START_MIDI; midi <= END_MIDI; midi++) {
+    if (!isBlack(midi)) continue;
+    const belowIdx = WHITE_KEYS.indexOf(midi - 1);
+    if (belowIdx < 0) continue;
+    const bx = belowIdx * w + w - bw / 2;
+    if (x >= bx && x <= bx + bw && y >= 0 && y <= bh) return midi;
+  }
+  const wIdx = Math.floor(x / w);
+  if (wIdx >= 0 && wIdx < WHITE_KEYS.length) return WHITE_KEYS[wIdx];
+  return null;
+}
+
+function getCanvasPos(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+function getTouchCanvasPos(touch, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return { x: (touch.clientX - rect.left) * scaleX, y: (touch.clientY - rect.top) * scaleY };
+}
+
+kbdCanvas.addEventListener('mousedown', async e => {
+  await Tone.start();
+  const { x, y } = getCanvasPos(e, kbdCanvas);
+  const midi = hitTestKeyboard(x, y);
+  if (midi !== null) processNoteOn(midi);
+});
+kbdCanvas.addEventListener('mouseup', e => {
+  const { x, y } = getCanvasPos(e, kbdCanvas);
+  const midi = hitTestKeyboard(x, y);
+  if (midi !== null) processNoteOff(midi);
+});
+kbdCanvas.addEventListener('mouseleave', () => {
+  pressedMidis.forEach(m => processNoteOff(m));
+});
+kbdCanvas.addEventListener('touchstart', async e => {
+  e.preventDefault(); await Tone.start();
+  for (const t of e.changedTouches) {
+    const { x, y } = getTouchCanvasPos(t, kbdCanvas);
+    const midi = hitTestKeyboard(x, y);
+    if (midi !== null) processNoteOn(midi);
+  }
+}, { passive: false });
+kbdCanvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    const { x, y } = getTouchCanvasPos(t, kbdCanvas);
+    const midi = hitTestKeyboard(x, y);
+    if (midi !== null) processNoteOff(midi);
+  }
+}, { passive: false });
+
+/* ══════════════════════════════════════════════════════
+   FEEDBACK & STARS
+══════════════════════════════════════════════════════ */
+function showFeedback(msg, type = 'correct') {
+  const el = document.getElementById('feedbackBubble');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._t);
+  const duration = type === 'wrong' ? 3200 : 2200;
+  el._t = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function burstStars() {
+  const cont = document.getElementById('starsContainer');
+  const emojis = ['⭐','🌟','✨','💛','🎉','🎵'];
+  for (let i = 0; i < 8; i++) {
+    const s = document.createElement('div');
+    s.className = 'star'; s.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    s.style.left = (20 + Math.random() * 60) + '%';
+    s.style.top  = (20 + Math.random() * 60) + '%';
+    s.style.setProperty('--dx', ((Math.random() - 0.5) * 120) + 'px');
+    s.style.setProperty('--dy', (-(40 + Math.random() * 80)) + 'px');
+    cont.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   BUTTON WIRING
+══════════════════════════════════════════════════════ */
+document.getElementById('btnStart').addEventListener('click', async () => {
+  await Tone.start();
+  document.getElementById('btnStop').disabled = false;
+  startPractice(); runAnimLoop();
+});
+document.getElementById('btnStop').addEventListener('click', () => {
+  stopPractice(true);
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  drawFalling(performance.now()); drawKeyboard();
+  showFeedback('Stopped 👋', 'info');
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  stopPractice(true); trainingIdx = 0;
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  freeMode = false;
+  document.getElementById('btnFree').classList.remove('active');
+  document.getElementById('btnFree').textContent = '🎹 Free Play';
+  document.getElementById('progressDots').innerHTML = '';
+  drawFalling(performance.now()); drawKeyboard();
+  showFeedback('Reset! 🔄', 'info');
+});
+document.getElementById('btnSpeedDown').addEventListener('click', () => {
+  if (speedIdx > 0) speedIdx--;
+  speedMult = SPEED_STEPS[speedIdx];
+  document.getElementById('speedDisplay').textContent = speedMult.toFixed(2) + '×';
+});
+document.getElementById('btnSpeedUp').addEventListener('click', () => {
+  if (speedIdx < SPEED_STEPS.length - 1) speedIdx++;
+  speedMult = SPEED_STEPS[speedIdx];
+  document.getElementById('speedDisplay').textContent = speedMult.toFixed(2) + '×';
+});
+document.getElementById('btnFree').addEventListener('click', async () => {
+  await Tone.start(); ensureSynth();
+  freeMode = !freeMode;
+  stopPractice(false); trainingActive = false; fallingRects = [];
+  expectedMidis.clear(); pressedMidis.clear(); clearSvgHighlight();
+  document.getElementById('noteBadge').classList.remove('show');
+  const btn = document.getElementById('btnFree');
+  if (freeMode) {
+    btn.classList.add('active'); btn.textContent = '✋ Exit Free Play';
+    showFeedback('🎹 Play any note!', 'info'); runAnimLoop();
+  } else {
+    btn.classList.remove('active'); btn.textContent = '🎹 Free Play';
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    drawKeyboard();
+  }
+});
+document.getElementById('btnLoop').addEventListener('click', () => {
+  loopEnabled = !loopEnabled;
+  const btn = document.getElementById('btnLoop');
+  btn.classList.toggle('active', loopEnabled);
+  btn.textContent = loopEnabled ? '🔁 Loop ON' : '🔁 Loop';
+});
+
+
+/* ══════════════════════════════════════════════════════
+   DARK MODE TOGGLE
+══════════════════════════════════════════════════════ */
+const dmBtn = document.getElementById('darkModeToggle');
+dmBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  dmBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+});
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   VIDEO MODAL
+══════════════════════════════════════════════════════ */
+window.openVideoModal = openVideoModal;
+window.closeVideoModal = closeVideoModal;
+function openVideoModal() {
+  const modal = document.getElementById('videoModal');
+  const iframe = document.getElementById('lessonVideo');
+  const placeholder = document.getElementById('videoPlaceholder');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const hasSrc = iframe.src && iframe.src !== '' && iframe.src !== window.location.href;
+  placeholder.style.display = hasSrc ? 'none' : 'flex';
+  iframe.style.display = hasSrc ? 'block' : 'none';
+}
+
+function closeVideoModal() {
+  const modal = document.getElementById('videoModal');
+  const iframe = document.getElementById('lessonVideo');
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+  // Pause YouTube by briefly clearing src, then restoring
+  const saved = iframe.src;
+  iframe.src = '';
+  setTimeout(() => { iframe.src = saved; }, 50);
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeVideoModal();
+});
+
+// Auto-open on first load after a short delay so kids see it immediately
+window.addEventListener('load', () => {
+  setTimeout(openVideoModal, 800);
+});
+
+buildSongList(); // no-op now
+resizeCanvases();
+runAnimLoop();
+drawKeyboard();
+
+// Auto-load embedded MIDI + SVG
+(async () => {
+  try {
+    const buf = b64ToArrayBuffer(EMBEDDED_MIDI_B64);
+    await loadMidiBuffer(buf);
+    loadSvgScore(EMBEDDED_SVG);
+    resizeCanvases(); // re-measure now that scoreZone has real height
+  } catch(e) {
+    console.error('Auto-load failed', e);
+  }
+})();
+</script>
+</body>
+</html>
