@@ -1647,8 +1647,8 @@ function loadSvgScore(svgText) {
 
   let cropX = vbX, cropY = vbY, cropW = vbW, cropH = vbH;
   if (isFinite(minX) && maxX > minX && maxY > minY) {
-    const pad = 70;
-    const padTop = 90;
+    const pad = 60;
+    const padTop = 120;
     cropX = Math.max(vbX, minX - pad);
     cropY = Math.max(vbY, minY - padTop);
     cropW = Math.min(vbW, maxX + pad) - cropX;
@@ -1658,8 +1658,8 @@ function loadSvgScore(svgText) {
       const g = yMids[i] - yMids[i-1];
       if (g > bigGap) { bigGap = g; gapMid = (yMids[i-1] + yMids[i]) / 2; }
     }
-    const firstRowMaxY = bigGap > 80 ? gapMid : maxY;
-    cropH = Math.min(vbH, firstRowMaxY + pad) - cropY;
+    const firstRowMaxY = maxY; // show all rows
+    cropH = Math.min(vbH, firstRowMaxY + 140) - cropY;
     // Store full bounds for scroll pan
     svgEl._fullVbY = cropY;
     svgEl._fullVbH = Math.min(vbH, maxY + pad) - cropY;
