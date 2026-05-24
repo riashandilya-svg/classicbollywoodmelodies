@@ -2099,9 +2099,7 @@ function clearSvgHighlight() {
 ══════════════════════════════════════════════════════ */
 // ── Exercise flow ────────────────────────────────────────────────────────
 const EXERCISES = [
-  { label: 'Exercise 1', measures: [1,  4], doneMsg: '\u{1F44F} Good! Ready for the next one?', nextDelay: 2400 },
-  { label: 'Exercise 2', measures: [5,  8], doneMsg: '\u{1F31F} Wow! Ready for the last one?',  nextDelay: 2400 },
-  { label: 'Exercise 3', measures: [9, 12], doneMsg: '\u{1F389} Amazing! You did it all!',       nextDelay: null },
+  { label: 'Pussy Cat', measures: [1, 999], doneMsg: '\u{1F389} Amazing! You played the whole song!', nextDelay: null },
 ];
 let currentExerciseIdx = 0;
 
@@ -2149,7 +2147,7 @@ function startExercise() {
   buildProgressDots();
   if (!practiceNotes.length) { showFeedback('No notes in that range!', 'wrong'); return; }
   const ex = EXERCISES[currentExerciseIdx];
-  showFeedback('\u{1F3B5} ' + ex.label + ' — Listen first…', 'info');
+  showFeedback('\u{1F3B5} Listen first…', 'info');
   trainingActive = true;
   trainingIdx = 0;
   waitingForInput = false;
@@ -2212,11 +2210,11 @@ function startPreview() {
   practiceTimeouts.push(setTimeout(() => {
     if (!previewPhase) return;
     previewPhase = false;
-    showFeedback('🎵 Now you try ' + EXERCISES[currentExerciseIdx].label + '!', 'info');
+    showFeedback('🎵 Now you try!', 'info');
     spawnNextNote();
   }, endDelay));
   runAnimLoop();
-  showFeedback('👂 Listen to ' + EXERCISES[currentExerciseIdx].label + '…', 'info');
+  showFeedback('👂 Listen carefully…', 'info');
 }
 
 function spawnNextNote() {
