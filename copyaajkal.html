@@ -3481,6 +3481,17 @@ if (clefMode === 'both') {
         document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
         document.getElementById('pressedNoteCircle').className = 'note-circle wrong';
         document.getElementById('correctNoteCircle').textContent = getNoteName(firstNew ?? midiNote);
+
+        // Restart the beat after a short pause so the user replays from the top
+        trainingActive = false;
+        waitingForInput = false;
+        if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+        _bgCountdownStartMs = null;
+        setTimeout(() => {
+            if (practiceNotes[trainingIndex]) {
+                spawnTrainingNote(practiceNotes[trainingIndex]);
+            }
+        }, 900);
         return;
     }
 
@@ -3995,117 +4006,96 @@ function spawnTrainingNote(noteObj) {
 
     // ====== BOTH-HANDS BEAT GROUP MODE ======
     if (clefMode === 'both') {
-        // Reset beat group state
-        _beatGroupNotes = [];
+        // ── Beat Group Model ─────────────────────────────────────────────────────
+        // Build the complete beat group: all notes (both hands) that must be played
+        // before "Good" fires. The group spans from this note's start to the furthest
+        // note-end reachable by the FIRST simultaneous chord's duration.
+        //
+        // Example: bass crotchet (0-0.437s) + treble quaver (0-0.218s)
+        //          + treble quaver (0.231-0.449s) => window=0.449s, all three grouped.
+
+        _beatGroupNotes   = [];
+        _beatGroupPressed = new Set();
         _bgHeldNotes.clear();
-        _beatGroupPressed.clear();
-        _bgCountdownStartMs = null;
         _beatGroupStartMs = null;
-        _beatGroupCurrentPlayTime = null;
+        _beatGroupIndex   = trainingIndex;
+        _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time;
+        _bgCountdownStartMs = null;
         sustainedNotes.clear();
 
         const groupStartSec = noteObj.playTime ?? noteObj.time;
 
-        // Step 1: collect all notes that share the SAME playTime as the first note
-        // (these form the first simultaneous chord across both hands).
-        _beatGroupNotes.push({ note: noteObj, idx: trainingIndex });
+        // Step 1: compute windowEndSec from the FIRST simultaneous chord only.
+        // Only notes at groupStartSec (within 10ms) set the window boundary.
+        // Sub-notes that arrive later within the window do NOT expand it further —
+        // that would cause a cascade where a crotchet at beat 2 pulls in all of
+        // beat 3's notes and so on, making the whole bar one giant group.
+        let windowEndSec = groupStartSec + noteObj.duration;
         for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
             const n = practiceNotes[i];
             const nStart = n.playTime ?? n.time;
-            if (Math.abs(nStart - groupStartSec) >= 0.01) break;
+            if (Math.abs(nStart - groupStartSec) >= 0.01) break; // past first chord
+            const nEnd = nStart + n.duration;
+            if (nEnd > windowEndSec) windowEndSec = nEnd;
+        }
+
+        // Step 2: collect all notes whose START falls within the window.
+        // Their own duration does NOT expand the window (see above).
+        for (let i = trainingIndex; i < practiceNotes.length; i++) {
+            const n = practiceNotes[i];
+            const nStart = n.playTime ?? n.time;
+            if (nStart >= windowEndSec - 0.001) break;
             _beatGroupNotes.push({ note: n, idx: i });
             noteTrackMap.set(n.midi, n.track);
         }
 
-        // Step 2: check whether the first slot already has BOTH hands.
-        // If yes — or if it's treble-only / bass-only — stop here: no multi-slot group needed.
-        // Only extend to multiple playTimes when the two hands are genuinely interleaved
-        // (e.g. bass starts on beat 1 while the treble melody continues into beat 2).
-        const firstSlotTracks = new Set(_beatGroupNotes.map(({note}) => note.track));
-        const firstSlotHasBoth = firstSlotTracks.has(TREBLE) && firstSlotTracks.has(BASS);
+        _beatGroupEndSec = windowEndSec;
 
-        if (!firstSlotHasBoth) {
-            // Single-hand slot at this time-point: look ahead to find the nearest
-            // future time-slot that brings in the OTHER hand, within 2 beats.
-            const missingTrack = firstSlotTracks.has(TREBLE) ? BASS : TREBLE;
-            const maxGroupDurationSec = secondsPerBeat * 2;
-            const windowEndSec = groupStartSec + maxGroupDurationSec;
-
-            // Find the playTime of the first note from the missing track within the window
-            let otherHandTime = null;
-            for (let i = trainingIndex + _beatGroupNotes.length; i < practiceNotes.length; i++) {
-                const n = practiceNotes[i];
-                const nStart = n.playTime ?? n.time;
-                if (nStart > windowEndSec) break;
-                if (n.track === missingTrack) { otherHandTime = nStart; break; }
-            }
-
-            if (otherHandTime !== null) {
-                // Collect all notes up to and including the other-hand's first appearance
-                for (let i = trainingIndex + _beatGroupNotes.length; i < practiceNotes.length; i++) {
-                    const n = practiceNotes[i];
-                    const nStart = n.playTime ?? n.time;
-                    if (nStart > otherHandTime + 0.005) break;
-                    _beatGroupNotes.push({ note: n, idx: i });
-                    noteTrackMap.set(n.midi, n.track);
-                }
-            }
-            // If no other-hand note found within window, group stays as single-slot
-        }
-
-        _beatGroupIndex = trainingIndex;
-        _beatGroupCurrentPlayTime = groupStartSec;
-
-        // Step 3: seed currentChordNotes with first time-slot notes
-        for (const {note} of _beatGroupNotes) {
-            const t = note.playTime ?? note.time;
-            if (Math.abs(t - groupStartSec) < 0.01) {
-                currentChordNotes.add(note.midi);
+        // Seed currentChordNotes with notes simultaneous to noteObj (first time slot)
+        for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+            const nextNote = practiceNotes[i];
+            const nextPlayTime = nextNote.playTime ?? nextNote.time;
+            if (Math.abs(nextPlayTime - groupStartSec) < 0.01) {
+                currentChordNotes.add(nextNote.midi);
+                noteTrackMap.set(nextNote.midi, nextNote.track);
+            } else {
+                break;
             }
         }
 
-        // Count distinct playTimes to describe the group
-        const distinctTimes = [...new Set(
-            _beatGroupNotes.map(({note}) => Math.round((note.playTime ?? note.time) * 1000))
-        )];
-        const groupLabel = beatsToNoteName(
-            (_beatGroupNotes[_beatGroupNotes.length - 1].note.duration) / secondsPerBeat
-        );
+        const isChord = currentChordNotes.size > 1;
+        const totalGroupNotes = _beatGroupNotes.length;
+        const groupDurSec = _beatGroupEndSec - groupStartSec;
+        const groupBeats  = groupDurSec / secondsPerBeat;
+        const groupLabel  = beatsToNoteName(groupBeats);
 
         const holdEl = document.getElementById('holdInfo');
-        if (distinctTimes.length > 1) {
-            holdEl.innerHTML = `Play all notes across both hands (group: <span class="music-symbol">${groupLabel}</span>)`;
-        } else {
-            holdEl.innerHTML = `Play chord across both hands (Hold for <span class="music-symbol">${groupLabel}</span>)`;
-        }
+        holdEl.innerHTML = totalGroupNotes > currentChordNotes.size
+            ? `Play all notes across both hands (group: <span class="music-symbol">${groupLabel}</span>)`
+            : isChord
+                ? `Click each note: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} &nbsp;<span style="opacity:0.6;font-size:0.85em">(clicks latch for the beat)</span>`
+                : `Hold for <span class="music-symbol">${groupLabel}</span>`;
+
         noteHoldStartTime = null;
-        holdEvaluated = false;
+        holdEvaluated     = false;
+        expectedHoldDuration = (groupDurSec * 1000) / speedMultiplier;
+
         setTargetNote(noteName);
 
-        // Highlight keyboard: first slot only
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-        currentChordNotes.forEach(midi => {
-            const track = noteTrackMap.get(midi) ?? noteObj.track;
-            if (track === TREBLE) expectedMidiTreble.add(midi);
-            else if (track === BASS) expectedMidiBass.add(midi);
-        });
-
         if (scoreModeActive) {
-            const allFirstSlot = [...currentChordNotes].map(m => getNoteName(m)).join(' + ');
+            rebuildKeyboardHighlights();
             document.getElementById('scoreKeyboardLabel').textContent =
-                distinctTimes.length > 1
-                    ? `🎹 Both hands — start: ${allFirstSlot}`
-                    : `🎹 Play: ${allFirstSlot}`;
+                currentChordNotes.size > 1
+                    ? `Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
+                    : `Play: ${noteName}`;
         } else {
-            // Falling notes for ALL notes in the group
-            for (const {note} of _beatGroupNotes) {
-                const track = noteTrackMap.get(note.midi) ?? note.track;
-                addMidiFallingRectangle(note.midi, note.duration, track, performance.now());
-            }
+            _beatGroupNotes.forEach(({ note: n }) => {
+                addMidiFallingRectangle(n.midi, n.duration, n.track, performance.now());
+            });
+            rebuildKeyboardHighlights();
         }
 
-        console.log('🎹 spawnTrainingNote [BOTH]: index=' + trainingIndex + ' group=' + _beatGroupNotes.length + ' slots=' + distinctTimes.length + ' first=' + [...currentChordNotes].map(m => getNoteName(m)).join('+'));
+        console.log('🎹 spawnTrainingNote [BOTH]: index=' + trainingIndex + ' group=' + _beatGroupNotes.length + ' window=' + groupDurSec.toFixed(3) + 's first=' + [...currentChordNotes].map(m => getNoteName(m)).join('+'));
         if (typeof onTrainingNoteSpawned === 'function') onTrainingNoteSpawned(noteObj);
         return;
     }
