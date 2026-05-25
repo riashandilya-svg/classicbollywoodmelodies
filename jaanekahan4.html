@@ -5855,6 +5855,10 @@ Tone.Transport.stop();
 Tone.Transport.cancel();
 
 mouseClearAllLatches();
+expectedMidiTreble.clear();
+expectedMidiBass.clear();
+currentChordNotes.clear();
+midiPressedNotes.clear();
 
 playbackTimeouts.forEach(t => clearTimeout(t));
 playbackTimeouts = [];
@@ -5945,6 +5949,7 @@ function resetAll() {
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
+    mouseClearAllLatches();
 
     // ── 6. Hide all overlays / visuals ───────────────────────────────────
     document.getElementById('countdownOverlay').style.display = 'none';
