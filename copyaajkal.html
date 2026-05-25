@@ -1667,6 +1667,10 @@ body.score-mode #panelProgressWrap {
     </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
     <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
+    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,193,7,0.10);border:1.5px dashed rgba(255,193,7,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:#B45309;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
+      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff8dc,#fef3c7)!important;color:#92400e!important;border-color:#fbbf24!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
+    </div>
   </div>
 
   <!-- PLAYBACK card -->
@@ -6594,6 +6598,60 @@ syncHandBtns();
 
     const obs = new MutationObserver(syncFeedback);
     obs.observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
+
+// ── Skip Preview helper ──────────────────────────────────────────────────────
+window._skipPreview = function() {
+    if (!previewMode) return;
+
+    // Cancel all pending preview timeouts/intervals
+    previewTimeouts.forEach(t => {
+        if (t && t._isFakeTimeout) {
+            t._clear();
+        } else {
+            clearTimeout(t);
+        }
+    });
+    previewTimeouts.length = 0;
+
+    // Kill the listen-countdown ticker if still running
+    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
+        clearInterval(_listenCountdownTimer);
+    }
+
+    // Reset preview state
+    previewMode = false;
+    speedLocked = false;
+    scoreKeysPlaying = false;
+    setSpeedButtonsEnabled(true);
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    if (scoreModeActive) clearScoreHighlight();
+    stopMetronome();
+    if (typeof _cancelCountAudio === 'function') _cancelCountAudio();
+
+    // Hide the skip box
+    const box = document.getElementById('skipPreviewBox');
+    if (box) box.style.display = 'none';
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Your turn';
+    feedback.classList.remove('correct', 'wrong', 'show');
+
+    spawnNextValidNote();
+};
+
+// Show/hide the skip-preview box whenever previewMode changes.
+(function _patchPreviewVisibility() {
+    const box = document.getElementById('skipPreviewBox');
+    if (!box) return;
+    let _prev = false;
+    setInterval(() => {
+        if (previewMode !== _prev) {
+            _prev = previewMode;
+            box.style.display = previewMode ? 'block' : 'none';
+        }
+    }, 150);
 })();
 </script>
 
