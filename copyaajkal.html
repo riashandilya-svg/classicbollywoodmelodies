@@ -3551,21 +3551,51 @@ function spawnTrainingNote(noteObj) {
 
         const groupStartSec = noteObj.playTime ?? noteObj.time;
 
-        // Step 1: compute windowEndSec — find the beat boundary for this group.
-        // A "beat" here means: look at the first simultaneous chord, then keep
-        // collecting notes until the playTime gap is >= 0.01s from the previous
-        // distinct playTime, capped at a reasonable musical window (e.g. 2 beats).
-        const maxGroupDurationSec = secondsPerBeat * 2;
-        const windowEndSec = groupStartSec + maxGroupDurationSec;
-
-        // Step 2: collect all notes within the window (both tracks)
+        // Step 1: collect all notes that share the SAME playTime as the first note
+        // (these form the first simultaneous chord across both hands).
         _beatGroupNotes.push({ note: noteObj, idx: trainingIndex });
         for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
             const n = practiceNotes[i];
             const nStart = n.playTime ?? n.time;
-            if (nStart > windowEndSec) break;
+            if (Math.abs(nStart - groupStartSec) >= 0.01) break;
             _beatGroupNotes.push({ note: n, idx: i });
             noteTrackMap.set(n.midi, n.track);
+        }
+
+        // Step 2: check whether the first slot already has BOTH hands.
+        // If yes — or if it's treble-only / bass-only — stop here: no multi-slot group needed.
+        // Only extend to multiple playTimes when the two hands are genuinely interleaved
+        // (e.g. bass starts on beat 1 while the treble melody continues into beat 2).
+        const firstSlotTracks = new Set(_beatGroupNotes.map(({note}) => note.track));
+        const firstSlotHasBoth = firstSlotTracks.has(TREBLE) && firstSlotTracks.has(BASS);
+
+        if (!firstSlotHasBoth) {
+            // Single-hand slot at this time-point: look ahead to find the nearest
+            // future time-slot that brings in the OTHER hand, within 2 beats.
+            const missingTrack = firstSlotTracks.has(TREBLE) ? BASS : TREBLE;
+            const maxGroupDurationSec = secondsPerBeat * 2;
+            const windowEndSec = groupStartSec + maxGroupDurationSec;
+
+            // Find the playTime of the first note from the missing track within the window
+            let otherHandTime = null;
+            for (let i = trainingIndex + _beatGroupNotes.length; i < practiceNotes.length; i++) {
+                const n = practiceNotes[i];
+                const nStart = n.playTime ?? n.time;
+                if (nStart > windowEndSec) break;
+                if (n.track === missingTrack) { otherHandTime = nStart; break; }
+            }
+
+            if (otherHandTime !== null) {
+                // Collect all notes up to and including the other-hand's first appearance
+                for (let i = trainingIndex + _beatGroupNotes.length; i < practiceNotes.length; i++) {
+                    const n = practiceNotes[i];
+                    const nStart = n.playTime ?? n.time;
+                    if (nStart > otherHandTime + 0.005) break;
+                    _beatGroupNotes.push({ note: n, idx: i });
+                    noteTrackMap.set(n.midi, n.track);
+                }
+            }
+            // If no other-hand note found within window, group stays as single-slot
         }
 
         _beatGroupIndex = trainingIndex;
