@@ -2542,6 +2542,8 @@ beatToggle.addEventListener('click', () => {
 
     if (beatEnabled && !metronomeRunning) {
         startMetronome();
+    } else if (!beatEnabled && !countEnabled && !subdivisionEnabled) {
+        stopMetronome();
     }
 });
 
@@ -2578,6 +2580,18 @@ if (countEnabled) {
     if (!metronomeRunning) {
         startMetronome();
     }
+} else {
+    // Count turned off — if neither beat nor subdivision needs the metronome, stop it
+    if (!beatEnabled && !subdivisionEnabled) {
+        stopMetronome();
+    }
+    // Also sync subdivisionEnabled off if counting is turned off
+    if (subdivisionEnabled) {
+        subdivisionEnabled = false;
+        countMode = "normal";
+        subdivisionToggle.textContent = "1 & 2 &";
+        document.getElementById('subdivBtn')?.classList.remove('active');
+    }
 }
 });
 
@@ -2592,9 +2606,18 @@ subdivisionToggle.addEventListener('click', () => {
     if (subdivisionEnabled) {
         countEnabled = true;
         countToggle.textContent = "Counting ✓";
+        startMetronome(transportStartTime);
+    } else {
+        // Turning off subdivision also turns off counting (subdivision auto-enabled it)
+        countEnabled = false;
+        countToggle.textContent = "Counting";
+        if (!beatEnabled) {
+            stopMetronome();
+        } else {
+            // Beat still on — restart without subdivision
+            startMetronome(transportStartTime);
+        }
     }
-
-    startMetronome(transportStartTime);
 });
 
 
