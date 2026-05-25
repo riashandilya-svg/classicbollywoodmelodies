@@ -1527,6 +1527,35 @@ body.score-mode #panelProgressWrap {
 
 <div id="paywall"></div>
 
+<!-- ===== MOUSE DEBUG OVERLAY ===== -->
+<div id="mouseDebug" style="
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.82);
+  color: #0f0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  min-width: 300px;
+  max-width: 420px;
+  pointer-events: none;
+  line-height: 1.6;
+  display: none;
+">
+  <div style="color:#FFD54F;font-weight:bold;margin-bottom:4px">&#x1F5B1; Mouse Input Debug</div>
+  <div id="dbg-click-count">Clicks registered: 0</div>
+  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
+  <div id="dbg-latch-state">Latched notes: -</div>
+  <div id="dbg-pressed-state">midiPressedNotes: -</div>
+  <div id="dbg-last-event">Last event: -</div>
+  <div id="dbg-hold-state">holdEvaluated: - | noteHoldStartTime: -</div>
+  <div id="dbg-training-state">trainingActive: - | waitingForInput: -</div>
+  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
+</div>
+
       <div id="app">
 
       <!-- 🎯 Training Progress Bar -->
@@ -3303,13 +3332,50 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 // SHARED USER NOTE HANDLER (MIDI + MOUSE)
 // =======================================
+// ===== MOUSE DEBUG HELPERS =====
+let _dbgClicks = 0;
+let _dbgSwallowed = 0;
+const _dbgEventLog = [];
+function _dbgLog(msg) {
+    const ts = performance.now().toFixed(0);
+    const entry = `[${ts}ms] ${msg}`;
+    _dbgEventLog.unshift(entry);
+    if (_dbgEventLog.length > 6) _dbgEventLog.pop();
+    console.log('[MouseDebug]', entry);
+}
+function _dbgUpdate() {
+    const panel = document.getElementById('mouseDebug');
+    if (!panel || panel.style.display === 'none') return;
+    document.getElementById('dbg-click-count').textContent  = `Clicks registered: ${_dbgClicks}`;
+    document.getElementById('dbg-swallowed').textContent    = `Swallowed (guard fired): ${_dbgSwallowed}`;
+    document.getElementById('dbg-latch-state').textContent  = `Latched: [${[...mouseLatchedNotes].map(m=>getNoteName(m)).join(', ')||'—'}]`;
+    document.getElementById('dbg-pressed-state').textContent= `midiPressed: [${[...midiPressedNotes].map(m=>getNoteName(m)).join(', ')||'—'}]`;
+    document.getElementById('dbg-last-event').textContent   = `Log: ${_dbgEventLog[0]||'—'}`;
+    document.getElementById('dbg-hold-state').textContent   = `holdEvaluated: ${holdEvaluated} | holdRunning: ${noteHoldStartTime !== null}`;
+    document.getElementById('dbg-training-state').textContent = `trainingActive: ${trainingActive} | waitingForInput: ${waitingForInput}`;
+}
+// Poll to keep the panel live while visible
+setInterval(() => { if (document.getElementById('mouseDebug')?.style.display !== 'none') _dbgUpdate(); }, 100);
+document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        const panel = document.getElementById('mouseDebug');
+        if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+});
+// ================================
+
 function processUserNoteOn(midiNote) {
 
 // Guard: ignore repeated noteOn for a note that's already held.
 // MIDI keyboards send repeated noteOn while a key is held; without this,
 // hardStopUserNote() below resets noteHoldStartTime on every repeat,
 // making the hold timer restart and causing multiple spawnTrainingNote calls.
-if (!freeMode && midiPressedNotes.has(midiNote)) return;
+if (!freeMode && midiPressedNotes.has(midiNote)) {
+    _dbgSwallowed++;
+    _dbgLog(`SWALLOWED midi=${midiNote} — already in midiPressedNotes | latched=${[...mouseLatchedNotes].join(',')} | holdEval=${holdEvaluated} | holdTime=${noteHoldStartTime !== null}`);
+    _dbgUpdate();
+    return;
+}
 
 if (previewMode) return;
 
@@ -5167,11 +5233,18 @@ canvas.addEventListener('mousedown', async (e) => {
     // Click-to-latch: in training mode (non-free), latch the note so chord
     // notes can be clicked one-by-one and held for the entire beat.
     if (!freeMode && trainingActive) {
+        _dbgClicks++;
+        const alreadyLatched = mouseLatchedNotes.has(midiNote);
+        const alreadyPressed = midiPressedNotes.has(midiNote);
+        _dbgLog(`CLICK midi=${midiNote}(${getNoteName(midiNote)}) alreadyLatched=${alreadyLatched} alreadyPressed=${alreadyPressed} holdEval=${holdEvaluated} holdRunning=${noteHoldStartTime !== null}`);
         mouseToggleLatch(midiNote);
         if (mouseLatchedNotes.has(midiNote)) {
             // Note was just latched — treat as note-on
             processUserNoteOn(midiNote);
+        } else {
+            _dbgLog(`  -> toggle OFF (unlatch), processUserNoteOn skipped`);
         }
+        _dbgUpdate();
         // If toggled off: processUserNoteOn won't re-fire; the note was released above
         return;
     }
