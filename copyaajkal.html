@@ -185,6 +185,13 @@ body.dark-mode .ctrl-btn:hover:not(:disabled) {
   background: rgba(255,107,129,0.12) !important;
   color: var(--dm-accent) !important;
 }
+body.dark-mode .ctrl-btn.active {
+  background: rgba(255,107,129,0.22) !important;
+  color: var(--dm-accent) !important;
+  border-color: rgba(255,107,129,0.5) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 1px rgba(255,107,129,0.35), 0 4px 12px rgba(255,107,129,0.2) !important;
+}
 body.dark-mode #bottomDock.score-mode {
   background: rgba(15,17,23,0.97) !important;
 }
@@ -194,6 +201,7 @@ body.dark-mode .ctrl-speed-row {
   border-color: rgba(255,107,129,0.15) !important;
 }
 body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
+body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
 
 /* Dark mode toggle button */
 #darkModeToggle {
@@ -1678,11 +1686,11 @@ body.score-mode #panelProgressWrap {
     <div class="ctrl-card-title">PLAYBACK</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
-      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
-      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="window._panelBeatClick(this)">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="window._panelCountClick(this)">Counting</button>
     </div>
     <div class="ctrl-row">
-      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
+      <button class="ctrl-btn" id="subdivBtn" onclick="window._panelSubdivClick(this)">1 &amp; 2 &amp;</button>
     </div>
     <div class="ctrl-speed-row">
       <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
@@ -2590,6 +2598,44 @@ subdivisionToggle.addEventListener('click', () => {
 });
 
 
+
+// ── Panel button helpers (exposed to window so inline onclick can reach module scope) ──
+window._panelBeatClick = function(btn) {
+    beatToggle.click();   // toggles beatEnabled inside module scope
+    btn.classList.toggle('active', beatEnabled);
+    if (!beatEnabled && !countEnabled && !subdivisionEnabled) {
+        stopMetronome();
+    }
+};
+
+window._panelCountClick = function(btn) {
+    countToggle.click();          // toggles countEnabled inside module scope
+    // After the click, countEnabled reflects the NEW state
+    btn.classList.toggle('active', countEnabled);
+    if (!countEnabled) {
+        // Counting turned off — also deactivate subdivision
+        subdivisionEnabled = false;
+        countMode = "normal";
+        subdivisionToggle.textContent = "1 & 2 &";
+        document.getElementById('subdivBtn').classList.remove('active');
+        stopMetronome();
+    }
+};
+
+window._panelSubdivClick = function(btn) {
+    subdivisionToggle.click();    // toggles subdivisionEnabled inside module scope
+    // After the click, subdivisionEnabled reflects the NEW state
+    btn.classList.toggle('active', subdivisionEnabled);
+    const countBtn = document.getElementById('countBtn');
+    if (subdivisionEnabled) {
+        // Subdivision requires counting — highlight Counting button too
+        countBtn.classList.add('active');
+    } else {
+        // Subdivision off — remove both highlights, stop metronome if nothing else needs it
+        countBtn.classList.remove('active');
+        if (!beatEnabled) stopMetronome();
+    }
+};
 
 skipRepeatsCheckbox.addEventListener('change', () => {
     skipSheetRepeats = skipRepeatsCheckbox.checked;
