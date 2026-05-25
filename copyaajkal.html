@@ -185,13 +185,6 @@ body.dark-mode .ctrl-btn:hover:not(:disabled) {
   background: rgba(255,107,129,0.12) !important;
   color: var(--dm-accent) !important;
 }
-body.dark-mode .ctrl-btn.active {
-  background: rgba(255,107,129,0.22) !important;
-  color: var(--dm-accent) !important;
-  border-color: rgba(255,107,129,0.5) !important;
-  font-weight: 700 !important;
-  box-shadow: 0 0 0 1px rgba(255,107,129,0.35), 0 4px 12px rgba(255,107,129,0.2) !important;
-}
 body.dark-mode #bottomDock.score-mode {
   background: rgba(15,17,23,0.97) !important;
 }
@@ -201,7 +194,6 @@ body.dark-mode .ctrl-speed-row {
   border-color: rgba(255,107,129,0.15) !important;
 }
 body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
-body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
 
 /* Dark mode toggle button */
 #darkModeToggle {
@@ -1686,11 +1678,11 @@ body.score-mode #panelProgressWrap {
     <div class="ctrl-card-title">PLAYBACK</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
-      <button class="ctrl-btn" id="beatBtn" onclick="window._panelBeatClick(this)">♩ Beat</button>
-      <button class="ctrl-btn" id="countBtn" onclick="window._panelCountClick(this)">Counting</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
     </div>
     <div class="ctrl-row">
-      <button class="ctrl-btn" id="subdivBtn" onclick="window._panelSubdivClick(this)">1 &amp; 2 &amp;</button>
+      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
     </div>
     <div class="ctrl-speed-row">
       <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
@@ -2132,66 +2124,18 @@ function getLogicalSheetMeasureFromTime(timeSeconds) {
 // PRACTICE SEQUENCE BUILDER (PHYSICAL MEASURES)
 // ================================
 
-function logicalToPhysicalFirst(logical) {
-  if (logical <= 36) return logical;
-  return logical + REPEAT_LEN;
-}
-
-function logicalToPhysicalSecond(logical) {
-  if (logical < REPEAT_START || logical > REPEAT_END) return null;
-  return logical + 8;
-}
+// Jaanekahan: no repeats — physical === logical throughout
+function logicalToPhysicalFirst(logical) { return logical; }
+function logicalToPhysicalSecond(logical) { return null; }
 
 function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats) {
   if (startLogical > endLogical) return null;
-
-  console.log("🔍 Building sequence for logical", startLogical, "to", endLogical);
-  console.log("   logicalToPhysicalFirst(21) =", logicalToPhysicalFirst(21));
-  console.log("   logicalToPhysicalFirst(24) =", logicalToPhysicalFirst(24));
-  console.log("   SONG_CONFIG.measures =", SONG_CONFIG.measures);
-
   const seq = [];
   const logicalSeq = [];
-
-  if (skipRepeats) {
-    for (let l = startLogical; l <= endLogical; l++) {
-      const p = logicalToPhysicalFirst(l);
-      if (!p || p > SONG_CONFIG.measures) return null;
-      seq.push(p);
-      logicalSeq.push(l);
-    }
-    return { seq, logicalSeq };
-  }
-
-  if (endLogical <= 28) {
-    for (let l = startLogical; l <= endLogical; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
-    }
-  }
-  else if (startLogical > 36) {
-    for (let l = startLogical; l <= endLogical; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
-    }
-  }
-  else {
-    for (let l = startLogical; l <= Math.min(36, endLogical); l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalFirst(l));
-    }
-    
-    for (let l = 29; l <= 36; l++) {
-      logicalSeq.push(l);
-      seq.push(logicalToPhysicalSecond(l));
-    }
-
-    if (endLogical > 36) {
-      for (let l = 37; l <= endLogical; l++) {
-        logicalSeq.push(l);
-        seq.push(logicalToPhysicalFirst(l));
-      }
-    }
+  for (let l = startLogical; l <= endLogical; l++) {
+    if (l > SONG_CONFIG.measures) return null;
+    seq.push(l);
+    logicalSeq.push(l);
   }
   return { seq, logicalSeq };
 }
@@ -2280,6 +2224,7 @@ function updateSpeed(delta) {
 speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
 // Note: speedDown/speedUp enabled state is managed entirely by setControlsEnabled()
+// and setSpeedButtonsEnabled(). Do NOT add unconditional .disabled = false here.
 
 // ====== BPM INPUT ======
 function syncBpmDisplay() {
@@ -2324,6 +2269,7 @@ function applyBpmInput() {
         if (e.key === 'Enter') applyBpmInput();
     });
 
+    // Style feedback on input focus
     bpmInput.addEventListener('focus', () => {
         bpmInput.style.borderColor = 'rgba(255,193,7,0.6)';
         bpmInput.style.boxShadow   = '0 0 0 3px rgba(255,193,7,0.15)';
@@ -2333,7 +2279,6 @@ function applyBpmInput() {
         bpmInput.style.boxShadow   = 'none';
     });
 })();
-// and setSpeedButtonsEnabled(). Do NOT add unconditional .disabled = false here.
 
 
 
@@ -2355,6 +2300,7 @@ let countEnabled = false;
 let metronomeRunning = false;
 let transportStartTime = null;
 let countdownActive = false;
+let countdownTimeoutId = null;
 
 // ── SpeechSynthesis kept ONLY as last-resort fallback ──────────────────────
 const speechSynth = window.speechSynthesis;
@@ -2660,6 +2606,7 @@ window._panelSubdivClick = function(btn) {
     }
 };
 
+
 skipRepeatsCheckbox.addEventListener('change', () => {
     skipSheetRepeats = skipRepeatsCheckbox.checked;
 });
@@ -2794,6 +2741,7 @@ let fullSongPlaying = false;
 
 let currentTrainingNote = null;
 let noteHoldStartTime = null;
+let _bgCountdownStartMs = null;  // set on first correct press in a beat group, for stats countdown
 let holdEvaluated = false;   // guards against double-advance from simultaneous mouseup + MIDI noteOff
 let expectedHoldDuration = 0;
 let activeMidiNote = null;
@@ -2801,22 +2749,26 @@ let expectedMidiNote = null;
 
 // ====== BEAT GROUP (both-hands mode) ======
 // In both-hands mode, notes interleave between hands. A "beat group" spans from
-// the first note the user must play to the last note at a distinct playTime
-// within a lookahead window. The user plays through each sub-slot in sequence.
-// Within each slot the notes may form a chord (pressed simultaneously).
-let _beatGroupNotes      = [];   // [{note, idx}, ...] all notes in the group
-let _beatGroupIndex      = 0;    // trainingIndex of currently active sub-note slot
-let _beatGroupCurrentPlayTime = null; // playTime of the sub-slot currently being played
-let _beatGroupTimer      = null; // setTimeout handle for the hold timer within the group
-let _bgHeldNotes         = new Map(); // midi → {requiredUntilMs} for notes currently held in bg mode
-let _beatGroupPressed    = new Set(); // midis pressed in the current beat-group slot
-let _bgCountdownStartMs  = null; // when the hold countdown started for current bg slot
-let _beatGroupEndSec     = null; // playTime of the last slot (used for hold duration)
-let _beatGroupStartMs    = null; // performance.now() when the hold phase officially began
-let _lastHoldStartTime   = null; // saved copy of noteHoldStartTime before evaluateHoldOnRelease clears it
+// the current note's start to the furthest note-end reachable within that window.
+// Example: bass crotchet (0.000s, dur 0.437s) + treble quaver (0.000s, dur 0.218s)
+//          + treble quaver (0.231s, dur 0.218s): all fall within 0.437s, so the
+//          full group lasts 0.449s. "Good" fires only after the full group.
+let _beatGroupNotes   = [];   // [{note, idx}] all practiceNotes in this group
+let _beatGroupEndSec  = 0;    // MIDI-time when last note in group ends
+let _beatGroupIndex   = 0;    // trainingIndex of currently active sub-note slot
+let _beatGroupCurrentPlayTime = null; // MIDI-time of the currently active slot (explicit, avoids ambiguity with carried-across notes)
+let _beatGroupTimer   = null; // setTimeout handle for group completion
+let _beatGroupPressed = new Set(); // midi numbers pressed so far in this group
+let _beatGroupStartMs = null; // performance.now() when first press occurred
+// Saved copy of noteHoldStartTime captured just before evaluateHoldOnRelease clears it.
+// spawnTrainingNote's carry-forward block reads this instead of noteHoldStartTime, because
+// by the time spawnNextValidNote() fires (via setTimeout), noteHoldStartTime is already null.
+let _lastHoldStartTime = null;
 
 // ====== SUSTAINED NOTES (both-hands mode) ======
 // Maps midi → { startTime (ms), requiredDurationMs, track, noteObj }
+// A note lives here while it's still within its required hold window.
+// Sustained notes from one hand remain active while the other hand changes steps.
 const sustainedNotes = new Map();
 
 function sustainedNoteExpired(midi) {
@@ -2829,6 +2781,7 @@ function cleanExpiredSustainedNotes() {
     for (const [midi] of sustainedNotes) {
         if (sustainedNoteExpired(midi)) {
             sustainedNotes.delete(midi);
+            // Remove from keyboard highlights if no longer expected
             expectedMidiTreble.delete(midi);
             expectedMidiBass.delete(midi);
         }
@@ -2839,6 +2792,7 @@ function cleanExpiredSustainedNotes() {
 function rebuildKeyboardHighlights() {
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
+    // Current step notes
     if (spawnTrainingNote._noteTrackMap) {
         currentChordNotes.forEach(midi => {
             const track = spawnTrainingNote._noteTrackMap.get(midi);
@@ -2846,6 +2800,7 @@ function rebuildKeyboardHighlights() {
             else if (track === BASS) expectedMidiBass.add(midi);
         });
     }
+    // Sustained notes from other hand
     for (const [midi, s] of sustainedNotes) {
         if (!sustainedNoteExpired(midi)) {
             if (s.track === TREBLE) expectedMidiTreble.add(midi);
@@ -2856,30 +2811,62 @@ function rebuildKeyboardHighlights() {
 
 // ====== HOLD COUNTDOWN ======
 (function startHoldCountdownLoop() {
-    const el = document.getElementById('statHold');
+    const el  = document.getElementById('statHold');
     const pel = document.getElementById('panelStatHold');
+
+    // Find the label spans next to the stat values so we can swap "Hold for" ↔ "Notes left"
+    // #statsBar uses a plain <span> (no class); #panelStatsCard uses .ctrl-stat-label
+    const labelEl  = el  ? (el.parentElement.querySelector('span:last-child'))  : null;
+    const labelPel = pel ? (pel.parentElement.querySelector('.ctrl-stat-label') || pel.parentElement.querySelector('span:last-child')) : null;
+
     setInterval(() => {
-        let val, color;
-        if (clefMode === 'both' && _bgCountdownStartMs !== null && _beatGroupNotes.length > 0) {
-            // Both-hands mode: countdown for the final hold
-            const lastNote = _beatGroupNotes[_beatGroupNotes.length - 1].note;
-            const groupEndSec = lastNote.playTime ?? lastNote.time;
-            const holdDurMs = ((groupEndSec - (_beatGroupCurrentPlayTime ?? groupEndSec)) + lastNote.duration) * 1000 / speedMultiplier;
-            const remaining = Math.max(0, (holdDurMs - (performance.now() - _bgCountdownStartMs)) / 1000);
-            val = remaining.toFixed(1) + 's';
-            color = remaining < 0.3 ? '#22c55e' : '';
-        } else if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+        let val, color, label;
+
+        if (noteHoldStartTime !== null && expectedHoldDuration > 0) {
+            // ── Active hold phase: count down remaining time ──
+            // noteHoldStartTime is set the moment the correct note is pressed.
             const remaining = Math.max(0,
                 (expectedHoldDuration - (performance.now() - noteHoldStartTime)) / 1000
             );
-            val = remaining.toFixed(1) + 's';
+            val   = remaining.toFixed(1) + 's';
             color = remaining < 0.3 ? '#22c55e' : '';
+            label = 'Hold for';
+
+        } else if (clefMode === 'both' && _bgCountdownStartMs !== null && _beatGroupNotes.length > 0) {
+            // ── Both-hands sub-note traversal: show slots-remaining progress ──
+            // Use _beatGroupCurrentPlayTime (the slot-advance tracker) to count done slots.
+            // Do NOT use _beatGroupPressed — the same midi number can appear at multiple
+            // time slots (e.g. G5 at t=0.000 and t=0.231), so pressing it at slot 2 would
+            // incorrectly mark slot 1 as done, causing the count to jump around.
+            const allSlots = [...new Set(
+                _beatGroupNotes.map(({ note: n }) => (n.playTime ?? n.time).toFixed(4))
+            )].sort();
+            const totalSlots = allSlots.length;
+            const curKey = _beatGroupCurrentPlayTime !== null
+                ? _beatGroupCurrentPlayTime.toFixed(4) : allSlots[0];
+            const curIdx    = allSlots.indexOf(curKey);
+            const doneSlots = Math.max(0, curIdx);
+            const leftSlots = totalSlots - doneSlots;
+            val   = leftSlots + '/' + totalSlots;
+            color = leftSlots <= 1 ? '#22c55e' : '#FFC107';
+            label = 'Notes left';
+
+        } else if (expectedHoldDuration > 0 && (trainingActive || waitingForInput)) {
+            // ── Waiting for first press: show full required duration as a static hint ──
+            val   = (expectedHoldDuration / 1000).toFixed(1) + 's';
+            color = '#aaa';
+            label = 'Hold for';
+
         } else {
-            val = '—';
+            val   = '—';
             color = '';
+            label = 'Hold for';
         }
+
         if (el)  { el.textContent  = val; el.style.color  = color; }
         if (pel) { pel.textContent = val; pel.style.color = color; }
+        if (labelEl  && labelEl.textContent  !== label) labelEl.textContent  = label;
+        if (labelPel && labelPel.textContent !== label) labelPel.textContent = label;
     }, 50);
 })();
 
@@ -2891,113 +2878,12 @@ let chordNotesCompleted = new Set();
 let freeModeActiveNote = null;
 let mouseDown = false;
 let freeModeReleaseTimer = null;
-// ── Sustained note release (single-hand mode) ─────────────────────────────────
-function handleSustainedNoteRelease(midiNote) {
-    if (!sustainedNotes.has(midiNote)) return false;
-    if (sustainedNoteExpired(midiNote)) {
-        sustainedNotes.delete(midiNote);
-        return false;
-    }
-    // Released too early — flag error, keep highlighting
-    midiPressedNotes.delete(midiNote);
-    if (synth) synth.triggerRelease(getNoteName(midiNote));
-    rebuildKeyboardHighlights();
-    const feedback = document.getElementById('feedback');
-    const s = sustainedNotes.get(midiNote);
-    const remaining = Math.max(0, (s.requiredDurationMs - (performance.now() - s.startTime)) / 1000);
-    feedback.innerHTML = `Keep holding <strong>${getNoteName(midiNote)}</strong>! ${remaining.toFixed(1)}s remaining`;
-    feedback.classList.remove('correct', 'wrong', 'show');
-    void feedback.offsetWidth;
-    feedback.classList.add('wrong', 'show');
-    return true;
-}
-
-// Core hold evaluation — called from mouseup, touchend, and MIDI noteOff.
-function evaluateHoldOnRelease(releasedMidi) {
-    // In both-hands mode: enforce sustained holds via the _bgHeldNotes registry.
-    if (clefMode === 'both') {
-        if (synth) synth.triggerRelease(getNoteName(releasedMidi));
-        midiPressedNotes.delete(releasedMidi);
-        _bgCheckEarlyRelease(releasedMidi);
-        return true;
-    }
-
-    if (handleSustainedNoteRelease(releasedMidi)) return true;
-
-    if (noteHoldStartTime === null) return false;
-
-    const heldTime = performance.now() - noteHoldStartTime;
-
-    if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return true; }
-    holdEvaluated = true;
-
-    const feedback = document.getElementById('feedback');
-
-    if (heldTime >= expectedHoldDuration) {
-        feedback.textContent = 'Good!';
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('correct', 'show');
-        explanationLocked = false;
-
-        waitingForInput = false;
-        expectedMidiNote = null;
-
-        // Save the hold start time NOW, before it gets cleared at the end of this function.
-        _lastHoldStartTime = noteHoldStartTime;
-
-        // In both-hands mode: move the completed notes into sustainedNotes
-        // so they remain required while the other hand continues
-        if (clefMode === 'both') {
-            currentChordNotes.forEach(midi => {
-                sustainedNotes.delete(midi);
-            });
-            // Clean up expired sustained notes from the other hand
-            cleanExpiredSustainedNotes();
-            rebuildKeyboardHighlights();
-        } else {
-            expectedMidiTreble.clear();
-            expectedMidiBass.clear();
-        }
-
-        advanceChordIndex();
-        updateTrainingProgress();
-
-        document.getElementById('holdInfo').textContent = '';
-        setTimeout(() => spawnNextValidNote(), 300);
-
-    } else {
-        const heldBeats    = heldTime / 1000 / secondsPerBeat;
-        const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
-        feedback.innerHTML =
-            `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('wrong', 'show');
-
-        const holdEl = document.getElementById('holdInfo');
-        holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
-
-        _lastHoldStartTime = null; // retry — no carry-forward should happen
-        if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
-        retryTimeout = setTimeout(() => {
-            if (trainingIndex < practiceNotes.length) {
-                spawnTrainingNote(practiceNotes[trainingIndex]);
-            }
-        }, 600);
-    }
-
-    noteHoldStartTime = null;
-    _lastHoldStartTime = null; // cleared here; was already saved above before this line
-    activeMidiNote = null;
-    return true;
-}
-
 let lastMouseMidi = null;
 let touchActive = false;
 let activeTouches = new Map();
-    
-// ── Mouse click-to-latch ──────────────────────────────────────────────────────
+
+// ====== MOUSE CLICK-TO-LATCH SYSTEM ======
+// Lets users click notes one-by-one to build up chords with a single mouse.
 // Each clicked note stays "latched" (sustained) for the entire beat.
 // All latches are cleared automatically when advancing to the next beat.
 const mouseLatchedNotes = new Set();
@@ -3018,17 +2904,20 @@ function mouseClearAllLatches() {
 }
 
 function mouseToggleLatch(midiNote) {
+    // If already latched, unlatch (toggle off)
     if (mouseLatchedNotes.has(midiNote)) {
         mouseReleaseLatch(midiNote);
         return;
     }
+    // Latch the note: treat it as physically held for the whole beat
     mouseLatchedNotes.add(midiNote);
 }
 
 function isMouseInputActive() {
+    // Returns true if input came from mouse (not touch/MIDI)
     return !touchActive;
 }
-
+    
 function hardStopUserNote() {
     if (!synth) return;
 
@@ -3118,7 +3007,7 @@ const ctx = canvas.getContext('2d');
 let scoreModeActive = false;
 let scoreNoteOffset = 0;
 let scoreCurrentPage = 1;
-const SCORE_TOTAL_PAGES = 3;
+const SCORE_TOTAL_PAGES = 2;
 const scoreCanvases = {};
 let pdfjsLib = null;
 let pdfDoc = null;
@@ -3290,11 +3179,11 @@ function drawKeyboard() {
             wGrad.addColorStop(0, '#D1FAE5');
             wGrad.addColorStop(1, '#6EE7B7');
         } else if (isTreble) {
-            wGrad.addColorStop(0, '#FFCDD2');
-            wGrad.addColorStop(1, '#EF9A9A');
+            wGrad.addColorStop(0, '#E8C8E8');
+            wGrad.addColorStop(1, '#7B1F5A');
         } else if (isBass) {
-            wGrad.addColorStop(0, '#DDD6FE');
-            wGrad.addColorStop(1, '#A78BFA');
+            wGrad.addColorStop(0, '#FFECB3');
+            wGrad.addColorStop(1, '#FFB300');
         } else {
             wGrad.addColorStop(0, '#ffffff');
             wGrad.addColorStop(0.7, '#f5f5f5');
@@ -3335,24 +3224,24 @@ function drawKeyboard() {
 
         // Glow for active treble key
         if (isTreble && !isSustainedHold) {
-            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowColor = '#C060A0';
             ctx.shadowBlur = 18;
-            ctx.fillStyle = 'rgba(255,107,107,0.15)';
+            ctx.fillStyle = 'rgba(160,40,120,0.18)';
             ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
             ctx.shadowBlur = 0;
         }
 
         // Glow for active bass key
         if (isBass && !isSustainedHold) {
-            ctx.shadowColor = '#7C3AED';
+            ctx.shadowColor = '#FDE047';
             ctx.shadowBlur = 18;
-            ctx.fillStyle = 'rgba(167,139,250,0.18)';
+            ctx.fillStyle = 'rgba(253,224,71,0.15)';
             ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
             ctx.shadowBlur = 0;
         }
 
         if (showNoteNames) {
-            ctx.fillStyle = isSustainedHold ? '#065F46' : isBass ? '#4C1D95' : '#555';
+            ctx.fillStyle = isBass ? '#78350F' : (isTreble ? '#F5D0F0' : '#555');
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -3393,11 +3282,11 @@ function drawKeyboard() {
             bGrad.addColorStop(0, '#A7F3D0');
             bGrad.addColorStop(1, '#059669');
         } else if (isTreble) {
-            bGrad.addColorStop(0, '#EF9A9A');
-            bGrad.addColorStop(1, '#E57373');
+            bGrad.addColorStop(0, '#E8C8E8');
+            bGrad.addColorStop(1, '#7B1F5A');
         } else if (isBass) {
-            bGrad.addColorStop(0, '#A78BFA');
-            bGrad.addColorStop(1, '#7C3AED');
+            bGrad.addColorStop(0, '#FEF9C3');
+            bGrad.addColorStop(1, '#CA8A04');
         } else {
             bGrad.addColorStop(0, '#333');
             bGrad.addColorStop(0.5, '#111');
@@ -3433,9 +3322,9 @@ function drawKeyboard() {
 
         // Glow for active treble
         if (isTreble && !isSustainedHold) {
-            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowColor = '#C060A0';
             ctx.shadowBlur = 20;
-            ctx.fillStyle = 'rgba(255,107,107,0.4)';
+            ctx.fillStyle = 'rgba(160,40,120,0.45)';
             ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
             ctx.shadowBlur = 0;
         }
@@ -3494,14 +3383,50 @@ function blackKeyGroupForMidi(midi) {
 // =======================================
 // SHARED USER NOTE HANDLER (MIDI + MOUSE)
 // =======================================
+// ===== MOUSE DEBUG HELPERS =====
+let _dbgClicks = 0;
+let _dbgSwallowed = 0;
+const _dbgEventLog = [];
+function _dbgLog(msg) {
+    const ts = performance.now().toFixed(0);
+    const entry = `[${ts}ms] ${msg}`;
+    _dbgEventLog.unshift(entry);
+    if (_dbgEventLog.length > 6) _dbgEventLog.pop();
+    console.log('[MouseDebug]', entry);
+}
+function _dbgUpdate() {
+    const panel = document.getElementById('mouseDebug');
+    if (!panel || panel.style.display === 'none') return;
+    document.getElementById('dbg-click-count').textContent  = `Clicks registered: ${_dbgClicks}`;
+    document.getElementById('dbg-swallowed').textContent    = `Swallowed (guard fired): ${_dbgSwallowed}`;
+    document.getElementById('dbg-latch-state').textContent  = `Latched: [${[...mouseLatchedNotes].map(m=>getNoteName(m)).join(', ')||'—'}]`;
+    document.getElementById('dbg-pressed-state').textContent= `midiPressed: [${[...midiPressedNotes].map(m=>getNoteName(m)).join(', ')||'—'}]`;
+    document.getElementById('dbg-last-event').textContent   = `Log: ${_dbgEventLog[0]||'—'}`;
+    document.getElementById('dbg-hold-state').textContent   = `holdEvaluated: ${holdEvaluated} | holdRunning: ${noteHoldStartTime !== null}`;
+    document.getElementById('dbg-training-state').textContent = `trainingActive: ${trainingActive} | waitingForInput: ${waitingForInput}`;
+}
+// Poll to keep the panel live while visible
+setInterval(() => { if (document.getElementById('mouseDebug')?.style.display !== 'none') _dbgUpdate(); }, 100);
+document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        const panel = document.getElementById('mouseDebug');
+        if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+});
+// ================================
+
 function processUserNoteOn(midiNote) {
 
 // Guard: ignore repeated noteOn for a note that's already held.
 // MIDI keyboards send repeated noteOn while a key is held; without this,
 // hardStopUserNote() below resets noteHoldStartTime on every repeat,
 // making the hold timer restart and causing multiple spawnTrainingNote calls.
-const isBgHeldRepress = clefMode === 'both' && _bgHeldNotes.has(midiNote);
-if (!freeMode && midiPressedNotes.has(midiNote) && !isBgHeldRepress) return;
+if (!freeMode && midiPressedNotes.has(midiNote)) {
+    _dbgSwallowed++;
+    _dbgLog(`SWALLOWED midi=${midiNote} — already in midiPressedNotes | latched=${[...mouseLatchedNotes].join(',')} | holdEval=${holdEvaluated} | holdTime=${noteHoldStartTime !== null}`);
+    _dbgUpdate();
+    return;
+}
 
 if (previewMode) return;
 
@@ -3541,86 +3466,13 @@ if (!trainingActive) return;
 const noteName = getNoteName(midiNote);
 const feedback = document.getElementById('feedback');
 
-// ====== BOTH-HANDS BEAT GROUP MODE ======
-if (clefMode === 'both') {
-    // Sustained = notes already in _bgHeldNotes (carried from a prior sub-slot).
-    // New = notes appearing for the first time in the current slot.
-    const sustainedRequired = Array.from(currentChordNotes).filter(m => _bgHeldNotes.has(m));
-    const newRequired       = Array.from(currentChordNotes).filter(m => !_bgHeldNotes.has(m));
-    const allExpected       = [...new Set([...sustainedRequired, ...newRequired])];
-
-    // Wrong note check
-    if (!allExpected.includes(midiNote)) {
-        const firstNew = newRequired[0] ?? allExpected[0];
-        const explanation = explainWrongNote(midiNote, firstNew);
-        feedback.textContent = explanation;
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('wrong', 'show');
-        failureCount++;
-        statsWrong++;
-        statsTotalAttempts++;
-        statsCombo = 0;
-        updateStatsBar();
-        document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
-        document.getElementById('pressedNoteCircle').className = 'note-circle wrong';
-        document.getElementById('correctNoteCircle').textContent = getNoteName(firstNew ?? midiNote);
-        return;
-    }
-
-    // Correct note
-    document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
-    document.getElementById('pressedNoteCircle').className = 'note-circle correct';
-    document.getElementById('correctNoteCircle').textContent = noteName;
-    explanationLocked = false;
-    showBlackKeyArrow = false;
-    arrowTargetGroup = null;
-    failureCount = 0;
-    statsPerfect++;
-    statsTotalAttempts++;
-    statsCombo++;
-    updateStatsBar();
-
-    _beatGroupPressed.add(midiNote);
-    midiPressedNotes.add(midiNote);
-
-    ensureSynth();
-    synth.triggerAttack(noteName);
-    activeMidiNote = midiNote;
-
-    // If this note is in the must-hold registry (re-press after early release),
-    // restart the group timer and wait for the hold to complete.
-    if (_bgRestartHoldTimer(midiNote)) {
-        return;
-    }
-
-    const allNewPressed       = newRequired.every(m => _beatGroupPressed.has(m));
-    const allSustainedStillOn = sustainedRequired.every(m => midiPressedNotes.has(m));
-    const allCurrentPressed   = allNewPressed && allSustainedStillOn;
-
-    if (allCurrentPressed) {
-        if (_bgCountdownStartMs === null) _bgCountdownStartMs = performance.now();
-        _advanceBeatGroupSubNote();
-    } else {
-        const missingNew       = newRequired.filter(m => !_beatGroupPressed.has(m));
-        const missingSustained = sustainedRequired.filter(m => !midiPressedNotes.has(m));
-        if (missingSustained.length > 0) {
-            feedback.innerHTML = `🟢 KEEP holding the green note${missingSustained.length > 1 ? 's' : ''}: <strong style="color:#10B981">${missingSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
-        } else {
-            feedback.textContent = `Also play: ${missingNew.map(m => getNoteName(m)).join(' + ')}`;
-        }
-        feedback.classList.remove('correct', 'wrong', 'show');
-        void feedback.offsetWidth;
-        feedback.classList.add('wrong', 'show');
-    }
-    return;
-}
-
 // Check if this is a sustained note being re-pressed (after early release)
 const isSustainedNote = sustainedNotes.has(midiNote) && !sustainedNoteExpired(midiNote);
+// In both-hands mode: also allow re-press of a note still in the hold registry
+const isBgHeldRepress = clefMode === 'both' && _bgHeldNotes.has(midiNote);
 
-// ---------- WRONG NOTE (single hand mode) ----------
-if (!currentChordNotes.has(midiNote) && !isSustainedNote) {
+// ---------- WRONG NOTE ----------
+if (!currentChordNotes.has(midiNote) && !isSustainedNote && !isBgHeldRepress) {
 
 const expectedMidi = allMidiNotes[trainingIndex].midi;
 const explanation = explainWrongNote(midiNote, expectedMidi);
@@ -3675,7 +3527,7 @@ setTimeout(() => {
 return;
 }
 
-// ---------- RE-PRESSING A SUSTAINED NOTE (single hand mode) ----------
+// ---------- RE-PRESSING A SUSTAINED NOTE ----------
 if (isSustainedNote && !currentChordNotes.has(midiNote)) {
     // User re-pressed a note they released too early — acknowledge it
     midiPressedNotes.add(midiNote);
@@ -3689,7 +3541,7 @@ if (isSustainedNote && !currentChordNotes.has(midiNote)) {
     return;
 }
 
-// ---------- CORRECT NOTE (single hand mode) ----------
+// ---------- CORRECT NOTE ----------
 document.getElementById('pressedNoteCircle').textContent =
     getNoteName(midiNote);
 
@@ -3712,56 +3564,109 @@ activeMidiNote = midiNote;
 ensureSynth();
 synth.triggerAttack(noteName);
 
-const allCurrentPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
-const allSustainedHeld = [...sustainedNotes.keys()]
-    .filter(m => !sustainedNoteExpired(m))
-    .every(m => midiPressedNotes.has(m));
-const startHold = (allCurrentPressed && allSustainedHeld) || scoreModeActive;
+if (clefMode === 'both') {
+    // ── Beat Group: note pressed ───────────────────────────────────────────
+    _beatGroupPressed.add(midiNote);
 
-if (startHold && noteHoldStartTime === null) {
-    hardStopUserNote();
-    // hardStopUserNote() clears mouseLatchedNotes — re-latch this note so the
-    // auto-evaluate setTimeout (below) and the "re-click to advance" branch in
-    // the mousedown handler can both find it.
-    mouseLatchedNotes.add(midiNote);
-    midiPressedNotes.add(midiNote);
-    const isChord = currentChordNotes.size > 1;
-    feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
-    noteHoldStartTime = performance.now();
+    // If this note is in the must-hold registry (re-press after early release),
+    // restart the group timer and wait for the hold to complete.
+    if (_bgRestartHoldTimer(midiNote)) {
+        console.log('🔁 _bgRestartHoldTimer fired for', getNoteName(midiNote), '— returning early. bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName));
+        return;
+    }
 
-    // Mouse latch: auto-evaluate the hold after expectedHoldDuration elapses,
-    // since mouseup no longer fires an evaluation for latched notes.
-    // Use the captured midiNote directly — mouseLatchedNotes may be cleared
-    // again before the timeout fires (e.g. on a wrong-note reset).
-    if (isMouseInputActive() && !touchActive) {
-        const holdDur = expectedHoldDuration;
-        const capturedNote = midiNote;
-        const capturedHoldStart = noteHoldStartTime;
-        setTimeout(() => {
-            // Only fire if we're still on the same hold session
-            if (noteHoldStartTime !== null && noteHoldStartTime === capturedHoldStart && !holdEvaluated) {
-                evaluateHoldOnRelease(capturedNote);
-            }
-        }, holdDur + 50);
+    // Determine which currentChordNotes are "new" (must be pressed) vs "sustained"
+    // (were pressed in a previous sub-slot and must still be physically held).
+    // Sustained notes are those already in _bgHeldNotes — they were carried across.
+    const sustainedRequired = Array.from(currentChordNotes).filter(m => _bgHeldNotes.has(m));
+    const newRequired       = Array.from(currentChordNotes).filter(m => !_bgHeldNotes.has(m));
+
+    // All new notes must be in _beatGroupPressed, AND all sustained notes must
+    // still be physically down (in midiPressedNotes).
+    const allNewPressed       = newRequired.every(m => _beatGroupPressed.has(m));
+    const allSustainedStillOn = sustainedRequired.every(m => midiPressedNotes.has(m));
+    const allCurrentPressed   = allNewPressed && allSustainedStillOn;
+
+    console.log('🎹 noteOn', getNoteName(midiNote), '| chord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName), '| midiPressed:', [...midiPressedNotes].map(getNoteName), '| sustReq:', sustainedRequired.map(getNoteName), '| newReq:', newRequired.map(getNoteName), '| allNewPressed:', allNewPressed, '| allSustOn:', allSustainedStillOn, '| willAdvance:', allCurrentPressed);
+
+    if (allCurrentPressed) {
+        // Start the stats countdown from the very first correct press so the
+        // stat bar counts down for the entire beat group, not just the final hold.
+        if (_bgCountdownStartMs === null) _bgCountdownStartMs = performance.now();
+        // The hold timer is started inside _advanceBeatGroupSubNote once all
+        // sub-notes have been played (nextIdx === null). Do NOT start it here —
+        // the group musical window (e.g. 437ms) is far too short for a learner
+        // to navigate D4 → D3 → G4 sequentially.
+        _advanceBeatGroupSubNote();
+    } else {
+        const missingNew       = newRequired.filter(m => !_beatGroupPressed.has(m));
+        const missingSustained = sustainedRequired.filter(m => !midiPressedNotes.has(m));
+        if (missingSustained.length > 0) {
+            feedback.innerHTML = `🟢 KEEP holding the green note${missingSustained.length > 1 ? 's' : ''}: <strong style="color:#10B981">${missingSustained.map(m => getNoteName(m)).join(' + ')}</strong>`;
+        } else {
+            feedback.textContent = `Also play: ${missingNew.map(m => getNoteName(m)).join(' + ')}`;
+        }
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
     }
-} else if (!startHold) {
-    const missingCurrent = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
-    const missingSustained = [...sustainedNotes.keys()]
-        .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m));
-    const allMissing = [...missingCurrent, ...missingSustained];
-    if (allMissing.length > 0) {
-        feedback.textContent = allMissing.length === missingCurrent.length
-            ? `Keep holding, add: ${allMissing.map(m => getNoteName(m)).join(' + ')}`
-            : `Keep holding all: ${allMissing.map(m => getNoteName(m)).join(' + ')}`;
+
+} else {
+    // ── Single-hand mode: hold-timer logic ────────────────────────────────
+    const allCurrentPressed = Array.from(currentChordNotes).every(midi => midiPressedNotes.has(midi));
+    const allSustainedHeld = [...sustainedNotes.keys()]
+        .filter(m => !sustainedNoteExpired(m))
+        .every(m => midiPressedNotes.has(m));
+    const startHold = (allCurrentPressed && allSustainedHeld) || scoreModeActive;
+
+    if (startHold && noteHoldStartTime === null) {
+        hardStopUserNote();
+        // hardStopUserNote() clears mouseLatchedNotes — re-latch this note so the
+        // auto-evaluate setTimeout (below) and the "re-click to advance" branch in
+        // the mousedown handler can both find it.
+        mouseLatchedNotes.add(midiNote);
+        midiPressedNotes.add(midiNote);
+        const isChord = currentChordNotes.size > 1;
+        feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
+        noteHoldStartTime = performance.now();
+
+        // Mouse latch: auto-evaluate the hold after expectedHoldDuration elapses,
+        // since mouseup no longer fires an evaluation for latched notes.
+        // Use the captured midiNote directly — mouseLatchedNotes may be cleared
+        // again before the timeout fires (e.g. on a wrong-note reset).
+        if (isMouseInputActive() && !touchActive) {
+            const holdDur = expectedHoldDuration;
+            const capturedNote = midiNote;
+            const capturedHoldStart = noteHoldStartTime;
+            setTimeout(() => {
+                // Only fire if we're still on the same hold session
+                if (noteHoldStartTime !== null && noteHoldStartTime === capturedHoldStart && !holdEvaluated) {
+                    evaluateHoldOnRelease(capturedNote);
+                }
+            }, holdDur + 50);
+        }
+    } else if (!startHold) {
+        const missingCurrent = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
+        const missingSustained = [...sustainedNotes.keys()]
+            .filter(m => !sustainedNoteExpired(m) && !midiPressedNotes.has(m));
+        const allMissing = [...missingCurrent, ...missingSustained];
+        if (allMissing.length > 0) {
+            feedback.textContent = allMissing.length === missingCurrent.length
+                ? `Keep holding, add: ${allMissing.map(m => getNoteName(m)).join(' + ')}`
+                : `Keep holding all: ${allMissing.map(m => getNoteName(m)).join(' + ')}`;
+        }
     }
+
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('show');
+}
 }
 
-feedback.classList.remove('correct', 'wrong', 'show');
-void feedback.offsetWidth;
-feedback.classList.add('show');
-}
-
-// ── Beat-Group hold registry ──────────────────────────────────────────────────
+// ── Beat Group sustained-hold registry ───────────────────────────────────────
+// Maps midi → { requiredUntilMs } for notes that must be held for their full
+// beat-group duration. Populated when a note is pressed; checked on every release.
+const _bgHeldNotes = new Map();
 
 // Register a note as "must hold until requiredUntilMs".
 function _bgRegisterHold(midi, requiredUntilMs) {
@@ -3770,7 +3675,7 @@ function _bgRegisterHold(midi, requiredUntilMs) {
 
 // Returns the Set of midi notes that are currently being SUSTAINED (carried across
 // from a previous sub-slot) — i.e. in _bgHeldNotes but NOT in the "new" notes of
-// the current slot. Shown GREEN on the keyboard.
+// the current slot. These are shown in GREEN on the keyboard to signal "keep holding".
 function getSustainedCarriedMidis() {
     if (!_beatGroupNotes.length || _beatGroupCurrentPlayTime === null) return new Set();
     const currentSlot = _beatGroupCurrentPlayTime;
@@ -3787,6 +3692,7 @@ function getSustainedCarriedMidis() {
 }
 
 // Called on every note-off in both-hands mode.
+// Returns true if this was an early-release violation (caller must stop).
 function _bgCheckEarlyRelease(releasedMidi) {
     const held = _bgHeldNotes.get(releasedMidi);
     if (!held) return false;
@@ -3794,7 +3700,9 @@ function _bgCheckEarlyRelease(releasedMidi) {
     const now = performance.now();
     if (now >= held.requiredUntilMs) {
         _bgHeldNotes.delete(releasedMidi);
-        // Hold complete — if timer was cancelled by an earlier release, try to restart it
+        // The hold for this note is now complete. If all other held notes are also done
+        // and the beat-group timer was previously cancelled (e.g. by an earlier early-
+        // release), attempt to restart completion so the group isn't stuck.
         if (_beatGroupTimer === null) {
             const allSubNotesDone = !_beatGroupNotes.some(({ note: n }) => {
                 const t = n.playTime ?? n.time;
@@ -3809,11 +3717,13 @@ function _bgCheckEarlyRelease(releasedMidi) {
                 }, 50);
             }
         }
-        return false;
+        return false;  // hold completed — not a violation
     }
 
     // Released too early
     const remainingSec = ((held.requiredUntilMs - now) / 1000).toFixed(1);
+
+    // Cancel the beat-group completion timer so the group cannot auto-advance
     if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
 
     const feedback = document.getElementById('feedback');
@@ -3823,10 +3733,11 @@ function _bgCheckEarlyRelease(releasedMidi) {
     feedback.classList.add('wrong', 'show');
 
     rebuildKeyboardHighlights();
-    return true;
+    return true;  // early release — caller should not proceed
 }
 
 // Called when the user re-presses a note they released too early.
+// Restarts the beat-group timer for the remaining hold duration.
 function _bgRestartHoldTimer(midi) {
     const held = _bgHeldNotes.get(midi);
     if (!held) return false;
@@ -3834,10 +3745,21 @@ function _bgRestartHoldTimer(midi) {
     const now = performance.now();
     const remainingMs = Math.max(300, held.requiredUntilMs - now);
 
+    // Only restart the completion timer if ALL sub-notes in the group have
+    // already been played. If there are still sub-notes pending (i.e. a later
+    // playTime exists in the group), do NOT start _onBeatGroupComplete — the
+    // user just re-pressed a carried bass note early; they still need to play
+    // the remaining treble sub-notes. Starting the timer here would skip them.
     const allSubNotesDone = !_beatGroupNotes.some(({ note: n }) => {
         const t = n.playTime ?? n.time;
         return t > (_beatGroupCurrentPlayTime ?? -1) + 0.001;
     });
+
+    // Additional guard: the hold timer must only fire after _advanceBeatGroupSubNote
+    // has already started it (i.e. noteHoldStartTime is set for the current group).
+    // If noteHoldStartTime is null or predates the current group, the hold phase has
+    // not officially started yet — a re-press here is a carried note replayed during
+    // sub-note traversal, not a valid hold restart.
     const holdPhaseStarted = noteHoldStartTime !== null && noteHoldStartTime >= (_beatGroupStartMs ?? 0);
 
     if (_beatGroupTimer === null && allSubNotesDone && holdPhaseStarted) {
@@ -3855,10 +3777,18 @@ function _bgRestartHoldTimer(midi) {
     return true;
 }
 
-// ====== BEAT GROUP SUB-NOTE ADVANCE ======
+// ── Beat Group helpers ────────────────────────────────────────────────────────
+
+// Called after all notes in the current simultaneous slot have been pressed.
+// Finds the next distinct playTime in the group and updates currentChordNotes.
 function _advanceBeatGroupSubNote() {
     if (!_beatGroupNotes.length) return;
 
+    // Use the explicitly-tracked current slot playTime.
+    // We cannot derive it from currentChordNotes because carried-across bass notes
+    // appear in both the old and new slot — looking them up always returns the
+    // original (earlier) slot time, causing _advanceBeatGroupSubNote to find the
+    // same "next" slot repeatedly instead of advancing (the double-input bug).
     const currentPlayTime = _beatGroupCurrentPlayTime;
     if (currentPlayTime === null || currentPlayTime === undefined) return;
 
@@ -3876,10 +3806,16 @@ function _advanceBeatGroupSubNote() {
     }
 
     if (nextIdx === null) {
-        // All sub-notes played — start the hold timer for the final slot's duration.
+        // All sub-notes played — NOW start the hold timer for the last note's duration.
+        console.log('⏱ All sub-notes done. Starting hold timer. bgHeld before register:', [..._bgHeldNotes.keys()].map(getNoteName), 'bgPressed:', [..._beatGroupPressed].map(getNoteName));
+        // The last note in the group has playTime == currentPlayTime; hold it for
+        // (_beatGroupEndSec - currentPlayTime). This is the only correct place to
+        // start the timer — doing it earlier (at spawn or first chord) gave the user
+        // only ~437ms to play all sub-notes sequentially, which is far too short.
         if (_beatGroupTimer) clearTimeout(_beatGroupTimer);
         _beatGroupStartMs = performance.now();
         const holdDurMs = Math.max((_beatGroupEndSec - currentPlayTime) * 1000 / speedMultiplier, 300);
+        // Hook into the stat-bar countdown (it watches noteHoldStartTime + expectedHoldDuration)
         noteHoldStartTime = _beatGroupStartMs;
         expectedHoldDuration = holdDurMs;
         _beatGroupTimer = setTimeout(() => {
@@ -3888,6 +3824,14 @@ function _advanceBeatGroupSubNote() {
         }, holdDurMs);
 
         // Register notes that must be held through the final hold phase.
+        // IMPORTANT: only register notes still active at the final slot (i.e. in
+        // currentChordNotes). Registering ALL _beatGroupPressed notes would include
+        // notes from earlier sub-slots that have already completed (e.g. a treble
+        // quaver played at slot 1 when the final slot is slot 2). Those stale notes
+        // would appear in getSustainedCarriedMidis() — which returns _bgHeldNotes
+        // entries NOT at the current slot — and get rendered GREEN on the keyboard,
+        // creating a spurious green flash immediately after the final input press.
+        // _bgCheckEarlyRelease() will cancel the timer if any held note is released early.
         const requiredUntilMs = performance.now() + holdDurMs;
         _beatGroupPressed.forEach(midi => {
             if (currentChordNotes.has(midi)) _bgRegisterHold(midi, requiredUntilMs);
@@ -3902,9 +3846,12 @@ function _advanceBeatGroupSubNote() {
     }
 
     _beatGroupIndex = nextIdx;
-    _beatGroupCurrentPlayTime = nextPlayTime;
+    _beatGroupCurrentPlayTime = nextPlayTime; // advance the explicit slot tracker
 
-    // Rebuild currentChordNotes for the next simultaneous slot (new + held-across).
+    // Rebuild currentChordNotes for the next simultaneous slot.
+    console.log('➡ Advancing to slot at nextPlayTime=', nextPlayTime?.toFixed(4), 'nextIdx=', nextIdx);
+    // IMPORTANT: also include any notes from earlier slots whose duration
+    // extends into this slot — those must still be physically held.
     currentChordNotes.clear();
     if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
     const noteTrackMap = spawnTrainingNote._noteTrackMap;
@@ -3912,7 +3859,9 @@ function _advanceBeatGroupSubNote() {
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         const tEnd = t + n.duration;
+        // New notes AT this slot
         const isAtSlot = Math.abs(t - nextPlayTime) < 0.01;
+        // Earlier notes whose duration spans past this slot's start time
         const isHeldAcross = t < nextPlayTime - 0.001 && tEnd > nextPlayTime + 0.05;
         if (isAtSlot || isHeldAcross) {
             currentChordNotes.add(n.midi);
@@ -3920,7 +3869,16 @@ function _advanceBeatGroupSubNote() {
         }
     }
 
-    // Clear _bgHeldNotes for notes that do NOT carry across into this slot.
+    // For sustained notes that carry across, pre-populate _beatGroupPressed so
+    // they aren't treated as "missing" — they only need to stay held, not re-pressed.
+    // (They were already pressed in an earlier slot.)
+    // Also register them in _bgHeldNotes so any release is caught immediately.
+    //
+    // IMPORTANT: first, clear _bgHeldNotes for any notes that do NOT carry across
+    // into this slot. Without this, notes registered in the previous slot's completion
+    // (e.g. short treble quavers) stay in _bgHeldNotes, causing _bgRestartHoldTimer
+    // to fire when the user presses the next note — blocking _advanceBeatGroupSubNote
+    // and requiring a second press to advance (the "double input" bug).
     const carriedAcrossMidis = new Set();
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
@@ -3932,36 +3890,48 @@ function _advanceBeatGroupSubNote() {
         if (!carriedAcrossMidis.has(midi)) _bgHeldNotes.delete(midi);
     }
 
-    // Remove NEW notes (not carried) from _beatGroupPressed AND midiPressedNotes
-    // so same-midi notes in consecutive slots must be physically re-pressed.
+    // Remove NEW notes (not carried across) from _beatGroupPressed AND midiPressedNotes
+    // so that midi numbers reused across slots (e.g. A4 at slot 0.0000 AND slot 0.3462)
+    // must be physically re-pressed in the new slot.
+    //
+    // Without removing from _beatGroupPressed: allNewPressed evaluates true immediately
+    // (from the earlier press) and the slot auto-advances without user input.
+    //
+    // Without removing from midiPressedNotes: the guard at the top of processUserNoteOn
+    // ("if midiPressedNotes.has(midiNote) return") fires and silently swallows the user's
+    // press — they have to physically release and re-press the key (the "double press" bug
+    // on semiquaver clusters where the same note appears in consecutive slots).
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         if (Math.abs(t - nextPlayTime) < 0.01 && !carriedAcrossMidis.has(n.midi)) {
             _beatGroupPressed.delete(n.midi);
             midiPressedNotes.delete(n.midi);
-            if (typeof mouseLatchedNotes !== 'undefined') mouseLatchedNotes.delete(n.midi);
+            mouseLatchedNotes.delete(n.midi); // Fix: prevent stale latch from causing double-click
         }
     }
 
-    // Pre-populate _beatGroupPressed for carried notes; register them in _bgHeldNotes.
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
         const tEnd = t + n.duration;
         const isHeldAcross = t < nextPlayTime - 0.001 && tEnd > nextPlayTime + 0.05;
         if (isHeldAcross) {
             _beatGroupPressed.add(n.midi);
+            // Register hold until the end of this note's duration (or beat group end)
             const holdUntilSec = Math.min(tEnd, _beatGroupEndSec);
             const holdUntilMs = performance.now() + (holdUntilSec - nextPlayTime) * 1000 / speedMultiplier;
             _bgRegisterHold(n.midi, holdUntilMs);
         }
     }
 
+    console.log('🔗 After slot advance: currentChord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName));
+
     // Update target display
     const firstNote = practiceNotes[nextIdx];
     currentTrainingNote = getNoteName(firstNote.midi);
     setTargetNote(currentTrainingNote);
 
-    const newNotes  = [];
+    // Build separate lists: notes to press new vs notes already held that must continue
+    const newNotes = [];
     const heldNotes = [];
     for (const { note: n } of _beatGroupNotes) {
         const t = n.playTime ?? n.time;
@@ -3973,8 +3943,20 @@ function _advanceBeatGroupSubNote() {
         }
     }
 
-    // Skip slots with zero new notes — only carry-across sustains, no visible change needed.
+    // Also recurse immediately when newNotes.length === 0: this slot has no
+    // genuinely-new notes to press — only carried-across sustains. Rendering it
+    // would call rebuildKeyboardHighlights() (green keyboard flash) and then
+    // _applyHighlight([]) (blank score), producing a visible green flash with no
+    // score highlight before the next real slot is shown. Skip it entirely.
+    //
+    // NOTE: We intentionally do NOT skip when newRequired notes happen to already
+    // be in _beatGroupPressed. The press that triggered _advanceBeatGroupSubNote
+    // was added to _beatGroupPressed (line ~3452) BEFORE this function ran, so
+    // it would falsely satisfy the next slot immediately — causing the double-press
+    // bug on semiquavers (sixteenth notes). Each new slot must always wait for a
+    // fresh physical press by the user.
     if (newNotes.length === 0) {
+        console.log('⏭ Slot at', nextPlayTime?.toFixed(4), '— no new notes, only carry-across — skipping visual, recursing');
         _advanceBeatGroupSubNote();
         return;
     }
@@ -4000,22 +3982,27 @@ function _advanceBeatGroupSubNote() {
             currentChordNotes.size > 1 ? `Play: ${allNames}` : `Play: ${currentTrainingNote}`;
 
         // Update SVG score highlight to the new sub-slot.
+        // onTrainingNoteSpawned only fires once at beat-group spawn (for the first sub-slot),
+        // so sub-slot advances here never update the score highlight — this fixes that.
         const seen = new Set();
         const allIndices = [];
         const colorMap = new Map();
+
+        // New sub-slot notes → purple/gold (default clef color, no entry in colorMap needed)
         for (const { note: n } of _beatGroupNotes) {
             const t = n.playTime ?? n.time;
-            if (Math.abs(t - nextPlayTime) >= 0.01) continue;
+            if (Math.abs(t - nextPlayTime) >= 0.01) continue; // only notes AT this new slot
             const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
             if (seen.has(k)) continue;
             seen.add(k);
-            if (typeof _svgIndicesForMidiNote === 'function') {
-                allIndices.push(..._svgIndicesForMidiNote(n, 'both'));
-            }
+            allIndices.push(..._svgIndicesForMidiNote(n, 'both'));
         }
-        if (allIndices.length > 0 && typeof _applyHighlight === 'function') {
-            _applyHighlight(allIndices, colorMap);
-        }
+
+        // Sustained carry-across notes are already indicated by green keyboard keys.
+        // Do NOT re-highlight them on the score at their old position — that causes
+        // stray green highlights on notes that are no longer the "current" chord.
+
+        if (allIndices.length > 0) _applyHighlight(allIndices, colorMap);
     }
 }
 
@@ -4028,8 +4015,8 @@ function _onBeatGroupComplete() {
     feedback.classList.remove('correct', 'wrong', 'show');
     void feedback.offsetWidth;
     feedback.classList.add('correct', 'show');
-    explanationLocked = false;
 
+    explanationLocked = false;
     waitingForInput   = false;
     expectedMidiNote  = null;
 
@@ -4047,21 +4034,20 @@ function _onBeatGroupComplete() {
     _beatGroupCurrentPlayTime = null;
     _bgHeldNotes.clear();
     sustainedNotes.clear();
-    if (typeof mouseClearAllLatches === 'function') mouseClearAllLatches();
+    mouseClearAllLatches();
     expectedMidiTreble.clear();
     expectedMidiBass.clear();
     noteHoldStartTime = null;
     activeMidiNote    = null;
-    document.getElementById('holdInfo').textContent = '';
-    currentChordNotes.clear();
-    midiPressedNotes.clear();
-    if (synth) synth.releaseAll();
+    holdEvaluated     = true;
 
     updateTrainingProgress();
+    document.getElementById('holdInfo').textContent = '';
     setTimeout(() => spawnNextValidNote(), 300);
 }
 
 function isBlackKey(noteName) { return noteName.includes("#"); }
+
 function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const x = noteToX(midiNumber);
 
@@ -4069,20 +4055,6 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const TOP_GAP = 10;
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
-
-    const gradient = ctx.createLinearGradient(0, startY, 0, startY + height);
-
-    if (track === TREBLE) {
-        gradient.addColorStop(0.00, "rgba(255,200,200,0.92)");
-        gradient.addColorStop(0.25, "rgba(255,150,150,0.88)");
-        gradient.addColorStop(0.65, "rgba(229,115,115,0.90)");
-        gradient.addColorStop(1.00, "rgba(239,83,80,0.94)");
-    } else if (track === BASS) {
-        gradient.addColorStop(0.00, "rgba(221,214,254,0.92)");
-        gradient.addColorStop(0.25, "rgba(196,181,253,0.88)");
-        gradient.addColorStop(0.65, "rgba(167,139,250,0.90)");
-        gradient.addColorStop(1.00, "rgba(124,58,237,0.94)");
-    }
 
     fallingRectangles.push({
         midi: midiNumber,
@@ -4097,7 +4069,7 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         width: getWhiteKeyWidth() * 0.86,
         height,
 
-        gradient,
+        gradient: null, // recomputed per-frame at actual rect.y so colours show correctly
         startTime: noteStartTime,
         landed: false,
     });
@@ -4139,18 +4111,30 @@ function spawnTrainingNote(noteObj) {
         sustainedNotes.clear();
         return;
     }
+
     // ── Both-hands: clear old sustain state (beat group model replaces it) ──
     sustainedNotes.clear();
-    hardStopUserNote();
+    if (clefMode === 'both' && _beatGroupTimer) {
+        clearTimeout(_beatGroupTimer);
+        _beatGroupTimer = null;
+    }
+
+    // ── Standard setup ──────────────────────────────────────────────────────────
+    if (clefMode === 'both') {
+        activeMidiNote = null;
+        noteHoldStartTime = null;
+        _bgCountdownStartMs = null;
+    } else {
+        hardStopUserNote();
+    }
+    midiPressedNotes.clear();
+
     trainingActive = true;
-    visualsPlaying = !scoreModeActive;  // no falling notes to animate in score mode
+    visualsPlaying = !scoreModeActive;
     fallingRectangles = [];
 
     previewTimeouts.forEach(t => clearTimeout(t));
     previewTimeouts = [];
-
-    // Clean up any prior beat group timer
-    if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
 
     const noteName = getNoteName(noteObj.midi);
     const beats = noteObj.duration / secondsPerBeat;
@@ -4161,17 +4145,18 @@ function spawnTrainingNote(noteObj) {
     waitingForInput = true;
     failureCount = 0;
 
+    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
+
     currentChordNotes.clear();
     chordNotesCompleted.clear();
-    midiPressedNotes.clear();
-    
-    // Store per-note track so we can highlight correctly
+
     if (!spawnTrainingNote._noteTrackMap) spawnTrainingNote._noteTrackMap = new Map();
     const noteTrackMap = spawnTrainingNote._noteTrackMap;
     noteTrackMap.clear();
+
+    currentChordNotes.add(noteObj.midi);
     noteTrackMap.set(noteObj.midi, noteObj.track);
 
-    // ====== BOTH-HANDS BEAT GROUP MODE ======
     if (clefMode === 'both') {
         // ── Beat Group Model ─────────────────────────────────────────────────────
         // Build the complete beat group: all notes (both hands) that must be played
@@ -4180,13 +4165,11 @@ function spawnTrainingNote(noteObj) {
         //
         // Example: bass crotchet (0-0.437s) + treble quaver (0-0.218s)
         //          + treble quaver (0.231-0.449s) => window=0.449s, all three grouped.
-        // The bass crotchet turns GREEN to signal "keep holding" while you play quavers.
 
         _beatGroupNotes   = [];
         _beatGroupPressed = new Set();
         _bgHeldNotes.clear();  // clear stale hold registry so retried chords require all notes fresh
         _beatGroupStartMs = null;
-        _bgCountdownStartMs = null;
         _beatGroupIndex   = trainingIndex;
         _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time; // initialize to first slot's time
 
@@ -4261,94 +4244,52 @@ function spawnTrainingNote(noteObj) {
             rebuildKeyboardHighlights();
         }
 
-        // Count distinct playTimes for logging
-        const distinctTimes = [...new Set(
-            _beatGroupNotes.map(({note}) => Math.round((note.playTime ?? note.time) * 1000))
-        )];
-        console.log('🎹 spawnTrainingNote [BOTH]: index=' + trainingIndex + ' group=' + _beatGroupNotes.length + ' slots=' + distinctTimes.length + ' first=' + [...currentChordNotes].map(m => getNoteName(m)).join('+'));
-        if (typeof onTrainingNoteSpawned === 'function') onTrainingNoteSpawned(noteObj);
-        return;
-    }
-
-    // ====== SINGLE HAND MODE ======
-    expectedHoldDuration = (noteObj.duration * 1000) / speedMultiplier;
-
-    currentChordNotes.add(noteObj.midi);
-
-    // Look ahead for simultaneous notes (within 10ms) — same track only
-    for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
-        const nextNote = practiceNotes[i];
-        const currentPlayTime = noteObj.playTime ?? noteObj.time;
-        const nextPlayTime = nextNote.playTime ?? nextNote.time;
-
-        if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
-            if (nextNote.track === noteObj.track) {
+    } else {
+        // ── Single-hand mode: original logic ────────────────────────────────────
+        for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
+            const nextNote = practiceNotes[i];
+            const currentPlayTime = noteObj.playTime ?? noteObj.time;
+            const nextPlayTime = nextNote.playTime ?? nextNote.time;
+            if (Math.abs(nextPlayTime - currentPlayTime) < 0.01) {
                 currentChordNotes.add(nextNote.midi);
                 noteTrackMap.set(nextNote.midi, nextNote.track);
+            } else {
+                break;
             }
+        }
+
+        const isChord = currentChordNotes.size > 1;
+        const holdEl = document.getElementById('holdInfo');
+        const sustainedActive = [...sustainedNotes.keys()].filter(m => !sustainedNoteExpired(m));
+        if (sustainedActive.length > 0) {
+            const newNoteNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
+            const sustainNames = sustainedActive.map(m => getNoteName(m)).join(' + ');
+            holdEl.innerHTML = `Keep holding <strong>${sustainNames}</strong> + play ${newNoteNames} (hold <span class="music-symbol">${beatLabel}</span>)`;
+        } else if (isChord) {
+            holdEl.innerHTML = `Click each note: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} &nbsp;<span style="opacity:0.6;font-size:0.85em">(clicks latch for the beat)</span>`;
         } else {
-            break;
+            holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
+        }
+
+        noteHoldStartTime = null;
+        holdEvaluated = false;
+        setTargetNote(noteName);
+
+        if (scoreModeActive) {
+            rebuildKeyboardHighlights();
+            document.getElementById('scoreKeyboardLabel').textContent =
+                isChord
+                    ? `Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
+                    : `Play: ${noteName}`;
+        } else {
+            currentChordNotes.forEach(midi => {
+                addMidiFallingRectangle(midi, noteObj.duration, noteTrackMap.get(midi) ?? noteObj.track, performance.now());
+            });
+            rebuildKeyboardHighlights();
         }
     }
 
-   const isChord = currentChordNotes.size > 1;
-    
-    const holdEl = document.getElementById('holdInfo');
-    const sustainedActive = [...sustainedNotes.keys()].filter(m => !sustainedNoteExpired(m));
-    if (sustainedActive.length > 0) {
-        const newNoteNames = Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ');
-        const sustainNames = sustainedActive.map(m => getNoteName(m)).join(' + ');
-        holdEl.innerHTML = `Keep holding <strong>${sustainNames}</strong> + play ${newNoteNames} (hold <span class="music-symbol">${beatLabel}</span>)`;
-    } else if (isChord) {
-        holdEl.innerHTML = `Click each note: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')} &nbsp;<span style="opacity:0.6;font-size:0.85em">(clicks latch for the beat)</span>`;
-    } else {
-        holdEl.innerHTML = `Hold for <span class="music-symbol">${beatLabel}</span>`;
-    }
-    noteHoldStartTime = null;
-    holdEvaluated = false;
-    setTargetNote(noteName);
-    
-    if (scoreModeActive) {
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-        currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            if (trackForMidi === TREBLE) {
-                expectedMidiTreble.add(midi);
-            } else if (trackForMidi === BASS) {
-                expectedMidiBass.add(midi);
-            }
-        });
-        document.getElementById('scoreKeyboardLabel').textContent =
-            isChord
-                ? `🎹 Play: ${Array.from(currentChordNotes).map(m => getNoteName(m)).join(' + ')}`
-                : `🎹 Play: ${noteName}`;
-    } else {
-        // 🔽 CREATE FALLING NOTES FOR ALL CHORD NOTES (preserving each note's track/color)
-        currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            addMidiFallingRectangle(
-                midi,
-                noteObj.duration,
-                trackForMidi,
-                performance.now()
-            );
-        });
-
-        // 🎹 HIGHLIGHT KEYBOARD for all chord notes using their actual track
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
-        currentChordNotes.forEach(midi => {
-            const trackForMidi = noteTrackMap.get(midi) ?? noteObj.track;
-            if (trackForMidi === TREBLE) {
-                expectedMidiTreble.add(midi);
-            } else if (trackForMidi === BASS) {
-                expectedMidiBass.add(midi);
-            }
-        });
-    }
-
-    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]));
+    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]) + ' sustained=' + JSON.stringify([...sustainedNotes.keys()]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
@@ -4363,6 +4304,15 @@ function setSpeedButtonsEnabled(enabled) {
     const panelUp   = document.getElementById('panelSpeedUp');
     if (panelDown) panelDown.disabled = !enabled;
     if (panelUp)   panelUp.disabled   = !enabled;
+
+    // Beat, Counting, 1&2&, BPM — locked for the exact same period as speed
+    const ids = ['beatToggle','countToggle','subdivisionToggle',
+                 'beatBtn','countBtn','subdivBtn',
+                 'bpmInput','bpmSetBtn','bpmResetBtn'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !enabled;
+    });
 }
 
 function playMeasurePreview(startTime, clef) {
@@ -4517,19 +4467,19 @@ const visualStart =
             // If this preview note is from the repeat pass, mirror to first-pass SVG elements
             const physMeasure = getMeasureFromTime(note.time);
             const isRepeatPass = physMeasure !== null &&
-                physMeasure >= REPEAT_START + REPEAT_LEN &&
-                physMeasure <= REPEAT_END + REPEAT_LEN;
+                physMeasure > REPEAT_END + 1 &&
+                physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
             let notesToHighlight;
             if (isRepeatPass) {
-                const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+                const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                 notesToHighlight = sectionNotes.filter(n =>
                     Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
                 );
                 if (!notesToHighlight.length) {
                     // First-pass measures are not in the current range (e.g. range 36→37).
                     // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
-                    const firstPassRawTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                    const firstPassRawTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                     notesToHighlight = allMidiNotes.filter(n =>
                         Math.abs(n.time - firstPassRawTime) < 0.01
                     );
@@ -4606,6 +4556,61 @@ previewTimeouts.push(endTimeout);
 
 }
 
+// ── Skip Preview helper ──────────────────────────────────────────────────────
+window._skipPreview = function() {
+    if (!previewMode) return;
+
+    // Cancel all pending preview timeouts/intervals
+    previewTimeouts.forEach(t => {
+        if (t && t._isFakeTimeout) {
+            t._clear();
+        } else {
+            clearTimeout(t);
+        }
+    });
+    previewTimeouts.length = 0;
+
+    // Kill the listen-countdown ticker if still running
+    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
+        clearInterval(_listenCountdownTimer);
+    }
+
+    // Reset preview state
+    previewMode = false;
+    speedLocked = false;
+    scoreKeysPlaying = false;
+    setSpeedButtonsEnabled(true);
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    if (scoreModeActive) clearScoreHighlight();
+    stopMetronome();
+    if (typeof _cancelCountAudio === 'function') _cancelCountAudio();
+
+    // Hide the skip box
+    const box = document.getElementById('skipPreviewBox');
+    if (box) box.style.display = 'none';
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Your turn';
+    feedback.classList.remove('correct', 'wrong', 'show');
+
+    spawnNextValidNote();
+};
+
+// Show/hide the skip-preview box whenever previewMode changes.
+(function _patchPreviewVisibility() {
+    const box = document.getElementById('skipPreviewBox');
+    if (!box) return;
+    let _prev = false;
+    setInterval(() => {
+        if (previewMode !== _prev) {
+            _prev = previewMode;
+            box.style.display = previewMode ? 'block' : 'none';
+        }
+    }, 150);
+})();
+// ─────────────────────────────────────────────────────────────────────────────
+
 function spawnNextValidNote() {
 
     // Guard: check up-front whether the current hand filter matches ANY note in
@@ -4649,6 +4654,19 @@ function spawnNextValidNote() {
             trainingIndex++;
             updateTrainingProgress();
             continue;
+        }
+
+        // Skip grace notes — they are ornamental, not real practice steps.
+        // The bass note simultaneous with the grace is NOT skipped; it plays as step 1.
+        const graceRankEntry = _midiRankMap.get(midiKey);
+        if (graceRankEntry) {
+            const graceBucket = _svgBuckets[graceRankEntry.sheet_measure]?.[graceRankEntry.clef];
+            const graceIdx = graceBucket?.[graceRankEntry.rank];
+            if (graceIdx !== undefined && _svgNoteElements[graceIdx]?.isGrace) {
+                trainingIndex++;
+                updateTrainingProgress();
+                continue;
+            }
         }
 
         const isTreble = note.track === TREBLE;
@@ -4702,14 +4720,45 @@ function spawnNextValidNote() {
 // grace note as if the section had looped.
 function advanceChordIndex() {
     if (!practiceNotes[trainingIndex]) return;
-    const baseTime = practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time;
-    let skip = 0;
-    for (let i = trainingIndex; i < practiceNotes.length; i++) {
-        const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
-        if (Math.abs(t - baseTime) < 0.01) skip++;
-        else break;
+    const baseTime  = practiceNotes[trainingIndex].playTime ?? practiceNotes[trainingIndex].time;
+    const baseTrack = practiceNotes[trainingIndex].track;
+
+    let i = trainingIndex;
+
+    if (clefMode === 'both') {
+        // In 'both' mode: if the current step included cross-track notes at the same
+        // playTime (they were all in currentChordNotes), advance past ALL of them
+        // regardless of track. Then skip any other-track notes whose playTime is
+        // strictly before baseTime (stale interleaved steps already completed).
+
+        // Step 1: skip ALL notes at the same playTime (same or different track)
+        // — these were all presented together as one chord step.
+        while (i < practiceNotes.length) {
+            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+            if (Math.abs(t - baseTime) < 0.01) { i++; }
+            else break;
+        }
+
+        // Step 2: skip any stale other-track notes that sit before baseTime
+        // (can happen when the two hands have offset rhythms and we've already
+        //  played the other hand's earlier steps)
+        while (i < practiceNotes.length) {
+            const n = practiceNotes[i];
+            const t = n.playTime ?? n.time;
+            if (n.track !== baseTrack && t < baseTime - 0.001) { i++; }
+            else break;
+        }
+    } else {
+        // Single-hand mode: advance past all notes at same playTime (original logic)
+        while (i < practiceNotes.length) {
+            const t = practiceNotes[i].playTime ?? practiceNotes[i].time;
+            if (Math.abs(t - baseTime) < 0.01) { i++; }
+            else break;
+        }
     }
-    trainingIndex += Math.max(skip, 1);
+
+    // Ensure we advance by at least 1
+    trainingIndex = Math.max(i, trainingIndex + 1);
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -4722,19 +4771,24 @@ function startVisualCountdown(onComplete) {
     overlay.textContent = count;
 
     const tick = () => {
+        if (!countdownActive) {
+            overlay.style.display = 'none';
+            return;
+        }
         count--;
 
         if (count > 0) {
             overlay.textContent = count;
-            setTimeout(tick, 1000);
+            countdownTimeoutId = setTimeout(tick, 1000);
         } else {
             overlay.style.display = 'none';
             countdownActive = false;
+            countdownTimeoutId = null;
             onComplete();
         }
     };
 
-    setTimeout(tick, 1000);
+    countdownTimeoutId = setTimeout(tick, 1000);
 }
 
 // Animation loop
@@ -4785,14 +4839,29 @@ if (rect.y > canvas.height) {
     return false;
 }
 
-ctx.fillStyle = rect.gradient;
+// Recompute gradient each frame at rect's actual y so colours render correctly
+{
+    const g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.height);
+    if (rect.track === TREBLE) {
+        g.addColorStop(0.00, "rgba(220,180,220,0.92)");
+        g.addColorStop(0.25, "rgba(168,100,160,0.88)");
+        g.addColorStop(0.65, "rgba(120,30,90,0.90)");
+        g.addColorStop(1.00, "rgba(80,10,50,0.94)");
+    } else {
+        g.addColorStop(0.00, "rgba(255,251,150,0.92)");
+        g.addColorStop(0.25, "rgba(255,236,50,0.88)");
+        g.addColorStop(0.65, "rgba(250,204,21,0.90)");
+        g.addColorStop(1.00, "rgba(202,138,4,0.94)");
+    }
+    ctx.fillStyle = g;
+}
 
 // Glow shadow for treble notes
 if (rect.track === TREBLE) {
-    ctx.shadowColor = 'rgba(255,107,107,0.55)';
+    ctx.shadowColor = 'rgba(160,40,120,0.60)';
     ctx.shadowBlur = 18;
 } else {
-    ctx.shadowColor = 'rgba(124,58,237,0.4)';
+    ctx.shadowColor = 'rgba(245,158,11,0.4)';
     ctx.shadowBlur = 10;
 }
 
@@ -4866,8 +4935,8 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
             ctx.fillStyle = "rgba(255,255,255,0.95)";
             ctx.shadowColor = "rgba(0,0,0,0.5)";
         } else {
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.shadowColor = "rgba(255,255,255,0.7)";
+            ctx.fillStyle = "rgba(255,220,255,0.95)";
+            ctx.shadowColor = "rgba(0,0,0,0.6)";
         }
         
         ctx.font = "bold 15px Arial";
@@ -4953,12 +5022,12 @@ function getCountWord(beatIndex, slotInBeat) {
     const lang = beatNames[countLanguage] || beatNames.en;
 
     if (countMode === "subdivision") {
-        // "1 e & a" syllables for each 16th-note slot
+        // "1 & 2 & 3 & 4 &" — speak on beat (slot 0) and "and" (slot 2) only
         switch (slotInBeat) {
-            case 0: return lang[beat - 1];   // "one" / "two"
-            case 1: return "e";
-            case 2: return "and";
-            case 3: return "a";
+            case 0: return lang[beat - 1];   // "one" / "two" / "three" / "four"
+            case 1: return null;             // skip "e"
+            case 2: return "and";            // "&"
+            case 3: return null;             // skip "a"
         }
     }
 
@@ -5051,6 +5120,127 @@ function startMetronome(startTimeOverride = null) {
 }
 
 // ================================
+// SHARED HOLD / SUSTAIN HELPERS
+// ================================
+
+// Called when a note is released. Returns true if it was a sustained note released early.
+// If so, it flags the error and keeps the note highlighted.
+function handleSustainedNoteRelease(midiNote) {
+    if (!sustainedNotes.has(midiNote)) return false;
+    if (sustainedNoteExpired(midiNote)) {
+        sustainedNotes.delete(midiNote);
+        return false;
+    }
+    // Released too early — flag error, keep highlighting
+    midiPressedNotes.delete(midiNote);
+    if (synth) synth.triggerRelease(getNoteName(midiNote));
+    rebuildKeyboardHighlights();
+    const feedback = document.getElementById('feedback');
+    const s = sustainedNotes.get(midiNote);
+    const remaining = Math.max(0, (s.requiredDurationMs - (performance.now() - s.startTime)) / 1000);
+    feedback.innerHTML = `Keep holding <strong>${getNoteName(midiNote)}</strong>! ${remaining.toFixed(1)}s remaining`;
+    feedback.classList.remove('correct', 'wrong', 'show');
+    void feedback.offsetWidth;
+    feedback.classList.add('wrong', 'show');
+    return true;
+}
+
+// Core hold evaluation — called from mouseup, touchend, and MIDI noteOff
+// Returns true if the hold was evaluated (advance or retry), false if not applicable.
+function evaluateHoldOnRelease(releasedMidi) {
+    // In both-hands mode: enforce sustained holds via the _bgHeldNotes registry.
+    if (clefMode === 'both') {
+        if (synth) synth.triggerRelease(getNoteName(releasedMidi));
+        midiPressedNotes.delete(releasedMidi);
+
+        // Check if this note must still be held — penalise and block if so
+        _bgCheckEarlyRelease(releasedMidi);
+        return true;
+    }
+
+    // If a sustained note was released early, handle that and stop
+    if (handleSustainedNoteRelease(releasedMidi)) return true;
+
+    if (noteHoldStartTime === null) return false;
+
+    const heldTime = performance.now() - noteHoldStartTime;
+
+    if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return true; }
+    holdEvaluated = true;
+
+    const feedback = document.getElementById('feedback');
+
+    if (heldTime >= expectedHoldDuration) {
+        feedback.textContent = 'Good!';
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('correct', 'show');
+        explanationLocked = false;
+
+        waitingForInput = false;
+        expectedMidiNote = null;
+
+        // Save the hold start time NOW, before it gets cleared at the end of this function.
+        // spawnTrainingNote's carry-forward block needs it to compute how much of a
+        // longer-duration note (e.g. bass crotchet) has already elapsed when the next
+        // step (e.g. treble quaver) is spawned.
+        _lastHoldStartTime = noteHoldStartTime;
+
+        // In both-hands mode: move the completed notes into sustainedNotes
+        // so they remain required while the other hand continues
+        if (clefMode === 'both') {
+            const nowMs = performance.now();
+            currentChordNotes.forEach(midi => {
+                if (midi !== releasedMidi) {
+                    // Notes still pressed — they may need to be sustained
+                    // For simplicity, they've been held for expectedHoldDuration, so they're done
+                }
+                sustainedNotes.delete(midi);
+            });
+            // Clean up expired sustained notes from the other hand
+            cleanExpiredSustainedNotes();
+            rebuildKeyboardHighlights();
+        } else {
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+        }
+
+        advanceChordIndex();
+        updateTrainingProgress();
+
+        document.getElementById('holdInfo').textContent = '';
+        setTimeout(() => spawnNextValidNote(), 300);
+
+    } else {
+        const heldBeats = heldTime / 1000 / secondsPerBeat;
+        const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
+
+        feedback.innerHTML =
+            `Too short — held <span class="music-symbol">${beatsToNoteName(heldBeats)}</span>, need <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+        feedback.classList.remove('correct', 'wrong', 'show');
+        void feedback.offsetWidth;
+        feedback.classList.add('wrong', 'show');
+
+        const holdEl = document.getElementById('holdInfo');
+        holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
+
+        if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
+        _lastHoldStartTime = null; // retry — no carry-forward should happen
+        retryTimeout = setTimeout(() => {
+            if (trainingIndex < practiceNotes.length) {
+                spawnTrainingNote(practiceNotes[trainingIndex]);
+            }
+        }, 600);
+    }
+
+    noteHoldStartTime = null;
+    _lastHoldStartTime = null; // cleared here; was already saved above before this line
+    activeMidiNote = null;
+    return true;
+}
+
+// ================================
 // MOUSE INPUT (NOTE ON / OFF)
 // ================================
 function getMidiFromMouse(x, y) {
@@ -5112,6 +5302,67 @@ canvas.addEventListener('mousedown', async (e) => {
     const midiNote = getMidiFromMouse(x, y);
     if (midiNote === null) return;
     lastMouseMidi = midiNote;
+
+    // Click-to-latch: in training mode (non-free), latch the note so chord
+    // notes can be clicked one-by-one and held for the entire beat.
+    if (!freeMode && trainingActive) {
+        _dbgClicks++;
+        const alreadyLatched = mouseLatchedNotes.has(midiNote);
+        const alreadyPressed = midiPressedNotes.has(midiNote);
+        _dbgLog(`CLICK midi=${midiNote}(${getNoteName(midiNote)}) alreadyLatched=${alreadyLatched} alreadyPressed=${alreadyPressed} holdEval=${holdEvaluated} holdRunning=${noteHoldStartTime !== null}`);
+
+        // If this note is already latched & the hold timer is running, the user is
+        // clicking again to signal done holding — evaluate immediately instead of
+        // toggling the latch off (which would silently do nothing useful).
+        if (alreadyLatched && noteHoldStartTime !== null && !holdEvaluated) {
+            _dbgLog(`  -> re-click while holding: evaluating hold immediately`);
+            _dbgUpdate();
+            // In both-hands mode the hold is managed by the beat-group registry.
+            // evaluateHoldOnRelease only calls _bgCheckEarlyRelease and returns,
+            // leaving _beatGroupTimer null with no path to completion when the user
+            // re-presses after a premature release. Use _bgRestartHoldTimer instead,
+            // which correctly re-arms the completion timer (or no-ops if the note
+            // is no longer in the must-hold registry because time has elapsed).
+            if (clefMode === 'both') {
+                const restarted = _bgRestartHoldTimer(midiNote);
+                if (!restarted) {
+                    // Note is no longer in the hold registry (time already elapsed
+                    // or was never registered). If the beat-group timer was cancelled
+                    // by an early-release, restart it now so the group can complete.
+                    if (_beatGroupTimer === null) {
+                        const allSubNotesDone = !_beatGroupNotes.some(({ note: n }) => {
+                            const t = n.playTime ?? n.time;
+                            return t > (_beatGroupCurrentPlayTime ?? -1) + 0.001;
+                        });
+                        const allHoldsComplete = [..._bgHeldNotes.values()].every(
+                            h => performance.now() >= h.requiredUntilMs
+                        );
+                        if (allSubNotesDone && allHoldsComplete) {
+                            _beatGroupTimer = setTimeout(() => {
+                                _beatGroupTimer = null;
+                                _onBeatGroupComplete();
+                            }, 50);
+                        }
+                    }
+                }
+            } else {
+                evaluateHoldOnRelease(midiNote);
+            }
+            return;
+        }
+
+        mouseToggleLatch(midiNote);
+        if (mouseLatchedNotes.has(midiNote)) {
+            // Note was just latched — treat as note-on
+            processUserNoteOn(midiNote);
+        } else {
+            _dbgLog(`  -> toggle OFF (unlatch), processUserNoteOn skipped`);
+        }
+        _dbgUpdate();
+        // If toggled off: processUserNoteOn won't re-fire; the note was released above
+        return;
+    }
+
     processUserNoteOn(midiNote);
 });
 
@@ -5140,15 +5391,13 @@ canvas.addEventListener('mouseup', () => {
     lastMouseMidi = null;
 
     if (freeMode && freeModeActiveNote !== null) {
-    freeModeSynth.triggerRelease(
-        getNoteName(freeModeActiveNote)
-    );
-    freeModeActiveNote = null;
-    expectedMidiNote = null;
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    return;
-}
+        freeModeSynth.triggerRelease(getNoteName(freeModeActiveNote));
+        freeModeActiveNote = null;
+        expectedMidiNote = null;
+        expectedMidiTreble.clear();
+        expectedMidiBass.clear();
+        return;
+    }
 
     // In latch mode: on mouseup, evaluate the hold — if the full duration has
     // elapsed, this advances to the next note. If not, the auto-evaluate
@@ -5245,11 +5494,14 @@ canvas.addEventListener('touchend', (e) => {
     if (!touchActive) return;
     e.preventDefault();
 
+    let lastReleasedMidi = null;
+
     for (let i = 0; i < e.changedTouches.length; i++) {
         const touch = e.changedTouches[i];
         const midiNote = activeTouches.get(touch.identifier);
 
         if (midiNote !== undefined) {
+            lastReleasedMidi = midiNote;
             if (freeMode && midiNote === freeModeActiveNote) {
                 freeModeSynth.triggerRelease(getNoteName(midiNote));
                 freeModeActiveNote = null;
@@ -5260,31 +5512,30 @@ canvas.addEventListener('touchend', (e) => {
             }
 
             midiPressedNotes.delete(midiNote);
-
             activeTouches.delete(touch.identifier);
         }
     }
 
-    // ── Multi-touch chord fix ────────────────────────────────────────────────
-    // Previously we only evaluated the hold when e.touches.length === 0, which
-    // breaks two-finger chords: the user typically lifts one finger a few ms
-    // before the other, so the first touchend sees e.touches.length === 1 and
-    // skips evaluation; by the time the second fires the browser sometimes
-    // reports length 0 but activeTouches is already clear.
-    //
-    // Instead, evaluate whenever ALL chord notes have been released
-    // (midiPressedNotes is empty and a hold was in progress).  We still use
-    // e.touches.length === 0 as the signal to fully tear down touch state.
-    // ─────────────────────────────────────────────────────────────────────────
+    // Check for early sustained-note release
+    if (lastReleasedMidi !== null && clefMode === 'both' && _bgHeldNotes.has(lastReleasedMidi)) {
+        _bgCheckEarlyRelease(lastReleasedMidi);
+        // Tear down touch tracking
+        if (e.touches.length === 0) { touchActive = false; mouseDown = false; activeTouches.clear(); }
+        return;
+    }
 
-    const allChordNotesReleased = !freeMode
-        && clefMode !== 'both'
+    if (lastReleasedMidi !== null && sustainedNotes.has(lastReleasedMidi)) {
+        handleSustainedNoteRelease(lastReleasedMidi);
+    }
+
+    // Evaluate hold when all current-chord notes have been released
+    // (sustained notes from the other hand may still be held — that's fine)
+    const currentChordAllReleased = !freeMode
         && noteHoldStartTime !== null
-        && midiPressedNotes.size === 0;
+        && Array.from(currentChordNotes).every(m => !midiPressedNotes.has(m));
 
-    if (allChordNotesReleased) {
-        const capturedNote = activeMidiNote;
-        evaluateHoldOnRelease(capturedNote ?? 0);
+    if (currentChordAllReleased && !holdEvaluated) {
+        evaluateHoldOnRelease(lastReleasedMidi ?? activeMidiNote ?? 0);
     }
 
     // Tear down touch tracking once all physical fingers have left the screen
@@ -5293,9 +5544,8 @@ canvas.addEventListener('touchend', (e) => {
         mouseDown = false;
         activeTouches.clear();
 
-        // Safety-net clear in case allChordNotesReleased path didn't run
-        // (e.g. freeMode, or noteHoldStartTime was already null)
-        if (!allChordNotesReleased) {
+        // Safety-net clear only for non-both-hands mode (sustained notes need to stay)
+        if (clefMode !== 'both' && !currentChordAllReleased) {
             expectedMidiTreble.clear();
             expectedMidiBass.clear();
         }
@@ -5325,6 +5575,7 @@ canvas.addEventListener('touchcancel', (e) => {
         expectedMidiBass.clear();
         noteHoldStartTime = null;
         activeMidiNote = null;
+        sustainedNotes.clear();
     }
 }, { passive: false });
 
@@ -5681,25 +5932,31 @@ scoreKeysPlaying = false;
 waitingForInput = false;
 fullSongPlaying = false;
 speedLocked = false;
+countdownActive = false;
 setSpeedButtonsEnabled(true);
 
+if (countdownTimeoutId) { clearTimeout(countdownTimeoutId); countdownTimeoutId = null; }
 if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 
-// Beat-group cleanup
+// Clear beat group state
 if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
-_beatGroupNotes = [];
-_bgHeldNotes.clear();
-_beatGroupPressed.clear();
-_bgCountdownStartMs = null;
+_beatGroupNotes   = [];
+_beatGroupPressed = new Set();
 _beatGroupStartMs = null;
 _beatGroupCurrentPlayTime = null;
-sustainedNotes.clear();
+_bgHeldNotes.clear();
 
 stopMetronome();
 
 if (synth) synth.releaseAll();
 Tone.Transport.stop();
 Tone.Transport.cancel();
+
+mouseClearAllLatches();
+expectedMidiTreble.clear();
+expectedMidiBass.clear();
+currentChordNotes.clear();
+midiPressedNotes.clear();
 
 playbackTimeouts.forEach(t => clearTimeout(t));
 playbackTimeouts = [];
@@ -5710,6 +5967,18 @@ previewTimeouts = [];
 fallingRectangles = [];
 expectedMidiNote = null;
 activeMidiNote = null;
+
+// Always reset counting/beat state and un-highlight panel buttons on stop
+beatEnabled        = false;
+countEnabled       = false;
+subdivisionEnabled = false;
+countMode          = "normal";
+beatToggle.textContent        = 'Beat';
+countToggle.textContent       = 'Counting';
+subdivisionToggle.textContent = '1 & 2 &';
+document.getElementById('beatBtn')   ?.classList.remove('active');
+document.getElementById('countBtn')  ?.classList.remove('active');
+document.getElementById('subdivBtn') ?.classList.remove('active');
 
 if (!userInitiated) return;
 
@@ -5730,7 +5999,6 @@ startPracticeButton.disabled = false;
 }
 
 function resetAll() {
-    // ── 1. Kill every pending timer / animation immediately ──────────────
     if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
     playbackTimeouts.forEach(t => clearTimeout(t)); playbackTimeouts = [];
     previewTimeouts.forEach(t => clearTimeout(t));  previewTimeouts = [];
@@ -5779,16 +6047,7 @@ function resetAll() {
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
-
-    // Beat-group cleanup
-    if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
-    _beatGroupNotes = [];
-    _bgHeldNotes.clear();
-    _beatGroupPressed.clear();
-    _bgCountdownStartMs = null;
-    _beatGroupStartMs = null;
-    _beatGroupCurrentPlayTime = null;
-    sustainedNotes.clear();
+    mouseClearAllLatches();
 
     // ── 6. Hide all overlays / visuals ───────────────────────────────────
     document.getElementById('countdownOverlay').style.display = 'none';
@@ -5804,6 +6063,7 @@ function resetAll() {
 
     speedMultiplier = 1.0;
     speedDisplay.textContent = '1.0×';
+    syncBpmDisplay();
 
     beatEnabled    = false;
     countEnabled   = false;
@@ -5959,17 +6219,17 @@ addMidiFallingRectangle(
                     if (!fullSongPlaying) return;
 
                     // Determine whether this timestamp falls in the repeat pass
-                    // (physical measures 37-44 → logical 29-36).
+                    // (physical measures 15-21 → logical 7-13).
                     const physMeasure = getMeasureFromTime(note.time);
                     const isRepeatPass = physMeasure !== null &&
-                        physMeasure >= REPEAT_START + REPEAT_LEN &&
-                        physMeasure <= REPEAT_END + REPEAT_LEN;
+                        physMeasure > REPEAT_END + 1 &&
+                        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
                     let notesToHighlight;
                     if (isRepeatPass) {
                         // Mirror: find the first-pass notes at the equivalent time
-                        // (subtract exactly one repeat-section length in seconds).
-                        const firstPassTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                        // (subtract the physical offset between repeat pass and first pass).
+                        const firstPassTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                         notesToHighlight = allMidiNotes.filter(n =>
                             Math.abs(n.time - firstPassTime) < 0.01
                         );
@@ -6176,27 +6436,7 @@ function _buildSvgNoteIndex() {
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
 
-        // Special case — measure 36 treble, page 2:
-        // The tied whole note that continues from m35 is correctly identified as a
-        // tied continuation and would normally be excluded. But the user wants it
-        // highlighted (it's visually prominent on the score). Un-exclude it here so
-        // it ends up in _svgBucketsPage2[36][treble] and can be highlighted.
-        // We identify it as: page 2, within the page-2 m36 treble staff bounds,
-        // within the m36 x-range (bls[0]=215 to bls[1]=696 for that system).
-        if (pageNum === 2) {
-            const sys36p2 = SVG_PAGE_SYSTEMS[1]?.find(s => s.start_measure === 36);
-            if (sys36p2) {
-                for (const ri of tiedNoteheadSet) {
-                    const rn = raw[ri];
-                    const inTreble = rn.ty >= sys36p2.treble_top - 50 && rn.ty <= sys36p2.treble_bot + 50;
-                    const inM36x   = rn.tx >= sys36p2.barline_xs[0] && rn.tx < sys36p2.barline_xs[1];
-                    if (inTreble && inM36x) {
-                        tiedNoteheadSet.delete(ri);
-                        break; // only one tied whole note to un-exclude
-                    }
-                }
-            }
-        }
+        // Jaanekahan: no repeat-boundary special cases — tied notes are excluded normally
 
         totalTied += tiedNoteheadSet.size;
 
@@ -6211,7 +6451,7 @@ function _buildSvgNoteIndex() {
             if (tiedNoteheadSet.has(ri)) continue;
             const n = raw[ri];
             for (const sys of pageSystems) {
-                const inTreble = n.ty >= sys.treble_top - 50 && n.ty <= sys.treble_bot + 50;
+                const inTreble = n.ty >= sys.treble_top - 80 && n.ty <= sys.treble_bot + 50;
                 const inBass   = n.ty >= sys.bass_top   - 50 && n.ty <= sys.bass_bot   + 50;
                 if (!inTreble && !inBass) continue;
                 const clef = inTreble ? 'treble' : 'bass';
@@ -6226,12 +6466,8 @@ function _buildSvgNoteIndex() {
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
 
-                        // Measure REPEAT_END (36) appears on both page 1 (end of repeat)
-                        // and page 2 (start of post-repeat section). Route page 2+ copies
-                        // to _svgBucketsPage2 so the first-pass highlights use page 1 noteheads
-                        // and the repeat-pass highlights use page 2 noteheads.
-                        const isRepeatPassPage = (pageNum >= 2 && sheet_measure === REPEAT_END);
-                        const targetBuckets = isRepeatPassPage ? _svgBucketsPage2 : _svgBuckets;
+                        // Jaanekahan: no repeat boundary — all noteheads go into _svgBuckets
+                        const targetBuckets = _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
                         break;
@@ -6276,8 +6512,8 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // DEBUG: dump SVG buckets 34-36
-    for (const m of [34,35,36]) {
+    // DEBUG: dump SVG buckets 28 and 34-36
+    for (const m of [28,34,35,36]) {
         for (const c of ["treble","bass"]) {
             const bucket = _svgBuckets[m]?.[c] || [];
             if (!bucket.length) continue;
@@ -6335,14 +6571,8 @@ function _buildSvgMidiMap() {
             // Exception: treble measure 36's tied whole note is intentionally kept in
             // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
             // get a rank entry (rank 0) rather than being skipped.
-            const isTiedM36Treble = (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))
-                && clef === 'treble'
-                && (() => {
-                    const pm = getMeasureFromTime(note.time);
-                    const sm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
-                    return sm === 36;
-                })();
-            if (!isTiedM36Treble && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))) continue;
+            // Jaanekahan: no repeat boundary — all tied-continuation notes are excluded normally
+            if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -6363,22 +6593,6 @@ function _buildSvgMidiMap() {
             // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
             if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
                 hardcodedGraceCorrected = true;
-            }
-
-            if (note.duration < 0.1) {
-                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
-                    sheetMeasure += 1;
-                    hardcodedGraceCorrected = true;
-                } else if (sheetMeasure === 36 && clef === 'treble') {
-                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
-                    // This fires on both passes when the grace note's MIDI time
-                    // maps to physical 36 (first pass) or physical 44 (second pass,
-                    // also logical 36). Always redirect to logical 29.
-                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
-                    // genuine short notes that must NOT be redirected to measure 29.
-                    sheetMeasure = 29;
-                    hardcodedGraceCorrected = true;
-                }
             }
 
             // Measure-boundary overflow correction:
@@ -6432,12 +6646,13 @@ function _buildSvgMidiMap() {
             // only on repeat bug).
             //
             // Additionally, notes whose physical measure falls in the repeat-pass range
-            // (physical 37-44, logical 29-36) must NEVER trigger overflow — they are
+            // (physical 15-21, logical 7-13) must NEVER trigger overflow — they are
             // genuine second-pass notes, not barline-straddle notes. Without this guard,
-            // the FIRST repeat-pass note for each bass measure (29, 31, 33, 35) fires
-            // overflow (because overflowFired doesn't have the key yet) and gets
-            // mis-routed to the next sheet measure, causing incorrect bass highlighting.
-            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN;
+            // the FIRST repeat-pass note for each measure fires overflow (because overflowFired
+            // doesn't have the key yet) and gets mis-routed to the next sheet measure.
+            // Physical measure 14 is the 1st ending (NOT part of the repeat pass).
+            // The repeat pass occupies physical REPEAT_END+2 .. REPEAT_END+REPEAT_LEN+1 = 15..21.
+            const isRepeatPassNote = physMeasure > REPEAT_END + 1 && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
             const overflowKey = `${sheetMeasure}|${clef}`;
             if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
                     (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
@@ -6466,19 +6681,35 @@ function _buildSvgMidiMap() {
             // Fall back to page2 so the % wrap uses the correct size (6), not 0.
             const bucketSize = ((_svgBuckets[sheetMeasure]?.[clef] || []).length)
                 || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
-            const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
+            let rank         = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
+
+            // NOTE: m28/m30 treble grace-note offset removed — grace B no longer exists
+            // in the SVG, so the old rank+1 was skipping rank 0 and pushing the last
+            // MIDI note (rawRank=6) to rank 7, which is out of bounds on a 7-note bucket.
 
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
                 console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
             }
 
+            // DEBUG: log all assignments to sheet 28 (both clefs)
+            // Expected rank map for m28 (user-verified):
+            //   rank 0: treble grace B
+            //   rank 1: treble C+  /  bass A
+            //   rank 2: treble B
+            //   rank 3: treble C+  /  bass C+E
+            //   rank 4: treble A
+            //   rank 5: treble B   /  bass G
+            //   rank 6: treble G
+            //   rank 7: treble A   /  bass B+D
+            //   rank 8: treble E
+            if (sheetMeasure === 28) {
+                console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
+            }
+
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
 
-            // DEBUG measure 36 bass
-            if (sheetMeasure === 36 && clef === 'bass') {
-                console.log(`🎯 m36 bass: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank}`);
-            }
+
         }
     }
 
@@ -6518,33 +6749,34 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // For REPEAT_END (measure 36): first-pass notes (physical ≤ REPEAT_END) use page 1 bucket,
-    // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
-    const physMeasure = getMeasureFromTime(noteObj.time);
-    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
-    // Measure 36 treble AND bass: _svgBuckets[36][treble|bass] is empty on page 1
-    // (only a tied whole note which is excluded from the bucket).
-    // Both first-pass and repeat-pass notes must use _svgBucketsPage2[36][treble|bass].
-    const bucketSource = (isRepeatPass || entry.sheet_measure === REPEAT_END)
-        ? _svgBucketsPage2
-        : _svgBuckets;
+    // Jaanekahan: no repeats — always use the primary _svgBuckets
+    const bucketSource = _svgBuckets;
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing (repeatPass=${isRepeatPass})`);
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
         return [];
     }
 
-    // Return the matched note AND all chord-mates at the same X position
+    // Return the matched note AND all chord-mates at the same X position.
+    // Strategy: try a tight 2px tolerance first (catches true chord-mates that
+    // are pixel-aligned). If that returns only the matched note itself, widen to
+    // 6px to handle minor SVG rounding across staves. This prevents grace notes
+    // placed just a few pixels away from accidentally being co-highlighted.
     const matchedIdx = bucket[entry.rank];
     const matchedTx  = _svgNoteElements[matchedIdx].tx;
-    const result = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 4);
+    const tight  = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 2);
+    const result = tight.length > 1 ? tight
+                 : bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 6);
     return result;
 }
 
 
 let _currentHighlightEls = [];
 
+// colorMap: optional Map<index, cssColor> — overrides the default clef-based color for
+// specific indices. Used to paint sustained carry-across notes green while the new
+// sub-slot notes remain purple/gold.
 function _applyHighlight(indices, colorMap) {
     // Clear previous highlights
     for (const el of _currentHighlightEls) {
@@ -6554,6 +6786,37 @@ function _applyHighlight(indices, colorMap) {
     // Accept either an array of indices (numbers) or legacy array of elements
     const idxArray = Array.isArray(indices) ? indices.filter(x => x != null) : (indices != null ? [indices] : []);
     _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
+
+    // ── DEBUG: log every highlighted note and flag strays ──────────────────
+    if (idxArray.length > 0) {
+        const expectedMidis = new Set([...currentChordNotes]);
+        const highlightedNotes = idxArray.map(x => {
+            if (typeof x !== 'number') return { idx: '?', midi: null, name: '?', colorKey: 'unknown' };
+            const ne    = _svgNoteElements[x];
+            const color = (colorMap && colorMap.has(x)) ? colorMap.get(x)
+                        : ne?.clef === 'bass' ? '#B45309' : '#9B2C6E';
+            const colorKey = color === '#16a34a' ? 'green' : color === '#9B2C6E' ? 'purple' : color === '#B45309' ? 'gold' : color;
+            // Reverse-lookup MIDI for this SVG index via _midiRankMap
+            let midi = null;
+            for (const [, entry] of _midiRankMap) {
+                const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef];
+                if (bucket && bucket[entry.rank] === x) { midi = entry.midi; break; }
+            }
+            // Any highlighted note (purple, gold, OR green) not in currentChordNotes is a stray
+            const stray = midi !== null && !expectedMidis.has(midi);
+            return { idx: x, midi, name: midi ? getNoteName(midi) : '?', colorKey, stray };
+        });
+        const strays = highlightedNotes.filter(n => n.stray);
+        const label  = strays.length > 0 ? '🚨 _applyHighlight STRAY' : '🎨 _applyHighlight';
+        console.log(
+            label,
+            '| highlighted:', highlightedNotes.map(n => `${n.name}(${n.colorKey})`).join(', '),
+            '| expected (currentChordNotes):', [...currentChordNotes].map(getNoteName).join(', ') || '(none)',
+            strays.length > 0 ? `| STRAYS: ${strays.map(n => `${n.name}(${n.colorKey})`).join(', ')}` : ''
+        );
+        if (strays.length > 0) console.trace('_applyHighlight stray — call stack:');
+    }
+    // ── END DEBUG ───────────────────────────────────────────────────────────
 
     idxArray.forEach(x => {
         const el   = typeof x === 'number' ? _svgNoteElements[x]?.el : x;
@@ -6628,19 +6891,19 @@ function onTrainingNoteSpawned(noteObj) {
     // If this note is from the repeat pass, mirror to the first-pass equivalent notes
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = physMeasure !== null &&
-        physMeasure >= REPEAT_START + REPEAT_LEN &&
-        physMeasure <= REPEAT_END + REPEAT_LEN;
+        physMeasure > REPEAT_END + 1 &&
+        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
     let simultaneousNotes;
     if (isRepeatPass) {
-        const firstPassPlayTime = notePlayTime - REPEAT_LEN * secondsPerMeasure;
+        const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
         simultaneousNotes = practiceNotes.filter(n =>
             Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
         );
         if (!simultaneousNotes.length) {
             // First-pass measures are not in the current range (e.g. range 36→37).
             // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
-            const firstPassRawTime = noteObj.time - REPEAT_LEN * secondsPerMeasure;
+            const firstPassRawTime = noteObj.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
             simultaneousNotes = allMidiNotes.filter(n =>
                 Math.abs(n.time - firstPassRawTime) < 0.01
             );
@@ -6836,80 +7099,29 @@ if (freeMode && note === freeModeActiveNote) {
         // Check for early sustained-note release before the standard hold evaluation
         if (sustainedNotes.has(note) && !sustainedNoteExpired(note)) {
             midiPressedNotes.delete(note);
-            if (synth) synth.triggerRelease(getNoteName(note));
+            synth.triggerRelease(getNoteName(note));
             handleSustainedNoteRelease(note);
             return;
         }
 
         if (!currentChordNotes.has(note)) return;
-
+        
         midiPressedNotes.delete(note);
-        if (synth) synth.triggerRelease(getNoteName(note));
-
+        
+        synth.triggerRelease(getNoteName(note));
+        
         // In both-hands mode: only evaluate hold when ALL current-step chord notes released
+        // (sustained notes from other hand may still be held — that's intended)
         const currentStepAllReleased = Array.from(currentChordNotes).every(m => !midiPressedNotes.has(m));
         if (!currentStepAllReleased) return;
-
+        
         if (noteHoldStartTime === null) return;
+
         if (holdEvaluated) { noteHoldStartTime = null; activeMidiNote = null; return; }
 
         evaluateHoldOnRelease(note);
     }
 }
-
-// ── Skip Preview helper ──────────────────────────────────────────────────────
-window._skipPreview = function() {
-    if (!previewMode) return;
-
-    // Cancel all pending preview timeouts/intervals
-    previewTimeouts.forEach(t => {
-        if (t && t._isFakeTimeout) {
-            t._clear();
-        } else {
-            clearTimeout(t);
-        }
-    });
-    previewTimeouts.length = 0;
-
-    // Kill the listen-countdown ticker if still running
-    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
-        clearInterval(_listenCountdownTimer);
-    }
-
-    // Reset preview state
-    previewMode = false;
-    speedLocked = false;
-    scoreKeysPlaying = false;
-    setSpeedButtonsEnabled(true);
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    if (scoreModeActive) clearScoreHighlight();
-    stopMetronome();
-    if (typeof _cancelCountAudio === 'function') _cancelCountAudio();
-
-    // Hide the skip box
-    const box = document.getElementById('skipPreviewBox');
-    if (box) box.style.display = 'none';
-
-    const feedback = document.getElementById('feedback');
-    feedback.textContent = 'Your turn';
-    feedback.classList.remove('correct', 'wrong', 'show');
-
-    spawnNextValidNote();
-};
-
-// Show/hide the skip-preview box whenever previewMode changes.
-(function _patchPreviewVisibility() {
-    const box = document.getElementById('skipPreviewBox');
-    if (!box) return;
-    let _prev = false;
-    setInterval(() => {
-        if (previewMode !== _prev) {
-            _prev = previewMode;
-            box.style.display = previewMode ? 'block' : 'none';
-        }
-    }, 150);
-})();
 
 </script>
 <!-- Stats toggle logic -->
@@ -7002,7 +7214,6 @@ syncHandBtns();
     const obs = new MutationObserver(syncFeedback);
     obs.observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
-
 </script>
 
 <!-- 1) Supabase library -->
