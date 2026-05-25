@@ -3481,17 +3481,6 @@ if (clefMode === 'both') {
         document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
         document.getElementById('pressedNoteCircle').className = 'note-circle wrong';
         document.getElementById('correctNoteCircle').textContent = getNoteName(firstNew ?? midiNote);
-
-        // Restart the beat after a short pause so the user replays from the top
-        trainingActive = false;
-        waitingForInput = false;
-        if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
-        _bgCountdownStartMs = null;
-        setTimeout(() => {
-            if (practiceNotes[trainingIndex]) {
-                spawnTrainingNote(practiceNotes[trainingIndex]);
-            }
-        }, 900);
         return;
     }
 
@@ -4009,27 +3998,27 @@ function spawnTrainingNote(noteObj) {
         // ── Beat Group Model ─────────────────────────────────────────────────────
         // Build the complete beat group: all notes (both hands) that must be played
         // before "Good" fires. The group spans from this note's start to the furthest
-        // note-end reachable by the FIRST simultaneous chord's duration.
+        // note-end reachable by walking ahead through interleaved notes.
         //
         // Example: bass crotchet (0-0.437s) + treble quaver (0-0.218s)
         //          + treble quaver (0.231-0.449s) => window=0.449s, all three grouped.
+        // The bass crotchet turns GREEN to signal "keep holding" while you play quavers.
 
         _beatGroupNotes   = [];
         _beatGroupPressed = new Set();
-        _bgHeldNotes.clear();
+        _bgHeldNotes.clear();  // clear stale hold registry so retried chords require all notes fresh
         _beatGroupStartMs = null;
-        _beatGroupIndex   = trainingIndex;
-        _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time;
         _bgCountdownStartMs = null;
-        sustainedNotes.clear();
+        _beatGroupIndex   = trainingIndex;
+        _beatGroupCurrentPlayTime = noteObj.playTime ?? noteObj.time; // initialize to first slot's time
 
         const groupStartSec = noteObj.playTime ?? noteObj.time;
 
         // Step 1: compute windowEndSec from the FIRST simultaneous chord only.
         // Only notes at groupStartSec (within 10ms) set the window boundary.
         // Sub-notes that arrive later within the window do NOT expand it further —
-        // that would cause a cascade where a crotchet at beat 2 pulls in all of
-        // beat 3's notes and so on, making the whole bar one giant group.
+        // that would cause a cascade where e.g. a crotchet at beat 2 pulls in all
+        // of beat 3's notes and so on, making the whole bar one giant group.
         let windowEndSec = groupStartSec + noteObj.duration;
         for (let i = trainingIndex + 1; i < practiceNotes.length; i++) {
             const n = practiceNotes[i];
@@ -4046,7 +4035,6 @@ function spawnTrainingNote(noteObj) {
             const nStart = n.playTime ?? n.time;
             if (nStart >= windowEndSec - 0.001) break;
             _beatGroupNotes.push({ note: n, idx: i });
-            noteTrackMap.set(n.midi, n.track);
         }
 
         _beatGroupEndSec = windowEndSec;
@@ -4095,7 +4083,11 @@ function spawnTrainingNote(noteObj) {
             rebuildKeyboardHighlights();
         }
 
-        console.log('🎹 spawnTrainingNote [BOTH]: index=' + trainingIndex + ' group=' + _beatGroupNotes.length + ' window=' + groupDurSec.toFixed(3) + 's first=' + [...currentChordNotes].map(m => getNoteName(m)).join('+'));
+        // Count distinct playTimes for logging
+        const distinctTimes = [...new Set(
+            _beatGroupNotes.map(({note}) => Math.round((note.playTime ?? note.time) * 1000))
+        )];
+        console.log('🎹 spawnTrainingNote [BOTH]: index=' + trainingIndex + ' group=' + _beatGroupNotes.length + ' slots=' + distinctTimes.length + ' first=' + [...currentChordNotes].map(m => getNoteName(m)).join('+'));
         if (typeof onTrainingNoteSpawned === 'function') onTrainingNoteSpawned(noteObj);
         return;
     }
