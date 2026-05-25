@@ -3352,8 +3352,17 @@ function _advanceBeatGroupSubNote() {
     });
 
     const nextNoteNames = [...currentChordNotes].map(m => getNoteName(m)).join(' + ');
-    const sustainedNames = [..._bgHeldNotes.keys()]
-        .filter(m => !currentChordNotes.has(m))
+    // Only show "keep holding" for notes whose duration actually extends into this next slot
+    const sustainedNames = _beatGroupNotes
+        .filter(({note}) => {
+            const t = note.playTime ?? note.time;
+            const endT = t + note.duration;
+            return t < nextPlayTime - 0.005    // started in a prior slot
+                && endT > nextPlayTime + 0.005  // still sounding at the next slot
+                && !currentChordNotes.has(note.midi); // not one of the new notes
+        })
+        .map(({note}) => note.midi)
+        .filter((m, i, arr) => arr.indexOf(m) === i) // deduplicate
         .map(m => getNoteName(m));
 
     let msg = `Now: ${nextNoteNames}`;
