@@ -1690,6 +1690,42 @@ body.score-mode #panelProgressWrap {
       <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
       <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
     </div>
+    <div class="ctrl-speed-row" style="margin-top:6px;">
+      <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
+      <input
+        id="bpmInput"
+        type="number"
+        min="20" max="300" step="1"
+        placeholder="—"
+        style="
+          width:70px;
+          text-align:center;
+          font-size:15px;
+          font-weight:700;
+          font-family:inherit;
+          border:1px solid rgba(255,193,7,0.25);
+          border-radius:8px;
+          padding:4px 6px;
+          background:rgba(255,255,255,0.9);
+          color:var(--text-main);
+          outline:none;
+          transition:border-color 0.2s;
+        "
+        title="Type a BPM to set playback speed"
+      />
+      <button
+        id="bpmSetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 10px !important;font-size:12px !important;"
+        title="Apply BPM"
+      >Set</button>
+      <button
+        id="bpmResetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 8px !important;font-size:12px !important;"
+        title="Reset to original BPM"
+      >↺</button>
+    </div>
   </div>
 
   <!-- UTILITY card -->
@@ -2039,6 +2075,9 @@ async function loadSongMidi() {
     if (bpmEl) bpmEl.textContent = Math.round(60 / secondsPerBeat);
     const pBpm = document.getElementById('panelStatBPM');
     if (pBpm) pBpm.textContent = Math.round(60 / secondsPerBeat);
+    originalBPM = Math.round(60 / secondsPerBeat);
+    const bpmInput = document.getElementById('bpmInput');
+    if (bpmInput) bpmInput.value = originalBPM;
 
     console.log("🎵 Song loaded", allMidiNotes.length, "notes");
 }
@@ -2221,6 +2260,9 @@ function updateSpeed(delta) {
 
     speedDisplay.textContent = speedMultiplier.toFixed(2) + "×";
 
+    // Sync BPM input and stat display to reflect new effective BPM
+    syncBpmDisplay();
+
     if (metronomeRunning) {
         startMetronome();
     }
@@ -2230,6 +2272,59 @@ function updateSpeed(delta) {
 speedDownButton.addEventListener('click', () => updateSpeed(-0.25));
 speedUpButton.addEventListener('click', () => updateSpeed(+0.25));
 // Note: speedDown/speedUp enabled state is managed entirely by setControlsEnabled()
+
+// ====== BPM INPUT ======
+function syncBpmDisplay() {
+    const effectiveBPM = Math.round(originalBPM * speedMultiplier);
+    const bpmInput = document.getElementById('bpmInput');
+    if (bpmInput) bpmInput.value = effectiveBPM;
+    const pBpm = document.getElementById('panelStatBPM');
+    if (pBpm) pBpm.textContent = effectiveBPM;
+    const sBpm = document.getElementById('statBPM');
+    if (sBpm) sBpm.textContent = effectiveBPM;
+}
+
+function applyBpmInput() {
+    if (visualsPlaying || previewMode || speedLocked) return;
+    const bpmInput = document.getElementById('bpmInput');
+    if (!bpmInput || !originalBPM) return;
+    const target = parseFloat(bpmInput.value);
+    if (!target || target < 20 || target > 300) return;
+    speedMultiplier = Math.min(2.0, Math.max(0.1, +(target / originalBPM).toFixed(4)));
+    speedDisplay.textContent = speedMultiplier.toFixed(2) + "×";
+    syncBpmDisplay();
+    if (metronomeRunning) startMetronome();
+}
+
+(function() {
+    const bpmInput   = document.getElementById('bpmInput');
+    const setBtn     = document.getElementById('bpmSetBtn');
+    const resetBtn   = document.getElementById('bpmResetBtn');
+    if (!bpmInput || !setBtn || !resetBtn) return;
+
+    setBtn.addEventListener('click', applyBpmInput);
+
+    resetBtn.addEventListener('click', () => {
+        if (visualsPlaying || previewMode || speedLocked) return;
+        speedMultiplier = 1.0;
+        speedDisplay.textContent = '1.0×';
+        syncBpmDisplay();
+        if (metronomeRunning) startMetronome();
+    });
+
+    bpmInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyBpmInput();
+    });
+
+    bpmInput.addEventListener('focus', () => {
+        bpmInput.style.borderColor = 'rgba(255,193,7,0.6)';
+        bpmInput.style.boxShadow   = '0 0 0 3px rgba(255,193,7,0.15)';
+    });
+    bpmInput.addEventListener('blur', () => {
+        bpmInput.style.borderColor = 'rgba(255,193,7,0.25)';
+        bpmInput.style.boxShadow   = 'none';
+    });
+})();
 // and setSpeedButtonsEnabled(). Do NOT add unconditional .disabled = false here.
 
 
@@ -2971,6 +3066,7 @@ let visualsPlaying = false;
 let scoreKeysPlaying = false; // true while listen-first key highlights are active in score mode
 let speedMultiplier = 1.0;
 let speedLocked = false;
+let originalBPM = 100; // updated after MIDI loads
 
 function getFallTimeMs() {
     return 2000 / speedMultiplier;
