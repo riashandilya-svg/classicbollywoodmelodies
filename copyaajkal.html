@@ -3272,23 +3272,13 @@ const feedback = document.getElementById('feedback');
 
 // ====== BOTH-HANDS BEAT GROUP MODE ======
 if (clefMode === 'both') {
-    // Determine the set of notes expected right now: notes in the current slot
-    // of the beat group whose playTime matches _beatGroupCurrentPlayTime
-    const sustainedRequired = [];  // notes from prior slots still being held
-    const newRequired = [];        // notes that first appear in this slot
+    // Sustained = notes already in _bgHeldNotes (carried from a prior sub-slot).
+    // New = notes appearing for the first time in the current slot.
+    const sustainedRequired = Array.from(currentChordNotes).filter(m => _bgHeldNotes.has(m));
+    const newRequired       = Array.from(currentChordNotes).filter(m => !_bgHeldNotes.has(m));
+    const allExpected       = [...new Set([...sustainedRequired, ...newRequired])];
 
-    for (const {note, idx} of _beatGroupNotes) {
-        const t = note.playTime ?? note.time;
-        if (Math.abs(t - _beatGroupCurrentPlayTime) < 0.01) {
-            newRequired.push(note.midi);
-        } else if (t < _beatGroupCurrentPlayTime - 0.005) {
-            sustainedRequired.push(note.midi);
-        }
-    }
-
-    const allExpected = [...new Set([...sustainedRequired, ...newRequired])];
-
-    // Wrong note check — must be in new required (or sustained)
+    // Wrong note check
     if (!allExpected.includes(midiNote)) {
         const firstNew = newRequired[0] ?? allExpected[0];
         const explanation = explainWrongNote(midiNote, firstNew);
@@ -3303,7 +3293,7 @@ if (clefMode === 'both') {
         updateStatsBar();
         document.getElementById('pressedNoteCircle').textContent = getNoteName(midiNote);
         document.getElementById('pressedNoteCircle').className = 'note-circle wrong';
-        document.getElementById('correctNoteCircle').textContent = getNoteName(firstNew);
+        document.getElementById('correctNoteCircle').textContent = getNoteName(firstNew ?? midiNote);
         return;
     }
 
@@ -3332,10 +3322,6 @@ if (clefMode === 'both') {
     if (_bgRestartHoldTimer(midiNote)) {
         return;
     }
-
-    // Sustained notes are those already in _bgHeldNotes (carried across from prior sub-slot).
-    const sustainedRequired = Array.from(currentChordNotes).filter(m => _bgHeldNotes.has(m));
-    const newRequired       = Array.from(currentChordNotes).filter(m => !_bgHeldNotes.has(m));
 
     const allNewPressed       = newRequired.every(m => _beatGroupPressed.has(m));
     const allSustainedStillOn = sustainedRequired.every(m => midiPressedNotes.has(m));
