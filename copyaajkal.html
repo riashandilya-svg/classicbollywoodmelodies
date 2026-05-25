@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aaj Kal Tere Mere Pyaar Ke Charche</title>
+<title>Jaane Kahan Mera Jigaar Gaya Ji</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1501,9 +1501,8 @@ body.score-mode #panelProgressWrap {
     <span>Ria Om Shandilya</span>
   </a>
   
-  <!-- ═══ SONG-SPECIFIC SLOT 2: YouTube guide link & button label ═══ -->
   <a href="https://www.youtube.com/watch?v=FaJh5yr51iw" id="youtubeBtn" target="_blank">
-    <span>Quick Guide to Measures &amp; Sheet</span>
+    <span>Quick Guide to Measures & Sheet</span>
   </a>
 </div>
 
@@ -1522,8 +1521,7 @@ body.score-mode #panelProgressWrap {
   })();
 </script>
 
-      <!-- ═══ SONG-SPECIFIC SLOT 3: display title in h1 ═══ -->
-      <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
+      <h1>Jaane Kahan Mera Jigaar Gaya Ji</h1>
 
 
 
@@ -1695,16 +1693,12 @@ body.score-mode #panelProgressWrap {
           sel.value = '';
         })(this)">
         <option value="">🎵 Jump to section…</option>
-        <!-- ═══ SONG-SPECIFIC SLOT 4: section shortcuts — format "startMeasure-endMeasure"
-             Example:
-               <option value="1-4">Intro (1 – 4)</option>
-               <option value="5-12">Verse 1 (5 – 12)</option>
-             Add/remove <option> lines to match this song's structure. ═══ -->
-        <option value="1-11">Intro music (1 – 11)</option>
-        <option value="12-28">Aaj kal — toh kya? (12 – 28)</option>
-        <option value="29-36">Middle music (29 – 36)</option>
-        <option value="37-57">Hamne toh — naam kar lia (37 – 57)</option>
-        <option value="58-73">Aaj kal toh kya — reprise (58 – 73)</option>
+        <option value="1-4">Intro (1 – 4)</option>
+        <option value="5-12">Jaane kahan — dil mera (5 – 12)</option>
+        <option value="13-20">Haye re haye — gaya ji (13 – 20)</option>
+        <option value="21-28">Mukhda reprise (21 – 28)</option>
+        <option value="29-37">Antara (29 – 37)</option>
+        <option value="38-40">Coda / ending (38 – 40)</option>
       </select>
     </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
@@ -1913,36 +1907,27 @@ body.score-mode #panelProgressWrap {
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script type="module">
 import { Midi } from 'https://esm.sh/@tonejs/midi@2.0.28';
-// ════════════════════════════════════════════════════════════════
-// ═══ SONG-SPECIFIC SLOT 5: SONG CONFIG (change all values) ═══
-// ════════════════════════════════════════════════════════════════
+// ================================
+// SONG CONFIG (SHEET STRUCTURE)
+// ================================
 const SONG_CONFIG = {
-    id: "aajkal",
-    title: "aajkal",
-
-    timeSignature: [2, 2], // 2/2 (cut time)
-    measures: 81,
-
+    id: "jaanekahan",
+    title: "Jaane Kahan Mera Jigaar Gaya Ji",
+    timeSignature: [4, 4], // 4/4
+    // 40 physical measures, no repeats — MIDI is a straight 1..40 timeline.
+    measures: 40,
     repeats: [],
-
     pickupBeats: 0
 };
-// ════════════════════════════════════════════════════════════════
-// ═══ SONG-SPECIFIC SLOT 5b: repeat structure ═══
-// For a song with NO repeats (most common), leave all four as 0/identity.
-// For a song WITH a repeat section:
-//   REPEAT_START = physical measure where the repeat section starts
-//   REPEAT_END   = physical measure where the 1st ending finishes
-//   REPEAT_LEN   = number of measures in the repeated block
-//   REPEAT_PHYSICAL_OFFSET = REPEAT_END + 1 - REPEAT_START (auto-derived)
-// ════════════════════════════════════════════════════════════════
+// ================================
+// No repeats — MIDI is a straight linear timeline
 const REPEAT_START = 0;
 const REPEAT_END   = 0;
 const REPEAT_LEN   = 0;
 const REPEAT_PHYSICAL_OFFSET = 0;
 function buildPhysicalToLogicalMap(config) {
   const map = [];
-  // No repeats — physical === logical. If your song has repeats, add mapping here.
+  // Jaanekahan: no repeats — physical === logical
   for (let p = 1; p <= config.measures; p++) {
     map[p] = p;
   }
@@ -1986,14 +1971,13 @@ async function loadSongMidi() {
 
     let response;
     try {
-        // ═══ SONG-SPECIFIC SLOT 5c: MIDI file path ═══
-        response = await fetch("aajkal.mid");
+        response = await fetch("jaanekahan.mid");
     } catch (networkErr) {
         throw new Error(`Network error — ${networkErr.message}`);
     }
 
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText} for "aajkal.mid" — check the file path`);
+        throw new Error(`HTTP ${response.status} ${response.statusText} for "jaanekahan.mid" — check the file path`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -2089,7 +2073,7 @@ function getLogicalSheetMeasureFromTime(timeSeconds) {
 // PRACTICE SEQUENCE BUILDER (PHYSICAL MEASURES)
 // ================================
 
-// No repeats — physical === logical throughout (update if song has repeats)
+// Jaanekahan: no repeats — physical === logical throughout
 function logicalToPhysicalFirst(logical) { return logical; }
 function logicalToPhysicalSecond(logical) { return null; }
 
@@ -2972,10 +2956,7 @@ const ctx = canvas.getContext('2d');
 let scoreModeActive = false;
 let scoreNoteOffset = 0;
 let scoreCurrentPage = 1;
-// ════════════════════════════════════════════════════════════════
-// ═══ SONG-SPECIFIC SLOT 6a: number of SVG score pages ═══
-// ════════════════════════════════════════════════════════════════
-const SCORE_TOTAL_PAGES = 3;
+const SCORE_TOTAL_PAGES = 2;
 const scoreCanvases = {};
 let pdfjsLib = null;
 let pdfDoc = null;
@@ -6296,47 +6277,25 @@ const TIE_GAP_THRESHOLD = 0.005;
 // Generated by analysing the MuseScore SVG exports in Python.
 // Each system entry: treble/bass Y bounds, barline X positions, and the
 // sheet-music measure number of the first measure in that system.
-// ════════════════════════════════════════════════════════════════
-// ═══ SONG-SPECIFIC SLOT 6b: SVG page geometry (barlines & staff bounds) ═══
-//
-// How to generate this data for a new song:
-//   1. Export MuseScore to SVG (File → Export → SVG).
-//   2. Run the Python helper script (generate_svg_systems.py) on the SVG files.
-//      It reads all staff lines and barlines, prints this exact JS array.
-//   3. Paste the output below, replacing everything inside the outer [ … ].
-//
-// Each page is an array of systems. Each system:
-//   treble_top / treble_bot — Y bounds of the treble staff (in SVG user units)
-//   bass_top   / bass_bot   — Y bounds of the bass staff
-//   barline_xs              — X positions of ALL vertical barlines in that system
-//                             (including the opening barline and the closing barline)
-//   start_measure           — sheet-music measure number of the first measure in that system
-//
-// Add or remove page arrays (inner []) to match SCORE_TOTAL_PAGES.
-// ════════════════════════════════════════════════════════════════
 const SVG_PAGE_SYSTEMS = [
-  // PAGE 1
+  // PAGE 1 — 5 systems × 4 measures = m1..20
   [
-    { treble_top:677.5,  treble_bot:773.9,  bass_top:915.6,  bass_bot:1012.1, barline_xs:[335,955,1117,1499,1660,2042,2402,2762], start_measure:1  },
-    { treble_top:1366.3, treble_bot:1462.8, bass_top:1650.9, bass_bot:1747.4, barline_xs:[215,759,1056,1354,1652,1961,2374,2762], start_measure:8  },
-    { treble_top:2101.7, treble_bot:2198.1, bass_top:2346.3, bass_bot:2442.7, barline_xs:[215,682,947,1333,1722,2012,2344,2762],  start_measure:15 },
-    { treble_top:2797.0, treble_bot:2893.5, bass_top:3041.6, bass_bot:3138.1, barline_xs:[215,791,1084,1368,1790,2184,2490,2762], start_measure:22 },
-    // Repeat sign at x=407/425 removed — those are the repeat-start double barline, not measure boundaries
-    { treble_top:3492.3, treble_bot:3588.8, bass_top:3730.5, bass_bot:3827.0, barline_xs:[215,843,1092,1492,1740,2124,2372,2762], start_measure:29 }
+    { treble_top:729.6,  treble_bot:826.1,  bass_top:1023.4, bass_bot:1119.8, barline_xs:[335.4,1130.0,1645.6,2246.7,2762.4], start_measure:1  },
+    { treble_top:1410.0, treble_bot:1506.5, bass_top:1705.7, bass_bot:1802.2, barline_xs:[214.8,937.7,1507.2,2124.0,2762.4],  start_measure:5  },
+    { treble_top:2097.6, treble_bot:2194.1, bass_top:2310.1, bass_bot:2406.6, barline_xs:[214.8,939.8,1506.2,2072.5,2762.4],  start_measure:9  },
+    { treble_top:2696.7, treble_bot:2793.2, bass_top:3018.8, bass_bot:3115.3, barline_xs:[214.8,1019.3,1568.0,2213.8,2762.4], start_measure:13 },
+    { treble_top:3405.4, treble_bot:3501.9, bass_top:3730.5, bass_bot:3827.0, barline_xs:[214.8,978.8,1568.0,2173.2,2762.4],  start_measure:17 },
   ],
-  // PAGE 2
+  // PAGE 2 — 5 systems: m21..24, m25..28, m29..32, m33..37 (5 measures), m38..40 (3 measures)
   [
-    // Repeat-end double barline at x=696/714 removed; start_measure corrected from 38 → 36
-    { treble_top:381.4,  treble_bot:477.9,  bass_top:656.2,  bass_bot:752.7,  barline_xs:[215,696,1044,1402,1759,2097,2446,2762], start_measure:36 },
-    { treble_top:1150.5, treble_bot:1247.0, bass_top:1407.3, bass_bot:1503.8, barline_xs:[215,693,1024,1405,1752,2100,2426,2762],     start_measure:43 },
-    { treble_top:1901.6, treble_bot:1998.1, bass_top:2191.9, bass_bot:2288.4, barline_xs:[215,739,1078,1439,1796,2096,2418,2762],     start_measure:50 },
-    { treble_top:2686.2, treble_bot:2782.7, bass_top:2982.9, bass_bot:3079.4, barline_xs:[215,673,1076,1447,1732,1985,2385,2762],     start_measure:57 },
-    { treble_top:3477.2, treble_bot:3573.7, bass_top:3730.5, bass_bot:3827.0, barline_xs:[215,693,1024,1442,1829,2111,2376,2762],     start_measure:64 }
+    { treble_top:404.3,  treble_bot:500.8,  bass_top:700.8,  bass_bot:797.3,  barline_xs:[214.8,981.6,1547.1,2187.1,2762.4],  start_measure:21 },
+    { treble_top:1153.2, treble_bot:1249.7, bass_top:1446.8, bass_bot:1543.3, barline_xs:[214.8,981.1,1545.9,2185.4,2762.4],  start_measure:25 },
+    { treble_top:1899.3, treble_bot:1995.7, bass_top:2236.4, bass_bot:2332.9, barline_xs:[214.8,970.9,1526.6,2139.2,2762.4],  start_measure:29 },
+    // 5 measures: m33-m37
+    { treble_top:2688.8, treble_bot:2785.3, bass_top:3009.4, bass_bot:3105.9, barline_xs:[214.8,864.6,1430.1,2007.3,2522.3,2762.4], start_measure:33 },
+    // 3 measures: m38-m40 (2740.2/2758.0 is double barline = one boundary → use 2758.0)
+    { treble_top:3461.9, treble_bot:3558.4, bass_top:3700.7, bass_bot:3797.2, barline_xs:[214.8,1213.3,2230.2,2758.0],         start_measure:38 },
   ],
-  // PAGE 3
-  [
-    { treble_top:381.4,  treble_bot:477.9,  bass_top:659.8,  bass_bot:756.3,  barline_xs:[215,1420,2258,2740,2758], start_measure:71 }
-  ]
 ];
 
 // ============================================================
@@ -6422,7 +6381,7 @@ function _buildSvgNoteIndex() {
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
 
-        // No repeat-boundary special cases — tied notes are excluded normally
+        // Jaanekahan: no repeat-boundary special cases — tied notes are excluded normally
 
         totalTied += tiedNoteheadSet.size;
 
@@ -6735,7 +6694,7 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // No repeats — always use the primary _svgBuckets (update if song has repeats)
+    // Jaanekahan: no repeats — always use the primary _svgBuckets
     const bucketSource = _svgBuckets;
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
@@ -6985,9 +6944,7 @@ async function renderAllScorePages() {
     for (let pageNum = 1; pageNum <= SCORE_TOTAL_PAGES; pageNum++) {
         const container = document.getElementById(`scorePage${pageNum}`);
         if (!container) continue;
-        // ═══ SONG-SPECIFIC SLOT 6c: SVG file path pattern ═══
-        // File must be named: svg/SONG_ID-1.svg, svg/SONG_ID-2.svg, etc.
-        const response = await fetch(`aajkal-${pageNum}.svg`);
+        const response = await fetch(`svg/jaanekahan-${pageNum}.svg`);
         const svgText = await response.text();
         container.innerHTML = svgText;
         const svgEl = container.querySelector('svg');
@@ -8186,7 +8143,7 @@ const rzp = new Razorpay(options);
         console.error('[FATAL] window.showPaywall is not defined — paywall.js did not initialize correctly.');
       } else {
         window.showPaywall({
-          productId: "song:aajkal",
+          productId: "song:jaanekahan",
           title: "This song is locked",
           body: "Please buy to unlock this lesson.",
           onSuccess: () => {
