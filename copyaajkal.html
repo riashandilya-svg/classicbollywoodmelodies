@@ -3362,6 +3362,13 @@ function _advanceBeatGroupSubNote() {
 
     document.getElementById('holdInfo').textContent =
         `Play both hands through the group`;
+
+    if (scoreModeActive) {
+        const lbl = sustainedNames.length > 0
+            ? `🎹 Now: ${nextNoteNames} (hold: ${sustainedNames.join(' + ')})`
+            : `🎹 Now: ${nextNoteNames}`;
+        document.getElementById('scoreKeyboardLabel').textContent = lbl;
+    }
 }
 
 // Called after the user has completed the entire beat group hold
@@ -5119,6 +5126,14 @@ setSpeedButtonsEnabled(true);
 
 if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
 
+// Beat-group cleanup
+if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+_beatGroupNotes = [];
+_bgHeldNotes.clear();
+_beatGroupPressed.clear();
+_bgCountdownStartMs = null;
+_beatGroupCurrentPlayTime = null;
+
 stopMetronome();
 
 if (synth) synth.releaseAll();
@@ -5203,6 +5218,14 @@ function resetAll() {
     currentChordNotes.clear();
     midiPressedNotes.clear();
     chordNotesCompleted.clear();
+
+    // Beat-group cleanup
+    if (_beatGroupTimer) { clearTimeout(_beatGroupTimer); _beatGroupTimer = null; }
+    _beatGroupNotes = [];
+    _bgHeldNotes.clear();
+    _beatGroupPressed.clear();
+    _bgCountdownStartMs = null;
+    _beatGroupCurrentPlayTime = null;
 
     // ── 6. Hide all overlays / visuals ───────────────────────────────────
     document.getElementById('countdownOverlay').style.display = 'none';
@@ -6223,6 +6246,12 @@ if (freeMode && note === freeModeActiveNote) {
     expectedMidiTreble.clear();
     return;
 }
+
+        // Both-hands beat-group mode: delegate noteOff to the beat-group handler
+        if (clefMode === 'both' && trainingActive) {
+            _bgCheckEarlyRelease(note);
+            return;
+        }
 
         if (!currentChordNotes.has(note)) return;
         
