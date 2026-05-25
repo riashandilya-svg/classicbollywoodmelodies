@@ -3193,10 +3193,19 @@ function drawKeyboard() {
         const x = whiteIndex * getWhiteKeyWidth();
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
+        const isLatched = mouseLatchedNotes.has(midi);
+        const _sustainedCarried = getSustainedCarriedMidis();
+        const isSustainedHold = _sustainedCarried.has(midi);
 
         // Premium gradient white key
         const wGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + keyHeight);
-        if (isTreble) {
+        if (isSustainedHold) {
+            wGrad.addColorStop(0, '#D1FAE5');
+            wGrad.addColorStop(1, '#34D399');
+        } else if (isLatched) {
+            wGrad.addColorStop(0, '#D1FAE5');
+            wGrad.addColorStop(1, '#6EE7B7');
+        } else if (isTreble) {
             wGrad.addColorStop(0, '#FFCDD2');
             wGrad.addColorStop(1, '#EF9A9A');
         } else if (isBass) {
@@ -3222,8 +3231,26 @@ function drawKeyboard() {
         ctx.fillStyle = innerGrad;
         ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), 14);
 
+        // Glow for sustained-hold (green) key
+        if (isSustainedHold) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 22;
+            ctx.fillStyle = 'rgba(16,185,129,0.22)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
+        // Glow for latched (mouse-clicked) key
+        if (isLatched && !isSustainedHold) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 18;
+            ctx.fillStyle = 'rgba(16,185,129,0.18)';
+            ctx.fillRect(x, keyboardTop, getWhiteKeyWidth(), keyHeight);
+            ctx.shadowBlur = 0;
+        }
+
         // Glow for active treble key
-        if (isTreble) {
+        if (isTreble && !isSustainedHold) {
             ctx.shadowColor = '#ff6b6b';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(255,107,107,0.15)';
@@ -3232,7 +3259,7 @@ function drawKeyboard() {
         }
 
         // Glow for active bass key
-        if (isBass) {
+        if (isBass && !isSustainedHold) {
             ctx.shadowColor = '#7C3AED';
             ctx.shadowBlur = 18;
             ctx.fillStyle = 'rgba(167,139,250,0.18)';
@@ -3241,7 +3268,7 @@ function drawKeyboard() {
         }
 
         if (showNoteNames) {
-            ctx.fillStyle = isBass ? '#4C1D95' : '#555';
+            ctx.fillStyle = isSustainedHold ? '#065F46' : isBass ? '#4C1D95' : '#555';
             ctx.font = `bold ${Math.max(9, Math.min(12, getWhiteKeyWidth() * 0.55))}px Inter, Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
@@ -3270,10 +3297,18 @@ function drawKeyboard() {
 
         const isTreble = expectedMidiTreble.has(midi);
         const isBass   = expectedMidiBass.has(midi);
+        const isLatched = mouseLatchedNotes.has(midi);
+        const isSustainedHold = getSustainedCarriedMidis().has(midi);
 
         // Premium gradient black key
         const bGrad = ctx.createLinearGradient(x, keyboardTop, x, keyboardTop + blackKeyHeight);
-        if (isTreble) {
+        if (isSustainedHold) {
+            bGrad.addColorStop(0, '#A7F3D0');
+            bGrad.addColorStop(1, '#059669');
+        } else if (isLatched) {
+            bGrad.addColorStop(0, '#A7F3D0');
+            bGrad.addColorStop(1, '#059669');
+        } else if (isTreble) {
             bGrad.addColorStop(0, '#EF9A9A');
             bGrad.addColorStop(1, '#E57373');
         } else if (isBass) {
@@ -3294,8 +3329,26 @@ function drawKeyboard() {
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
 
+        // Glow for sustained-hold (green) key
+        if (isSustainedHold) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 22;
+            ctx.fillStyle = 'rgba(16,185,129,0.5)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
+
+        // Glow for latched (mouse-clicked) key
+        if (isLatched && !isSustainedHold) {
+            ctx.shadowColor = '#10B981';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = 'rgba(16,185,129,0.45)';
+            ctx.fillRect(x, keyboardTop, blackKeyWidth, blackKeyHeight);
+            ctx.shadowBlur = 0;
+        }
+
         // Glow for active treble
-        if (isTreble) {
+        if (isTreble && !isSustainedHold) {
             ctx.shadowColor = '#ff6b6b';
             ctx.shadowBlur = 20;
             ctx.fillStyle = 'rgba(255,107,107,0.4)';
