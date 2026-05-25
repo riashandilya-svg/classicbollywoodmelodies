@@ -1879,10 +1879,6 @@ body.score-mode #panelProgressWrap {
 <script type="module">
 import { Midi } from 'https://esm.sh/@tonejs/midi@2.0.28';
 // ================================
-// DEBUG FLAG — set true only during local development
-// ================================
-const DEBUG = false;
-// ================================
 // SONG CONFIG (SHEET STRUCTURE)
 // ================================
 const SONG_CONFIG = {
@@ -2615,18 +2611,6 @@ function ensureSynth() {
     }
 
     freeModeSynth = synth;
-}
-
-// Fully tears down the shared synth and frees all Web Audio nodes.
-// Call on resetAll() — NOT on stopPlayback(), because disposing forces
-// a full Salamander sample reload on the next session (slow).
-function disposeSynth() {
-    if (synth) {
-        try { synth.releaseAll(); } catch(e) {}
-        try { synth.dispose();    } catch(e) {}
-        synth = null;
-    }
-    freeModeSynth = null;
 }
 
 let secondsPerBeat = 0.5;
@@ -3470,7 +3454,7 @@ if (clefMode === 'both') {
     // If this note is in the must-hold registry (re-press after early release),
     // restart the group timer and wait for the hold to complete.
     if (_bgRestartHoldTimer(midiNote)) {
-        if (DEBUG) console.log('🔁 _bgRestartHoldTimer fired for', getNoteName(midiNote), '— returning early. bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName));
+        console.log('🔁 _bgRestartHoldTimer fired for', getNoteName(midiNote), '— returning early. bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName));
         return;
     }
 
@@ -3486,7 +3470,7 @@ if (clefMode === 'both') {
     const allSustainedStillOn = sustainedRequired.every(m => midiPressedNotes.has(m));
     const allCurrentPressed   = allNewPressed && allSustainedStillOn;
 
-    if (DEBUG) console.log('🎹 noteOn', getNoteName(midiNote), '| chord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName), '| midiPressed:', [...midiPressedNotes].map(getNoteName), '| sustReq:', sustainedRequired.map(getNoteName), '| newReq:', newRequired.map(getNoteName), '| allNewPressed:', allNewPressed, '| allSustOn:', allSustainedStillOn, '| willAdvance:', allCurrentPressed);
+    console.log('🎹 noteOn', getNoteName(midiNote), '| chord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName), '| midiPressed:', [...midiPressedNotes].map(getNoteName), '| sustReq:', sustainedRequired.map(getNoteName), '| newReq:', newRequired.map(getNoteName), '| allNewPressed:', allNewPressed, '| allSustOn:', allSustainedStillOn, '| willAdvance:', allCurrentPressed);
 
     if (allCurrentPressed) {
         // Start the stats countdown from the very first correct press so the
@@ -3684,7 +3668,7 @@ function _advanceBeatGroupSubNote() {
 
     if (nextIdx === null) {
         // All sub-notes played — NOW start the hold timer for the last note's duration.
-        if (DEBUG) console.log('⏱ All sub-notes done. Starting hold timer. bgHeld before register:', [..._bgHeldNotes.keys()].map(getNoteName), 'bgPressed:', [..._beatGroupPressed].map(getNoteName));
+        console.log('⏱ All sub-notes done. Starting hold timer. bgHeld before register:', [..._bgHeldNotes.keys()].map(getNoteName), 'bgPressed:', [..._beatGroupPressed].map(getNoteName));
         // The last note in the group has playTime == currentPlayTime; hold it for
         // (_beatGroupEndSec - currentPlayTime). This is the only correct place to
         // start the timer — doing it earlier (at spawn or first chord) gave the user
@@ -3726,7 +3710,7 @@ function _advanceBeatGroupSubNote() {
     _beatGroupCurrentPlayTime = nextPlayTime; // advance the explicit slot tracker
 
     // Rebuild currentChordNotes for the next simultaneous slot.
-    if (DEBUG) console.log('➡ Advancing to slot at nextPlayTime=', nextPlayTime?.toFixed(4), 'nextIdx=', nextIdx);
+    console.log('➡ Advancing to slot at nextPlayTime=', nextPlayTime?.toFixed(4), 'nextIdx=', nextIdx);
     // IMPORTANT: also include any notes from earlier slots whose duration
     // extends into this slot — those must still be physically held.
     currentChordNotes.clear();
@@ -3783,6 +3767,7 @@ function _advanceBeatGroupSubNote() {
         if (Math.abs(t - nextPlayTime) < 0.01 && !carriedAcrossMidis.has(n.midi)) {
             _beatGroupPressed.delete(n.midi);
             midiPressedNotes.delete(n.midi);
+            mouseLatchedNotes.delete(n.midi); // Fix: prevent stale latch from causing double-click
         }
     }
 
@@ -3799,7 +3784,7 @@ function _advanceBeatGroupSubNote() {
         }
     }
 
-    if (DEBUG) console.log('🔗 After slot advance: currentChord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName));
+    console.log('🔗 After slot advance: currentChord:', [...currentChordNotes].map(getNoteName), '| bgHeld:', [..._bgHeldNotes.keys()].map(getNoteName), '| bgPressed:', [..._beatGroupPressed].map(getNoteName));
 
     // Update target display
     const firstNote = practiceNotes[nextIdx];
@@ -3832,7 +3817,7 @@ function _advanceBeatGroupSubNote() {
     // bug on semiquavers (sixteenth notes). Each new slot must always wait for a
     // fresh physical press by the user.
     if (newNotes.length === 0) {
-        if (DEBUG) console.log('⏭ Slot at', nextPlayTime?.toFixed(4), '— no new notes, only carry-across — skipping visual, recursing');
+        console.log('⏭ Slot at', nextPlayTime?.toFixed(4), '— no new notes, only carry-across — skipping visual, recursing');
         _advanceBeatGroupSubNote();
         return;
     }
@@ -3932,34 +3917,6 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
     const startY = -height - TOP_GAP;
     const endY = canvas.height - KEYBOARD_HEIGHT - height;
 
-    const width = getWhiteKeyWidth() * 0.86;
-    const gloss = ctx.createLinearGradient(x, 0, x + width, 0);
-    gloss.addColorStop(0.0, "rgba(255,255,255,0.05)");
-    gloss.addColorStop(0.4, "rgba(255,255,255,0.35)");
-    gloss.addColorStop(0.6, "rgba(255,255,255,0.35)");
-    gloss.addColorStop(1.0, "rgba(255,255,255,0.05)");
-
-    // Body gradient — normalised 0→height so it can be cached at spawn.
-    // Drawn via ctx.translate(0, rect.y) so no per-frame recreation needed.
-    const bodyGrad = ctx.createLinearGradient(0, 0, 0, height);
-    if (track === TREBLE) {
-        bodyGrad.addColorStop(0.00, "rgba(220,180,220,0.92)");
-        bodyGrad.addColorStop(0.25, "rgba(168,100,160,0.88)");
-        bodyGrad.addColorStop(0.65, "rgba(120,30,90,0.90)");
-        bodyGrad.addColorStop(1.00, "rgba(80,10,50,0.94)");
-    } else {
-        bodyGrad.addColorStop(0.00, "rgba(255,251,150,0.92)");
-        bodyGrad.addColorStop(0.25, "rgba(255,236,50,0.88)");
-        bodyGrad.addColorStop(0.65, "rgba(250,204,21,0.90)");
-        bodyGrad.addColorStop(1.00, "rgba(202,138,4,0.94)");
-    }
-
-    // Shimmer gradient — normalised -20→+20 around y=0; translated to shimmerY each frame.
-    const shimmerGrad = ctx.createLinearGradient(0, -20, 0, 20);
-    shimmerGrad.addColorStop(0,   "rgba(255,255,255,0)");
-    shimmerGrad.addColorStop(0.5, "rgba(255,255,255,0.8)");
-    shimmerGrad.addColorStop(1,   "rgba(255,255,255,0)");
-
     fallingRectangles.push({
         midi: midiNumber,
         noteName: getNoteName(midiNumber),
@@ -3970,12 +3927,10 @@ function addMidiFallingRectangle(midiNumber, duration, track, noteStartTime) {
         y: startY,
         startY,
         endY,
-        width,
+        width: getWhiteKeyWidth() * 0.86,
         height,
 
-        bodyGrad,       // normalised vertical gradient — cached at spawn, used with translate
-        shimmerGrad,    // normalised shimmer band — cached at spawn, used with translate
-        gloss,          // horizontal — depends only on x/width, safe to cache at spawn
+        gradient: null, // recomputed per-frame at actual rect.y so colours show correctly
         startTime: noteStartTime,
         landed: false,
     });
@@ -4195,7 +4150,7 @@ function spawnTrainingNote(noteObj) {
         }
     }
 
-    if (DEBUG) console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]) + ' sustained=' + JSON.stringify([...sustainedNotes.keys()]));
+    console.log('🎯 spawnTrainingNote: index=' + trainingIndex + ' midi=' + noteObj.midi + ' track=' + noteObj.track + ' playTime=' + (noteObj.playTime??noteObj.time).toFixed(4) + ' chord=' + JSON.stringify([...currentChordNotes]) + ' sustained=' + JSON.stringify([...sustainedNotes.keys()]));
     if (typeof onTrainingNoteSpawned === 'function') {
         onTrainingNoteSpawned(noteObj);
     }
@@ -4433,7 +4388,6 @@ const endTimeout = setTimeout(() => {
     speedLocked = false;
     setSpeedButtonsEnabled(true);
     scoreKeysPlaying = false;
-    previewTimeouts = [];  // all timeouts have now fired — release the timer IDs
 
     // Clear any keyboard keys left highlighted by landing preview notes
     expectedMidiTreble.clear();
@@ -4505,14 +4459,11 @@ window._skipPreview = function() {
 };
 
 // Show/hide the skip-preview box whenever previewMode changes.
-// The interval ID is stored so it can be cleared on Stop/Reset — preventing
-// the previous bug where every Start/Stop cycle leaked a new 150ms timer.
-let _previewVisibilityInterval = null;
 (function _patchPreviewVisibility() {
     const box = document.getElementById('skipPreviewBox');
     if (!box) return;
     let _prev = false;
-    _previewVisibilityInterval = setInterval(() => {
+    setInterval(() => {
         if (previewMode !== _prev) {
             _prev = previewMode;
             box.style.display = previewMode ? 'block' : 'none';
@@ -4749,12 +4700,24 @@ if (rect.y > canvas.height) {
     return false;
 }
 
-// ── Draw rect in translated space (origin = rect's top-left Y) ─────────────
-// Both bodyGrad and shimmerGrad are normalised at spawn — no per-frame allocation.
-ctx.save();
-ctx.translate(0, rect.y);
+// Recompute gradient each frame at rect's actual y so colours render correctly
+{
+    const g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.height);
+    if (rect.track === TREBLE) {
+        g.addColorStop(0.00, "rgba(220,180,220,0.92)");
+        g.addColorStop(0.25, "rgba(168,100,160,0.88)");
+        g.addColorStop(0.65, "rgba(120,30,90,0.90)");
+        g.addColorStop(1.00, "rgba(80,10,50,0.94)");
+    } else {
+        g.addColorStop(0.00, "rgba(255,251,150,0.92)");
+        g.addColorStop(0.25, "rgba(255,236,50,0.88)");
+        g.addColorStop(0.65, "rgba(250,204,21,0.90)");
+        g.addColorStop(1.00, "rgba(202,138,4,0.94)");
+    }
+    ctx.fillStyle = g;
+}
 
-// Glow shadow
+// Glow shadow for treble notes
 if (rect.track === TREBLE) {
     ctx.shadowColor = 'rgba(160,40,120,0.60)';
     ctx.shadowBlur = 18;
@@ -4763,45 +4726,70 @@ if (rect.track === TREBLE) {
     ctx.shadowBlur = 10;
 }
 
-// Rounded-rect body — y-coords are now relative (0 = top of rect)
 const r = 12;
-ctx.fillStyle = rect.bodyGrad;
 ctx.beginPath();
-ctx.moveTo(rect.x + r,             0);
-ctx.lineTo(rect.x + rect.width - r, 0);
-ctx.quadraticCurveTo(rect.x + rect.width, 0,             rect.x + rect.width, r);
-ctx.lineTo(rect.x + rect.width,          rect.height - r);
-ctx.quadraticCurveTo(rect.x + rect.width, rect.height,   rect.x + rect.width - r, rect.height);
-ctx.lineTo(rect.x + r,                   rect.height);
-ctx.quadraticCurveTo(rect.x,             rect.height,    rect.x, rect.height - r);
-ctx.lineTo(rect.x,                       r);
-ctx.quadraticCurveTo(rect.x,             0,               rect.x + r, 0);
+ctx.moveTo(rect.x + r, rect.y);
+ctx.lineTo(rect.x + rect.width - r, rect.y);
+ctx.quadraticCurveTo(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y + r);
+ctx.lineTo(rect.x + rect.width, rect.y + rect.height - r);
+ctx.quadraticCurveTo(rect.x + rect.width, rect.y + rect.height, rect.x + rect.width - r, rect.y + rect.height);
+ctx.lineTo(rect.x + r, rect.y + rect.height);
+ctx.quadraticCurveTo(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height - r);
+ctx.lineTo(rect.x, rect.y + r);
+ctx.quadraticCurveTo(rect.x, rect.y, rect.x + r, rect.y);
 ctx.closePath();
 ctx.fill();
 ctx.shadowBlur = 0;
 
-// Gloss overlay (horizontal gradient — cached at spawn)
 ctx.save();
 ctx.globalCompositeOperation = "screen";
 ctx.globalAlpha = 0.22;
-ctx.fillStyle = rect.gloss;
-ctx.fillRect(rect.x, 0, rect.width, rect.height);
+
+const gloss = ctx.createLinearGradient(
+    rect.x,
+    rect.y,
+    rect.x + rect.width,
+    rect.y
+);
+
+gloss.addColorStop(0.0, "rgba(255,255,255,0.05)");
+gloss.addColorStop(0.4, "rgba(255,255,255,0.35)");
+gloss.addColorStop(0.6, "rgba(255,255,255,0.35)");
+gloss.addColorStop(1.0, "rgba(255,255,255,0.05)");
+
+ctx.fillStyle = gloss;
+ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
 ctx.restore();
 
-// Shimmer band — cached shimmerGrad translated to its Y position within the rect
 const shimmerSpeed = 0.0015 * speedMultiplier;
-const shimmerPhase = (performance.now() * shimmerSpeed) % 1;
-const shimmerLocalY = shimmerPhase * rect.height;  // relative to translated origin
+const shimmerPhase =
+    (performance.now() * shimmerSpeed) % 1;
+
+const shimmerY =
+    rect.y + shimmerPhase * rect.height;
 
 const isDownbeat = metronomeRunning && (metroBeat % SONG_CONFIG.timeSignature[0] === 0);
+
 ctx.save();
 ctx.globalAlpha = isDownbeat ? 0.28 : 0.18;
 ctx.globalCompositeOperation = "lighter";
-ctx.translate(0, shimmerLocalY);   // shimmerGrad is normalised to -20→+20 around y=0
-ctx.fillStyle = rect.shimmerGrad;
-ctx.fillRect(rect.x, -20, rect.width, 40);  // only need to fill the shimmer band height
 
-ctx.restore();  // pop shimmer translate
+const shimmerGradient = ctx.createLinearGradient(
+    0,
+    shimmerY - 20,
+    0,
+    shimmerY + 20
+);
+
+shimmerGradient.addColorStop(0, "rgba(255,255,255,0)");
+shimmerGradient.addColorStop(0.5, "rgba(255,255,255,0.8)");
+shimmerGradient.addColorStop(1, "rgba(255,255,255,0)");
+
+ctx.fillStyle = shimmerGradient;
+ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+
+ctx.restore();
 
 if (showNoteNames && rect.isMidi && rect.noteName) {
         if (rect.track === BASS) {
@@ -4820,12 +4808,10 @@ if (showNoteNames && rect.isMidi && rect.noteName) {
         ctx.fillText(
             rect.noteName,
             rect.x + rect.width / 2,
-            rect.height / 2   // relative — outer translate puts us at rect.y
+            rect.y + rect.height / 2
         );
         ctx.shadowBlur = 0;
     }
-
-ctx.restore();  // pop outer translate(0, rect.y)
 
     return true;
 });
@@ -5407,9 +5393,7 @@ async function initMIDI() {
     if(!navigator.requestMIDIAccess){ console.log('Web MIDI API not supported'); return; }
     try {
         const midiAccess = await navigator.requestMIDIAccess();
-        if (DEBUG) console.log('✅ MIDI Access granted');
         for(const input of midiAccess.inputs.values()){
-            if (DEBUG) console.log('🔌 Connected:', input.name);
             midiInputs.push(input);
             input.onmidimessage = handleMIDIMessage;
         }
@@ -5526,7 +5510,21 @@ startPracticeButton.addEventListener('click', async () => {
     await Tone.start();
     
     if (midiInputs.length === 0) {
-        await initMIDI();
+        try {
+            const midiAccess = await navigator.requestMIDIAccess();
+            console.log('✅ MIDI Access granted');
+            
+            for (const input of midiAccess.inputs.values()) {
+                console.log('🔌 Connected:', input.name);
+                midiInputs.push(input);
+                
+                input.onmidimessage = (event) => {
+                    handleMIDIMessage(event);
+                };
+            }
+        } catch (err) {
+            console.error('❌ MIDI Error:', err);
+        }
     }
     
     hardStopUserNote();
@@ -5812,7 +5810,7 @@ function resetAll() {
 
     // ── 2. Stop all audio & transport ────────────────────────────────────
     stopMetronome();
-    disposeSynth();
+    if (synth) synth.releaseAll();
     try { Tone.Transport.stop(); Tone.Transport.cancel(); } catch(e) {}
 
     // ── 3. Kill every active state flag ──────────────────────────────────
@@ -6124,7 +6122,6 @@ let _bucketFirstIsGrace = {};
 // within its (sheet_measure, clef) bucket so we can do an O(1) lookup.
 // Built in _buildSvgMidiMap() alongside the SVG index.
 let _midiRankMap = new Map();   // key = `${time.toFixed(4)}|${midi}|${track}` → {sheet_measure, clef, rank}
-let _svgIndexToMidi = new Map(); // inverse: svgIndex (number) → midi (number) — built in assignRanks for O(1) debug lookups
 
 // Tie detection threshold: splitRepeatedNotes inserts 0.02s gaps between re-attacked
 // same-pitch notes. After splitting, genuine ties have gap ≈ 0 (< 1ms), while
@@ -6165,7 +6162,6 @@ function _buildSvgNoteIndex() {
     _svgBucketsPage2    = {};
     _bucketFirstIsGrace = {};
     _midiRankMap        = new Map();
-    _svgIndexToMidi     = new Map();
     _currentHighlightEl = null;
 
     let totalTied = 0;
@@ -6492,7 +6488,7 @@ function _buildSvgMidiMap() {
             // MIDI note (rawRank=6) to rank 7, which is out of bounds on a 7-note bucket.
 
             // DEBUG: log all assignments to sheet 35 treble
-            if (DEBUG && sheetMeasure === 35 && clef === 'treble') {
+            if (sheetMeasure === 35 && clef === 'treble') {
                 console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
             }
 
@@ -6507,18 +6503,13 @@ function _buildSvgMidiMap() {
             //   rank 6: treble G
             //   rank 7: treble A   /  bass B+D
             //   rank 8: treble E
-            if (DEBUG && sheetMeasure === 28) {
+            if (sheetMeasure === 28) {
                 console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
             }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
 
-            // Build the inverse map (svgIndex → midi) for O(1) debug lookups in _applyHighlight.
-            // We have rank + sheetMeasure + clef, so we can resolve the SVG index directly
-            // from the bucket without any scan at highlight time.
-            const svgIdx = (_svgBuckets[sheetMeasure]?.[clef]?.[rank])
-                        ?? (_svgBucketsPage2[sheetMeasure]?.[clef]?.[rank]);
-            if (svgIdx != null) _svgIndexToMidi.set(svgIdx, note.midi);
+
         }
     }
 
@@ -6597,7 +6588,7 @@ function _applyHighlight(indices, colorMap) {
     _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
 
     // ── DEBUG: log every highlighted note and flag strays ──────────────────
-    if (DEBUG && idxArray.length > 0) {
+    if (idxArray.length > 0) {
         const expectedMidis = new Set([...currentChordNotes]);
         const highlightedNotes = idxArray.map(x => {
             if (typeof x !== 'number') return { idx: '?', midi: null, name: '?', colorKey: 'unknown' };
@@ -6605,8 +6596,12 @@ function _applyHighlight(indices, colorMap) {
             const color = (colorMap && colorMap.has(x)) ? colorMap.get(x)
                         : ne?.clef === 'bass' ? '#B45309' : '#9B2C6E';
             const colorKey = color === '#16a34a' ? 'green' : color === '#9B2C6E' ? 'purple' : color === '#B45309' ? 'gold' : color;
-            // O(1) reverse-lookup via pre-built inverse map
-            const midi = _svgIndexToMidi.get(x) ?? null;
+            // Reverse-lookup MIDI for this SVG index via _midiRankMap
+            let midi = null;
+            for (const [, entry] of _midiRankMap) {
+                const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef];
+                if (bucket && bucket[entry.rank] === x) { midi = entry.midi; break; }
+            }
             // Any highlighted note (purple, gold, OR green) not in currentChordNotes is a stray
             const stray = midi !== null && !expectedMidis.has(midi);
             return { idx: x, midi, name: midi ? getNoteName(midi) : '?', colorKey, stray };
@@ -6724,7 +6719,7 @@ function onTrainingNoteSpawned(noteObj) {
         );
     }
 
-    if (DEBUG) console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
+    console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
     // Deduplicate by time+midi+track so we don't double-lookup.
     // Also skip notes that are carried-across sustains (_bgHeldNotes) — those are
@@ -7207,7 +7202,7 @@ async function detectCurrency() {
       // Return currency for country, or INR as fallback
       return currencyMap[countryCode] || 'INR';
     } catch (fetchError) {
-      clearTimeout(timeoutId);  // covers both abort and network errors
+      clearTimeout(timeoutId);
       throw fetchError;
     }
   } catch (error) {
@@ -7648,7 +7643,7 @@ window.location.reload();
       console.log("[PAYWALL] 🚫 ACCESS DENIED - Showing paywall");
       
       const currency = await detectCurrency();
-      const currencySymbol = CURRENCY_SYMBOLS[currency] || currency;
+      const currencySymbol = CURRENCY_SYMBOLS[currency];
       
       const [pricingData, credits] = await Promise.all([
         fetchPricing(productId, currency),
