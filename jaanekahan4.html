@@ -3649,6 +3649,23 @@ function _bgCheckEarlyRelease(releasedMidi) {
     const now = performance.now();
     if (now >= held.requiredUntilMs) {
         _bgHeldNotes.delete(releasedMidi);
+        // The hold for this note is now complete. If all other held notes are also done
+        // and the beat-group timer was previously cancelled (e.g. by an earlier early-
+        // release), attempt to restart completion so the group isn't stuck.
+        if (_beatGroupTimer === null) {
+            const allSubNotesDone = !_beatGroupNotes.some(({ note: n }) => {
+                const t = n.playTime ?? n.time;
+                return t > (_beatGroupCurrentPlayTime ?? -1) + 0.001;
+            });
+            const holdPhaseStarted = noteHoldStartTime !== null && noteHoldStartTime >= (_beatGroupStartMs ?? 0);
+            const allHoldsComplete = [..._bgHeldNotes.values()].every(h => performance.now() >= h.requiredUntilMs);
+            if (allSubNotesDone && holdPhaseStarted && allHoldsComplete) {
+                _beatGroupTimer = setTimeout(() => {
+                    _beatGroupTimer = null;
+                    _onBeatGroupComplete();
+                }, 50);
+            }
+        }
         return false;  // hold completed — not a violation
     }
 
@@ -5249,7 +5266,37 @@ canvas.addEventListener('mousedown', async (e) => {
         if (alreadyLatched && noteHoldStartTime !== null && !holdEvaluated) {
             _dbgLog(`  -> re-click while holding: evaluating hold immediately`);
             _dbgUpdate();
-            evaluateHoldOnRelease(midiNote);
+            // In both-hands mode the hold is managed by the beat-group registry.
+            // evaluateHoldOnRelease only calls _bgCheckEarlyRelease and returns,
+            // leaving _beatGroupTimer null with no path to completion when the user
+            // re-presses after a premature release. Use _bgRestartHoldTimer instead,
+            // which correctly re-arms the completion timer (or no-ops if the note
+            // is no longer in the must-hold registry because time has elapsed).
+            if (clefMode === 'both') {
+                const restarted = _bgRestartHoldTimer(midiNote);
+                if (!restarted) {
+                    // Note is no longer in the hold registry (time already elapsed
+                    // or was never registered). If the beat-group timer was cancelled
+                    // by an early-release, restart it now so the group can complete.
+                    if (_beatGroupTimer === null) {
+                        const allSubNotesDone = !_beatGroupNotes.some(({ note: n }) => {
+                            const t = n.playTime ?? n.time;
+                            return t > (_beatGroupCurrentPlayTime ?? -1) + 0.001;
+                        });
+                        const allHoldsComplete = [..._bgHeldNotes.values()].every(
+                            h => performance.now() >= h.requiredUntilMs
+                        );
+                        if (allSubNotesDone && allHoldsComplete) {
+                            _beatGroupTimer = setTimeout(() => {
+                                _beatGroupTimer = null;
+                                _onBeatGroupComplete();
+                            }, 50);
+                        }
+                    }
+                }
+            } else {
+                evaluateHoldOnRelease(midiNote);
+            }
             return;
         }
 
