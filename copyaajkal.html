@@ -3210,7 +3210,7 @@ if (clefMode === 'both') {
     } else {
         const remaining = [...newRequired, ...sustainedRequired].filter(m => !_beatGroupPressed.has(m) && !_bgHeldNotes.has(m));
         if (remaining.length > 0) {
-            feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
+            feedback.textContent = `Also press: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
         }
     }
 
@@ -3280,7 +3280,7 @@ if (allPressed && noteHoldStartTime === null) {
     
 } else if (!allPressed) {
     const remaining = Array.from(currentChordNotes).filter(m => !midiPressedNotes.has(m));
-    feedback.textContent = `Keep holding, add: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
+    feedback.textContent = `Also press: ${remaining.map(m => getNoteName(m)).join(' + ')}`;
 }
 
 feedback.classList.remove('correct', 'wrong', 'show');
@@ -6189,7 +6189,7 @@ async function renderAllScorePages() {
     for (let pageNum = 1; pageNum <= SCORE_TOTAL_PAGES; pageNum++) {
         const container = document.getElementById(`scorePage${pageNum}`);
         if (!container) continue;
-        const response = await fetch(`aajkal-${pageNum}.svg`);
+        const response = await fetch(`svg/aajkal-${pageNum}.svg`);
         const svgText = await response.text();
         container.innerHTML = svgText;
         const svgEl = container.querySelector('svg');
