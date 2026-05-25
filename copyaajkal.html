@@ -2814,6 +2814,38 @@ let lastMouseMidi = null;
 let touchActive = false;
 let activeTouches = new Map();
     
+// ── Mouse click-to-latch ──────────────────────────────────────────────────────
+// Each clicked note stays "latched" (sustained) for the entire beat.
+// All latches are cleared automatically when advancing to the next beat.
+const mouseLatchedNotes = new Set();
+
+function mouseReleaseLatch(midi) {
+    if (!mouseLatchedNotes.has(midi)) return;
+    mouseLatchedNotes.delete(midi);
+    midiPressedNotes.delete(midi);
+    if (synth) synth.triggerRelease(getNoteName(midi));
+}
+
+function mouseClearAllLatches() {
+    for (const midi of mouseLatchedNotes) {
+        midiPressedNotes.delete(midi);
+        if (synth) synth.triggerRelease(getNoteName(midi));
+    }
+    mouseLatchedNotes.clear();
+}
+
+function mouseToggleLatch(midiNote) {
+    if (mouseLatchedNotes.has(midiNote)) {
+        mouseReleaseLatch(midiNote);
+        return;
+    }
+    mouseLatchedNotes.add(midiNote);
+}
+
+function isMouseInputActive() {
+    return !touchActive;
+}
+
 function hardStopUserNote() {
     if (!synth) return;
 
@@ -2825,6 +2857,8 @@ function hardStopUserNote() {
 
     activeMidiNote = null;
     noteHoldStartTime = null;
+    sustainedNotes.clear();
+    mouseLatchedNotes.clear();
 }
 let failureCount = 0;
 let autoSlowed = false;
