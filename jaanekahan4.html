@@ -3570,6 +3570,10 @@ if (clefMode === 'both') {
 
     if (startHold && noteHoldStartTime === null) {
         hardStopUserNote();
+        // hardStopUserNote() clears mouseLatchedNotes — re-latch this note so the
+        // auto-evaluate setTimeout (below) and the "re-click to advance" branch in
+        // the mousedown handler can both find it.
+        mouseLatchedNotes.add(midiNote);
         midiPressedNotes.add(midiNote);
         const isChord = currentChordNotes.size > 1;
         feedback.textContent = isChord ? 'Hold this chord' : 'Hold this note';
@@ -3577,15 +3581,16 @@ if (clefMode === 'both') {
 
         // Mouse latch: auto-evaluate the hold after expectedHoldDuration elapses,
         // since mouseup no longer fires an evaluation for latched notes.
+        // Use the captured midiNote directly — mouseLatchedNotes may be cleared
+        // again before the timeout fires (e.g. on a wrong-note reset).
         if (isMouseInputActive() && !touchActive) {
             const holdDur = expectedHoldDuration;
+            const capturedNote = midiNote;
+            const capturedHoldStart = noteHoldStartTime;
             setTimeout(() => {
-                if (noteHoldStartTime !== null && !holdEvaluated) {
-                    // Simulate a note-off for each latched note
-                    const latchedArr = [...mouseLatchedNotes];
-                    if (latchedArr.length > 0) {
-                        evaluateHoldOnRelease(latchedArr[0]);
-                    }
+                // Only fire if we're still on the same hold session
+                if (noteHoldStartTime !== null && noteHoldStartTime === capturedHoldStart && !holdEvaluated) {
+                    evaluateHoldOnRelease(capturedNote);
                 }
             }, holdDur + 50);
         }
@@ -5296,9 +5301,13 @@ canvas.addEventListener('mouseup', () => {
         return;
     }
 
-    // In latch mode: notes stay pressed until the beat is complete.
-    // Skip the normal release logic for latched notes.
+    // In latch mode: on mouseup, evaluate the hold — if the full duration has
+    // elapsed, this advances to the next note. If not, the auto-evaluate
+    // setTimeout will fire when the time is up (note stays latched/pressed).
     if (!freeMode && trainingActive && releasedMidi !== null && mouseLatchedNotes.has(releasedMidi)) {
+        if (noteHoldStartTime !== null && !holdEvaluated) {
+            evaluateHoldOnRelease(releasedMidi);
+        }
         return;
     }
 
