@@ -2874,18 +2874,29 @@ function evaluateHoldOnRelease(releasedMidi) {
         waitingForInput = false;
         expectedMidiNote = null;
 
+        // Save the hold start time NOW, before it gets cleared at the end of this function.
         _lastHoldStartTime = noteHoldStartTime;
 
-        expectedMidiTreble.clear();
-        expectedMidiBass.clear();
+        // In both-hands mode: move the completed notes into sustainedNotes
+        // so they remain required while the other hand continues
+        if (clefMode === 'both') {
+            currentChordNotes.forEach(midi => {
+                sustainedNotes.delete(midi);
+            });
+            // Clean up expired sustained notes from the other hand
+            cleanExpiredSustainedNotes();
+            rebuildKeyboardHighlights();
+        } else {
+            expectedMidiTreble.clear();
+            expectedMidiBass.clear();
+        }
 
         advanceChordIndex();
         updateTrainingProgress();
 
         document.getElementById('holdInfo').textContent = '';
-        noteHoldStartTime = null;
-        activeMidiNote = null;
         setTimeout(() => spawnNextValidNote(), 300);
+
     } else {
         const heldBeats    = heldTime / 1000 / secondsPerBeat;
         const expectedBeats = expectedHoldDuration / 1000 / secondsPerBeat;
@@ -2898,14 +2909,18 @@ function evaluateHoldOnRelease(releasedMidi) {
         const holdEl = document.getElementById('holdInfo');
         holdEl.innerHTML = `Hold for <span class="music-symbol">${beatsToNoteName(expectedBeats)}</span>`;
 
-        noteHoldStartTime = null;
-        activeMidiNote = null;
-
-        if (retryTimeout) clearTimeout(retryTimeout);
+        _lastHoldStartTime = null; // retry — no carry-forward should happen
+        if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
         retryTimeout = setTimeout(() => {
-            spawnTrainingNote(practiceNotes[trainingIndex]);
+            if (trainingIndex < practiceNotes.length) {
+                spawnTrainingNote(practiceNotes[trainingIndex]);
+            }
         }, 600);
     }
+
+    noteHoldStartTime = null;
+    _lastHoldStartTime = null; // cleared here; was already saved above before this line
+    activeMidiNote = null;
     return true;
 }
 
@@ -4469,7 +4484,7 @@ const visualStart =
                 seen.add(k);
                 allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
-            if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+            if (allIndices.length > 0) _applyHighlight(allIndices);
         }, highlightDelay);
         previewTimeouts.push(th);
     }
@@ -5909,7 +5924,7 @@ addMidiFallingRectangle(
                         seen.add(k);
                         allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
                     }
-                    if (allIndices.length > 0) _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+                    if (allIndices.length > 0) _applyHighlight(allIndices);
                 }, (note.time * 1000) / speedMultiplier);
                 playbackTimeouts.push(ht);
             }
@@ -6461,17 +6476,26 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
 let _currentHighlightEls = [];
 
-function _applyHighlight(els) {
+function _applyHighlight(indices, colorMap) {
     // Clear previous highlights
     for (const el of _currentHighlightEls) {
         el.removeAttribute('fill');
         el.removeAttribute('filter');
     }
-    _currentHighlightEls = Array.isArray(els) ? els.filter(Boolean) : (els ? [els] : []);
-    for (const el of _currentHighlightEls) {
-        el.setAttribute('fill', '#E57373');
+    // Accept either an array of indices (numbers) or legacy array of elements
+    const idxArray = Array.isArray(indices) ? indices.filter(x => x != null) : (indices != null ? [indices] : []);
+    _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
+
+    idxArray.forEach(x => {
+        const el   = typeof x === 'number' ? _svgNoteElements[x]?.el : x;
+        const clef = typeof x === 'number' ? _svgNoteElements[x]?.clef : null;
+        if (!el) return;
+        // colorMap override → clef default (treble: purple-maroon, bass: gold)
+        const color = (colorMap && colorMap.has(x)) ? colorMap.get(x)
+                    : clef === 'bass' ? '#B45309' : '#9B2C6E';
+        el.setAttribute('fill', color);
         el.setAttribute('filter', 'url(#hlGlow)');
-    }
+    });
     scrollToHighlight();
 }
 
@@ -6565,9 +6589,14 @@ function onTrainingNoteSpawned(noteObj) {
 
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
-    // Deduplicate by time+midi+track so we don't double-lookup
+    // Deduplicate by time+midi+track so we don't double-lookup.
+    // Also skip notes that are carried-across sustains (_bgHeldNotes) — those are
+    // already physically held from a previous slot and do NOT need a new score
+    // highlight. Highlighting them here causes a stray green/purple flash right
+    // after a successful press before the app moves to the next musical event.
     const seen = new Set();
     for (const n of simultaneousNotes) {
+        if (_bgHeldNotes && _bgHeldNotes.has(n.midi)) continue; // carried-across sustain — skip
         const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
         if (seen.has(k)) continue;
         seen.add(k);
@@ -6582,7 +6611,7 @@ function onTrainingNoteSpawned(noteObj) {
     }
 
     if (allIndices.length > 0) {
-        _applyHighlight(allIndices.map(i => _svgNoteElements[i].el));
+        _applyHighlight(allIndices);
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
@@ -6684,7 +6713,7 @@ scoreModeToggle.addEventListener('change', async () => {
             showScoreNoteDisplay(currentTrainingNote);
             if (noteObj) {
                 const indices = _svgIndicesForMidiNote(noteObj, clefMode);
-                if (indices.length > 0) _applyHighlight(indices.map(i => _svgNoteElements[i].el));
+                if (indices.length > 0) _applyHighlight(indices);
             }
         }
     } else {
