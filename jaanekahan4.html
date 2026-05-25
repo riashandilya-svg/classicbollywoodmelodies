@@ -5237,6 +5237,17 @@ canvas.addEventListener('mousedown', async (e) => {
         const alreadyLatched = mouseLatchedNotes.has(midiNote);
         const alreadyPressed = midiPressedNotes.has(midiNote);
         _dbgLog(`CLICK midi=${midiNote}(${getNoteName(midiNote)}) alreadyLatched=${alreadyLatched} alreadyPressed=${alreadyPressed} holdEval=${holdEvaluated} holdRunning=${noteHoldStartTime !== null}`);
+
+        // If this note is already latched & the hold timer is running, the user is
+        // clicking again to signal done holding — evaluate immediately instead of
+        // toggling the latch off (which would silently do nothing useful).
+        if (alreadyLatched && noteHoldStartTime !== null && !holdEvaluated) {
+            _dbgLog(`  -> re-click while holding: evaluating hold immediately`);
+            _dbgUpdate();
+            evaluateHoldOnRelease(midiNote);
+            return;
+        }
+
         mouseToggleLatch(midiNote);
         if (mouseLatchedNotes.has(midiNote)) {
             // Note was just latched — treat as note-on
