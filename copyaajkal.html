@@ -6602,7 +6602,59 @@ if (freeMode && note === freeModeActiveNote) {
     }
 }
 
+// ── Skip Preview helper ──────────────────────────────────────────────────────
+window._skipPreview = function() {
+    if (!previewMode) return;
 
+    // Cancel all pending preview timeouts/intervals
+    previewTimeouts.forEach(t => {
+        if (t && t._isFakeTimeout) {
+            t._clear();
+        } else {
+            clearTimeout(t);
+        }
+    });
+    previewTimeouts.length = 0;
+
+    // Kill the listen-countdown ticker if still running
+    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
+        clearInterval(_listenCountdownTimer);
+    }
+
+    // Reset preview state
+    previewMode = false;
+    speedLocked = false;
+    scoreKeysPlaying = false;
+    setSpeedButtonsEnabled(true);
+    expectedMidiTreble.clear();
+    expectedMidiBass.clear();
+    if (scoreModeActive) clearScoreHighlight();
+    stopMetronome();
+    if (typeof _cancelCountAudio === 'function') _cancelCountAudio();
+
+    // Hide the skip box
+    const box = document.getElementById('skipPreviewBox');
+    if (box) box.style.display = 'none';
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = 'Your turn';
+    feedback.classList.remove('correct', 'wrong', 'show');
+
+    spawnNextValidNote();
+};
+
+// Show/hide the skip-preview box whenever previewMode changes.
+(function _patchPreviewVisibility() {
+    const box = document.getElementById('skipPreviewBox');
+    if (!box) return;
+    let _prev = false;
+    setInterval(() => {
+        if (previewMode !== _prev) {
+            _prev = previewMode;
+            box.style.display = previewMode ? 'block' : 'none';
+        }
+    }, 150);
+})();
 
 </script>
 <!-- Stats toggle logic -->
@@ -6696,59 +6748,6 @@ syncHandBtns();
     obs.observe(src, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
 
-// ── Skip Preview helper ──────────────────────────────────────────────────────
-window._skipPreview = function() {
-    if (!previewMode) return;
-
-    // Cancel all pending preview timeouts/intervals
-    previewTimeouts.forEach(t => {
-        if (t && t._isFakeTimeout) {
-            t._clear();
-        } else {
-            clearTimeout(t);
-        }
-    });
-    previewTimeouts.length = 0;
-
-    // Kill the listen-countdown ticker if still running
-    if (typeof _listenCountdownTimer !== 'undefined' && _listenCountdownTimer) {
-        clearInterval(_listenCountdownTimer);
-    }
-
-    // Reset preview state
-    previewMode = false;
-    speedLocked = false;
-    scoreKeysPlaying = false;
-    setSpeedButtonsEnabled(true);
-    expectedMidiTreble.clear();
-    expectedMidiBass.clear();
-    if (scoreModeActive) clearScoreHighlight();
-    stopMetronome();
-    if (typeof _cancelCountAudio === 'function') _cancelCountAudio();
-
-    // Hide the skip box
-    const box = document.getElementById('skipPreviewBox');
-    if (box) box.style.display = 'none';
-
-    const feedback = document.getElementById('feedback');
-    feedback.textContent = 'Your turn';
-    feedback.classList.remove('correct', 'wrong', 'show');
-
-    spawnNextValidNote();
-};
-
-// Show/hide the skip-preview box whenever previewMode changes.
-(function _patchPreviewVisibility() {
-    const box = document.getElementById('skipPreviewBox');
-    if (!box) return;
-    let _prev = false;
-    setInterval(() => {
-        if (previewMode !== _prev) {
-            _prev = previewMode;
-            box.style.display = previewMode ? 'block' : 'none';
-        }
-    }, 150);
-})();
 </script>
 
 <!-- 1) Supabase library -->
