@@ -7160,6 +7160,8 @@ function syncHandBtns() {
     document.getElementById('handBothBtn').classList.toggle('active', val === 'both');
     document.getElementById('handRightBtn').classList.toggle('active', val === 'treble');
 }
+// Expose globally so inline onclick handlers (outside module scope) can call it
+window.syncHandBtns = syncHandBtns;
 
 // Mirror pressedNoteCircle / correctNoteCircle into the stats-card panel versions
 function syncPanelNoteCircles() {
