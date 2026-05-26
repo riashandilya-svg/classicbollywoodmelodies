@@ -1615,15 +1615,16 @@ body.score-mode #panelProgressWrap {
     </div>
 
 <div id="countdownOverlay">3</div>
-<div id="mouseDebug" style="display:none;position:fixed;bottom:10px;left:10px;z-index:99999;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:8px;min-width:320px;line-height:1.6;">
+<div id="mouseDebug" style="display:none;position:fixed;bottom:10px;left:10px;z-index:99999;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:8px;min-width:320px;max-width:420px;pointer-events:none;line-height:1.6;">
   <div style="font-weight:bold;margin-bottom:4px;">🖱 Mouse Input Debug <span style="font-size:10px;opacity:0.6">(Ctrl+Shift+D)</span></div>
   <div id="dbg-click-count">Clicks registered: 0</div>
   <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
-  <div id="dbg-latch-state">Latched: —</div>
-  <div id="dbg-pressed-state">midiPressed: —</div>
-  <div id="dbg-last-event">Log: —</div>
-  <div id="dbg-hold-state">holdEvaluated: — | holdRunning: —</div>
+  <div id="dbg-latch-state">Latched notes: —</div>
+  <div id="dbg-pressed-state">midiPressedNotes: —</div>
+  <div id="dbg-last-event">Last event: —</div>
+  <div id="dbg-hold-state">holdEvaluated: — | noteHoldStartTime: —</div>
   <div id="dbg-training-state">trainingActive: — | waitingForInput: —</div>
+  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
 </div>
 <!-- 🎯 Right-side note indicators -->
 <div id="sideNoteFeedback">
@@ -1909,6 +1910,7 @@ const SONG_CONFIG = {
 const REPEAT_START = 29;
 const REPEAT_END = 36;
 const REPEAT_LEN = 8;
+const REPEAT_PHYSICAL_OFFSET = 8; // 2nd pass starts REPEAT_LEN measures after 1st pass
 function buildPhysicalToLogicalMap(config) {
   const map = [];
 
@@ -7900,7 +7902,7 @@ const bundlePriceDisplay = bundlePrice
               💡 <strong>What's included:</strong><br>
               • Falling notes learning video<br>
               • Sheet music PDF (watermarked with your name)<br>
-              • Access both in your <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="color: #3b82f6; text-decoration: underline;">DASHBOARD</a>
+              • Access both in your <a href="https://riashandilya-svg.github.io/classicbollywoodmelodies/dashboard.html" style="color: #E57373; text-decoration: underline;">DASHBOARD</a>
             </p>
           </div>
       `;
