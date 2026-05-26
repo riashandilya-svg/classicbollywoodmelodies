@@ -7043,7 +7043,7 @@ async function renderAllScorePages() {
     for (let pageNum = 1; pageNum <= SCORE_TOTAL_PAGES; pageNum++) {
         const container = document.getElementById(`scorePage${pageNum}`);
         if (!container) continue;
-        const response = await fetch(`svg/jaanekahan-${pageNum}.svg`);
+        const response = await fetch(`svg/ekladki-${pageNum}.svg`);
         const svgText = await response.text();
         container.innerHTML = svgText;
         const svgEl = container.querySelector('svg');
@@ -8242,7 +8242,7 @@ const rzp = new Razorpay(options);
         console.error('[FATAL] window.showPaywall is not defined — paywall.js did not initialize correctly.');
       } else {
         window.showPaywall({
-          productId: "song:jaanekahan",
+          productId: "song:ekladki",
           title: "This song is locked",
           body: "Please buy to unlock this lesson.",
           onSuccess: () => {
