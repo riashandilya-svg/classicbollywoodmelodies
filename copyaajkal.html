@@ -185,6 +185,13 @@ body.dark-mode .ctrl-btn:hover:not(:disabled) {
   background: rgba(255,107,129,0.12) !important;
   color: var(--dm-accent) !important;
 }
+body.dark-mode .ctrl-btn.active {
+  background: rgba(255,107,129,0.22) !important;
+  color: var(--dm-accent) !important;
+  border-color: rgba(255,107,129,0.5) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 1px rgba(255,107,129,0.35), 0 4px 12px rgba(255,107,129,0.2) !important;
+}
 body.dark-mode #bottomDock.score-mode {
   background: rgba(15,17,23,0.97) !important;
 }
@@ -194,6 +201,7 @@ body.dark-mode .ctrl-speed-row {
   border-color: rgba(255,107,129,0.15) !important;
 }
 body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
+body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
 
 /* Dark mode toggle button */
 #darkModeToggle {
@@ -1520,7 +1528,34 @@ body.score-mode #panelProgressWrap {
 
 <div id="paywall"></div>
 
-      <div id="app">
+<!-- ===== MOUSE DEBUG OVERLAY ===== -->
+<div id="mouseDebug" style="
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.82);
+  color: #0f0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  min-width: 300px;
+  max-width: 420px;
+  pointer-events: none;
+  line-height: 1.6;
+  display: none;
+">
+  <div style="color:#ff7b7b;font-weight:bold;margin-bottom:4px">&#x1F5B1; Mouse Input Debug</div>
+  <div id="dbg-click-count">Clicks registered: 0</div>
+  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
+  <div id="dbg-latch-state">Latched notes: -</div>
+  <div id="dbg-pressed-state">midiPressedNotes: -</div>
+  <div id="dbg-last-event">Last event: -</div>
+  <div id="dbg-hold-state">holdEvaluated: - | noteHoldStartTime: -</div>
+  <div id="dbg-training-state">trainingActive: - | waitingForInput: -</div>
+  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
+</div>
 
       <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
@@ -1678,11 +1713,11 @@ body.score-mode #panelProgressWrap {
     <div class="ctrl-card-title">PLAYBACK</div>
     <div class="ctrl-row">
       <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
-      <button class="ctrl-btn" id="beatBtn" onclick="document.getElementById('beatToggle').click(); this.classList.toggle('active')">♩ Beat</button>
-      <button class="ctrl-btn" id="countBtn" onclick="document.getElementById('countToggle').click(); this.classList.toggle('active')">Counting</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="window._panelBeatClick(this)">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="window._panelCountClick(this)">Counting</button>
     </div>
     <div class="ctrl-row">
-      <button class="ctrl-btn" id="subdivBtn" onclick="document.getElementById('subdivisionToggle').click(); this.classList.toggle('active')">1 &amp; 2 &amp;</button>
+      <button class="ctrl-btn" id="subdivBtn" onclick="window._panelSubdivClick(this)">1 &amp; 2 &amp;</button>
     </div>
     <div class="ctrl-speed-row">
       <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
