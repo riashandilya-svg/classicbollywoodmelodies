@@ -1524,6 +1524,8 @@ body.score-mode #panelProgressWrap {
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
+<div id="paywall"></div>
+
 <!-- ===== MOUSE DEBUG OVERLAY ===== -->
 <div id="mouseDebug" style="
   position: fixed;
@@ -1552,8 +1554,6 @@ body.score-mode #panelProgressWrap {
   <div id="dbg-training-state">trainingActive: - | waitingForInput: -</div>
   <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
 </div>
-
-<div id="paywall"></div>
 
       <div id="app">
 
@@ -1702,9 +1702,9 @@ body.score-mode #panelProgressWrap {
     </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
     <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
-    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,193,7,0.10);border:1.5px dashed rgba(255,193,7,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
-      <div style="font-size:11px;font-weight:700;color:#B45309;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
-      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff8dc,#fef3c7)!important;color:#92400e!important;border-color:#fbbf24!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
+    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(235,50,70,0.10);border:1.5px dashed rgba(235,50,70,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:#E57373;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
+      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff0f0,#ffe4e6)!important;color:#c0392b!important;border-color:#ff8fa3!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
     </div>
   </div>
 
@@ -2884,7 +2884,7 @@ function rebuildKeyboardHighlights() {
             const doneSlots = Math.max(0, curIdx);
             const leftSlots = totalSlots - doneSlots;
             val   = leftSlots + '/' + totalSlots;
-            color = leftSlots <= 1 ? '#22c55e' : '#FFC107';
+            color = leftSlots <= 1 ? '#22c55e' : '#E57373';
             label = 'Notes left';
 
         } else if (expectedHoldDuration > 0 && (trainingActive || waitingForInput)) {
@@ -3218,8 +3218,8 @@ function drawKeyboard() {
             wGrad.addColorStop(0, '#E8C8E8');
             wGrad.addColorStop(1, '#7B1F5A');
         } else if (isBass) {
-            wGrad.addColorStop(0, '#FFECB3');
-            wGrad.addColorStop(1, '#FFB300');
+            wGrad.addColorStop(0, '#FFCDD2');
+            wGrad.addColorStop(1, '#E57373');
         } else {
             wGrad.addColorStop(0, '#ffffff');
             wGrad.addColorStop(0.7, '#f5f5f5');
@@ -6830,8 +6830,8 @@ function _applyHighlight(indices, colorMap) {
             if (typeof x !== 'number') return { idx: '?', midi: null, name: '?', colorKey: 'unknown' };
             const ne    = _svgNoteElements[x];
             const color = (colorMap && colorMap.has(x)) ? colorMap.get(x)
-                        : ne?.clef === 'bass' ? '#B45309' : '#9B2C6E';
-            const colorKey = color === '#16a34a' ? 'green' : color === '#9B2C6E' ? 'purple' : color === '#B45309' ? 'gold' : color;
+                        : ne?.clef === 'bass' ? '#E57373' : '#9B2C6E';
+            const colorKey = color === '#16a34a' ? 'green' : color === '#9B2C6E' ? 'purple' : color === '#E57373' ? 'red' : color;
             // Reverse-lookup MIDI for this SVG index via _midiRankMap
             let midi = null;
             for (const [, entry] of _midiRankMap) {
@@ -6860,7 +6860,7 @@ function _applyHighlight(indices, colorMap) {
         if (!el) return;
         // colorMap override → clef default (treble: purple-maroon, bass: gold)
         const color = (colorMap && colorMap.has(x)) ? colorMap.get(x)
-                    : clef === 'bass' ? '#B45309' : '#9B2C6E';
+                    : clef === 'bass' ? '#E57373' : '#9B2C6E';
         el.setAttribute('fill', color);
         el.setAttribute('filter', 'url(#hlGlow)');
     });
@@ -7968,16 +7968,16 @@ const bundlePriceDisplay = bundlePrice
           ? `${currencySymbol}${(savings / 100).toFixed(2)}`
           : `${currencySymbol}${(savings / 100).toFixed(0)}`;
         paywallHTML += `
-          <div style="margin: 20px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+          <div style="margin: 20px 0; padding: 15px; background: #ffe4e6; border: 2px solid #E57373; border-radius: 8px;">
             <h4 style="margin: 0 0 10px 0;">💎 Better Deal: 5-Song Bundle</h4>
             <p style="margin: 0 0 8px 0; font-size: 0.9em;">Get 5 songs for ${bundlePriceDisplay}</p>
-            <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #92400e;">
+            <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #c0392b;">
               <strong>${perSongDisplay} per song</strong> — Save ${savingsDisplay}!
             </p>
             <button id="bundleBtn" type="button" style="
               width: 100%;
               padding: 12px;
-              background: #f59e0b;
+              background: #E57373;
               color: white;
               border: none;
               border-radius: 6px;
