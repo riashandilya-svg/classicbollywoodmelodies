@@ -4069,7 +4069,7 @@ function _onBeatGroupComplete() {
 
     updateTrainingProgress();
     document.getElementById('holdInfo').textContent = '';
-    spawnNextValidNote();
+    setTimeout(() => spawnNextValidNote(), 300);
 }
 
 function isBlackKey(noteName) { return noteName.includes("#"); }
@@ -5235,7 +5235,7 @@ function evaluateHoldOnRelease(releasedMidi) {
         updateTrainingProgress();
 
         document.getElementById('holdInfo').textContent = '';
-        spawnNextValidNote();
+        setTimeout(() => spawnNextValidNote(), 300);
 
     } else {
         const heldBeats = heldTime / 1000 / secondsPerBeat;
@@ -6928,7 +6928,7 @@ function scrollToHighlight() {
     window.scrollTo({ top: docY - targetTop, behavior: 'smooth' });
 
     _scrollLocked = true;
-    setTimeout(() => { _scrollLocked = false; }, 400);
+    setTimeout(() => { _scrollLocked = false; }, 1000);
 }
 
 // Keep legacy single-element reference for anything that reads _currentHighlightEl
