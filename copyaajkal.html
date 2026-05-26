@@ -185,6 +185,13 @@ body.dark-mode .ctrl-btn:hover:not(:disabled) {
   background: rgba(255,107,129,0.12) !important;
   color: var(--dm-accent) !important;
 }
+body.dark-mode .ctrl-btn.active {
+  background: rgba(255,193,7,0.22) !important;
+  color: var(--dm-accent) !important;
+  border-color: rgba(255,193,7,0.5) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 1px rgba(255,193,7,0.35), 0 4px 12px rgba(255,193,7,0.2) !important;
+}
 body.dark-mode #bottomDock.score-mode {
   background: rgba(15,17,23,0.97) !important;
 }
@@ -194,6 +201,7 @@ body.dark-mode .ctrl-speed-row {
   border-color: rgba(255,107,129,0.15) !important;
 }
 body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
+body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
 
 /* Dark mode toggle button */
 #darkModeToggle {
@@ -1360,16 +1368,6 @@ body.dark-mode .ctrl-stat-val {
     color: var(--dm-text);
 }
 
-body.dark-mode .ctrl-btn.active {
-    background: rgba(255,107,129,0.22) !important;
-    color: var(--dm-accent) !important;
-    border-color: rgba(255,107,129,0.5) !important;
-    font-weight: 700 !important;
-    box-shadow: 0 0 0 1px rgba(255,107,129,0.35), 0 4px 12px rgba(255,107,129,0.2) !important;
-}
-
-body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
-
 /* Stats card: score mode only — handled in score-mode block above */
 
 /* Note circles card — score mode only, narrow standalone column — handled above */
@@ -1526,7 +1524,34 @@ body.score-mode #panelProgressWrap {
 
       <h1>Aaj Kal Tere Mere Pyaar Ke Charche</h1>
 
-
+<!-- ===== MOUSE DEBUG OVERLAY ===== -->
+<div id="mouseDebug" style="
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.82);
+  color: #0f0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  min-width: 300px;
+  max-width: 420px;
+  pointer-events: none;
+  line-height: 1.6;
+  display: none;
+">
+  <div style="color:#FFD54F;font-weight:bold;margin-bottom:4px">&#x1F5B1; Mouse Input Debug</div>
+  <div id="dbg-click-count">Clicks registered: 0</div>
+  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
+  <div id="dbg-latch-state">Latched notes: -</div>
+  <div id="dbg-pressed-state">midiPressedNotes: -</div>
+  <div id="dbg-last-event">Last event: -</div>
+  <div id="dbg-hold-state">holdEvaluated: - | noteHoldStartTime: -</div>
+  <div id="dbg-training-state">trainingActive: - | waitingForInput: -</div>
+  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
+</div>
 
 <div id="paywall"></div>
 
@@ -1615,17 +1640,6 @@ body.score-mode #panelProgressWrap {
     </div>
 
 <div id="countdownOverlay">3</div>
-<div id="mouseDebug" style="display:none;position:fixed;bottom:10px;left:10px;z-index:99999;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:8px;min-width:320px;max-width:420px;pointer-events:none;line-height:1.6;">
-  <div style="font-weight:bold;margin-bottom:4px;">🖱 Mouse Input Debug <span style="font-size:10px;opacity:0.6">(Ctrl+Shift+D)</span></div>
-  <div id="dbg-click-count">Clicks registered: 0</div>
-  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
-  <div id="dbg-latch-state">Latched notes: —</div>
-  <div id="dbg-pressed-state">midiPressedNotes: —</div>
-  <div id="dbg-last-event">Last event: —</div>
-  <div id="dbg-hold-state">holdEvaluated: — | noteHoldStartTime: —</div>
-  <div id="dbg-training-state">trainingActive: — | waitingForInput: —</div>
-  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
-</div>
 <!-- 🎯 Right-side note indicators -->
 <div id="sideNoteFeedback">
 
@@ -1688,9 +1702,9 @@ body.score-mode #panelProgressWrap {
     </div>
     <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
     <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff0f0!important;color:#E57373!important;border-color:#ffb7bb!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
-    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,107,129,0.10);border:1.5px dashed rgba(255,107,129,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
-      <div style="font-size:11px;font-weight:700;color:#c0152a;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
-      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff0f3,#ffd6e0)!important;color:#9b1c2e!important;border-color:#ff6b81!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
+    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,193,7,0.10);border:1.5px dashed rgba(255,193,7,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:#B45309;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
+      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff8dc,#fef3c7)!important;color:#92400e!important;border-color:#fbbf24!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
     </div>
   </div>
 
@@ -1724,7 +1738,7 @@ body.score-mode #panelProgressWrap {
           font-size:15px;
           font-weight:700;
           font-family:inherit;
-          border:1px solid rgba(255,107,129,0.25);
+          border:1px solid rgba(255,193,7,0.25);
           border-radius:8px;
           padding:4px 6px;
           background:rgba(255,255,255,0.9);
@@ -2293,11 +2307,11 @@ function applyBpmInput() {
 
     // Style feedback on input focus
     bpmInput.addEventListener('focus', () => {
-        bpmInput.style.borderColor = 'rgba(255,107,129,0.6)';
-        bpmInput.style.boxShadow   = '0 0 0 3px rgba(255,107,129,0.15)';
+        bpmInput.style.borderColor = 'rgba(255,193,7,0.6)';
+        bpmInput.style.boxShadow   = '0 0 0 3px rgba(255,193,7,0.15)';
     });
     bpmInput.addEventListener('blur', () => {
-        bpmInput.style.borderColor = 'rgba(255,107,129,0.25)';
+        bpmInput.style.borderColor = 'rgba(255,193,7,0.25)';
         bpmInput.style.boxShadow   = 'none';
     });
 })();
