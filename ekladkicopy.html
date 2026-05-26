@@ -5819,10 +5819,14 @@ practiceNotes = allMidiNotes
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
             if (entry && allowedLogical.has(entry.sheet_measure)) {
+                // Find the physical measure that (a) maps to the correct logical measure
+                // AND (b) is adjacent to p. physicalSeq.find returns only the first match,
+                // which fails for repeat-pass grace notes whose raw MIDI time (e.g. physical 43)
+                // is adjacent to the second occurrence (physical 43→36+7) not the first (36).
                 const correctedPhys = physicalSeq.find(
-                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
+                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure && Math.abs(q - p) <= 1
                 );
-                if (correctedPhys !== undefined && Math.abs(correctedPhys - p) <= 1) {
+                if (correctedPhys !== undefined) {
                     console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
                     p = correctedPhys;
                     overflowCorrected = true;
