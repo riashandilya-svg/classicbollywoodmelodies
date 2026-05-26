@@ -185,13 +185,6 @@ body.dark-mode .ctrl-btn:hover:not(:disabled) {
   background: rgba(255,107,129,0.12) !important;
   color: var(--dm-accent) !important;
 }
-body.dark-mode .ctrl-btn.active {
-  background: rgba(255,107,129,0.22) !important;
-  color: var(--dm-accent) !important;
-  border-color: rgba(255,107,129,0.5) !important;
-  font-weight: 700 !important;
-  box-shadow: 0 0 0 1px rgba(255,107,129,0.35), 0 4px 12px rgba(255,107,129,0.2) !important;
-}
 body.dark-mode #bottomDock.score-mode {
   background: rgba(15,17,23,0.97) !important;
 }
@@ -201,7 +194,6 @@ body.dark-mode .ctrl-speed-row {
   border-color: rgba(255,107,129,0.15) !important;
 }
 body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
-body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
 
 /* Dark mode toggle button */
 #darkModeToggle {
@@ -1368,6 +1360,16 @@ body.dark-mode .ctrl-stat-val {
     color: var(--dm-text);
 }
 
+body.dark-mode .ctrl-btn.active {
+    background: rgba(255,193,7,0.22) !important;
+    color: var(--dm-accent) !important;
+    border-color: rgba(255,193,7,0.5) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 0 1px rgba(255,193,7,0.35), 0 4px 12px rgba(255,193,7,0.2) !important;
+}
+
+body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
+
 /* Stats card: score mode only — handled in score-mode block above */
 
 /* Note circles card — score mode only, narrow standalone column — handled above */
@@ -1528,34 +1530,7 @@ body.score-mode #panelProgressWrap {
 
 <div id="paywall"></div>
 
-<!-- ===== MOUSE DEBUG OVERLAY ===== -->
-<div id="mouseDebug" style="
-  position: fixed;
-  bottom: 12px;
-  left: 12px;
-  z-index: 99999;
-  background: rgba(0,0,0,0.82);
-  color: #0f0;
-  font-family: monospace;
-  font-size: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  min-width: 300px;
-  max-width: 420px;
-  pointer-events: none;
-  line-height: 1.6;
-  display: none;
-">
-  <div style="color:#ff7b7b;font-weight:bold;margin-bottom:4px">&#x1F5B1; Mouse Input Debug</div>
-  <div id="dbg-click-count">Clicks registered: 0</div>
-  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
-  <div id="dbg-latch-state">Latched notes: -</div>
-  <div id="dbg-pressed-state">midiPressedNotes: -</div>
-  <div id="dbg-last-event">Last event: -</div>
-  <div id="dbg-hold-state">holdEvaluated: - | noteHoldStartTime: -</div>
-  <div id="dbg-training-state">trainingActive: - | waitingForInput: -</div>
-  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
-</div>
+      <div id="app">
 
       <!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
@@ -1640,6 +1615,16 @@ body.score-mode #panelProgressWrap {
     </div>
 
 <div id="countdownOverlay">3</div>
+<div id="mouseDebug" style="display:none;position:fixed;bottom:10px;left:10px;z-index:99999;background:rgba(0,0,0,0.85);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:8px;min-width:320px;line-height:1.6;">
+  <div style="font-weight:bold;margin-bottom:4px;">🖱 Mouse Input Debug <span style="font-size:10px;opacity:0.6">(Ctrl+Shift+D)</span></div>
+  <div id="dbg-click-count">Clicks registered: 0</div>
+  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
+  <div id="dbg-latch-state">Latched: —</div>
+  <div id="dbg-pressed-state">midiPressed: —</div>
+  <div id="dbg-last-event">Log: —</div>
+  <div id="dbg-hold-state">holdEvaluated: — | holdRunning: —</div>
+  <div id="dbg-training-state">trainingActive: — | waitingForInput: —</div>
+</div>
 <!-- 🎯 Right-side note indicators -->
 <div id="sideNoteFeedback">
 
@@ -3042,7 +3027,7 @@ const ctx = canvas.getContext('2d');
 let scoreModeActive = false;
 let scoreNoteOffset = 0;
 let scoreCurrentPage = 1;
-const SCORE_TOTAL_PAGES = 2;
+const SCORE_TOTAL_PAGES = 3;
 const scoreCanvases = {};
 let pdfjsLib = null;
 let pdfDoc = null;
