@@ -5819,10 +5819,14 @@ practiceNotes = allMidiNotes
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
             if (entry && allowedLogical.has(entry.sheet_measure)) {
+                // Find the physical measure that (a) maps to the correct logical measure
+                // AND (b) is adjacent to p. physicalSeq.find returns only the first match,
+                // which fails for repeat-pass grace notes whose raw MIDI time (e.g. physical 43)
+                // is adjacent to the second occurrence (physical 43→36+7) not the first (36).
                 const correctedPhys = physicalSeq.find(
-                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
+                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure && Math.abs(q - p) <= 1
                 );
-                if (correctedPhys !== undefined && Math.abs(correctedPhys - p) <= 1) {
+                if (correctedPhys !== undefined) {
                     console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
                     p = correctedPhys;
                     overflowCorrected = true;
@@ -6639,6 +6643,22 @@ function _buildSvgMidiMap() {
                 hardcodedGraceCorrected = true;
             }
 
+            if (note.duration < 0.1) {
+                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
+                    sheetMeasure += 1;
+                    hardcodedGraceCorrected = true;
+                } else if (sheetMeasure === 36 && clef === 'treble') {
+                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
+                    // This fires on both passes when the grace note's MIDI time
+                    // maps to physical 36 (first pass) or physical 44 (second pass,
+                    // also logical 36). Always redirect to logical 29.
+                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
+                    // genuine short notes that must NOT be redirected to measure 29.
+                    sheetMeasure = 29;
+                    hardcodedGraceCorrected = true;
+                }
+            }
+
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
@@ -6727,9 +6747,12 @@ function _buildSvgMidiMap() {
                 || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
             let rank         = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
-            // NOTE: m28/m30 treble grace-note offset removed — grace B no longer exists
-            // in the SVG, so the old rank+1 was skipping rank 0 and pushing the last
-            // MIDI note (rawRank=6) to rank 7, which is out of bounds on a 7-note bucket.
+            // Measures 28 and 30 treble: the SVG has a grace B at rank 0, but the MIDI
+            // has no grace note — it starts directly at C6. Shift all treble ranks +1 so
+            // MIDI note 0 (C6) highlights SVG rank 1, and the last note (E5) hits rank 8.
+            if ((sheetMeasure === 28 || sheetMeasure === 30) && clef === 'treble') {
+                rank = rank + 1;
+            }
 
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
