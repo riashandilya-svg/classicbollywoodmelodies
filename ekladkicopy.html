@@ -6684,19 +6684,10 @@ function _buildSvgMidiMap() {
 
             // Measure 28/29 boundary correction (bass):
             // The MIDI has a quarter-note A3 at t=67.2000 that lands exactly on the
-            // physical measure 36 boundary (sheetMeasure=29), but m28 bass is already
-            // full (6/6) so there's no spare slot. This note has no SVG notehead —
-            // skip it so it doesn't consume rank=0 and push all real m29 bass notes forward.
-            // Only skip the single boundary note (time < 67.5), not the real m29 notes.
-            // Repeat pass: same time threshold catches the boundary note again.
-            if (sheetMeasure === 29 && clef === 'bass' && note.time < 67.5) {
-                const m28BassUsed = assignedCount['28|bass'] ?? 0;
-                const m28BassCap  = bucketCapacity['28|bass'] ?? 0;
-                if (m28BassUsed >= m28BassCap) {
-                    console.log(`🔧 m29 bass boundary skip: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)}`);
-                    continue; // skip — no SVG slot for this boundary note
-                }
-            }
+            // physical measure 36 boundary (sheetMeasure=29). The SVG has a sustained A3
+            // at rank=0 (tx=364.6) — this is beat 1 of m29 and should be highlighted.
+            // Previously skipped, but now allowed so A3 maps to m29 bass rank=0 (beat 1)
+            // and C4+E4 (t=67.68) naturally fall to rank=1+2 (beat 2). No skip needed.
 
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
@@ -6795,14 +6786,8 @@ function _buildSvgMidiMap() {
                 rank = rank + 1;
             }
 
-            // Measure 29 bass: the SVG has a sustained A3 at rank=0 (tx=364.6) carried
-            // over from m28 — no fresh MIDI note attacks it. The boundary A3 at t=67.2000
-            // was skipped above. The first real m29 bass notes (C4+E4 at t=67.68) should
-            // map to rank=1+2 (both at tx=500.5), not rank=0+1.
-            // Use (rawRank % (bucketSize-1)) + 1 so both passes wrap correctly into slots 1-5.
-            if (sheetMeasure === 29 && clef === 'bass' && bucketSize > 1) {
-                rank = (rawRank % (bucketSize - 1)) + 1;
-            }
+            // Measure 29 bass: A3 at t=67.2000 now correctly maps to rank=0 (beat 1).
+            // C4+E4 at t=67.68 naturally fall to rank=1+2 (beat 2). No override needed.
 
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
