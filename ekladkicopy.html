@@ -4028,7 +4028,6 @@ function _advanceBeatGroupSubNote() {
         // Do NOT re-highlight them on the score at their old position — that causes
         // stray green highlights on notes that are no longer the "current" chord.
 
-        _injectM29BassA(allIndices);
         if (allIndices.length > 0) _applyHighlight(allIndices, colorMap);
     }
 }
@@ -4530,7 +4529,6 @@ const visualStart =
                 seen.add(k);
                 allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
-            _injectM29BassA(allIndices);
             if (allIndices.length > 0) _applyHighlight(allIndices);
         }, highlightDelay);
         previewTimeouts.push(th);
@@ -5849,10 +5847,7 @@ const TOLERANCE = 0.001;
 // Overflow-corrected notes (grace notes whose MIDI time sits fractionally before
 // the barline) are by definition outside the corrected measure's time window,
 // so skip the time-range guard for them.
-// Also allow a small start-boundary tolerance (same as end tolerance) to prevent
-// floating-point imprecision dropping notes that land exactly on the measure start
-// (e.g. bass A3 at t=67.2000 on the m29/m36 boundary).
-if (!overflowCorrected && (note.time < measureStart - TOLERANCE || note.time >= measureEnd + TOLERANCE)) return null;
+if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd + TOLERANCE)) return null;
         const isTreble = note.track === TREBLE;
         const isBass   = note.track === BASS;
         if (selectedHand !== "both") {
@@ -5870,24 +5865,7 @@ if (!overflowCorrected && (note.time < measureStart - TOLERANCE || note.time >= 
         // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
         // so they sort before the main notes AND are outside the 0.01s chord-grouping
         // window used in spawnTrainingNote's lookahead.
-        let offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
-
-        // Measure 29 bass beat-2 correction:
-        // C4 (midi=60) and E4 (midi=64) in m29 bass have the same MIDI timestamp as
-        // the treble A5 beat-1 (t=67.68), but they visually sit on beat 2 of the bar
-        // (SVG rank=1 and rank=2, tx=500.5). The sustained A3 at rank=0 is beat 1.
-        // Shift C4/E4 forward by one beat so they form their own slot after A.
-        // Also align bass A3 (rank=0) to the same beat-1 slot as treble A5 (offset=0.48).
-        const rankEntry = _midiRankMap.get(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
-        if (rankEntry && rankEntry.sheet_measure === 29 && rankEntry.clef === 'bass') {
-            if (rankEntry.rank === 0) {
-                // Beat 1: align with treble A5 at offset = secondsPerBeat
-                offsetInMeasure = secondsPerBeat;
-            } else if (rankEntry.rank === 1 || rankEntry.rank === 2) {
-                // Beat 2: shift one beat past beat 1
-                offsetInMeasure = rawOffset + secondsPerBeat;
-            }
-        }
+        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -6706,10 +6684,19 @@ function _buildSvgMidiMap() {
 
             // Measure 28/29 boundary correction (bass):
             // The MIDI has a quarter-note A3 at t=67.2000 that lands exactly on the
-            // physical measure 36 boundary (sheetMeasure=29). The SVG has a sustained A3
-            // at rank=0 (tx=364.6) — this is beat 1 of m29 and should be highlighted.
-            // Previously skipped, but now allowed so A3 maps to m29 bass rank=0 (beat 1)
-            // and C4+E4 (t=67.68) naturally fall to rank=1+2 (beat 2). No skip needed.
+            // physical measure 36 boundary (sheetMeasure=29), but m28 bass is already
+            // full (6/6) so there's no spare slot. This note has no SVG notehead —
+            // skip it so it doesn't consume rank=0 and push all real m29 bass notes forward.
+            // Only skip the single boundary note (time < 67.5), not the real m29 notes.
+            // Repeat pass: same time threshold catches the boundary note again.
+            if (sheetMeasure === 29 && clef === 'bass' && note.time < 67.5) {
+                const m28BassUsed = assignedCount['28|bass'] ?? 0;
+                const m28BassCap  = bucketCapacity['28|bass'] ?? 0;
+                if (m28BassUsed >= m28BassCap) {
+                    console.log(`🔧 m29 bass boundary skip: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)}`);
+                    continue; // skip — no SVG slot for this boundary note
+                }
+            }
 
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
@@ -6808,8 +6795,14 @@ function _buildSvgMidiMap() {
                 rank = rank + 1;
             }
 
-            // Measure 29 bass: A3 at t=67.2000 now correctly maps to rank=0 (beat 1).
-            // C4+E4 at t=67.68 naturally fall to rank=1+2 (beat 2). No override needed.
+            // Measure 29 bass: the SVG has a sustained A3 at rank=0 (tx=364.6) carried
+            // over from m28 — no fresh MIDI note attacks it. The boundary A3 at t=67.2000
+            // was skipped above. The first real m29 bass notes (C4+E4 at t=67.68) should
+            // map to rank=1+2 (both at tx=500.5), not rank=0+1.
+            // Use (rawRank % (bucketSize-1)) + 1 so both passes wrap correctly into slots 1-5.
+            if (sheetMeasure === 29 && clef === 'bass' && bucketSize > 1) {
+                rank = (rawRank % (bucketSize - 1)) + 1;
+            }
 
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
@@ -7079,30 +7072,16 @@ function onTrainingNoteSpawned(noteObj) {
         allIndices.push(...fallback);
     }
 
-    // Measure 29 beat-1 correction: inject bass rank-0 A notehead
-    _injectM29BassA(allIndices);
-
     if (allIndices.length > 0) {
         _applyHighlight(allIndices);
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
 }
+
 // ============================================================
-// Measure 29 beat-1 helper: injects bass rank-0 A notehead
-// whenever m29 beat 1 is highlighted (treble A5 at rank=0).
-// The bass A3 at rank=0 is a sustained note carried from m28
-// with no reliable new MIDI attack at the beat boundary.
+// Score-note display badge
 // ============================================================
-function _injectM29BassA(indices) {
-    const m29TrebleRank0 = (_svgBuckets[29]?.['treble'] || [])[0];
-    const m29BassRank0   = (_svgBuckets[29]?.['bass']   || [])[0];
-    if (m29TrebleRank0 !== undefined && m29BassRank0 !== undefined
-            && indices.includes(m29TrebleRank0)
-            && !indices.includes(m29BassRank0)) {
-        indices.push(m29BassRank0);
-    }
-}
 function showScoreNoteDisplay(noteName, hint) {
     const el = document.getElementById('scoreNoteDisplay');
     document.getElementById('scoreNoteName').textContent = noteName || '—';
