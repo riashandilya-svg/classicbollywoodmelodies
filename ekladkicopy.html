@@ -6634,6 +6634,7 @@ function _buildSvgMidiMap() {
             // IMPORTANT: set gracePreCorrected=true here so the overflow check below
             // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
+            let forceRank0NoPlusOne = false; // set when a boundary note is redirected to m28 rank=0
 
             // Measure 36 bass AND treble: _svgBuckets[36][bass|treble] is empty because the
             // page-1 SVG only has a tied whole note (excluded as a tied continuation). The actual
@@ -6657,6 +6658,27 @@ function _buildSvgMidiMap() {
                     // genuine short notes that must NOT be redirected.
                     sheetMeasure = 30;
                     hardcodedGraceCorrected = true;
+                }
+            }
+
+            // Measure 28/29 boundary correction (treble):
+            // The MIDI has a quarter-note A5 at t=67.2000 that lands exactly on the
+            // physical measure 36 boundary (sheetMeasure=29), but the SVG places it
+            // at m28 rank=0 — the grace-note slot that is never filled by the 8 real
+            // MIDI notes (which all get +1 shifted to ranks 1-8).
+            // Detect: sheetMeasure=29, clef=treble, first note to arrive (used=0 OR
+            // on repeat pass: used===cap), and m28 treble still has the grace slot free
+            // (assignedCount['28|treble'] < bucketCapacity['28|treble']).
+            // Redirect it backward to sheetMeasure=28 at rank=0 (suppress the +1 shift).
+            if (sheetMeasure === 29 && clef === 'treble') {
+                const m28Key = '28|treble';
+                const m28Used = assignedCount[m28Key] ?? 0;
+                const m28Cap  = bucketCapacity[m28Key] ?? 0;
+                if (m28Used < m28Cap) {
+                    console.log(`🔧 m29→m28 boundary redirect: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} m28used=${m28Used}/${m28Cap}`);
+                    sheetMeasure = 28;
+                    hardcodedGraceCorrected = true;
+                    forceRank0NoPlusOne = true; // this note fills the grace rank=0 slot directly
                 }
             }
 
@@ -6751,7 +6773,9 @@ function _buildSvgMidiMap() {
             // Measures 28 and 30 treble: the SVG has a grace B at rank 0, but the MIDI
             // has no grace note — it starts directly at C6. Shift all treble ranks +1 so
             // MIDI note 0 (C6) highlights SVG rank 1, and the last note (E5) hits rank 8.
-            if ((sheetMeasure === 28 || sheetMeasure === 30) && clef === 'treble') {
+            // Exception: forceRank0NoPlusOne is set for the boundary A5 note redirected
+            // from m29 back into m28's rank=0 grace slot — it must NOT get the +1 shift.
+            if ((sheetMeasure === 28 || sheetMeasure === 30) && clef === 'treble' && !forceRank0NoPlusOne) {
                 rank = rank + 1;
             }
 
@@ -6776,7 +6800,7 @@ function _buildSvgMidiMap() {
             }
 
             if (sheetMeasure === 29) {
-                console.log(`📊 assignRanks m29|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1} physMeasure=${physMeasure}`);
+                console.log(`📊 assignRanks m29|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1} physMeasure=${physMeasure} forceRank0=${forceRank0NoPlusOne}`);
             }
 
             // Log any note that was originally mapped to sheetMeasure 29 but got redirected
