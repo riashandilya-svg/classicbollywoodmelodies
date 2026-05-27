@@ -6909,8 +6909,12 @@ function _applyHighlight(indices, colorMap) {
         el.removeAttribute('fill');
         el.removeAttribute('filter');
     }
-    // Accept either an array of indices (numbers) or legacy array of elements
-    const idxArray = Array.isArray(indices) ? indices.filter(x => x != null) : (indices != null ? [indices] : []);
+    // Accept either an array of indices (numbers) or legacy array of elements.
+    // Deduplicate: chord-mate scanning means C4 returns [C4,E4] and E4 returns [E4,C4],
+    // so without dedup the same noteheads appear twice in allIndices.
+    const _seen = new Set();
+    const idxArray = (Array.isArray(indices) ? indices.filter(x => x != null) : (indices != null ? [indices] : []))
+        .filter(x => { if (_seen.has(x)) return false; _seen.add(x); return true; });
     _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
 
     // ── DEBUG: log every highlighted note and flag strays ──────────────────
