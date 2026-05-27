@@ -6699,6 +6699,23 @@ function _buildSvgMidiMap() {
                 hardcodedGraceCorrected = true;
             }
 
+            // Measure 29 treble: the grace note for m29 has its MIDI timestamp at the end
+            // of m28 (sheetMeasure=28). Normally gracePreCorrect would catch this, but m28
+            // ALSO starts with a grace note, so the condition !thisStartsGrace is false and
+            // the correction never fires. The grace note then gets mis-assigned to m28 and
+            // m29 starts at rank 1 instead of rank 0.
+            // Fix: when we see a MIDI grace note landing in m28 treble AFTER the 8 normal
+            // notes have already been counted, force it forward to m29.
+            if (sheetMeasure === 28 && clef === 'treble' && note.duration < 0.1) {
+                const m28cap  = bucketCapacity['28|treble'] ?? 0;
+                const m28used = assignedCount['28|treble'] ?? 0;
+                if (m28used >= m28cap - 1) {
+                    sheetMeasure = 29;
+                    hardcodedGraceCorrected = true;
+                    console.log(`🎶 HardcodedGraceCorrect m28→m29 treble: midi=${note.midi} t=${note.time.toFixed(4)}`);
+                }
+            }
+
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
