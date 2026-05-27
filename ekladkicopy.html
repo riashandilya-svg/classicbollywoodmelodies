@@ -6625,6 +6625,7 @@ function _buildSvgMidiMap() {
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
             let sheetMeasure = PHYSICAL_TO_LOGICAL[physMeasure] ?? physMeasure;
+            const origSheetMeasure = sheetMeasure; // capture before any corrections
 
             // Grace notes for measures 31, 33, 35 have their MIDI timestamp in the
             // preceding measure (30, 32, 34) because those buckets are empty (cap=0).
@@ -6694,7 +6695,7 @@ function _buildSvgMidiMap() {
             if (!hardcodedGraceCorrected && isMidiGrace && !thisStartsGrace && nextStartsGrace && allowGraceCorrect) {
                 const nextCap = bucketCapacity[nextKey] ?? 0;
                 if (nextCap > 0) {
-                    console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
+                    console.log(`🎶 GracePreCorrect [${clef}] midi=${note.midi} t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} → sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
                     sheetMeasure = sheetMeasure + 1;
                     gracePreCorrected = true;
                 }
@@ -6772,6 +6773,15 @@ function _buildSvgMidiMap() {
             //   rank 8: treble E
             if (sheetMeasure === 28) {
                 console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
+            }
+
+            if (sheetMeasure === 29) {
+                console.log(`📊 assignRanks m29|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1} physMeasure=${physMeasure}`);
+            }
+
+            // Log any note that was originally mapped to sheetMeasure 29 but got redirected
+            if (origSheetMeasure === 29 && sheetMeasure !== 29) {
+                console.log(`🔀 m29→${sheetMeasure}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} physMeasure=${physMeasure} clef=${clef}`);
             }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
