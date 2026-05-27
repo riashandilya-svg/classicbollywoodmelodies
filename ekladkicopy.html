@@ -5849,7 +5849,10 @@ const TOLERANCE = 0.001;
 // Overflow-corrected notes (grace notes whose MIDI time sits fractionally before
 // the barline) are by definition outside the corrected measure's time window,
 // so skip the time-range guard for them.
-if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd + TOLERANCE)) return null;
+// Also allow a small start-boundary tolerance (same as end tolerance) to prevent
+// floating-point imprecision dropping notes that land exactly on the measure start
+// (e.g. bass A3 at t=67.2000 on the m29/m36 boundary).
+if (!overflowCorrected && (note.time < measureStart - TOLERANCE || note.time >= measureEnd + TOLERANCE)) return null;
         const isTreble = note.track === TREBLE;
         const isBass   = note.track === BASS;
         if (selectedHand !== "both") {
@@ -5867,7 +5870,24 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
         // so they sort before the main notes AND are outside the 0.01s chord-grouping
         // window used in spawnTrainingNote's lookahead.
-        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
+        let offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
+
+        // Measure 29 bass beat-2 correction:
+        // C4 (midi=60) and E4 (midi=64) in m29 bass have the same MIDI timestamp as
+        // the treble A5 beat-1 (t=67.68), but they visually sit on beat 2 of the bar
+        // (SVG rank=1 and rank=2, tx=500.5). The sustained A3 at rank=0 is beat 1.
+        // Shift C4/E4 forward by one beat so they form their own slot after A.
+        // Also align bass A3 (rank=0) to the same beat-1 slot as treble A5 (offset=0.48).
+        const rankEntry = _midiRankMap.get(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+        if (rankEntry && rankEntry.sheet_measure === 29 && rankEntry.clef === 'bass') {
+            if (rankEntry.rank === 0) {
+                // Beat 1: align with treble A5 at offset = secondsPerBeat
+                offsetInMeasure = secondsPerBeat;
+            } else if (rankEntry.rank === 1 || rankEntry.rank === 2) {
+                // Beat 2: shift one beat past beat 1
+                offsetInMeasure = rawOffset + secondsPerBeat;
+            }
+        }
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
