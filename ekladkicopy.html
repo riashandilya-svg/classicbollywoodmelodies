@@ -6554,6 +6554,7 @@ function _buildSvgNoteIndex() {
     console.log(`✅ SVG noteheads: ${_svgNoteElements.length} playable (${totalTied} tied continuations excluded) across measures ` +
         `${Math.min(...Object.keys(_svgBuckets).map(Number))}–` +
         `${Math.max(...Object.keys(_svgBuckets).map(Number))}`);
+    console.log(`🔍 _bucketFirstIsGrace m28 treble=${_bucketFirstIsGrace['28|treble']} bass=${_bucketFirstIsGrace['28|bass']} | m29 treble=${_bucketFirstIsGrace['29|treble']} bass=${_bucketFirstIsGrace['29|bass']}`);
 }
 
 function _buildSvgMidiMap() {
@@ -6561,7 +6562,7 @@ function _buildSvgMidiMap() {
     if (!_svgNoteElements.length) return;
 
     // DEBUG: dump SVG buckets 28 and 34-36
-    for (const m of [28,34,35,36]) {
+    for (const m of [28,29,34,35,36]) {
         for (const c of ["treble","bass"]) {
             const bucket = _svgBuckets[m]?.[c] || [];
             if (!bucket.length) continue;
@@ -6645,6 +6646,7 @@ function _buildSvgMidiMap() {
 
             if (note.duration < 0.1) {
                 if (sheetMeasure === 28 || sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
+                    console.log(`🎵 HardcodedGraceRedirect [${clef}] midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} sheetMeasure ${sheetMeasure}→${sheetMeasure + 1}`);
                     sheetMeasure += 1;
                     hardcodedGraceCorrected = true;
                 } else if (sheetMeasure === 36 && clef === 'treble') {
@@ -6772,6 +6774,12 @@ function _buildSvgMidiMap() {
             //   rank 8: treble E
             if (sheetMeasure === 28) {
                 console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
+            }
+
+            // DEBUG: log all assignments to sheet 29 (both clefs)
+            // Expected: rank 0 = grace note, then real notes start at rank 1
+            if (sheetMeasure === 29) {
+                console.log(`📊 assignRanks m29|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1} physM=${physMeasure} capKey_used=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected} thisStartsGrace=${thisStartsGrace} nextStartsGrace=${nextStartsGrace}`);
             }
 
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
