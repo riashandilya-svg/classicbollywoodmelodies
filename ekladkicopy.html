@@ -4529,6 +4529,13 @@ const visualStart =
                 seen.add(k);
                 allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
+            // m29 beat-1: also light up bass rank-0 (A3) alongside treble rank-0 (A5)
+            const _pv29tR0 = (_svgBuckets[29]?.['treble'] || [])[0];
+            const _pv29bR0 = (_svgBuckets[29]?.['bass']   || [])[0];
+            if (_pv29tR0 !== undefined && _pv29bR0 !== undefined
+                    && allIndices.includes(_pv29tR0) && !allIndices.includes(_pv29bR0)) {
+                allIndices.push(_pv29bR0);
+            }
             if (allIndices.length > 0) _applyHighlight(allIndices);
         }, highlightDelay);
         previewTimeouts.push(th);
@@ -5865,7 +5872,16 @@ if (!overflowCorrected && (note.time < measureStart || note.time >= measureEnd +
         // Overflow-corrected grace notes get a playTime 0.02s BEFORE the measure start
         // so they sort before the main notes AND are outside the 0.01s chord-grouping
         // window used in spawnTrainingNote's lookahead.
-        const offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
+        let offsetInMeasure = (overflowCorrected && rawOffset < 0) ? -0.02 : Math.max(0, rawOffset);
+
+        // m29 bass beat-2 correction: C4 (rank=1) and E4 (rank=2) share the same MIDI
+        // timestamp as treble A5 (beat 1), but on the score they sit on beat 2.
+        // Shift their playTime forward by one beat so they form a separate slot.
+        const _m29RankEntry = _midiRankMap.get(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
+        if (_m29RankEntry && _m29RankEntry.sheet_measure === 29 && _m29RankEntry.clef === 'bass'
+                && (_m29RankEntry.rank === 1 || _m29RankEntry.rank === 2)) {
+            offsetInMeasure += secondsPerBeat;
+        }
 
         const playTime = (idx * secondsPerMeasure) + offsetInMeasure;
 
@@ -7070,6 +7086,15 @@ function onTrainingNoteSpawned(noteObj) {
     if (allIndices.length === 0) {
         const fallback = _svgIndicesForMidiNote(noteObj, clefMode);
         allIndices.push(...fallback);
+    }
+
+    // m29 beat-1: when treble rank-0 (A5) is highlighted, also light up bass rank-0 (A3).
+    // The bass A3 is a sustained note with no fresh MIDI attack in practiceNotes.
+    const _m29tRank0 = (_svgBuckets[29]?.['treble'] || [])[0];
+    const _m29bRank0 = (_svgBuckets[29]?.['bass']   || [])[0];
+    if (_m29tRank0 !== undefined && _m29bRank0 !== undefined
+            && allIndices.includes(_m29tRank0) && !allIndices.includes(_m29bRank0)) {
+        allIndices.push(_m29bRank0);
     }
 
     if (allIndices.length > 0) {
