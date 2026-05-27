@@ -4028,6 +4028,7 @@ function _advanceBeatGroupSubNote() {
         // Do NOT re-highlight them on the score at their old position — that causes
         // stray green highlights on notes that are no longer the "current" chord.
 
+        _injectM29BassA(allIndices);
         if (allIndices.length > 0) _applyHighlight(allIndices, colorMap);
     }
 }
@@ -4529,6 +4530,7 @@ const visualStart =
                 seen.add(k);
                 allIndices.push(..._svgIndicesForMidiNote(sn, 'both'));
             }
+            _injectM29BassA(allIndices);
             if (allIndices.length > 0) _applyHighlight(allIndices);
         }, highlightDelay);
         previewTimeouts.push(th);
@@ -7057,16 +7059,30 @@ function onTrainingNoteSpawned(noteObj) {
         allIndices.push(...fallback);
     }
 
+    // Measure 29 beat-1 correction: inject bass rank-0 A notehead
+    _injectM29BassA(allIndices);
+
     if (allIndices.length > 0) {
         _applyHighlight(allIndices);
     } else {
         console.warn(`onTrainingNoteSpawned: no SVG match for ${noteName} t=${noteObj.time.toFixed(3)}`);
     }
 }
-
 // ============================================================
-// Score-note display badge
+// Measure 29 beat-1 helper: injects bass rank-0 A notehead
+// whenever m29 beat 1 is highlighted (treble A5 at rank=0).
+// The bass A3 at rank=0 is a sustained note carried from m28
+// with no reliable new MIDI attack at the beat boundary.
 // ============================================================
+function _injectM29BassA(indices) {
+    const m29TrebleRank0 = (_svgBuckets[29]?.['treble'] || [])[0];
+    const m29BassRank0   = (_svgBuckets[29]?.['bass']   || [])[0];
+    if (m29TrebleRank0 !== undefined && m29BassRank0 !== undefined
+            && indices.includes(m29TrebleRank0)
+            && !indices.includes(m29BassRank0)) {
+        indices.push(m29BassRank0);
+    }
+}
 function showScoreNoteDisplay(noteName, hint) {
     const el = document.getElementById('scoreNoteDisplay');
     document.getElementById('scoreNoteName').textContent = noteName || '—';
