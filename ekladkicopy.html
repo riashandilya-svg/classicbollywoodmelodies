@@ -6682,6 +6682,27 @@ function _buildSvgMidiMap() {
                 }
             }
 
+            // Measure 28/29 boundary correction (bass):
+            // Same boundary note issue as treble: midi=57(A3) t=67.2000 lands in
+            // sheetMeasure=29 but the m29 bass SVG has only 6 slots for 7 MIDI notes.
+            // Unlike treble, m28 bass is already full (6/6) so we can't redirect backward.
+            // This note has no SVG notehead at all — skip it entirely so it doesn't
+            // consume rank=0 and push all real m29 bass notes one rank forward.
+            // On the repeat pass, m29BassUsed === cap (6), so detect both passes:
+            // first pass: m29BassUsed===0; repeat pass: m29BassUsed===m29BassCap.
+            if (sheetMeasure === 29 && clef === 'bass') {
+                const m28BassUsed = assignedCount['28|bass'] ?? 0;
+                const m28BassCap  = bucketCapacity['28|bass'] ?? 0;
+                const m29BassUsed = assignedCount['29|bass'] ?? 0;
+                const m29BassCap  = bucketCapacity['29|bass'] ?? 0;
+                const isFirstPassBoundary  = m28BassUsed >= m28BassCap && m29BassUsed === 0;
+                const isRepeatPassBoundary = m29BassUsed === m29BassCap && !overflowFired.has('29|bass');
+                if (isFirstPassBoundary || isRepeatPassBoundary) {
+                    console.log(`🔧 m29 bass boundary skip: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} pass=${isRepeatPassBoundary?'repeat':'first'}`);
+                    continue; // skip — no SVG slot, _svgIndicesForMidiNote returns [] for it
+                }
+            }
+
             // Measure-boundary overflow correction:
             // If the current measure's SVG bucket is already at capacity (all its
             // noteheads have been claimed), this MIDI note's timestamp must have
