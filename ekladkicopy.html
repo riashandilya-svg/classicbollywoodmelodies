@@ -5746,6 +5746,22 @@ startPracticeButton.addEventListener('click', async () => {
     
     hardStopUserNote();
 
+    // FIX: Cancel any stale preview highlight timeouts from a previous session.
+    // Without this, a lingering timeout from the previous preview fires AFTER
+    // spawnTrainingNote sets currentChordNotes for the new session, overwriting
+    // the correct measure highlight with old notes (e.g. measure 28 notes over
+    // measure 29's highlight).
+    previewTimeouts.forEach(t => {
+        if (t && typeof t === 'object' && t._isFakeTimeout) {
+            if (typeof t._clear === 'function') t._clear();
+        } else {
+            clearTimeout(t);
+        }
+    });
+    previewTimeouts = [];
+    previewMode = false;
+    clearScoreHighlight();
+
     const selectedHand = handSelect.value;
     const startMeasure = parseInt(startMeasureInput.value, 10);
 const endMeasure = parseInt(endMeasureInput.value, 10);
@@ -6996,7 +7012,12 @@ function onTrainingNoteSpawned(noteObj) {
     // after a successful press before the app moves to the next musical event.
     const seen = new Set();
     for (const n of simultaneousNotes) {
-        if (_bgHeldNotes && _bgHeldNotes.has(n.midi)) continue; // carried-across sustain — skip
+        // Skip carried-across sustains ONLY when they are NOT also required as new
+        // notes in currentChordNotes. If they ARE in currentChordNotes they must be
+        // highlighted even if still physically held (e.g. C4/E4 held from measure 28
+        // that recur as the opening chord of measure 29 — without this check they were
+        // silently skipped, leaving measure 29 with no visible score highlight).
+        if (_bgHeldNotes && _bgHeldNotes.has(n.midi) && !currentChordNotes.has(n.midi)) continue;
         const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
         if (seen.has(k)) continue;
         seen.add(k);
