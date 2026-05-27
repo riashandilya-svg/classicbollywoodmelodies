@@ -6795,6 +6795,15 @@ function _buildSvgMidiMap() {
                 rank = rank + 1;
             }
 
+            // Measure 29 bass: the SVG has a sustained A3 at rank=0 (tx=364.6) carried
+            // over from m28 — no fresh MIDI note attacks it. The boundary A3 at t=67.2000
+            // was skipped above. The first real m29 bass notes (C4+E4 at t=67.68) should
+            // map to rank=1+2 (both at tx=500.5), not rank=0+1.
+            // Use (rawRank % (bucketSize-1)) + 1 so both passes wrap correctly into slots 1-5.
+            if (sheetMeasure === 29 && clef === 'bass' && bucketSize > 1) {
+                rank = (rawRank % (bucketSize - 1)) + 1;
+            }
+
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
                 console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
