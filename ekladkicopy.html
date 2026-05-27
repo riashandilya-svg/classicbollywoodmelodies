@@ -2019,63 +2019,7 @@ async function loadSongMidi() {
     });
 
     allMidiNotes.sort((a, b) => a.time - b.time);
-
-    // Build tie keys BEFORE splitRepeatedNotes to detect raw ties, then rebuild
-    // AFTER so that keys match the post-split timestamps used everywhere else.
-    const _preSplitTieKeys = new Set();
-    {
-        const tieSeenRaw = new Map();
-        for (const note of allMidiNotes) {
-            const k = `${note.track}|${note.midi}`;
-            const prev = tieSeenRaw.get(k);
-            if (prev) {
-                const gap = note.time - (prev.time + prev.duration);
-                // Only flag as a tied continuation if:
-                //   1. The gap is near-zero (genuine tie), AND
-                //   2. The previous note is NOT a grace note (grace notes have duration < 0.1s).
-                //      A main note immediately after a grace note must NOT be treated as a tie.
-                const prevIsGrace = prev.duration < 0.1;
-                if (Math.abs(gap) < 0.005 && !prevIsGrace) {
-                    _preSplitTieKeys.add(`${note.time.toFixed(4)}|${note.midi}|${note.track}`);
-                }
-            }
-            tieSeenRaw.set(k, note);
-        }
-    }
-    console.log(`🔗 Raw ties detected (pre-split): ${_preSplitTieKeys.size}`);
-
     allMidiNotes = splitRepeatedNotes(allMidiNotes);
-
-    // Rebuild _tiedNoteKeys using POST-split timestamps so that the keys in
-    // spawnNextValidNote (which uses note.time from post-split allMidiNotes) match exactly.
-    _tiedNoteKeys = new Set();
-    {
-        const tieSeenPost = new Map();
-        for (const note of allMidiNotes) {
-            const k = `${note.track}|${note.midi}`;
-            const prev = tieSeenPost.get(k);
-            if (prev) {
-                // A note is a tied continuation post-split if it was flagged pre-split
-                // OR if the gap is still near-zero after split (handles same-pitch ties
-                // where splitRepeatedNotes opened a 0.02s gap — those are re-attacks, NOT ties).
-                // We rely on the pre-split detection to identify true ties, then
-                // map them to the post-split timestamp.
-                // Key trick: splitRepeatedNotes only shifts the SECOND of two consecutive
-                // same-pitch notes by +NOTE_GAP_TIME. So the post-split time of a truly
-                // tied note is either unchanged OR shifted. We check both possibilities.
-                const origKey  = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
-                const shiftedBackKey = `${(note.time - NOTE_GAP_TIME).toFixed(4)}|${note.midi}|${note.track}`;
-                if (_preSplitTieKeys.has(origKey) || _preSplitTieKeys.has(shiftedBackKey)) {
-                    const prevIsGrace = prev.duration < 0.1;
-                    if (!prevIsGrace) {
-                        _tiedNoteKeys.add(origKey);
-                    }
-                }
-            }
-            tieSeenPost.set(k, note);
-        }
-    }
-    console.log(`🔗 Tied note keys (post-split): ${_tiedNoteKeys.size}`);
 
     const bpm = currentMidi.header.tempos.length
         ? currentMidi.header.tempos[0].bpm
@@ -5875,14 +5819,10 @@ practiceNotes = allMidiNotes
             const mk = `${note.time.toFixed(4)}|${note.midi}|${note.track}`;
             const entry = _midiRankMap.get(mk);
             if (entry && allowedLogical.has(entry.sheet_measure)) {
-                // Find the physical measure that (a) maps to the correct logical measure
-                // AND (b) is adjacent to p. physicalSeq.find returns only the first match,
-                // which fails for repeat-pass grace notes whose raw MIDI time (e.g. physical 43)
-                // is adjacent to the second occurrence (physical 43→36+7) not the first (36).
                 const correctedPhys = physicalSeq.find(
-                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure && Math.abs(q - p) <= 1
+                    q => (PHYSICAL_TO_LOGICAL[q] ?? q) === entry.sheet_measure
                 );
-                if (correctedPhys !== undefined) {
+                if (correctedPhys !== undefined && Math.abs(correctedPhys - p) <= 1) {
                     console.log(`🔁 Grace-note rescue: time=${note.time.toFixed(4)} physMeasure ${p}→${correctedPhys} (sheet ${entry.sheet_measure})`);
                     p = correctedPhys;
                     overflowCorrected = true;
@@ -6697,23 +6637,6 @@ function _buildSvgMidiMap() {
             // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
             if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
                 hardcodedGraceCorrected = true;
-            }
-
-            // Measure 29 treble: the grace note for m29 has its MIDI timestamp at the end
-            // of m28 (sheetMeasure=28). Normally gracePreCorrect would catch this, but m28
-            // ALSO starts with a grace note, so the condition !thisStartsGrace is false and
-            // the correction never fires. The grace note then gets mis-assigned to m28 and
-            // m29 starts at rank 1 instead of rank 0.
-            // Fix: when we see a MIDI grace note landing in m28 treble AFTER the 8 normal
-            // notes have already been counted, force it forward to m29.
-            if (sheetMeasure === 28 && clef === 'treble' && note.duration < 0.1) {
-                const m28cap  = bucketCapacity['28|treble'] ?? 0;
-                const m28used = assignedCount['28|treble'] ?? 0;
-                if (m28used >= m28cap - 1) {
-                    sheetMeasure = 29;
-                    hardcodedGraceCorrected = true;
-                    console.log(`🎶 HardcodedGraceCorrect m28→m29 treble: midi=${note.midi} t=${note.time.toFixed(4)}`);
-                }
             }
 
             // Measure-boundary overflow correction:
