@@ -6539,8 +6539,13 @@ function _buildSvgNoteIndex() {
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
 
-                        // Jaanekahan: no repeat boundary — all noteheads go into _svgBuckets
-                        const targetBuckets = _svgBuckets;
+                        // For measure REPEAT_END (36): page 1 has only a tied whole note
+                        // (excluded above), so its playable noteheads are on page 2.
+                        // Route page-2 noteheads for measure 36 into _svgBucketsPage2 so
+                        // _svgIndicesForMidiNote can find them.
+                        const targetBuckets = (sheet_measure === REPEAT_END && pageNum > 1)
+                            ? _svgBucketsPage2
+                            : _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
                         break;
@@ -6822,10 +6827,12 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // Jaanekahan: no repeats — always use the primary _svgBuckets
-    const bucketSource = _svgBuckets;
-
-    const bucket = bucketSource[entry.sheet_measure]?.[clef];
+    // Try the primary bucket first; fall back to page-2 bucket (used for measure 36
+    // whose playable noteheads live on page 2 of the sheet).
+    let bucket = _svgBuckets[entry.sheet_measure]?.[clef];
+    if ((!bucket || entry.rank >= bucket.length) && _svgBucketsPage2) {
+        bucket = _svgBucketsPage2[entry.sheet_measure]?.[clef];
+    }
     if (!bucket || entry.rank >= bucket.length) {
         console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
         return [];
@@ -6861,7 +6868,8 @@ function _applyHighlight(indices, colorMap) {
     _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
 
     // ── DEBUG: log every highlighted note and flag strays ──────────────────
-    if (idxArray.length > 0) {
+    // During preview mode currentChordNotes is intentionally empty — skip stray check.
+    if (idxArray.length > 0 && !previewMode) {
         const expectedMidis = new Set([...currentChordNotes]);
         const highlightedNotes = idxArray.map(x => {
             if (typeof x !== 'number') return { idx: '?', midi: null, name: '?', colorKey: 'unknown' };
@@ -6872,7 +6880,8 @@ function _applyHighlight(indices, colorMap) {
             // Reverse-lookup MIDI for this SVG index via _midiRankMap
             let midi = null;
             for (const [, entry] of _midiRankMap) {
-                const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef];
+                const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef]
+                            ?? _svgBucketsPage2?.[entry.sheet_measure]?.[entry.clef];
                 if (bucket && bucket[entry.rank] === x) { midi = entry.midi; break; }
             }
             // Any highlighted note (purple, gold, OR green) not in currentChordNotes is a stray
