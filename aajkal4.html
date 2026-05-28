@@ -4540,8 +4540,8 @@ const visualStart =
             // If this preview note is from the repeat pass, mirror to first-pass SVG elements
             const physMeasure = getMeasureFromTime(note.time);
             const isRepeatPass = physMeasure !== null &&
-                physMeasure > REPEAT_END + 1 &&
-                physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+                physMeasure >= REPEAT_START + REPEAT_LEN &&
+                physMeasure <= REPEAT_END + REPEAT_LEN;
 
             let notesToHighlight;
             if (isRepeatPass) {
@@ -6292,11 +6292,11 @@ addMidiFallingRectangle(
                     if (!fullSongPlaying) return;
 
                     // Determine whether this timestamp falls in the repeat pass
-                    // (physical measures 15-21 → logical 7-13).
+                    // (physical measures 37-44 → logical 29-36).
                     const physMeasure = getMeasureFromTime(note.time);
                     const isRepeatPass = physMeasure !== null &&
-                        physMeasure > REPEAT_END + 1 &&
-                        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+                        physMeasure >= REPEAT_START + REPEAT_LEN &&
+                        physMeasure <= REPEAT_END + REPEAT_LEN;
 
                     let notesToHighlight;
                     if (isRepeatPass) {
@@ -6509,7 +6509,27 @@ function _buildSvgNoteIndex() {
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
 
-        // Jaanekahan: no repeat-boundary special cases — tied notes are excluded normally
+        // Special case — measure 36 treble, page 2:
+        // The tied whole note that continues from m35 is correctly identified as a
+        // tied continuation and would normally be excluded. But the user wants it
+        // highlighted (it's visually prominent on the score). Un-exclude it here so
+        // it ends up in _svgBucketsPage2[36][treble] and can be highlighted.
+        // We identify it as: page 2, within the page-2 m36 treble staff bounds,
+        // within the m36 x-range (bls[0]=215 to bls[1]=696 for that system).
+        if (pageNum === 2) {
+            const sys36p2 = SVG_PAGE_SYSTEMS[1]?.find(s => s.start_measure === 36);
+            if (sys36p2) {
+                for (const ri of tiedNoteheadSet) {
+                    const rn = raw[ri];
+                    const inTreble = rn.ty >= sys36p2.treble_top - 50 && rn.ty <= sys36p2.treble_bot + 50;
+                    const inM36x   = rn.tx >= sys36p2.barline_xs[0] && rn.tx < sys36p2.barline_xs[1];
+                    if (inTreble && inM36x) {
+                        tiedNoteheadSet.delete(ri);
+                        break; // only one tied whole note to un-exclude
+                    }
+                }
+            }
+        }
 
         totalTied += tiedNoteheadSet.size;
 
@@ -6539,13 +6559,12 @@ function _buildSvgNoteIndex() {
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
 
-                        // For measure REPEAT_END (36): page 1 has only a tied whole note
-                        // (excluded above), so its playable noteheads are on page 2.
-                        // Route page-2 noteheads for measure 36 into _svgBucketsPage2 so
-                        // _svgIndicesForMidiNote can find them.
-                        const targetBuckets = (sheet_measure === REPEAT_END && pageNum > 1)
-                            ? _svgBucketsPage2
-                            : _svgBuckets;
+                        // Measure REPEAT_END (36) appears on both page 1 (end of repeat)
+                        // and page 2 (start of post-repeat section). Route page 2+ copies
+                        // to _svgBucketsPage2 so the first-pass highlights use page 1 noteheads
+                        // and the repeat-pass highlights use page 2 noteheads.
+                        const isRepeatPassPage = (pageNum >= 2 && sheet_measure === REPEAT_END);
+                        const targetBuckets = isRepeatPassPage ? _svgBucketsPage2 : _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
                         break;
@@ -6649,8 +6668,14 @@ function _buildSvgMidiMap() {
             // Exception: treble measure 36's tied whole note is intentionally kept in
             // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
             // get a rank entry (rank 0) rather than being skipped.
-            // Jaanekahan: no repeat boundary — all tied-continuation notes are excluded normally
-            if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
+            const isTiedM36Treble = (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))
+                && clef === 'treble'
+                && (() => {
+                    const pm = getMeasureFromTime(note.time);
+                    const sm = pm !== null ? (PHYSICAL_TO_LOGICAL[pm] ?? pm) : null;
+                    return sm === 36;
+                })();
+            if (!isTiedM36Treble && (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted))) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
             if (physMeasure === null) continue;
@@ -6671,6 +6696,22 @@ function _buildSvgMidiMap() {
             // _svgIndicesForMidiNote can route them to the correct page-2 bucket.
             if (sheetMeasure === 36 && (clef === 'bass' || clef === 'treble')) {
                 hardcodedGraceCorrected = true;
+            }
+
+            if (note.duration < 0.1) {
+                if (sheetMeasure === 30 || sheetMeasure === 32 || sheetMeasure === 34) {
+                    sheetMeasure += 1;
+                    hardcodedGraceCorrected = true;
+                } else if (sheetMeasure === 36 && clef === 'treble') {
+                    // Repeat pass: treble grace note for logical 29 lands in logical 36.
+                    // This fires on both passes when the grace note's MIDI time
+                    // maps to physical 36 (first pass) or physical 44 (second pass,
+                    // also logical 36). Always redirect to logical 29.
+                    // NOTE: bass clef is intentionally excluded — bass measure 36 has
+                    // genuine short notes that must NOT be redirected to measure 29.
+                    sheetMeasure = 29;
+                    hardcodedGraceCorrected = true;
+                }
             }
 
             // Measure-boundary overflow correction:
@@ -6724,13 +6765,12 @@ function _buildSvgMidiMap() {
             // only on repeat bug).
             //
             // Additionally, notes whose physical measure falls in the repeat-pass range
-            // (physical 15-21, logical 7-13) must NEVER trigger overflow — they are
+            // (physical 37-44, logical 29-36) must NEVER trigger overflow — they are
             // genuine second-pass notes, not barline-straddle notes. Without this guard,
-            // the FIRST repeat-pass note for each measure fires overflow (because overflowFired
-            // doesn't have the key yet) and gets mis-routed to the next sheet measure.
-            // Physical measure 14 is the 1st ending (NOT part of the repeat pass).
-            // The repeat pass occupies physical REPEAT_END+2 .. REPEAT_END+REPEAT_LEN+1 = 15..21.
-            const isRepeatPassNote = physMeasure > REPEAT_END + 1 && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+            // the FIRST repeat-pass note for each bass measure (29, 31, 33, 35) fires
+            // overflow (because overflowFired doesn't have the key yet) and gets
+            // mis-routed to the next sheet measure, causing incorrect bass highlighting.
+            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN;
             const overflowKey = `${sheetMeasure}|${clef}`;
             if (!gracePreCorrected && !isRepeatPassNote && !overflowFired.has(overflowKey) &&
                     (cap === 0 ? used < 2 : (used >= cap && used < 2 * cap))) {
@@ -6827,12 +6867,18 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // Try the primary bucket first; fall back to page-2 bucket (used for measure 36
-    // whose playable noteheads live on page 2 of the sheet).
-    let bucket = _svgBuckets[entry.sheet_measure]?.[clef];
-    if ((!bucket || entry.rank >= bucket.length) && _svgBucketsPage2) {
-        bucket = _svgBucketsPage2[entry.sheet_measure]?.[clef];
-    }
+    // For REPEAT_END (measure 36): first-pass notes (physical ≤ REPEAT_END) use page 1 bucket,
+    // repeat-pass notes (physical > REPEAT_END, i.e. physical 37-44) use the page 2 bucket.
+    const physMeasure = getMeasureFromTime(noteObj.time);
+    const isRepeatPass = (entry.sheet_measure === REPEAT_END) && physMeasure !== null && physMeasure > REPEAT_END;
+    // Measure 36 treble AND bass: _svgBuckets[36][treble|bass] is empty on page 1
+    // (only a tied whole note which is excluded from the bucket).
+    // Both first-pass and repeat-pass notes must use _svgBucketsPage2[36][treble|bass].
+    const bucketSource = (isRepeatPass || entry.sheet_measure === REPEAT_END)
+        ? _svgBucketsPage2
+        : _svgBuckets;
+
+    const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
         console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
         return [];
@@ -6868,8 +6914,7 @@ function _applyHighlight(indices, colorMap) {
     _currentHighlightEls = idxArray.map(x => (typeof x === 'number' ? _svgNoteElements[x]?.el : x)).filter(Boolean);
 
     // ── DEBUG: log every highlighted note and flag strays ──────────────────
-    // During preview mode currentChordNotes is intentionally empty — skip stray check.
-    if (idxArray.length > 0 && !previewMode) {
+    if (idxArray.length > 0) {
         const expectedMidis = new Set([...currentChordNotes]);
         const highlightedNotes = idxArray.map(x => {
             if (typeof x !== 'number') return { idx: '?', midi: null, name: '?', colorKey: 'unknown' };
@@ -6880,8 +6925,7 @@ function _applyHighlight(indices, colorMap) {
             // Reverse-lookup MIDI for this SVG index via _midiRankMap
             let midi = null;
             for (const [, entry] of _midiRankMap) {
-                const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef]
-                            ?? _svgBucketsPage2?.[entry.sheet_measure]?.[entry.clef];
+                const bucket = _svgBuckets[entry.sheet_measure]?.[entry.clef];
                 if (bucket && bucket[entry.rank] === x) { midi = entry.midi; break; }
             }
             // Any highlighted note (purple, gold, OR green) not in currentChordNotes is a stray
@@ -6973,8 +7017,8 @@ function onTrainingNoteSpawned(noteObj) {
     // If this note is from the repeat pass, mirror to the first-pass equivalent notes
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = physMeasure !== null &&
-        physMeasure > REPEAT_END + 1 &&
-        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+        physMeasure >= REPEAT_START + REPEAT_LEN &&
+        physMeasure <= REPEAT_END + REPEAT_LEN;
 
     let simultaneousNotes;
     if (isRepeatPass) {
