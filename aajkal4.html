@@ -1738,7 +1738,7 @@ body.score-mode #panelProgressWrap {
           font-size:15px;
           font-weight:700;
           font-family:inherit;
-          border:1px solid rgba(229,115,115,0.25);
+          border:1px solid rgba(255,193,7,0.25);
           border-radius:8px;
           padding:4px 6px;
           background:rgba(255,255,255,0.9);
@@ -2160,18 +2160,12 @@ function getLogicalSheetMeasureFromTime(timeSeconds) {
 // PRACTICE SEQUENCE BUILDER (PHYSICAL MEASURES)
 // ================================
 
-// Aajkal: repeats measures 29–36 (physical 29–44, logical 29–36 plays twice)
-// First pass: physical === logical (1..36)
-// Second pass: physical = logical + REPEAT_LEN (29+8=37 .. 36+8=44)
-function logicalToPhysicalFirst(logical) {
-  // Every logical measure has a first physical pass at the same number
-  if (logical < 1 || logical > MAX_LOGICAL_MEASURE) return null;
-  return logical;
-}
+function logicalToPhysicalFirst(logical) { return logical; }
 function logicalToPhysicalSecond(logical) {
-  // Only the repeated section (logical 29..36) has a second physical pass
+  // The repeat pass occupies physical measures REPEAT_END+1 .. REPEAT_END+REPEAT_LEN
+  // i.e. physical 37..44 → logical 29..36
   if (logical >= REPEAT_START && logical <= REPEAT_END) {
-    return logical + REPEAT_LEN;
+    return logical + REPEAT_PHYSICAL_OFFSET;
   }
   return null;
 }
@@ -2180,24 +2174,42 @@ function buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepe
   if (startLogical > endLogical) return null;
   const seq = [];
   const logicalSeq = [];
+
   for (let l = startLogical; l <= endLogical; l++) {
-    if (l > MAX_LOGICAL_MEASURE) return null;
-    // First physical pass
-    const p1 = logicalToPhysicalFirst(l);
-    if (p1 !== null) {
-      seq.push(p1);
-      logicalSeq.push(l);
-    }
-    // Second physical pass (repeat section only), unless skipping repeats
-    if (!skipRepeats) {
-      const p2 = logicalToPhysicalSecond(l);
-      if (p2 !== null) {
-        seq.push(p2);
-        logicalSeq.push(l);
+    if (l > SONG_CONFIG.measures) return null;
+
+    const phys1 = logicalToPhysicalFirst(l);
+    seq.push(phys1);
+    logicalSeq.push(l);
+
+    // If this measure is inside the repeat section and repeats are not skipped,
+    // append the second-pass physical measure right after the first pass of
+    // the last repeated measure (i.e. emit pass-2 as a block after pass-1 block).
+    // We collect pass-2 separately and splice after the first-pass block.
+  }
+
+  if (!skipRepeats) {
+    // Find the intersection of [startLogical..endLogical] with [REPEAT_START..REPEAT_END]
+    const repStart = Math.max(startLogical, REPEAT_START);
+    const repEnd   = Math.min(endLogical,   REPEAT_END);
+    if (repStart <= repEnd) {
+      // Insert the second-pass block immediately after the first-pass block ends.
+      // The first-pass block for the repeated measures ends at the position of
+      // logical REPEAT_END (or endLogical if that's smaller) inside seq.
+      const insertAfterLogical = repEnd; // last logical measure of first pass repeat
+      const insertIdx = logicalSeq.indexOf(insertAfterLogical) + 1; // position after it
+
+      const seqPass2    = [];
+      const logicalPass2 = [];
+      for (let l = repStart; l <= repEnd; l++) {
+        seqPass2.push(l + REPEAT_PHYSICAL_OFFSET);
+        logicalPass2.push(l);
       }
+      seq.splice(insertIdx, 0, ...seqPass2);
+      logicalSeq.splice(insertIdx, 0, ...logicalPass2);
     }
   }
-  if (!seq.length) return null;
+
   return { seq, logicalSeq };
 }
 
@@ -2332,11 +2344,11 @@ function applyBpmInput() {
 
     // Style feedback on input focus
     bpmInput.addEventListener('focus', () => {
-        bpmInput.style.borderColor = 'rgba(229,115,115,0.6)';
-        bpmInput.style.boxShadow   = '0 0 0 3px rgba(229,115,115,0.15)';
+        bpmInput.style.borderColor = 'rgba(255,193,7,0.6)';
+        bpmInput.style.boxShadow   = '0 0 0 3px rgba(255,193,7,0.15)';
     });
     bpmInput.addEventListener('blur', () => {
-        bpmInput.style.borderColor = 'rgba(229,115,115,0.25)';
+        bpmInput.style.borderColor = 'rgba(255,193,7,0.25)';
         bpmInput.style.boxShadow   = 'none';
     });
 })();
@@ -6497,7 +6509,7 @@ function _buildSvgNoteIndex() {
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
 
-        // Aajkal: repeat boundary at measures 29–36; tied notes are excluded using _tiedNoteKeys
+        // Jaanekahan: no repeat-boundary special cases — tied notes are excluded normally
 
         totalTied += tiedNoteheadSet.size;
 
@@ -6527,7 +6539,7 @@ function _buildSvgNoteIndex() {
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
 
-                        // Aajkal: all noteheads go into _svgBuckets (repeat-pass notes map to first-pass logical measures)
+                        // Jaanekahan: no repeat boundary — all noteheads go into _svgBuckets
                         const targetBuckets = _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
@@ -6632,7 +6644,7 @@ function _buildSvgMidiMap() {
             // Exception: treble measure 36's tied whole note is intentionally kept in
             // _svgBucketsPage2[36][treble] for highlighting, so its MIDI note must also
             // get a rank entry (rank 0) rather than being skipped.
-            // Aajkal: tied-continuation notes excluded using _tiedNoteKeys (handles repeat section too)
+            // Jaanekahan: no repeat boundary — all tied-continuation notes are excluded normally
             if (_tiedNoteKeys.has(mk) || _tiedNoteKeys.has(mkShifted)) continue;
 
             const physMeasure = getMeasureFromTime(note.time);
@@ -6810,7 +6822,7 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // Aajkal: always use the primary _svgBuckets (repeat-pass notes share logical measure buckets)
+    // Jaanekahan: no repeats — always use the primary _svgBuckets
     const bucketSource = _svgBuckets;
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
