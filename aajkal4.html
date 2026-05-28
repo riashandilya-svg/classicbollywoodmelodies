@@ -6544,7 +6544,7 @@ function _buildSvgNoteIndex() {
             if (tiedNoteheadSet.has(ri)) continue;
             const n = raw[ri];
             for (const sys of pageSystems) {
-                const inTreble = n.ty >= sys.treble_top - 80 && n.ty <= sys.treble_bot + 50;
+                const inTreble = n.ty >= sys.treble_top - 50 && n.ty <= sys.treble_bot + 50;
                 const inBass   = n.ty >= sys.bass_top   - 50 && n.ty <= sys.bass_bot   + 50;
                 if (!inTreble && !inBass) continue;
                 const clef = inTreble ? 'treble' : 'bass';
@@ -6609,8 +6609,8 @@ function _buildSvgMidiMap() {
     _buildSvgNoteIndex();
     if (!_svgNoteElements.length) return;
 
-    // DEBUG: dump SVG buckets 28 and 34-36
-    for (const m of [28,34,35,36]) {
+    // DEBUG: dump SVG buckets 34-36
+    for (const m of [34,35,36]) {
         for (const c of ["treble","bass"]) {
             const bucket = _svgBuckets[m]?.[c] || [];
             if (!bucket.length) continue;
@@ -6799,35 +6799,19 @@ function _buildSvgMidiMap() {
             // Fall back to page2 so the % wrap uses the correct size (6), not 0.
             const bucketSize = ((_svgBuckets[sheetMeasure]?.[clef] || []).length)
                 || ((_svgBucketsPage2[sheetMeasure]?.[clef] || []).length);
-            let rank         = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
-
-            // NOTE: m28/m30 treble grace-note offset removed — grace B no longer exists
-            // in the SVG, so the old rank+1 was skipping rank 0 and pushing the last
-            // MIDI note (rawRank=6) to rank 7, which is out of bounds on a 7-note bucket.
+            const rank       = (bucketSize > 0) ? (rawRank % bucketSize) : rawRank;
 
             // DEBUG: log all assignments to sheet 35 treble
             if (sheetMeasure === 35 && clef === 'treble') {
                 console.log(`📊 assignRanks sheet35|treble: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank} used_before=${used} cap=${cap} gracePreCorrected=${gracePreCorrected} hardcoded=${hardcodedGraceCorrected}`);
             }
 
-            // DEBUG: log all assignments to sheet 28 (both clefs)
-            // Expected rank map for m28 (user-verified):
-            //   rank 0: treble grace B
-            //   rank 1: treble C+  /  bass A
-            //   rank 2: treble B
-            //   rank 3: treble C+  /  bass C+E
-            //   rank 4: treble A
-            //   rank 5: treble B   /  bass G
-            //   rank 6: treble G
-            //   rank 7: treble A   /  bass B+D
-            //   rank 8: treble E
-            if (sheetMeasure === 28) {
-                console.log(`📊 assignRanks m28|${clef}: midi=${note.midi}(${getNoteName(note.midi)}) t=${note.time.toFixed(4)} dur=${note.duration.toFixed(3)} rawRank=${rawRank} rank=${rank} grace=${note.duration < 0.1}`);
-            }
-
             _midiRankMap.set(mk, { sheet_measure: sheetMeasure, clef, rank });
 
-
+            // DEBUG measure 36 bass
+            if (sheetMeasure === 36 && clef === 'bass') {
+                console.log(`🎯 m36 bass: mk=${mk} rawRank=${rawRank} bucketSize=${bucketSize} rank=${rank}`);
+            }
         }
     }
 
@@ -6880,23 +6864,16 @@ function _svgIndicesForMidiNote(noteObj, hand) {
 
     const bucket = bucketSource[entry.sheet_measure]?.[clef];
     if (!bucket || entry.rank >= bucket.length) {
-        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing`);
+        console.warn(`_svgIndicesForMidiNote: bucket[${entry.sheet_measure}][${clef}] rank=${entry.rank} missing (repeatPass=${isRepeatPass})`);
         return [];
     }
 
-    // Return the matched note AND all chord-mates at the same X position.
-    // Strategy: try a tight 2px tolerance first (catches true chord-mates that
-    // are pixel-aligned). If that returns only the matched note itself, widen to
-    // 6px to handle minor SVG rounding across staves. This prevents grace notes
-    // placed just a few pixels away from accidentally being co-highlighted.
+    // Return the matched note AND all chord-mates at the same X position
     const matchedIdx = bucket[entry.rank];
     const matchedTx  = _svgNoteElements[matchedIdx].tx;
-    const tight  = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 2);
-    const result = tight.length > 1 ? tight
-                 : bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 6);
+    const result = bucket.filter(i => Math.abs(_svgNoteElements[i].tx - matchedTx) < 4);
     return result;
 }
-
 
 let _currentHighlightEls = [];
 
