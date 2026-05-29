@@ -238,112 +238,140 @@ window.SONG_CONFIG = {
   midiFile:  "../midi/raatkali.mid",
   svgBase:   "../svg/raatkali",
   timeSignature: [4, 4],
-  measures:      62,  // MIDI has 62 physical measures (repeat written out: 55 printed + 7 extra)
+  measures:      63,  // MIDI has 63 physical measures (55 sheet bars + 8-bar written-out repeat + trailing)
   repeats:       [],
   pickupBeats:   0,
 
   // ── Sheet & MIDI structure ───────────────────────────────────────────────
-  // The sheet has 55 printed measures, labels 1–55.
-  // Measures 27–34 carry a repeat sign; the MIDI encodes them twice:
-  //   MIDI physical 1–26  = sheet 1–26   (pre-repeat)
-  //   MIDI physical 27–34 = sheet 27–34  (repeat, first pass)
-  //   MIDI physical 35–42 = sheet 35–42  (repeat, second pass — written out on sheet)
-  //   MIDI physical 43–55 = sheet 43–55  (post-repeat unique content)
+  // The sheet (SVG) has 55 printed measures, labelled 1–55.
+  // Measures 27–34 carry a repeat sign on the sheet.
   //
-  // All 55 MIDI measures map 1:1 to the 55 sheet measures.
-  // MAX_LOGICAL_MEASURE = 55 so the user can type any measure from 1 to 55.
+  // MIDI physical layout:
+  //   MIDI  1–26  = sheet  1–26  (pre-repeat)
+  //   MIDI 27–34  = sheet 27–34  (first pass of repeat)
+  //   MIDI 35–42  = sheet 27–34  (second pass — identical notes, maps back to same SVG bars)
+  //   MIDI 43–55  = sheet 43–55  (post-repeat)
+  //   MIDI 56–63  = trailing (no SVG, clamp to sheet 55)
   //
-  // When a selection spans measures 27–34 the sequencer automatically plays
-  // both passes (physical 27–34 first, then physical 35–42).
-  // Example — select 26–35:
-  //   26  |  27 28 29 30 31 32 33 34  |  35 36 37 38 39 40 41 42  |  35
-  //   pre     first pass (phys 27–34)    second pass (phys 35–42)    post
+  // The user-facing logical measure range is 1–55 (= SVG bar numbers).
+  // When a selection covers bars 27–34, the sequencer plays the repeat automatically:
+  //   physical sequence → [27 28 29 30 31 32 33 34]  (pass 1, MIDI 27–34)
+  //                       [35 36 37 38 39 40 41 42]  (pass 2, MIDI 35–42)
+  //   SVG highlight     → bars 27–34 (pass 1) then bars 27–34 again (pass 2)
+  //
+  // Example selections:
+  //   select 27–34  → MIDI seq [27..34, 35..42],  SVG [27..34, 27..34]
+  //   select 26–35  → MIDI seq [26, 27..34, 35..42, 43..43+n], SVG [26, 27..34, 27..34, 43..]
+  //   select 35–42  → MIDI seq [43..50] (maps to sheet 43–50, no repeat triggered)
+  //   select 43–55  → MIDI seq [43..55] (plain, no repeat)
+  //
+  // NOTE: Logical bars 35–42 on the sheet are a distinct post-repeat section.
+  // Selecting sheet bars 35–42 does NOT re-trigger the repeat; those bars map
+  // to MIDI 43–50 (shifted by 8, because MIDI 35–42 is the hidden second pass).
+
   repeatStart: 27,
   repeatEnd:   34,
   repeatLen:   8,
 
-  // Physical 27–34  → logical 27–34  (first pass)
-  // Physical 35–42  → logical 27–34  (second pass — same sheet measures, different MIDI)
-  // Physical 43–55  → logical 43–55  (post-repeat, written once)
-  // Physical 56–62  → logical 55     (MIDI trailing measures, no SVG)
+  // ── Physical↔Logical mappings ────────────────────────────────────────────
+  // MIDI physical → SVG/sheet logical bar number
   buildPhysicalToLogical(map) {
-    for (let p = 1; p <= 26; p++)  map[p] = p;
-    for (let p = 27; p <= 34; p++) map[p] = p;         // first pass
-    for (let p = 35; p <= 42; p++) map[p] = p - 8;     // second pass → logical 27–34
-    for (let p = 43; p <= 55; p++) map[p] = p;
-    for (let p = 56; p <= 62; p++) map[p] = 55;        // trailing MIDI, clamp to last
+    for (let p = 1;  p <= 26; p++) map[p] = p;          // pre-repeat: identity
+    for (let p = 27; p <= 34; p++) map[p] = p;          // repeat pass 1 -> SVG 27-34
+    for (let p = 35; p <= 42; p++) map[p] = p - 8;      // repeat pass 2 -> SVG 27-34 (same bars)
+    for (let p = 43; p <= 63; p++) map[p] = Math.min(p - 8, 55); // post-repeat MIDI 43-63 -> SVG 35-55
     return map;
   },
 
-  // Sheet measure == physical measure (identity).
-  logicalToPhysicalFirst(logical) { return logical; },
+  // SVG/sheet logical -> first MIDI physical measure
+  // Sheet bars 1-34: identity (MIDI 1-34)
+  // Sheet bars 35-55: shifted +8 (sheet 35 -> MIDI 43, sheet 55 -> MIDI 63)
+  logicalToPhysicalFirst(logical) {
+    if (logical >= 35) return logical + 8;
+    return logical;
+  },
 
-  // Bars 27–34 have a repeat: second physical pass is at logical+8 (bars 35–42).
+  // SVG/sheet logical → second MIDI physical measure (repeat pass only)
+  // Only bars 27–34 have a second physical pass (MIDI 35–42).
   logicalToPhysicalSecond(logical) {
-    if (logical >= 27 && logical <= 34) return logical + 8;
+    if (logical >= 27 && logical <= 34) return logical + 8; // 27→35, …, 34→42
     return null;
   },
 
-  // Sequencer: build the ordered list of physical MIDI measures to play.
-  // The sheet has a repeat sign on bars 27–34. In the MIDI, the second pass
-  // of that repeat is written out as physical measures 35–42 (different content).
-  // select 26–35 → [26, 27..34, 35..42, 35]   (pre, 1st pass, 2nd pass, post)
-  // select 27–34 → [27..34, 35..42]            (repeat both passes)
-  // select 35–42 → [35..42]                    (2nd-pass section directly)
-  // select 43–55 → [43..55]                    (ending, plain)
+  // ── Sequencer: build physical MIDI measure list for a practice selection ─
+  //
+  // Rules:
+  //   • Selection entirely before 27  → play as-is, no repeat.
+  //   • Selection overlaps 27–34      → play overlap once (pass 1), then play
+  //                                     the same overlap again via MIDI+8 (pass 2),
+  //                                     unless skipRepeats is true.
+  //   • Selection includes bars ≥ 35  → those map to MIDI bars+8 (because MIDI
+  //                                     35–42 is already used for the repeat pass 2,
+  //                                     so sheet bar 35 = MIDI 43, bar 36 = MIDI 44, …).
+  //   • Selection entirely ≥ 35       → plain play, shifted by 8.
+  //
+  // Physical MIDI measure range: 1–63.  Sheet logical range: 1–55.
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
-    const RSTART = 27, REND = 34;
-    const seq = [], logicalSeq = [];
+    const RSTART = 27, REND = 34, RSHIFT = 8;
+    // Physical MIDI ceiling
+    const MIDI_MAX = SONG_CONFIG.measures; // 63
 
-    const push = (l, logical) => {
-      if (l < 1 || l > SONG_CONFIG.measures) return false;
-      seq.push(l); logicalSeq.push(logical ?? l);
+    const seq = [], logicalSeq = [];
+    const push = (physMeasure, logicalMeasure) => {
+      if (physMeasure < 1 || physMeasure > MIDI_MAX) return false;
+      seq.push(physMeasure);
+      logicalSeq.push(logicalMeasure);
       return true;
     };
 
-    // Pre-repeat (bars before 27)
+    // ── 1. Pre-repeat section: logical 1–26 ──────────────────────────────
     for (let l = startLogical; l <= Math.min(endLogical, RSTART - 1); l++) {
-      if (!push(l)) return null;
+      if (!push(l, l)) return null;
     }
 
-    // Repeat block — fires when selection overlaps bars 27–34
+    // ── 2. Repeat block: logical 27–34 ───────────────────────────────────
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
-    if (repStart <= repEnd) {
-      // First pass: physical 27–34
+    const repeatFires = repStart <= repEnd;
+
+    if (repeatFires) {
+      // Pass 1 — MIDI bars 27–34 (same as logical)
       for (let l = repStart; l <= repEnd; l++) {
-        if (!push(l)) return null;
+        if (!push(l, l)) return null;
       }
-      // Second pass: physical 35–42 (written-out repeat in MIDI), logical still 27–34
+      // Pass 2 — MIDI bars 35–42 (logical still points to SVG 27–34)
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
-          const p2 = l + 8;  // 27→35, 28→36, …, 34→42
-          if (p2 > SONG_CONFIG.measures) return null;
-          if (!push(p2, l)) return null;
+          if (!push(l + RSHIFT, l)) return null; // MIDI 35–42, SVG highlight 27–34
         }
       }
     }
 
-    // Post-repeat: bars 35 onward that weren't already covered by the second pass.
-    // If second pass was emitted (covered 35–42), start post-repeat at 43.
-    // Otherwise start at 35 so bars 35–55 are reachable when repeat didn't fire.
-    const secondPassEmitted = (repStart <= repEnd) && !skipRepeats;
-    const postStart = secondPassEmitted ? REND + (REND - RSTART + 1) + 1 : REND + 1;
-    for (let l = Math.max(startLogical, postStart); l <= endLogical; l++) {
-      if (!push(l)) return null;
+    // ── 3. Post-repeat section: logical 35–55 ────────────────────────────
+    // Sheet bar 35 → MIDI bar 43 (shifted +8 because MIDI 35–42 is the repeat pass).
+    // Sheet bar 55 → MIDI bar 63 (55 + 8 = 63, which is within range).
+    const postLogicalStart = repeatFires && !skipRepeats
+      ? REND + 1          // after full repeat block: start at sheet bar 35
+      : Math.max(startLogical, REND + 1);
+
+    for (let l = postLogicalStart; l <= endLogical; l++) {
+      const physBar = l + RSHIFT; // sheet 35 → MIDI 43, …, sheet 55 → MIDI 63
+      if (!push(physBar, l)) return null;
     }
 
     return { seq, logicalSeq };
   },
 
-  // Sections use the printed sheet numbers (1–55).
+  // Sections use the printed sheet bar numbers (1-55).
+  // Note: selecting bars 27-34 automatically plays the repeat (both passes).
+  // Bars 35-55 are post-repeat content (MIDI offset +8 internally).
   sections: [
     { label: "Intro",                         start: 1,  end: 5  },
     { label: "Raat kali — verse 1",           start: 6,  end: 17 },
     { label: "Middle phrase",                 start: 18, end: 26 },
-    { label: "Repeat — 1st pass",             start: 27, end: 34 },
-    { label: "Repeat — 2nd pass",             start: 35, end: 42 },
+    { label: "Repeat (plays twice)",          start: 27, end: 34 },
+    { label: "Post-repeat phrase",            start: 35, end: 42 },
     { label: "Raat kali — verse 2",           start: 43, end: 50 },
     { label: "Ending",                        start: 51, end: 55 },
   ],
@@ -962,11 +990,11 @@ window.SONG_CONFIG = {
 </script>
 
 <!-- ===== GHOST-NOTE FIX =====
-  Root cause: measure 50's bass SVG bucket is full (6/6 noteheads), so a MIDI bass
-  note at time=118.8s (physically in m50) overflows into the rank map under sheet m51.
-  When the user selects measures 51–55, the engine's rank-map rescue pulls this note
-  into the selection with playTime = −0.02 (before the section start). The engine
-  then queues one extra note AFTER the real last note of m55 plays.
+  Root cause: sheet bar 50's bass SVG bucket can fill (6/6 noteheads), so a MIDI bass
+  note at MIDI physical bar 58 (= sheet bar 50) overflows into the rank map under sheet bar 51.
+  When the user selects measures 51-55, the engine's rank-map rescue pulls this note
+  into the selection with playTime = -0.02 (before the section start). The engine
+  then queues one extra note AFTER the real last note of bar 55 plays.
 
   Fix: intercept Array.prototype.sort to capture the practiceNotes array reference
   (the engine sorts it by playTime as its final build step), then hook console.groupEnd
