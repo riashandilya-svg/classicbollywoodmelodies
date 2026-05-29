@@ -238,110 +238,101 @@ window.SONG_CONFIG = {
   midiFile:  "../midi/raatkali.mid",
   svgBase:   "../svg/raatkali",
   timeSignature: [4, 4],
-  measures:      55,   // physical MIDI measure count (includes both passes of the repeat)
+  measures:      55,
   repeats:       [],
   pickupBeats:   0,
 
-  // ── Repeat model ─────────────────────────────────────────────────────────
-  // The sheet has 47 unique measures (labels 1–47).
-  // Measures 27–34 have a repeat sign: the MIDI encodes them at physical 27–34
-  // (first pass) and again at physical 35–42 (second pass / repeat copy).
-  // Post-repeat sheet measures 35–47 live at physical MIDI 43–55.
+  // ── Sheet & MIDI structure ───────────────────────────────────────────────
+  // The sheet has 55 printed measures, labels 1–55.
+  // Measures 27–34 carry a repeat sign; the MIDI encodes them twice:
+  //   MIDI physical 1–26  = sheet 1–26   (pre-repeat)
+  //   MIDI physical 27–34 = sheet 27–34  (repeat, first pass)
+  //   MIDI physical 35–42 = sheet 35–42  (repeat, second pass — written out on sheet)
+  //   MIDI physical 43–55 = sheet 43–55  (post-repeat unique content)
   //
-  //   MIDI physical 1–26  → sheet 1–26   (identity)
-  //   MIDI physical 27–34 → sheet 27–34  (first pass, same position)
-  //   MIDI physical 35–42 → sheet 27–34  (second/repeat pass, same sheet position)
-  //   MIDI physical 43–55 → sheet 35–47  (post-repeat, shifted back 8)
+  // All 55 MIDI measures map 1:1 to the 55 sheet measures.
+  // MAX_LOGICAL_MEASURE = 55 so the user can type any measure from 1 to 55.
   //
-  // User-facing measure numbers go 1–47.
-  // Selecting 26–35 plays: 26 | 27,28,29,30,31,32,33,34 | 27,28,29,30,31,32,33,34 | 35
-  //                         pre  first pass (phys 27–34)  second pass (phys 35–42)   post
+  // When a selection spans measures 27–34 the sequencer automatically plays
+  // both passes (physical 27–34 first, then physical 35–42).
+  // Example — select 26–35:
+  //   26  |  27 28 29 30 31 32 33 34  |  35 36 37 38 39 40 41 42  |  35
+  //   pre     first pass (phys 27–34)    second pass (phys 35–42)    post
   repeatStart: 27,
   repeatEnd:   34,
   repeatLen:   8,
 
+  // Full identity: physical MIDI measure == sheet measure for all 55.
   buildPhysicalToLogical(map) {
-    for (let p = 1;  p <= 26; p++) map[p] = p;           // pre-repeat: identity
-    for (let p = 27; p <= 34; p++) map[p] = p;           // first pass: identity
-    for (let p = 35; p <= 42; p++) map[p] = p - 8;       // second pass → sheet 27–34
-    for (let p = 43; p <= 55; p++) map[p] = p - 8;       // post-repeat → sheet 35–47
+    for (let p = 1; p <= 55; p++) map[p] = p;
     return map;
   },
 
-  logicalToPhysicalFirst(logical) {
-    // Sheet 1–34: first pass lives at same physical position.
-    // Sheet 35–47: post-repeat lives at physical +8.
-    if (logical >= 35 && logical <= 47) return logical + 8;
-    return logical;
-  },
+  // Sheet measure == physical measure (identity).
+  logicalToPhysicalFirst(logical) { return logical; },
 
+  // Bars 27–34 have a repeat: second physical pass is at logical+8 (bars 35–42).
   logicalToPhysicalSecond(logical) {
-    // Only sheet 27–34 have a second physical pass (the repeat copy at physical 35–42).
     if (logical >= 27 && logical <= 34) return logical + 8;
     return null;
   },
 
-  // Sequencer: given sheet range startLogical–endLogical, produce the physical
-  // MIDI measure sequence to play (in order).
-  //
-  // Selecting 26–35:
-  //   pre-repeat  → physical 26
-  //   repeat 1st  → physical 27,28,29,30,31,32,33,34
-  //   repeat 2nd  → physical 35,36,37,38,39,40,41,42
-  //   post-repeat → physical 43  (sheet 35 = phys 43)
+  // Sequencer: build the ordered list of physical MIDI measures to play.
+  // select 26–35 → [26, 27..34, 35..42, 35]  (pre, 1st pass, 2nd pass, then bar 35)
+  // select 35–39 → [35,36,37,38,39]           (just those bars, no repeat)
+  // select 27–34 → [27..34, 35..42]           (full repeat, both passes)
+  // select 43–55 → [43..55]                   (post-repeat, plain)
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
     const RSTART = 27, REND = 34;
     const seq = [], logicalSeq = [];
 
-    const pushFirst = (l) => {
-      if (l > MAX_LOGICAL_MEASURE) return false;
-      const p1 = window.SONG_CONFIG.logicalToPhysicalFirst(l);
-      if (p1 > SONG_CONFIG.measures) return false;
-      seq.push(p1); logicalSeq.push(l);
+    const push = (l) => {
+      if (l < 1 || l > MAX_LOGICAL_MEASURE || l > SONG_CONFIG.measures) return false;
+      seq.push(l); logicalSeq.push(l);   // physical == logical (identity)
       return true;
     };
 
-    // Pre-repeat measures (sheet 1–26)
+    // Pre-repeat
     for (let l = startLogical; l <= Math.min(endLogical, RSTART - 1); l++) {
-      if (!pushFirst(l)) return null;
+      if (!push(l)) return null;
     }
 
-    // Repeat block (sheet 27–34)
+    // Repeat block — only fires when the selection overlaps bars 27–34
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
     if (repStart <= repEnd) {
-      // First pass: physical 27–34
+      // First pass (physical 27–34)
       for (let l = repStart; l <= repEnd; l++) {
-        if (!pushFirst(l)) return null;
+        if (!push(l)) return null;
       }
-      // Second pass: physical 35–42
+      // Second pass (physical 35–42) — skipped when "Skip Repeats" is on
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
-          const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
-          if (p2 !== null && p2 <= SONG_CONFIG.measures) {
-            seq.push(p2); logicalSeq.push(l);
-          }
+          const p2 = l + 8;  // 27→35, 28→36, …, 34→42
+          if (p2 > SONG_CONFIG.measures) return null;
+          seq.push(p2); logicalSeq.push(l);
         }
       }
     }
 
-    // Post-repeat measures (sheet 35–47 = physical 43–55)
+    // Post-repeat and the written second-pass bars (35–55), played directly
     for (let l = Math.max(startLogical, REND + 1); l <= endLogical; l++) {
-      if (!pushFirst(l)) return null;
+      if (!push(l)) return null;
     }
 
     return { seq, logicalSeq };
   },
 
-  // Sections use SHEET measure numbers (1–47).
+  // Sections use the printed sheet numbers (1–55).
   sections: [
     { label: "Intro",                         start: 1,  end: 5  },
     { label: "Raat kali — verse 1",           start: 6,  end: 17 },
     { label: "Middle phrase",                 start: 18, end: 26 },
-    { label: "Repeat section",                start: 27, end: 34 },
-    { label: "Raat kali — verse 2",           start: 35, end: 42 },
-    { label: "Ending",                        start: 43, end: 47 },
+    { label: "Repeat — 1st pass",             start: 27, end: 34 },
+    { label: "Repeat — 2nd pass",             start: 35, end: 42 },
+    { label: "Raat kali — verse 2",           start: 43, end: 50 },
+    { label: "Ending",                        start: 51, end: 55 },
   ],
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
   brandName:    "Ria Om Shandilya",
@@ -1026,6 +1017,8 @@ window.SONG_CONFIG = {
   console.log('[GHOST-FIX] Installed — negative-playTime overflow notes will be stripped after each practice build.');
 })();
 </script>
+
+
 
 <script type="module" src="../engine.js"></script>
 
