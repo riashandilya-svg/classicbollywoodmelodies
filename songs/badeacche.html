@@ -258,6 +258,41 @@ window.SONG_CONFIG = {
     { label: "Mukhda reprise 2",   start: 89,  end: 104 },
     { label: "Coda / ending",      start: 105, end: 113 },
   ],
+
+  // ── Grace-note boundary fix ───────────────────────────────────────────────
+  // badeacche has two grace notes (SVG scale=0.6944) at the start of m=98 and
+  // m=100. Their MIDI timestamps fire ~0.207s before the natural measure boundary,
+  // so getMeasureFromTime() places them in m97/m99. This triggers the
+  // barline-straddle overflow path, which assigns them rank=0 of m98/m100 without
+  // consuming the rankCounter — causing the genuine first note of m98/m100 to
+  // ALSO land at rank=0 (the grace), get detected as a grace, and be skipped too.
+  //
+  // Fix: pull the m97/m98 and m99/m100 time boundaries back just enough so that
+  // getMeasureFromTime() returns 98/100 directly for those grace timestamps.
+  // They get rank=0 → isGrace=true → skipped correctly. The real first note of
+  // m98/m100 then gets rank=1 and is played as expected.
+  buildMeasureTimeMap: function(config, tempos, secondsPerBeat) {
+    const spm = secondsPerBeat * config.timeSignature[0];
+    const map = {};
+    // Grace-note MIDI timestamps (from the badeacche.mid file):
+    const GRACE_M98  = 120.2069;  // grace pickup before m=98 beat 1
+    const GRACE_M100 = 122.6896;  // grace pickup before m=100 beat 1
+    const EPS = 0.001;
+
+    let cursor = 0;
+    for (let m = 1; m <= config.measures; m++) {
+      const start = cursor;
+      let end;
+      if      (m === 97)  end = GRACE_M98  - EPS;  // shorten: grace now in m98
+      else if (m === 98)  end = 98  * spm;          // extended start, natural end
+      else if (m === 99)  end = GRACE_M100 - EPS;  // shorten: grace now in m100
+      else if (m === 100) end = 100 * spm;          // extended start, natural end
+      else                end = m * spm;
+      map[m] = { start, end };
+      cursor = end;
+    }
+    return map;
+  },
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
   brandName:    "Ria Om Shandilya",
   youtubeUrl:   "https://www.youtube.com/watch?v=FaJh5yr51iw",
