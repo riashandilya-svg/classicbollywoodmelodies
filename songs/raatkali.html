@@ -380,37 +380,37 @@ window.SONG_CONFIG = {
   youtubeUrl:   "https://www.youtube.com/watch?v=FaJh5yr51iw",
   youtubeLabel: "Quick Guide to Measures & Sheet",
 
-  // ── Theme: raatkali red (treble) + black/charcoal (bass) palette ────────
+  // ── Theme: aajkal red/pink (treble) + purple/violet (bass) palette ────────
   themeOverride: {
     // SVG notehead highlight colors
     trebleNote:        '#E57373',
-    bassNote:          '#424242',
+    bassNote:          '#7C3AED',
 
-    // Falling note gradients — treble (red)
-    trebleFallTop:     'rgba(255,235,238,0.92)',
-    trebleFallMid1:    'rgba(239,154,154,0.88)',
+    // Falling note gradients — treble (red/pink)
+    trebleFallTop:     'rgba(255,200,200,0.92)',
+    trebleFallMid1:    'rgba(255,150,150,0.88)',
     trebleFallMid2:    'rgba(229,115,115,0.90)',
     trebleFallBot:     'rgba(239,83,80,0.94)',
     trebleFallShadow:  'rgba(229,115,115,0.35)',
 
-    // Falling note gradients — bass (black/charcoal)
-    bassFallTop:       'rgba(97,97,97,0.92)',
-    bassFallMid1:      'rgba(66,66,66,0.88)',
-    bassFallMid2:      'rgba(33,33,33,0.90)',
-    bassFallBot:       'rgba(0,0,0,0.94)',
-    bassFallShadow:    'rgba(66,66,66,0.4)',
+    // Falling note gradients — bass (purple/violet)
+    bassFallTop:       'rgba(221,214,254,0.92)',
+    bassFallMid1:      'rgba(196,181,253,0.88)',
+    bassFallMid2:      'rgba(167,139,250,0.90)',
+    bassFallBot:       'rgba(124,58,237,0.94)',
+    bassFallShadow:    'rgba(167,139,250,0.4)',
 
     // Piano white key fills
     whiteKeyTrebleTop: '#FFCDD2',
     whiteKeyTrebleBot: '#EF9A9A',
-    whiteKeyBassTop:   '#BDBDBD',
-    whiteKeyBassBot:   '#757575',
+    whiteKeyBassTop:   '#DDD6FE',
+    whiteKeyBassBot:   '#A78BFA',
 
     // Piano black key fills
     blackKeyTrebleTop: '#EF9A9A',
     blackKeyTrebleBot: '#E57373',
-    blackKeyBassTop:   '#616161',
-    blackKeyBassBot:   '#212121',
+    blackKeyBassTop:   '#A78BFA',
+    blackKeyBassBot:   '#7C3AED',
 
     // Piano key glow overlays — treble
     keyTrebleGlowShadow: '#ff6b6b',
@@ -418,12 +418,12 @@ window.SONG_CONFIG = {
     keyTrebleGlowFillB:  'rgba(255,107,107,0.4)',
 
     // Piano key glow overlays — bass
-    keyBassGlowShadow:   '#424242',
-    keyBassGlowFillW:    'rgba(66,66,66,0.18)',
+    keyBassGlowShadow:   '#7C3AED',
+    keyBassGlowFillW:    'rgba(167,139,250,0.18)',
 
     // Note name labels on keys and falling notes
     keyLabelTreble:      '#555',
-    keyLabelBass:        '#111',
+    keyLabelBass:        '#4C1D95',
     fallingLabelTreble:  'rgba(255,255,255,0.95)',
     fallingLabelBass:    'rgba(255,255,255,0.95)',
 
@@ -889,32 +889,26 @@ window.SONG_CONFIG = {
 
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 
-<!-- Override SVG highlight colors to match score-mode: use #E57373 for treble,
-     #424242 for bass, instead of engine.js defaults (purple, gold/amber, green) -->
+<!-- Override SVG highlight colors to match score-mode: use #E57373 for all notes
+     instead of engine.js defaults (treble: #9B2C6E purple, bass: #B45309 gold) -->
 <script>
 (function () {
-  const ENGINE_TREBLE_COLORS = new Set([
-    '#9B2C6E', '#9b2c6e'
-  ]);
-  const ENGINE_BASS_COLORS = new Set([
+  // Colors engine.js uses for treble and bass highlights (purple, gold/amber, green)
+  const ENGINE_COLORS = new Set([
+    '#9B2C6E', '#9b2c6e',
     '#B45309', '#b45309',
     '#FFC107', '#ffc107',
     '#F59E0B', '#f59e0b',
     '#FBBF24', '#fbbf24',
     '#D97706', '#d97706',
-  ]);
-  const ENGINE_OTHER = new Set([
     '#16a34a', '#16A34A'
   ]);
-  const TREBLE_COLOR = '#E57373';
-  const BASS_COLOR   = '#424242';
+  const SCORE_MODE_COLOR = '#E57373';
 
   const _origSetAttr = SVGElement.prototype.setAttribute;
   SVGElement.prototype.setAttribute = function (name, value) {
-    if (name === 'fill') {
-      if (ENGINE_TREBLE_COLORS.has(value)) return _origSetAttr.call(this, name, TREBLE_COLOR);
-      if (ENGINE_BASS_COLORS.has(value))   return _origSetAttr.call(this, name, BASS_COLOR);
-      if (ENGINE_OTHER.has(value))         return _origSetAttr.call(this, name, TREBLE_COLOR);
+    if (name === 'fill' && ENGINE_COLORS.has(value)) {
+      return _origSetAttr.call(this, name, SCORE_MODE_COLOR);
     }
     return _origSetAttr.call(this, name, value);
   };
