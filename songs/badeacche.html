@@ -784,6 +784,102 @@ window.SONG_CONFIG = {
 })();
 </script>
 
+<!-- Diagnostic: intercept MutationObserver to catch when page 1 SVG is injected,
+     then scan ALL noteheads + ALL TieSegments to find what's being excluded -->
+<script>
+(function() {
+  const observer = new MutationObserver(() => {
+    const svgEl = document.querySelector('#scorePage1 svg');
+    if (!svgEl) return;
+    observer.disconnect();
+
+    const cfg = window.SONG_CONFIG;
+    const sys1 = cfg.svgPageSystems[0][0];  // page 1, system 1
+    const GRACE_SCALE = 0.85;
+
+    const raw = [];
+    svgEl.querySelectorAll('path.Note').forEach(el => {
+      const t = el.getAttribute('transform') || '';
+      const mm = t.match(/matrix\(\s*([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)[,\s]+([\d.eE+-]+)\s*\)/);
+      if (!mm) return;
+      raw.push({ tx: parseFloat(mm[5]), ty: parseFloat(mm[6]), scale: parseFloat(mm[1]) });
+    });
+
+    const tieRights = [];
+    svgEl.querySelectorAll('path.TieSegment').forEach(el => {
+      const d = el.getAttribute('d') || '';
+      const nums = [...d.matchAll(/[-\d.]+/g)].map(m => parseFloat(m[0]));
+      if (nums.length < 8) return;
+      tieRights.push({ ex: nums[6], ey: nums[7] });
+    });
+
+    const excluded = new Set();
+    for (const tie of tieRights) {
+      let bestIdx = -1, bestDist = Infinity;
+      for (let i = 0; i < raw.length; i++) {
+        const dist = Math.abs(raw[i].tx - tie.ex) + Math.abs(raw[i].ty - tie.ey) * 0.3;
+        if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+      }
+      if (bestIdx >= 0 && bestDist < 40) excluded.add(bestIdx);
+    }
+
+    const bls = sys1.barline_xs;
+    console.log(`[DIAG] === PAGE 1 SYSTEM 1 FULL SCAN (bass_top=${sys1.bass_top}, bass_bot=${sys1.bass_bot}) ===`);
+    console.log(`[DIAG] tie exclusion threshold=40, ties found=${tieRights.length}, excluded noteheads=${excluded.size}`);
+
+    for (let ri = 0; ri < raw.length; ri++) {
+      const n = raw[ri];
+      if (n.ty < sys1.treble_top - 150 || n.ty > sys1.bass_bot + 250) continue;
+      const inTreble = n.ty >= sys1.treble_top - 80 && n.ty <= sys1.treble_bot + 50;
+      const inBass   = n.ty >= sys1.bass_top - 50   && n.ty <= sys1.bass_bot + 50;
+      const clef = inBass ? 'bass' : inTreble ? 'treble' : 'OUT_OF_BOUNDS';
+      let measure = '?';
+      for (let i = 0; i < bls.length - 1; i++) {
+        const lb = i===0 ? bls[i]-20 : bls[i];
+        const rb = i===bls.length-2 ? bls[i+1]+20 : bls[i+1];
+        if (n.tx >= lb && n.tx < rb) { measure = sys1.start_measure + i; break; }
+      }
+      const status = excluded.has(ri) ? 'EXCLUDED(tie)' : 'kept';
+      if (clef === 'bass' || clef === 'OUT_OF_BOUNDS' || status === 'EXCLUDED(tie)') {
+        console.log(`[DIAG] ri=${ri} ${clef} tx=${n.tx.toFixed(0)} ty=${n.ty.toFixed(0)} m=${measure} scale=${n.scale.toFixed(3)} → ${status}`);
+      }
+    }
+    console.log('[DIAG] === END SCAN ===');
+  });
+  observer.observe(document.getElementById('scoreObj') || document.body, { childList: true, subtree: true });
+})();
+</script>
+
+ ────────────────────────────────────────
+     engine.js builds the SVG↔MIDI rank map inside renderAllScorePages(), which
+     is called the moment the user flips the Score toggle. If the toggle is already
+     ON when the page loads (e.g. browser restored it, or user reloaded in Score
+     mode), renderAllScorePages() fires BEFORE loadSongMidi() completes, so
+     allMidiNotes is still empty → rank map = 0 → no highlights ever work.
+
+     Fix: watch #measureTimeline for the pip elements that engine.js injects right
+     after MIDI loads. Once they appear, if the score toggle is already checked,
+     re-fire a synthetic 'change' event so engine re-runs initScoreMode() with a
+     fully-populated allMidiNotes array.
+──────────────────────────────────────────────────────────────────────────── -->
+<script>
+(function() {
+  const tl = document.getElementById('measureTimeline');
+  if (!tl) return;
+  const obs = new MutationObserver(function(_, o) {
+    if (!tl.children.length) return;   // wait until pips actually appear
+    o.disconnect();
+    const toggle = document.getElementById('scoreModeToggle');
+    if (toggle && toggle.checked) {
+      // MIDI is now loaded; re-trigger score mode so rank map is built correctly
+      console.log('[fix] MIDI ready with score toggle already ON — rebuilding rank map');
+      toggle.dispatchEvent(new Event('change'));
+    }
+  });
+  obs.observe(tl, { childList: true });
+})();
+</script>
+
 <script type="module" src="../engine.js"></script>
 
 <!-- Supabase + Paywall (shared) -->
