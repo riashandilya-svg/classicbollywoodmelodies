@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../engine.css">
-<!-- ✏️ Per-song color override — score-mode pink/red palette -->
+<!-- ✏️ Per-song color override — raatkali red/pink (treble) + dark/black (bass) palette -->
 <style>
   :root {
     --accent-primary: #E57373;
@@ -225,6 +225,27 @@
     background: #fff8f8 !important;
     box-shadow: 0 0 0 12px #fff8f8, 0 4px 32px rgba(229,115,115,0.18) !important;
   }
+
+  /* ── Stop button — raatkali red tint ── */
+  .ctrl-btn[onclick*="stopButton"] {
+    background: #fff0f0 !important;
+    color: #E57373 !important;
+    border-color: #ffb7bb !important;
+  }
+
+  /* ── Skip preview box ── */
+  #skipPreviewBox {
+    background: rgba(229,115,115,0.10) !important;
+    border-color: rgba(229,115,115,0.5) !important;
+  }
+  #skipPreviewBox > div {
+    color: #E57373 !important;
+  }
+  #skipPreviewBtn {
+    background: linear-gradient(135deg,#fff0f2,#ffe4e8) !important;
+    color: #c62828 !important;
+    border-color: #ffb7bb !important;
+  }
 </style>
 </head>
 <body>
@@ -238,26 +259,108 @@ window.SONG_CONFIG = {
   midiFile:  "../midi/raatkali.mid",
   svgBase:   "../svg/raatkali",
   timeSignature: [4, 4],
-  measures:      55,
+  measures:      55,   // physical MIDI measure count (includes both passes of the repeat)
   repeats:       [],
   pickupBeats:   0,
 
+  // ── Repeat: physical measures 27-34 play twice in the MIDI.
+  //    The SVG/sheet shows them once (logical 27-34).
+  //    Physical 35-42  = repeat pass  → logical 27-34
+  //    Physical 43-55  = post-repeat  → logical 35-47
+  repeatStart: 27,
+  repeatEnd:   34,
+  repeatLen:   8,
+
+  buildPhysicalToLogical(map) {
+    for (let p = 1;  p <= 26; p++) map[p] = p;           // pre-repeat: direct
+    for (let p = 27; p <= 34; p++) map[p] = p;           // first pass of repeat
+    for (let p = 35; p <= 42; p++) map[p] = p - 8;       // second pass → logical 27-34
+    for (let p = 43; p <= 55; p++) map[p] = p - 8;       // post-repeat: shift back 8
+    return map;
+  },
+
+  logicalToPhysicalFirst(logical) {
+    // Logical 1-34  live at the same physical measure.
+    // Logical 35-47 live at physical + 8 (post-repeat block).
+    if (logical >= 35 && logical <= 47) return logical + 8;
+    return logical;
+  },
+
+  logicalToPhysicalSecond(logical) {
+    // Only the repeated section (logical 27-34) has a second physical pass.
+    if (logical >= 27 && logical <= 34) return logical + 8;
+    return null;
+  },
+
+  // Block-repeat aware sequencer:
+  //   - If the range overlaps the repeat block (27-34), emit the entire first
+  //     pass of the overlap FIRST, then the entire second pass.
+  //   - Measures outside the repeat block use the normal per-measure logic.
+  buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
+    if (startLogical > endLogical) return null;
+    const RSTART = 27, REND = 34;
+    const seq = [], logicalSeq = [];
+
+    const preEnd    = Math.min(endLogical,   RSTART - 1);
+    const repStart  = Math.max(startLogical, RSTART);
+    const repEnd    = Math.min(endLogical,   REND);
+    const postStart = Math.max(startLogical, REND + 1);
+
+    const pushFirst = (l) => {
+      if (l > MAX_LOGICAL_MEASURE) return false;
+      const p1 = window.SONG_CONFIG.logicalToPhysicalFirst(l);
+      if (p1 > SONG_CONFIG.measures) return false;
+      seq.push(p1); logicalSeq.push(l);
+      return true;
+    };
+
+    // Pre-repeat measures
+    for (let l = startLogical; l <= preEnd; l++) {
+      if (!pushFirst(l)) return null;
+    }
+
+    // Repeat block: all first-pass first, then all second-pass
+    if (repStart <= repEnd) {
+      for (let l = repStart; l <= repEnd; l++) {
+        if (!pushFirst(l)) return null;
+      }
+      if (!skipRepeats) {
+        for (let l = repStart; l <= repEnd; l++) {
+          const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
+          if (p2 !== null && p2 <= SONG_CONFIG.measures) {
+            seq.push(p2); logicalSeq.push(l);
+          }
+        }
+      }
+    }
+
+    // Post-repeat measures
+    for (let l = postStart; l <= endLogical; l++) {
+      if (!pushFirst(l)) return null;
+    }
+
+    return { seq, logicalSeq };
+  },
+
+  // Sections use LOGICAL measure numbers (max 47, not 55).
   sections: [
-    { label: "Intro music",          start: 1,  end: 10 },
-    { label: "Raat kali — verse 1",  start: 11, end: 25 },
-    { label: "Bridge",               start: 26, end: 35 },
-    { label: "Raat kali — verse 2",  start: 36, end: 55 },
+    { label: "Intro",                              start: 1,  end: 8  },
+    { label: "Raat kali ek khwaab mein aayi",      start: 9,  end: 18 },
+    { label: "Interlude (repeat)",                 start: 19, end: 26 },
+    { label: "Jo bhi tune — chhua mujhe",          start: 27, end: 34 },
+    { label: "Raat kali — reprise",                start: 35, end: 42 },
+    { label: "Ending",                             start: 43, end: 47 },
   ],
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
   brandName:    "Ria Om Shandilya",
   youtubeUrl:   "https://www.youtube.com/watch?v=FaJh5yr51iw",
   youtubeLabel: "Quick Guide to Measures & Sheet",
 
-  // ── Theme: aajkal red/pink (treble) + purple/violet (bass) palette ────────
+  // ── Theme: raatkali red/pink (treble) + dark/charcoal (bass) palette ──────
   themeOverride: {
     // SVG notehead highlight colors
     trebleNote:        '#E57373',
-    bassNote:          '#7C3AED',
+    bassNote:          '#424242',
 
     // Falling note gradients — treble (red/pink)
     trebleFallTop:     'rgba(255,200,200,0.92)',
@@ -266,24 +369,24 @@ window.SONG_CONFIG = {
     trebleFallBot:     'rgba(239,83,80,0.94)',
     trebleFallShadow:  'rgba(229,115,115,0.35)',
 
-    // Falling note gradients — bass (purple/violet)
-    bassFallTop:       'rgba(221,214,254,0.92)',
-    bassFallMid1:      'rgba(196,181,253,0.88)',
-    bassFallMid2:      'rgba(167,139,250,0.90)',
-    bassFallBot:       'rgba(124,58,237,0.94)',
-    bassFallShadow:    'rgba(167,139,250,0.4)',
+    // Falling note gradients — bass (dark/charcoal)
+    bassFallTop:       'rgba(97,97,97,0.92)',
+    bassFallMid1:      'rgba(66,66,66,0.88)',
+    bassFallMid2:      'rgba(33,33,33,0.90)',
+    bassFallBot:       'rgba(0,0,0,0.94)',
+    bassFallShadow:    'rgba(66,66,66,0.5)',
 
     // Piano white key fills
     whiteKeyTrebleTop: '#FFCDD2',
     whiteKeyTrebleBot: '#EF9A9A',
-    whiteKeyBassTop:   '#DDD6FE',
-    whiteKeyBassBot:   '#A78BFA',
+    whiteKeyBassTop:   '#BDBDBD',
+    whiteKeyBassBot:   '#757575',
 
     // Piano black key fills
     blackKeyTrebleTop: '#EF9A9A',
     blackKeyTrebleBot: '#E57373',
-    blackKeyBassTop:   '#A78BFA',
-    blackKeyBassBot:   '#7C3AED',
+    blackKeyBassTop:   '#757575',
+    blackKeyBassBot:   '#424242',
 
     // Piano key glow overlays — treble
     keyTrebleGlowShadow: '#ff6b6b',
@@ -291,13 +394,13 @@ window.SONG_CONFIG = {
     keyTrebleGlowFillB:  'rgba(255,107,107,0.4)',
 
     // Piano key glow overlays — bass
-    keyBassGlowShadow:   '#7C3AED',
-    keyBassGlowFillW:    'rgba(167,139,250,0.18)',
+    keyBassGlowShadow:   '#424242',
+    keyBassGlowFillW:    'rgba(66,66,66,0.18)',
 
     // Note name labels on keys and falling notes
     keyLabelTreble:      '#555',
-    keyLabelBass:        '#4C1D95',
-    fallingLabelTreble:  'rgba(255,255,255,0.95)',
+    keyLabelBass:        '#111',
+    fallingLabelTreble:  'rgba(0,0,0,0.9)',
     fallingLabelBass:    'rgba(255,255,255,0.95)',
 
     // BPM input focus ring
@@ -308,33 +411,28 @@ window.SONG_CONFIG = {
 
   scorePages: 3,
 
-  // ── svgPageSystems: coordinate maps for SVG score highlighting.
-  //    Measured directly from raatkali-1.svg, raatkali-2.svg, raatkali-3.svg.
-  //    Each page has 4 systems (viewBox 0 0 2977.2 4208.4).
-  //    bass_bot extended +120 past the bottom staff line to capture low noteheads.
-  //    Linear layout: m1–m55, no repeats.
+  repeatStart: 27,
+  repeatEnd:   34,
+  repeatLen:   8,
+
   svgPageSystems: [
-    // PAGE 1  (raatkali-1.svg)  m1–m17
+    // PAGE 1 — update barline_xs / treble/bass coords after generating SVGs
     [
-      { treble_top:740.4,  treble_bot:839.6,  bass_top:1000.8, bass_bot:1220.0, barline_xs:[339,890,1306,1726,2142,2762],  start_measure:1  },
-      { treble_top:1581.9, treble_bot:1681.1, bass_top:1922.6, bass_bot:2141.8, barline_xs:[215,885,1485,2153,2762],        start_measure:6  },
-      { treble_top:2503.8, treble_bot:2603.0, bass_top:2796.4, bass_bot:3015.6, barline_xs:[215,899,1485,2153,2762],        start_measure:10 },
-      { treble_top:3377.6, treble_bot:3476.8, bass_top:3723.0, bass_bot:3942.2, barline_xs:[215,881,1534,2162,2762],        start_measure:14 },
+      { treble_top:677.5,  treble_bot:773.9,  bass_top:915.6,  bass_bot:1132.1, barline_xs:[335,955,1117,1499,1660,2042,2402,2762], start_measure:1  },
+      { treble_top:1366.3, treble_bot:1462.8, bass_top:1650.9, bass_bot:1867.4, barline_xs:[215,759,1056,1354,1652,1961,2374,2762], start_measure:9  },
+      { treble_top:2101.7, treble_bot:2198.1, bass_top:2346.3, bass_bot:2562.7, barline_xs:[215,682,947,1333,1722,2012,2344,2762],  start_measure:17 },
+      { treble_top:2797.0, treble_bot:2893.5, bass_top:3041.6, bass_bot:3258.1, barline_xs:[215,791,1084,1368,1790,2184,2490,2762], start_measure:25 }
     ],
-    // PAGE 2  (raatkali-2.svg)  m18–m35
+    // PAGE 2
     [
-      { treble_top:461.2,  treble_bot:560.4,  bass_top:815.3,  bass_bot:1034.5, barline_xs:[215,937,1522,2171,2762],        start_measure:18 },
-      { treble_top:1416.7, treble_bot:1515.9, bass_top:1709.2, bass_bot:1928.4, barline_xs:[215,899,1485,2153,2762],        start_measure:22 },
-      { treble_top:2310.6, treble_bot:2409.8, bass_top:2737.4, bass_bot:2956.6, barline_xs:[215,798,1323,1781,2280,2762],   start_measure:26 },
-      { treble_top:3338.8, treble_bot:3438.0, bass_top:3713.5, bass_bot:3932.7, barline_xs:[215,800,1311,1811,2232,2762],   start_measure:31 },
+      { treble_top:381.4,  treble_bot:477.9,  bass_top:656.2,  bass_bot:872.7,  barline_xs:[215,696,1044,1402,1759,2097,2446,2762], start_measure:29 },
+      { treble_top:1150.5, treble_bot:1247.0, bass_top:1407.3, bass_bot:1623.8, barline_xs:[215,693,1024,1405,1752,2100,2426,2762], start_measure:35 },
+      { treble_top:1901.6, treble_bot:1998.1, bass_top:2191.9, bass_bot:2408.4, barline_xs:[215,739,1078,1439,1796,2096,2418,2762], start_measure:41 }
     ],
-    // PAGE 3  (raatkali-3.svg)  m36–m55
+    // PAGE 3
     [
-      { treble_top:438.8,  treble_bot:538.0,  bass_top:778.0,  bass_bot:997.2,  barline_xs:[215,866,1361,1806,2228,2762],   start_measure:36 },
-      { treble_top:1395.4, treble_bot:1494.6, bass_top:1688.0, bass_bot:1907.2, barline_xs:[215,798,1292,1750,2288,2762],   start_measure:41 },
-      { treble_top:2305.5, treble_bot:2404.7, bass_top:2659.9, bass_bot:2879.1, barline_xs:[215,752,1295,1802,2274,2762],   start_measure:46 },
-      { treble_top:3277.3, treble_bot:3376.6, bass_top:3713.5, bass_bot:3932.7, barline_xs:[215,832,1416,1945,2488,2740],   start_measure:51 },
-    ],
+      { treble_top:381.4,  treble_bot:477.9,  bass_top:659.8,  bass_bot:876.3,  barline_xs:[215,1420,2258,2740,2758], start_measure:45 }
+    ]
   ],
 };
 </script>
@@ -375,7 +473,6 @@ window.SONG_CONFIG = {
 
 <button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); const dm=document.body.classList.contains('dark-mode'); this.textContent=dm?'☀️':'🌙'; localStorage.setItem('darkMode',dm)">🌙</button>
 <script>
-  // Restore dark mode preference before first paint to avoid a flash
   (function(){
     if(localStorage.getItem('darkMode')==='true'){
       document.body.classList.add('dark-mode');
@@ -389,7 +486,28 @@ window.SONG_CONFIG = {
 
       <h1 id="songTitle"></h1>
 
-
+<!-- PDF Access Banner -->
+<a href="/dashboard.html" style="
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto 6px auto;
+  padding: 9px 18px;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(235, 50, 70, 0.22);
+  border-radius: 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1A1A1F;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+  letter-spacing: 0.2px;
+  transition: box-shadow 0.2s, transform 0.15s;
+" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,0.12)'"
+   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.07)'">
+  📄 Access the PDF sheet from <strong>My Dashboard</strong>
+</a>
 
 <div id="paywall"></div>
 
@@ -767,11 +885,11 @@ window.SONG_CONFIG = {
 
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 
-<!-- Override SVG highlight colors to match score-mode: use #E57373 for all notes
+<!-- Override SVG highlight colors to match raatkali palette:
+     treble → #E57373 (red/pink), bass → #424242 (dark charcoal)
      instead of engine.js defaults (treble: #9B2C6E purple, bass: #B45309 gold) -->
 <script>
 (function () {
-  // Colors engine.js uses for treble and bass highlights (purple, gold/amber, green)
   const ENGINE_COLORS = new Set([
     '#9B2C6E', '#9b2c6e',
     '#B45309', '#b45309',
@@ -781,12 +899,25 @@ window.SONG_CONFIG = {
     '#D97706', '#d97706',
     '#16a34a', '#16A34A'
   ]);
-  const SCORE_MODE_COLOR = '#E57373';
+
+  // Map engine treble/bass default colors to raatkali colors
+  const TREBLE_COLOR = '#E57373';
+  const BASS_COLOR   = '#424242';
+
+  // Purple family → treble red
+  const TREBLE_DEFAULTS = new Set(['#9B2C6E','#9b2c6e']);
+  // Gold/amber/green family → bass dark
+  const BASS_DEFAULTS   = new Set([
+    '#B45309','#b45309','#FFC107','#ffc107',
+    '#F59E0B','#f59e0b','#FBBF24','#fbbf24',
+    '#D97706','#d97706','#16a34a','#16A34A'
+  ]);
 
   const _origSetAttr = SVGElement.prototype.setAttribute;
   SVGElement.prototype.setAttribute = function (name, value) {
-    if (name === 'fill' && ENGINE_COLORS.has(value)) {
-      return _origSetAttr.call(this, name, SCORE_MODE_COLOR);
+    if (name === 'fill') {
+      if (TREBLE_DEFAULTS.has(value)) return _origSetAttr.call(this, name, TREBLE_COLOR);
+      if (BASS_DEFAULTS.has(value))   return _origSetAttr.call(this, name, BASS_COLOR);
     }
     return _origSetAttr.call(this, name, value);
   };
@@ -797,16 +928,15 @@ window.SONG_CONFIG = {
      then scan ALL noteheads + ALL TieSegments to find what's being excluded -->
 <script>
 (function() {
-  // Watch for #scorePage1 to get an SVG child injected
   const observer = new MutationObserver(() => {
     const svgEl = document.querySelector('#scorePage1 svg');
     if (!svgEl) return;
     observer.disconnect();
 
     const cfg = window.SONG_CONFIG;
-    const sys1 = cfg.svgPageSystems[0][0];  // page 1, system 1
+    const sys1 = cfg.svgPageSystems[0][0];
+    const GRACE_SCALE = 0.85;
 
-    // Collect all raw noteheads
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
       const t = el.getAttribute('transform') || '';
@@ -815,7 +945,6 @@ window.SONG_CONFIG = {
       raw.push({ tx: parseFloat(mm[5]), ty: parseFloat(mm[6]), scale: parseFloat(mm[1]) });
     });
 
-    // Collect tie endpoints (right side = continuation notehead)
     const tieRights = [];
     svgEl.querySelectorAll('path.TieSegment').forEach(el => {
       const d = el.getAttribute('d') || '';
@@ -824,7 +953,6 @@ window.SONG_CONFIG = {
       tieRights.push({ ex: nums[6], ey: nums[7] });
     });
 
-    // Find which noteheads would be excluded (bestDist < 40) — same logic as engine
     const excluded = new Set();
     for (const tie of tieRights) {
       let bestIdx = -1, bestDist = Infinity;
@@ -862,27 +990,6 @@ window.SONG_CONFIG = {
     console.log('[DIAG] === END SCAN ===');
   });
   observer.observe(document.getElementById('scoreObj') || document.body, { childList: true, subtree: true });
-})();
-</script>
-
-<!-- Patch: clamp negative playTimes from rank-map rescue overflow notes.
-     A MIDI note ~20ms before a measure boundary gets rescued to the next measure,
-     producing playTime ≈ -0.02 which causes a stray highlight warning.
-     We intercept Tone.Transport.schedule (used by engine.js to queue notes)
-     and clamp any negative time to 0. -->
-<script>
-(function() {
-  // Wait for Tone.js to load, then wrap Transport.schedule
-  window.addEventListener('load', function() {
-    if (!window.Tone || !Tone.getTransport) return;
-    const transport = Tone.getTransport();
-    if (!transport || !transport.schedule) return;
-    const _origSchedule = transport.schedule.bind(transport);
-    transport.schedule = function(callback, time) {
-      const clampedTime = (typeof time === 'number' && time < 0) ? 0 : time;
-      return _origSchedule(callback, clampedTime);
-    };
-  });
 })();
 </script>
 
