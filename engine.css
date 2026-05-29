@@ -1,0 +1,1497 @@
+/* Fixed brand bar */
+#brandBar{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-soft);
+
+  z-index: 10000;
+}
+
+#brandBar span{
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 1000;
+    letter-spacing: 0.6px;
+}
+
+#brandLink{
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 12px;
+}
+
+#brandLink:hover{
+  text-decoration: underline;
+}
+
+/* YouTube button - right side, larger text */
+#youtubeBtn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  background: var(--accent-primary);
+  color: #000;
+  text-decoration: none;
+  
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+}
+
+#youtubeBtn:hover {
+  background: var(--accent-primary-dark);
+  transform: translateY(-50%) translateY(-1px);
+  text-decoration: none;
+}
+
+#youtubeBtn span {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+   :root{
+  --bg-main: #ffffff;
+  --bg-surface: rgba(255,255,255,0.86);
+
+  --yellow1: var(--accent-alpha-22);
+  --yellow2: rgba(255, 235, 59, 0.16);
+  --softBlack: rgba(0, 0, 0, 0.10);
+
+  --accent-primary: var(--accent-primary);
+  --accent-primary-light: var(--accent-primary-light);
+  --accent-primary-dark: var(--accent-primary-dark);
+
+  /* RGB channel values — used for rgba() alpha variants */
+  --accent-primary-rgb: 255, 193, 7;
+  --accent-primary-light-rgb: 255, 213, 79;
+
+  /* Pre-mixed alpha tokens (override these per-song alongside the solid vars) */
+  --accent-alpha-06:  rgba(255, 193, 7, 0.06);
+  --accent-alpha-10:  var(--accent-alpha-10);
+  --accent-alpha-12:  var(--accent-alpha-12);
+  --accent-alpha-13:  var(--accent-alpha-13);
+  --accent-alpha-14:  var(--accent-alpha-14);
+  --accent-alpha-15:  var(--accent-alpha-15);
+  --accent-alpha-18:  var(--accent-alpha-18);
+  --accent-alpha-20:  rgba(255, 193, 7, 0.20);
+  --accent-alpha-22:  var(--accent-alpha-22);
+  --accent-alpha-25:  var(--accent-alpha-25);
+  --accent-alpha-28:  var(--accent-alpha-28);
+  --accent-alpha-30:  rgba(255, 193, 7, 0.30);
+  --accent-alpha-32:  rgba(255, 193, 7, 0.32);
+  --accent-alpha-35:  var(--accent-alpha-35);
+  --accent-alpha-36:  rgba(255, 193, 7, 0.36);
+  --accent-alpha-42:  rgba(255, 193, 7, 0.42);
+  --accent-alpha-50:  rgba(255, 193, 7, 0.50);
+  --accent-alpha-55:  rgba(255, 193, 7, 0.55);
+
+  --accent-success: #22C55E;
+  --accent-error: #EF4444;
+
+  --text-main: #1A1A1F;
+  --border-soft: var(--accent-alpha-18);
+
+  /* Dark mode palette */
+  --dm-bg: #0f1117;
+  --dm-panel: #181c25;
+  --dm-accent: var(--accent-primary-light);
+  --dm-text: #f0f0f5;
+  --dm-border: var(--accent-alpha-25);
+}
+
+/* ====== AMBIENT GLOW LIGHTING ====== */
+body::before {
+  content: '';
+  position: fixed;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-primary) 60%, white) 0%, transparent 70%);
+  filter: blur(100px);
+  opacity: 0.32;
+  top: -250px;
+  left: -150px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+body::after {
+  content: '';
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-primary) 30%, white) 0%, transparent 70%);
+  filter: blur(90px);
+  opacity: 0.22;
+  bottom: -100px;
+  right: -100px;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.4s;
+}
+
+body {
+    margin: 0;
+    padding: 80px 0 40px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(900px 520px at 20% 0%, var(--yellow1), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, var(--softBlack), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, var(--yellow2), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, var(--accent-alpha-10), transparent 60%),
+      var(--bg-main);
+
+    color: var(--text-main);
+    transition: background 0.4s, color 0.4s;
+}
+
+/* ====== DARK MODE ====== */
+body.dark-mode {
+  background: var(--dm-bg) !important;
+  color: var(--dm-text) !important;
+}
+body.dark-mode::before { opacity: 0.18; background: radial-gradient(circle, var(--accent-primary) 0%, transparent 70%); }
+body.dark-mode::after  { opacity: 0.10; background: radial-gradient(circle, var(--accent-primary-light) 0%, transparent 70%); }
+
+body.dark-mode #brandBar {
+  background: rgba(24,28,37,0.96) !important;
+  border-bottom-color: var(--accent-alpha-25) !important;
+}
+body.dark-mode .ctrl-card {
+  background: rgba(24,28,37,0.92) !important;
+  border-color: var(--dm-border) !important;
+}
+body.dark-mode .ctrl-btn {
+  background: rgba(30,34,48,0.9) !important;
+  color: #ccc !important;
+  border-color: var(--accent-alpha-15) !important;
+}
+body.dark-mode .ctrl-btn:hover:not(:disabled) {
+  background: var(--accent-alpha-12) !important;
+  color: var(--dm-accent) !important;
+}
+body.dark-mode .ctrl-btn.active {
+  background: var(--accent-alpha-22) !important;
+  color: var(--dm-accent) !important;
+  border-color: var(--accent-alpha-50) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 1px var(--accent-alpha-35), 0 4px 12px var(--accent-alpha-20) !important;
+}
+body.dark-mode #bottomDock.score-mode {
+  background: rgba(15,17,23,0.97) !important;
+}
+body.dark-mode h1 { color: #f0f0f5; }
+body.dark-mode .ctrl-speed-row {
+  background: rgba(30,34,48,0.9) !important;
+  border-color: var(--accent-alpha-15) !important;
+}
+body.dark-mode .ctrl-card-title { color: var(--dm-accent); }
+body.dark-mode .ctrl-speed-val { color: var(--dm-text) !important; }
+
+/* Dark mode toggle button */
+#darkModeToggle {
+  position: fixed;
+  top: 68px;
+  right: 14px;
+  z-index: 9999;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--accent-alpha-18);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 0;
+}
+#darkModeToggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+body.dark-mode #darkModeToggle {
+  background: rgba(24,28,37,0.92);
+  border-color: var(--dm-border);
+}
+h1 {
+    font-size: clamp(1.4rem, 3vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text-main);
+    text-align: center;
+    margin-top: 12px;
+    margin-bottom: 13px;
+    line-height: 1.1;
+    animation: fadeUp 0.7s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+button {
+    padding: clamp(8px, 2vw, 15px) clamp(14px, 4vw, 30px);
+    font-size: clamp(14px, 2.2vw, 18px);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+
+    background: linear-gradient(135deg, var(--accent-primary-light), var(--accent-primary));
+    color: white;
+
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px var(--accent-alpha-28);
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px var(--accent-alpha-36);
+}
+
+button:active:not(:disabled) {
+    transform: translateY(0px);
+}
+
+button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+    button:disabled { background-color: #cccccc; cursor: not-allowed; }
+    .button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+    
+#stopButton {
+    background-color: var(--accent-error);
+}
+
+#stopButton:hover:not(:disabled) {
+    background-color: #DC2626;
+}
+    #feedback {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+    transition:
+        opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        background-color 0.25s ease;
+
+    border-radius: 14px;
+    padding: 8px 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+
+    max-width: 520px;
+    width: fit-content;
+    min-width: 120px;
+    min-height: 36px;
+    margin: 0 auto;
+    text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#feedback.show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+#feedback.correct {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 8px 24px rgba(34,197,94,0.35);
+}
+
+#feedback.wrong {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 8px 24px rgba(239,68,68,0.35);
+}
+/* ====== GAME STAGE ====== */
+#gameStage {
+    position: relative;
+    width: min(100%, 1420px);
+    border-radius: 24px;
+    background: linear-gradient(
+      180deg,
+      rgba(255,255,255,0.75) 0%,
+      rgba(255,245,247,0.88) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.07),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    border: 1px solid var(--accent-alpha-12);
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.05s;
+}
+
+body.dark-mode #gameStage {
+    background: linear-gradient(
+      180deg,
+      rgba(24,28,37,0.88) 0%,
+      rgba(15,17,23,0.95) 100%
+    );
+    border-color: var(--accent-alpha-18);
+}
+
+/* Glowing hit line at the keyboard top */
+#hitLine {
+    position: absolute;
+    bottom: 130px; /* KEYBOARD_HEIGHT */
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 2%, var(--accent-primary-light) 20%, var(--accent-primary) 50%, var(--accent-primary-light) 80%, transparent 98%);
+    box-shadow:
+      0 0 12px var(--accent-primary-light),
+      0 0 28px var(--accent-alpha-50);
+    z-index: 2;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Stats bar above stage */
+#statsBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: min(900px, 96%);
+    margin: 10px auto 6px auto;
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--accent-alpha-13);
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+    font-size: 13px;
+    font-weight: 600;
+    animation: fadeUp 0.5s ease both;
+    animation-delay: 0.1s;
+}
+
+#statsBar .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: #888;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+#statsBar .stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+body.dark-mode #statsBar {
+    background: rgba(24,28,37,0.85);
+    border-color: var(--accent-alpha-18);
+}
+body.dark-mode #statsBar .stat-val { color: var(--dm-text); }
+
+/* MIDI load error banner */
+#midiLoadError {
+    display: none;
+    width: min(900px, 96%);
+    margin: 10px auto 0 auto;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.35);
+    animation: fadeUp 0.4s ease both;
+    z-index: 10;
+    position: relative;
+}
+#midiLoadError.visible { display: block; }
+#midiLoadError button {
+    margin-left: 14px;
+    padding: 5px 14px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.25);
+    box-shadow: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    vertical-align: middle;
+}
+#midiLoadError button:hover:not(:disabled) {
+    background: rgba(255,255,255,0.38);
+    transform: none;
+    box-shadow: none;
+}
+
+/* Measure timeline */
+#measureTimeline {
+    width: min(900px, 96%);
+    margin: 6px auto 0 auto;
+    display: flex;
+    gap: 3px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 8px;
+    opacity: 0.8;
+}
+.measure-pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    transition: background 0.3s, transform 0.2s;
+}
+.measure-pip.done {
+    background: linear-gradient(135deg, var(--accent-primary-light), var(--accent-primary));
+}
+.measure-pip.active {
+    background: linear-gradient(135deg, var(--accent-primary-light), var(--accent-primary));
+    transform: scale(1.5);
+    box-shadow: 0 0 8px var(--accent-alpha-50);
+}
+.note-feedback {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.note-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+
+    background: #e5e7eb;
+    color: #111;
+
+    font-weight: 700;
+    font-size: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+.note-circle.correct {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.note-circle.wrong {
+    background: #EF4444;
+    color: white;
+}
+
+.note-label {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.note-explanation {
+    font-size: 14px;
+    margin-top: 6px;
+    line-height: 1.4;
+    opacity: 0.95;
+}
+#feedback .note-circle {
+    color: inherit;
+}
+
+#holdInfo {
+    display: none !important;
+}
+#notesDisplay {
+    display: none !important;
+}
+
+    #notesDisplay h2 { margin-top: 0; color: #333; font-size: 24px; }
+    .note-list { display: flex; flex-wrap: wrap; gap: 10px; }
+    .note-number { padding: 8px 12px; background-color: #e3f2fd; border-radius: 4px; font-size: 16px; color: #1976d2; }
+    #countdownOverlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 160px;
+    font-weight: bold;
+    color: #333;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px 80px;
+    border-radius: 20px;
+    z-index: 9999;
+    display: none;
+    pointer-events: none;
+}
+#notesDisplay,
+#notesList {
+    font-size: 14px;
+}
+
+#midiDisplay h3 {
+    font-size: 16px;
+    margin: 6px 0 4px 0;
+}
+
+#notesList {
+    margin-top: 4px;
+    line-height: 1.3;
+}
+#midiDisplay {
+    margin-top: 4px;
+    font-size: 18px;
+}
+
+#midiDisplay > div:not(:empty) {
+    margin-top: 6px;
+}
+.music-symbol {
+    font-family: "Arial Unicode MS", "Segoe UI Symbol", "Noto Music", serif;
+}
+/* 🎯 Right-side fixed note feedback */
+#sideNoteFeedback {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-90%);
+
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    z-index: 1000;
+}
+#freeModeButton.side-floating {
+    position: fixed;
+    right: 20px;
+    top: calc(50% - 260px);
+
+    width: 64px;
+    height: 64px;
+    padding: 0;
+
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    z-index: 1001;
+}
+.side-note {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+@media (max-width: 900px) {
+
+.button-group {
+    flex-direction: column;
+    align-items: stretch;
+}
+    
+#brandBar {
+  height: auto;
+  min-height: 56px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+#youtubeBtn {
+  position: static;
+  transform: none;
+  width: auto;
+  margin: 0 auto;
+}
+
+#youtubeBtn:hover {
+  transform: translateY(-1px);
+}
+
+#practiceControls {
+    flex-direction: column;
+    align-items: stretch;
+}
+}
+    
+canvas {
+    width: 100%;
+    height: auto;
+}
+}
+canvas {
+    display: block;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+/* 🎯 Training Progress Bar */
+#trainingProgress {
+    position: relative;
+    width: min(600px, 90%);
+    height: 8px;
+    background: var(--accent-alpha-12);
+    border-radius: 999px;
+    margin: 10px auto 0 auto;
+    overflow: hidden;
+}
+
+#trainingProgressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+        90deg,
+        var(--accent-primary-light),
+        var(--accent-primary),
+        var(--accent-success)
+    );
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 999px;
+}
+
+#trainingProgressText {
+    position: absolute;
+    top: -22px;
+    right: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-primary-dark);
+    letter-spacing: 0.03em;
+}
+#bottomDock {
+    margin-top: 0;
+    padding-top: 0;
+    padding-bottom: 80px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Feedback + holdInfo sit right below the stats box */
+#feedbackArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    margin: 4px 0 4px 0;
+    min-height: 44px;
+    justify-content: center;
+}
+
+/* ====== PANEL FEEDBACK SECTION ====== */
+#panelFeedbackBubble {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.97);
+    transition:
+        opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 36px;
+}
+
+#panelFeedbackBubble.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#panelFeedbackBubble.correct {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 6px 20px rgba(34,197,94,0.3);
+}
+
+#panelFeedbackBubble.wrong {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.3);
+}
+
+#panelFeedbackBubble.almost {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+    box-shadow: 0 6px 20px rgba(249,115,22,0.3);
+}
+
+body.dark-mode #panelFeedbackBubble.correct { box-shadow: 0 8px 28px rgba(34,197,94,0.4); }
+body.dark-mode #panelFeedbackBubble.wrong   { box-shadow: 0 8px 28px rgba(239,68,68,0.4); }
+.falling-note {
+    border-radius: 14px;
+    filter: drop-shadow(0 6px 14px var(--accent-alpha-35));
+}
+/* 🔒 Paywall card */
+#paywall{
+  display: none;
+  width: min(420px, 92%);
+  padding: 16px 18px;
+  margin: 14px auto;
+  border: 1px solid var(--accent-alpha-22);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+#paywall h3{
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 0.3px;
+}
+
+#paywall p{
+  margin: 0 0 14px 0;
+  font-size: 15px;
+  opacity: 0.9;
+  line-height: 1.45;
+}
+
+#buyBtn{
+  display: inline-block;
+  width: auto;
+  min-width: 180px;
+  padding: 10px 18px;
+  border-radius: 12px;
+}
+#app { display: none; }
+
+/* ============================
+   SCORE MODE — HIDE TITLE & PDF BANNER
+   ============================ */
+body.score-mode h1 {
+    display: none !important;
+}
+
+/* ============================
+   SCORE MODE — KEYBOARD STRIP
+   ============================ */
+
+#bottomDock.score-mode {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 900;
+
+    padding-top: 8px;
+    padding-bottom: 8px;
+
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--accent-alpha-18);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#scoreView.active {
+    padding-bottom: 320px;
+    width: 100%;
+    max-width: 100%;
+}
+
+#bottomDock.score-mode #canvas {
+    max-width: 100%;
+}
+
+
+body.score-mode #feedbackArea {
+    display: none !important;
+}
+
+/* Floating keyboard toast removed — feedback lives in panelFeedbackCard instead */
+
+body.score-mode #hitLine {
+    display: none !important;
+}
+
+#bottomDock.score-mode #playbackControls {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 8px 2px 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    font-size: 13px;
+}
+
+#bottomDock.score-mode #playbackControls button {
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 7px;
+}
+
+#bottomDock.score-mode #practiceControls {
+    gap: 6px;
+}
+
+#bottomDock.score-mode #practiceControls label {
+    font-size: 12px;
+}
+
+#bottomDock.score-mode #practiceControls input,
+#bottomDock.score-mode #practiceControls select {
+    font-size: 12px;
+}
+
+#scoreKeyboardLabel {
+    display: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: 4px;
+    text-align: center;
+    opacity: 0.85;
+}
+
+#bottomDock.score-mode #scoreKeyboardLabel {
+    display: block;
+}
+
+/* ============================
+   SCORE VIEW TOGGLE  (now lives inside #brandBar)
+   ============================ */
+#viewToggleBar {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+#viewToggleBar:hover {
+    /* no-op — hover effect removed now it's inline */
+}
+
+#viewToggleLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+body.dark-mode #viewToggleLabel {
+    color: var(--dm-text);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 56px;
+    height: 28px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 999px;
+    transition: background 0.25s;
+}
+
+.toggle-switch input:checked + .toggle-track {
+    background: var(--accent-primary);
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transition: transform 0.25s;
+}
+
+.toggle-switch input:checked ~ .toggle-thumb {
+    transform: translateX(28px);
+}
+
+/* Score container */
+#scoreView {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    position: relative;
+}
+
+#scoreView.active {
+    display: flex;
+}
+
+#scorePageWrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+#scoreObj {
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    transform-origin: left top;
+}
+
+/* In dark mode + score mode: white-warm paper behind the SVG so notation stays readable */
+body.dark-mode.score-mode #scoreObj {
+    background: #fffbeb;
+    border-radius: 10px;
+    box-shadow: 0 0 0 12px #fffbeb, 0 4px 32px var(--accent-alpha-18);
+}
+
+#scoreObj svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+#scoreImg {
+    width: 100%;
+    display: block;
+    border: 1px solid var(--accent-alpha-15);
+    border-radius: 8px;
+    background: white;
+}
+
+/* Highlight overlay on score */
+#scoreHighlight {
+    position: absolute;
+    pointer-events: none;
+    border: 3px solid var(--accent-primary);
+    border-radius: 6px;
+    background: var(--accent-alpha-28);
+    box-shadow: 0 0 0 4px var(--accent-alpha-18), 0 0 16px var(--accent-alpha-35);
+    transition: left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease, opacity 0.2s;
+    opacity: 0;
+    animation: none;
+}
+
+#scoreHighlight.visible {
+    opacity: 1;
+    animation: scorePulse 1.1s ease-in-out infinite;
+}
+
+@keyframes scorePulse {
+    0%, 100% { box-shadow: 0 0 0 4px var(--accent-alpha-18), 0 0 16px var(--accent-alpha-35); }
+    50%       { box-shadow: 0 0 0 8px var(--accent-alpha-10), 0 0 28px var(--accent-alpha-55); }
+}
+
+/* FIX 1: Page nav hidden — single tall SVG, no pagination needed */
+#scorePageNav {
+    display: none;
+}
+
+#scorePageLabel {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* Current note badge — hidden now that pressed/correct circles live in the stats card */
+#scoreNoteDisplay,
+#scoreNoteDisplay.active {
+    display: none !important;
+}
+
+/* Hide the "Play:" label — not needed in compact circle */
+#scoreNoteDisplay > span:first-child {
+    display: none;
+}
+
+#scoreNoteName {
+    font-size: 16px;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    text-align: center;
+    min-width: unset;
+}
+
+#scoreNoteHint {
+    font-size: 18px;
+    opacity: 0.9;
+    color: white;
+    line-height: 1;
+}
+
+/* Normal mode: simple 3-card flex row */
+#controlPanel {
+    display: flex;
+    gap: 10px;
+    width: min(1100px, 98%);
+    margin: 4px auto 0 auto;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s ease both;
+    animation-delay: 0.15s;
+}
+
+/* Grid placement by ID — only used in score mode above */
+#panelPracticeCard  { flex: 1; }
+#panelPlaybackCard  { flex: 1; }
+#panelUtilityCard   { flex: 1; }
+
+/* STATS + NOTES hidden in normal mode */
+#panelStatsCard,
+#panelNoteCirclesCard {
+    display: none;
+}
+
+/* Feedback card hidden in normal mode */
+#panelFeedbackCard {
+    display: none !important;
+}
+
+/* Normal mode: hide feedback card entirely */
+#panelFeedbackCard {
+    display: none !important;
+}
+
+/* Score mode: CSS grid so feedback fills the gap under Playback + Utility */
+body.score-mode #controlPanel {
+    display: grid;
+grid-template-columns: auto 0.4fr 0.4fr auto auto;
+    grid-template-rows: auto auto;
+    width: min(1600px, 99%);
+    gap: 7px;
+    margin: 6px auto 0 auto;
+  justify-content: center;
+}
+
+/* Explicit grid placement in score mode */
+body.score-mode #panelPracticeCard  { grid-column: 1; grid-row: 1 / 3; }
+body.score-mode #panelPlaybackCard  { grid-column: 2; grid-row: 1; }
+body.score-mode #panelUtilityCard   { grid-column: 3; grid-row: 1; }
+body.score-mode #panelStatsCard     { grid-column: 4; grid-row: 1 / 3; display: block; }
+body.score-mode #panelNoteCirclesCard { grid-column: 5; grid-row: 1 / 3; display: block; flex: unset; min-width: unset; width: 90px; }
+body.score-mode #panelFeedbackCard  {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    min-height: 40px;
+}
+body.score-mode #panelFeedbackCard:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.ctrl-card {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--accent-alpha-15);
+    border-radius: 20px;
+    padding: 10px 14px;             /* ← card inner padding (normal mode) */
+    box-shadow: 0 12px 40px rgba(0,0,0,0.07), 0 2px 8px var(--accent-alpha-06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* In score mode: reduce card padding to save vertical height */
+body.score-mode .ctrl-card {
+    padding: 6px 10px;              /* ← SCORE MODE vertical height dial — reduce top/bottom to shrink */
+    border-radius: 14px;
+    min-width: 0;                   /* allows cards to shrink below 200px on narrow screens */
+}
+
+.ctrl-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.1), 0 4px 12px var(--accent-alpha-10);
+}
+
+.ctrl-card-title {
+    text-align: center;
+    color: var(--accent-primary-dark);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    margin-bottom: 8px;             /* ← gap under the PRACTICE/PLAYBACK/UTILITY label (was 14px) */
+}
+
+/* Score mode: tighter label gap */
+body.score-mode .ctrl-card-title {
+    margin-bottom: 5px;             /* ← SCORE MODE label gap — reduce to save height */
+    font-size: 11px;
+}
+
+.ctrl-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;             /* ← vertical gap between button rows (was 10px) */
+}
+
+/* Score mode: tighter row gap */
+body.score-mode .ctrl-row {
+    margin-bottom: 4px;             /* ← SCORE MODE row gap */
+}
+
+.ctrl-btn {
+    flex: 1;
+    padding: 7px 6px !important;    /* ← button top/bottom padding (was 12px) */
+    font-size: 13px !important;
+    border-radius: 12px !important;
+    background: rgba(250,250,250,0.8) !important;
+    color: #555 !important;
+    border: 1px solid var(--accent-alpha-10) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+}
+
+.ctrl-btn:hover:not(:disabled) {
+    background: rgba(255,248,225,0.95) !important;
+    color: var(--accent-primary-dark) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px var(--accent-alpha-18) !important;
+}
+
+.ctrl-btn.active {
+    background: linear-gradient(135deg, rgba(255,248,225,0.95), rgba(254,243,199,0.95)) !important;
+    color: var(--accent-primary-dark) !important;
+    border-color: var(--accent-alpha-30) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px var(--accent-alpha-20) !important;
+}
+
+.ctrl-btn-primary {
+    width: 100%;
+    padding: 9px 6px !important;    /* ← Start Practice button top/bottom padding (was 14px) */
+    font-size: 14px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, var(--accent-primary-light), var(--accent-primary)) !important;
+    color: #000 !important;
+    border: none !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    transition: all 0.25s ease !important;
+    margin-top: 4px;
+    box-shadow: 0 6px 20px var(--accent-alpha-32) !important;
+}
+
+.ctrl-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 28px var(--accent-alpha-42) !important;
+}
+
+/* Score mode: smaller button padding to reduce height */
+body.score-mode .ctrl-btn {
+    padding: 5px 5px !important;    /* ← SCORE MODE button padding — reduce to shrink */
+    font-size: 12px !important;
+}
+
+body.score-mode .ctrl-btn-primary {
+    padding: 6px 6px !important;    /* ← SCORE MODE start-practice button padding */
+    font-size: 13px !important;
+    margin-top: 2px;
+}
+
+body.score-mode .ctrl-stat-item {
+    padding: 4px 3px;               /* ← SCORE MODE stat item padding */
+}
+
+body.score-mode .ctrl-stat-val {
+    font-size: 15px;                /* ← SCORE MODE stat value font size */
+}
+
+body.score-mode .ctrl-speed-row {
+    padding: 4px 10px;              /* ← SCORE MODE speed row padding */
+    margin-top: 2px;
+}
+
+.ctrl-speed-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid var(--accent-alpha-10);
+    border-radius: 12px;
+    padding: 6px 12px;              /* ← Speed row top/bottom padding (was 10px 14px) */
+    margin-top: 4px;
+}
+
+.ctrl-speed-row span:first-child {
+    font-size: 14px;
+    color: #666;
+}
+
+.ctrl-speed-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.ctrl-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.ctrl-grid-full {
+    grid-column: 1 / -1;
+}
+
+.ctrl-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.ctrl-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid var(--accent-alpha-10);
+    border-radius: 10px;
+    padding: 6px 4px;
+    gap: 2px;
+}
+
+/* BPM spans full width at the bottom */
+.ctrl-stat-item:last-child {
+    grid-column: 1 / -1;
+}
+
+.ctrl-stat-val {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.ctrl-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+body.dark-mode .ctrl-stat-item {
+    background: rgba(30,34,48,0.9);
+    border-color: var(--accent-alpha-15);
+}
+
+body.dark-mode .ctrl-stat-val {
+    color: var(--dm-text);
+}
+
+/* Stats card: score mode only — handled in score-mode block above */
+
+/* Note circles card — score mode only, narrow standalone column — handled above */
+
+.panel-note-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(250,250,250,0.8);
+    border: 1px solid var(--accent-alpha-10);
+    border-radius: 10px;
+    padding: 8px 6px;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+body.dark-mode .panel-note-item {
+    background: rgba(30,34,48,0.9);
+    border-color: var(--accent-alpha-15);
+}
+
+.panel-note-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #111;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background 0.2s, color 0.2s;
+}
+
+.panel-note-circle.correct {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.panel-note-circle.wrong {
+    background: #EF4444;
+    color: white;
+}
+
+.panel-note-circle-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+/* Hide top progress bar + measure dots in score mode */
+body.score-mode #trainingProgress,
+body.score-mode #measureTimeline {
+    display: none !important;
+}
+
+/* In score mode, hide the floating side note feedback — circles live in the stats card instead */
+body.score-mode #sideNoteFeedback {
+    display: none !important;
+}
+
+/* In-card progress bar (score mode stats card) */
+#panelProgressWrap {
+    display: none;
+}
+
+body.score-mode #panelProgressWrap {
+    display: block;
+    margin-top: 8px;
+}
+
+#panelProgressBar {
+    position: relative;
+    width: 100%;
+    height: 7px;
+    background: var(--accent-alpha-14);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+#panelProgressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent-primary-light), var(--accent-primary), var(--accent-success));
+    border-radius: 999px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ====== STATS TOGGLE — notes mode ====== */
+.notes-stat-extra {
+    transition: opacity 0.2s, max-width 0.25s, padding 0.2s, margin 0.2s;
+}
+#statsBar.stats-minimal .notes-stat-extra {
+    display: none !important;
+}
+
+/* ====== STATS TOGGLE — score mode ====== */
+.score-stat-extra {
+    transition: opacity 0.2s;
+}
+#panelStatsCard.stats-minimal .score-stat-extra {
+    display: none !important;
+}
+/* When minimal: Hold for spans full width of the 2-col grid */
+#panelStatsCard.stats-minimal .ctrl-stats-grid {
+    grid-template-columns: 1fr;
+}
