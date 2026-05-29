@@ -969,6 +969,186 @@ window.SONG_CONFIG = {
 })();
 </script>
 
+<!-- ===== POST-SONG-END DEBUG ===== -->
+<script>
+(function() {
+  // ── 1. Intercept spawnNextValidNote to log when trainingIndex walks past the last note
+  const _origRAF = window.requestAnimationFrame;
+  let _engineReady = false;
+
+  // Wait for engine to expose globals, then wrap key functions
+  const _installDebug = () => {
+    if (_engineReady) return;
+
+    // Patch window._skipPreview if it exists (engine sets it)
+    // We'll install our patches after engine module loads via a MutationObserver on #app
+
+    // ── 2. Monitor practiceNotes array length vs trainingIndex after each note spawn
+    let _lastLoggedOverrun = -1;
+
+    const _dbgTick = () => {
+      const pn   = window.__practiceNotes;   // engine exposes this if it uses window.__practiceNotes
+      const ti   = window.__trainingIndex;
+      const ta   = window.__trainingActive;
+      if (pn && ti !== undefined && ti >= pn.length && ta) {
+        if (ti !== _lastLoggedOverrun) {
+          _lastLoggedOverrun = ti;
+          console.warn(`[POST55-DBG] ⚠️ trainingIndex=${ti} >= practiceNotes.length=${pn.length} but trainingActive=${ta} — should have stopped!`);
+        }
+      }
+      requestAnimationFrame(_dbgTick);
+    };
+    requestAnimationFrame(_dbgTick);
+    _engineReady = true;
+  };
+
+  // ── 3. Wrap spawnTrainingNote via a proxy on the module's scope isn't possible,
+  //       but we CAN watch for notes with physMeasure > SONG_CONFIG.measures
+  //       by intercepting the Tone.js triggerAttack calls.
+  const SONG_MEASURES = window.SONG_CONFIG?.measures ?? 55;
+
+  // ── 4. The real signal: watch for audio playing after the last expected time
+  //       Last measure ends at measures * secondsPerMeasure.
+  //       We'll compute this once song loads.
+  let _songEndTime   = null;   // wall-clock ms when last MIDI note should end
+  let _warnedOverrun = false;
+
+  const _origPerf = performance.now.bind(performance);
+
+  // Engine fires 'songLoaded' or we can detect via MIDI note count.
+  // Instead: poll for when the last practice note playTime is known.
+  const _checkSongEnd = () => {
+    // Once engine sets practiceNotes, find the last note's playTime + duration
+    const pn = window.__practiceNotes;
+    if (pn && pn.length > 0 && _songEndTime === null) {
+      const last = pn[pn.length - 1];
+      // playTime is relative to section start; we need absolute time
+      // Use last note's `time` (absolute MIDI time) + duration
+      _songEndTime = (last.time + last.duration) * 1000; // ms from MIDI start
+      console.log(`[POST55-DBG] 📍 Last practice note: physMeasure=${last.physMeasure} time=${last.time.toFixed(3)}s dur=${last.duration.toFixed(3)}s → expected end at ${_songEndTime.toFixed(0)}ms from MIDI t=0`);
+    }
+    requestAnimationFrame(_checkSongEnd);
+  };
+
+  // ── 5. Intercept console.log/warn from engine to catch key signals
+  const _origLog = console.log.bind(console);
+  console.log = function(...args) {
+    _origLog(...args);
+    const msg = args.join(' ');
+
+    // Catch when engine spawns a note with physMeasure > 55
+    if (msg.includes('spawnTrainingNote') && msg.includes('physMeasure')) {
+      const m = msg.match(/physMeasure[=:](\d+)/);
+      if (m && parseInt(m[1]) > SONG_MEASURES) {
+        console.warn(`[POST55-DBG] 🚨 Engine spawning note at physMeasure=${m[1]} which is PAST song end (${SONG_MEASURES})!`, args);
+      }
+    }
+
+    // Catch "Excellent work" or section-complete to confirm clean finish
+    if (msg.includes('Excellent work') || msg.includes('section complete') || msg.includes('loopEnabled')) {
+      _origLog(`[POST55-DBG] ✅ Section complete signal detected`);
+    }
+  };
+
+  // ── 6. Direct practiceNotes overrun watcher — fires immediately when engine
+  //       calls spawnNextValidNote with trainingIndex past end
+  Object.defineProperty(window, '__trainingIndexDebug', {
+    set(v) {
+      if (window.__practiceNotes && v > window.__practiceNotes.length) {
+        console.warn(`[POST55-DBG] 🚨 trainingIndex set to ${v} but practiceNotes.length=${window.__practiceNotes.length}`);
+      }
+      window.__trainingIndex = v;
+    },
+    get() { return window.__trainingIndex; },
+    configurable: true
+  });
+
+  // ── 7. After engine loads, try to hook into its note-spawn flow
+  //       Engine sets window.SONG_CONFIG already; we can also intercept
+  //       the practiceNotes dump log to grab the array
+  const _origWarn = console.warn.bind(console);
+  // Watch for "practiceNotes dump" in engine logs to capture the array reference
+  const _logProxy = console.log;
+  console.log = function(...args) {
+    _logProxy(...args);
+    // Engine logs: "🔬 practiceNotes dump (all notes):"
+    if (typeof args[0] === 'string' && args[0].includes('practiceNotes dump')) {
+      console.warn('[POST55-DBG] 📋 practiceNotes dump detected — will monitor array via window.__practiceNotes');
+    }
+  };
+
+  // Install RAF monitor
+  requestAnimationFrame(_checkSongEnd);
+  _installDebug();
+
+  console.log('[POST55-DBG] 🔧 Post-song-end debug installed. Watching for physMeasure >' + SONG_MEASURES);
+})();
+</script>
+
+<!-- ===== TRAINING NOTE SPAWN INTERCEPTOR ===== -->
+<script>
+// This runs AFTER engine.js module loads and processes its first tick.
+// We use a deferred approach: watch for engine's internal spawnTrainingNote
+// to be called with a note past measure 55.
+//
+// Engine.js exposes nothing directly, but we CAN intercept via the
+// practiceNotes dump. We store the reference when engine logs it.
+(function() {
+  const SONG_MEASURES = window.SONG_CONFIG?.measures ?? 55;
+  let _patchInstalled = false;
+
+  // Engine uses Tone.js for audio. Wrap triggerAttackRelease to log timing.
+  // This fires for both preview playback and practice audio.
+  const _origTone = window.Tone;
+  if (_origTone && _origTone.Sampler) {
+    const _origSampler = _origTone.Sampler;
+    // Can't easily wrap constructor at this point (module already loaded).
+  }
+
+  // ── Simplest reliable approach: watch the feedback div for "Excellent work"
+  //    and then monitor if more notes play after that
+  const feedbackEl = document.getElementById('feedback');
+  if (feedbackEl) {
+    let _excellentAt = null;
+    const _fbObs = new MutationObserver(() => {
+      const txt = feedbackEl.textContent || '';
+      if (txt.includes('Excellent') || txt.includes('excellent')) {
+        _excellentAt = performance.now();
+        console.log(`[POST55-DBG] ✅ "Excellent work" shown at t=${_excellentAt.toFixed(0)}ms`);
+      }
+    });
+    _fbObs.observe(feedbackEl, { childList: true, characterData: true, subtree: true });
+  }
+
+  // ── Watch scoreNoteName for note names appearing after "Excellent work"
+  const scoreNoteEl = document.getElementById('scoreNoteName');
+  if (scoreNoteEl) {
+    let _excellentShown = false;
+    const _noteObs = new MutationObserver(() => {
+      const txt = (document.getElementById('feedback')?.textContent || '');
+      if (txt.includes('Excellent')) _excellentShown = true;
+      if (_excellentShown && scoreNoteEl.textContent && scoreNoteEl.textContent !== '—') {
+        console.warn(`[POST55-DBG] 🚨 scoreNoteName changed to "${scoreNoteEl.textContent}" AFTER "Excellent work"! Extra note spawned.`);
+        _excellentShown = false; // reset to avoid spam
+      }
+    });
+    _noteObs.observe(scoreNoteEl, { childList: true, characterData: true, subtree: true });
+  }
+
+  // ── Watch holdInfo for note display after section end
+  const holdEl = document.getElementById('holdInfo');
+  if (holdEl) {
+    const _holdObs = new MutationObserver(() => {
+      if (!holdEl.textContent) return;
+      console.log(`[POST55-DBG] 📝 holdInfo: "${holdEl.textContent}" — trainingActive=${window.__trainingActive}`);
+    });
+    _holdObs.observe(holdEl, { childList: true, characterData: true, subtree: true });
+  }
+
+  console.log('[POST55-DBG] 🔧 UI watchers installed (feedback, scoreNoteName, holdInfo)');
+})();
+</script>
+
 <script type="module" src="../engine.js"></script>
 
 <!-- Supabase + Paywall (shared) -->
