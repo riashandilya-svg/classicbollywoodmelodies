@@ -281,55 +281,47 @@ window.SONG_CONFIG = {
   },
 
   // Sequencer: build the ordered list of physical MIDI measures to play.
-  // select 26–35 → [26, 27..34, 35..42, 35]  (pre, 1st pass, 2nd pass, then bar 35)
-  // select 35–39 → [35,36,37,38,39]           (just those bars, no repeat)
-  // select 27–34 → [27..34, 35..42]           (full repeat, both passes)
-  // select 43–55 → [43..55]                   (post-repeat, plain)
+  // The sheet has a repeat sign on bars 27–34: they play twice, then
+  // bars 35–42 are the written-out continuation (different material).
+  // select 26–35 → [26, 27..34, 27..34, 35]   (pre, 1st pass, repeat, post)
+  // select 27–34 → [27..34, 27..34]            (repeat both passes)
+  // select 35–42 → [35..42]                    (written second section, no repeat)
+  // select 43–55 → [43..55]                    (ending, plain)
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
     const RSTART = 27, REND = 34;
     const seq = [], logicalSeq = [];
 
-    const push = (l) => {
+    const push = (l, logical) => {
       if (l < 1 || l > MAX_LOGICAL_MEASURE || l > SONG_CONFIG.measures) return false;
-      seq.push(l); logicalSeq.push(l);   // physical == logical (identity)
+      seq.push(l); logicalSeq.push(logical ?? l);
       return true;
     };
 
-    // Pre-repeat
+    // Pre-repeat (bars before 27)
     for (let l = startLogical; l <= Math.min(endLogical, RSTART - 1); l++) {
       if (!push(l)) return null;
     }
 
-    // Repeat block — only fires when the selection overlaps bars 27–34
+    // Repeat block — fires when selection overlaps bars 27–34
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
     if (repStart <= repEnd) {
-      // First pass (physical 27–34)
+      // First pass: play the selected slice of 27–34
       for (let l = repStart; l <= repEnd; l++) {
         if (!push(l)) return null;
       }
-      // Second pass (physical 35–42) — skipped when "Skip Repeats" is on
+      // Second pass: replay the SAME physical measures again (the repeat)
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
-          const p2 = l + 8;  // 27→35, 28→36, …, 34→42
-          if (p2 > SONG_CONFIG.measures) return null;
-          seq.push(p2); logicalSeq.push(l);
+          if (!push(l, l)) return null;  // same physical measure, same logical
         }
       }
     }
 
-    // Post-repeat: bars after the full repeat block (43–55).
-    // If the second pass was emitted (physical 35–42 already pushed above),
-    // start at REND + REPEAT_LEN + 1 = 43 to avoid replaying 35–42 again.
-    // If the repeat block did not fire (selection is entirely outside 27–34),
-    // fall back to REND + 1 = 35 so bars 35–55 are still reachable.
-    const repeatBlockFired = repStart <= repEnd;
-    const secondPassEmitted = repeatBlockFired && !skipRepeats;
-    const postRepeatStart = secondPassEmitted
-      ? REND + (REND - RSTART + 1) + 1   // = 34 + 8 + 1 = 43
-      : REND + 1;                          // = 35 (no second pass emitted)
-    for (let l = Math.max(startLogical, postRepeatStart); l <= endLogical; l++) {
+    // Post-repeat: bars 35 onward (written-out continuation + ending).
+    // Always starts at REND+1=35 regardless of whether the repeat fired.
+    for (let l = Math.max(startLogical, REND + 1); l <= endLogical; l++) {
       if (!push(l)) return null;
     }
 
