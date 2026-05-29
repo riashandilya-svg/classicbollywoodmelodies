@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../engine.css">
-<!-- ✏️ Per-song color override — raatkali red/pink (treble) + dark/black (bass) palette -->
+<!-- ✏️ Per-song color override — raatkali red/black palette -->
 <style>
   :root {
     --accent-primary: #E57373;
@@ -225,27 +225,6 @@
     background: #fff8f8 !important;
     box-shadow: 0 0 0 12px #fff8f8, 0 4px 32px rgba(229,115,115,0.18) !important;
   }
-
-  /* ── Stop button — raatkali red tint ── */
-  .ctrl-btn[onclick*="stopButton"] {
-    background: #fff0f0 !important;
-    color: #E57373 !important;
-    border-color: #ffb7bb !important;
-  }
-
-  /* ── Skip preview box ── */
-  #skipPreviewBox {
-    background: rgba(229,115,115,0.10) !important;
-    border-color: rgba(229,115,115,0.5) !important;
-  }
-  #skipPreviewBox > div {
-    color: #E57373 !important;
-  }
-  #skipPreviewBtn {
-    background: linear-gradient(135deg,#fff0f2,#ffe4e8) !important;
-    color: #c62828 !important;
-    border-color: #ffb7bb !important;
-  }
 </style>
 </head>
 <body>
@@ -259,138 +238,152 @@ window.SONG_CONFIG = {
   midiFile:  "../midi/raatkali.mid",
   svgBase:   "../svg/raatkali",
   timeSignature: [4, 4],
-  measures:      55,   // physical MIDI measure count
+  measures:      55,   // physical MIDI measure count (includes both passes of the repeat)
   repeats:       [],
   pickupBeats:   0,
 
-  // ── Repeat model ──────────────────────────────────────────────────────────
-  // The SVG writes out ALL 55 physical measures linearly (no folding).
-  // The MIDI is also 55 measures.
-  // Repeat block: physical 27-34 plays once on first pass,
-  //               physical 35-42 is the repeat (same sheet measures 27-34 again),
-  //               physical 43-55 continues after the repeat.
-  //
-  // "Logical" measures = what the user types in the UI = sheet measure numbers.
-  // Because the sheet is linear:  logical = physical for all 55 measures.
-  // The repeat awareness only affects the SEQUENCER (which physical measures
-  // to queue) when the user selects a range that straddles the repeat block.
-  //
-  // Example: user selects 26-35:
-  //   → play physical 26, 27,28,29,30,31,32,33,34 (1st pass),
-  //              then 35,36,37,38,39,40,41,42 (2nd pass = physical repeat),
-  //              then 43 (= logical 35 post-repeat)... but user said end=35,
-  //   so: 26, 27–34 (first pass), 35–42 (second pass), 43
-  //
-  // Simpler framing the user confirmed:
-  //   select 26-35 → physical sequence: 26, 27,28,29,30,31,32,33,34,
-  //                                         35,36,37,38,39,40,41,42, 43
-  //   i.e. the sheet measure 35 lives at physical 43 (post-repeat shift).
-  //
-  // Sheet measure → physical measure mapping:
-  //   sheet 1-34   → physical 1-34  (identity, pre-repeat + first pass)
-  //   sheet 35-42  → physical 35-42 (repeat pass — second time through 27-34)
-  //   sheet 43-47  → physical 43-47 (no, wait: sheet has 55 measures so
-  //                  sheet 43-55 = physical 43-55 identity)
-  //
-  // Because the SVG is linear (55 measures = 55 physical), logical == physical.
-  // The ONLY thing "repeat-aware" is: when practising, if the selection spans
-  // the transition at measure 34→35 (the repeat sign boundary), we insert the
-  // repeat pass automatically so the student hears it twice, matching the sheet.
-
+  // ── Repeat: physical measures 27-34 play twice in the MIDI.
+  //    The SVG/sheet shows them once (logical 27-34).
+  //    Physical 35-42  = repeat pass  → logical 27-34
+  //    Physical 43-55  = post-repeat  → logical 35-47
   repeatStart: 27,
   repeatEnd:   34,
   repeatLen:   8,
 
-  // Physical-to-logical: identity (SVG is fully written out, no folding)
   buildPhysicalToLogical(map) {
-    for (let p = 1; p <= 55; p++) map[p] = p;
+    for (let p = 1;  p <= 26; p++) map[p] = p;           // pre-repeat: direct
+    for (let p = 27; p <= 34; p++) map[p] = p;           // first pass of repeat
+    for (let p = 35; p <= 42; p++) map[p] = p - 8;       // second pass → logical 27-34
+    for (let p = 43; p <= 55; p++) map[p] = p - 8;       // post-repeat: shift back 8
     return map;
   },
 
-  // Logical-to-physical first occurrence: identity
   logicalToPhysicalFirst(logical) {
+    // Logical 1-34 live at the same physical measure.
+    // Logical 35-47 live at physical + 8 (post-repeat block).
+    if (logical >= 35 && logical <= 47) return logical + 8;
     return logical;
   },
 
-  // Logical-to-physical second occurrence:
-  // Sheet measures 27-34 have a repeat — second pass lives at physical 35-42.
-  // But since physical == logical here, the "second pass" of logical 27-34
-  // is represented by sheet measures 35-42.
-  // So there is no separate second physical occurrence; the sheet already shows both.
   logicalToPhysicalSecond(logical) {
-    return null; // sheet is fully written out; no hidden second pass
+    // Only the repeated section (logical 27-34) has a second physical pass.
+    if (logical >= 27 && logical <= 34) return logical + 8;
+    return null;
   },
 
-  // Practice sequencer:
-  // User selects logical (= physical) start/end.
-  // When the selection spans the repeat region (27-34 + its written-out repeat 35-42):
-  //   → play straight through: start … 34, 35 … 42 (if range covers it), … end
-  // No special repeat insertion needed because the repeat is already on the sheet.
+  // Block-repeat aware sequencer:
+  //   - If the range overlaps the repeat block (27-34), emit the entire first
+  //     pass of the overlap FIRST, then the entire second pass — never
+  //     interleaved per-measure.
+  //   - Measures outside the repeat block use the normal per-measure logic.
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
+    const RSTART = 27, REND = 34;
     const seq = [], logicalSeq = [];
-    for (let l = startLogical; l <= endLogical; l++) {
-      if (l > SONG_CONFIG.measures) break;
-      seq.push(l);
-      logicalSeq.push(l);
+
+    const preEnd    = Math.min(endLogical,   RSTART - 1);
+    const repStart  = Math.max(startLogical, RSTART);
+    const repEnd    = Math.min(endLogical,   REND);
+    const postStart = Math.max(startLogical, REND + 1);
+
+    const pushFirst = (l) => {
+      if (l > MAX_LOGICAL_MEASURE) return false;
+      const p1 = window.SONG_CONFIG.logicalToPhysicalFirst(l);
+      if (p1 > SONG_CONFIG.measures) return false;
+      seq.push(p1); logicalSeq.push(l);
+      return true;
+    };
+
+    // Pre-repeat measures
+    for (let l = startLogical; l <= preEnd; l++) {
+      if (!pushFirst(l)) return null;
     }
+
+    // Repeat block: all first-pass first, then all second-pass
+    if (repStart <= repEnd) {
+      for (let l = repStart; l <= repEnd; l++) {
+        if (!pushFirst(l)) return null;
+      }
+      if (!skipRepeats) {
+        for (let l = repStart; l <= repEnd; l++) {
+          const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
+          if (p2 !== null && p2 <= SONG_CONFIG.measures) {
+            seq.push(p2); logicalSeq.push(l);
+          }
+        }
+      }
+    }
+
+    // Post-repeat measures
+    for (let l = postStart; l <= endLogical; l++) {
+      if (!pushFirst(l)) return null;
+    }
+
     return { seq, logicalSeq };
   },
 
-  // Sections: use physical (= logical) measure numbers
+  // Sections use LOGICAL measure numbers (max 47, not 55).
   sections: [
-    { label: "Intro",                              start:  1, end:  5  },
-    { label: "Raat kali ek khwaab mein aayi",      start:  6, end: 17  },
-    { label: "Interlude",                          start: 18, end: 26  },
-    { label: "Jo bhi tune — 1st pass",             start: 27, end: 34  },
-    { label: "Jo bhi tune — repeat pass",          start: 35, end: 42  },
-    { label: "Raat kali — reprise",                start: 43, end: 51  },
-    { label: "Ending",                             start: 52, end: 55  },
+    { label: "Intro",                         start: 1,  end: 5  },
+    { label: "Raat kali — verse 1",           start: 6,  end: 17 },
+    { label: "Middle phrase",                 start: 18, end: 26 },
+    { label: "Repeat section",                start: 27, end: 34 },
+    { label: "Raat kali — verse 2",           start: 35, end: 42 },
+    { label: "Ending",                        start: 43, end: 47 },
   ],
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
   brandName:    "Ria Om Shandilya",
   youtubeUrl:   "https://www.youtube.com/watch?v=FaJh5yr51iw",
   youtubeLabel: "Quick Guide to Measures & Sheet",
 
-  // ── Theme: raatkali red/pink (treble) + dark/charcoal (bass) palette ──────
+  // ── Theme: raatkali red (treble) + black/charcoal (bass) palette ────────
   themeOverride: {
+    // SVG notehead highlight colors
     trebleNote:        '#E57373',
     bassNote:          '#424242',
 
-    trebleFallTop:     'rgba(255,200,200,0.92)',
-    trebleFallMid1:    'rgba(255,150,150,0.88)',
+    // Falling note gradients — treble (red)
+    trebleFallTop:     'rgba(255,235,238,0.92)',
+    trebleFallMid1:    'rgba(239,154,154,0.88)',
     trebleFallMid2:    'rgba(229,115,115,0.90)',
     trebleFallBot:     'rgba(239,83,80,0.94)',
     trebleFallShadow:  'rgba(229,115,115,0.35)',
 
+    // Falling note gradients — bass (black/charcoal)
     bassFallTop:       'rgba(97,97,97,0.92)',
     bassFallMid1:      'rgba(66,66,66,0.88)',
     bassFallMid2:      'rgba(33,33,33,0.90)',
     bassFallBot:       'rgba(0,0,0,0.94)',
-    bassFallShadow:    'rgba(66,66,66,0.5)',
+    bassFallShadow:    'rgba(66,66,66,0.4)',
 
+    // Piano white key fills
     whiteKeyTrebleTop: '#FFCDD2',
     whiteKeyTrebleBot: '#EF9A9A',
     whiteKeyBassTop:   '#BDBDBD',
     whiteKeyBassBot:   '#757575',
 
+    // Piano black key fills
     blackKeyTrebleTop: '#EF9A9A',
     blackKeyTrebleBot: '#E57373',
-    blackKeyBassTop:   '#757575',
-    blackKeyBassBot:   '#424242',
+    blackKeyBassTop:   '#616161',
+    blackKeyBassBot:   '#212121',
 
+    // Piano key glow overlays — treble
     keyTrebleGlowShadow: '#ff6b6b',
     keyTrebleGlowFillW:  'rgba(255,107,107,0.15)',
     keyTrebleGlowFillB:  'rgba(255,107,107,0.4)',
 
+    // Piano key glow overlays — bass
     keyBassGlowShadow:   '#424242',
     keyBassGlowFillW:    'rgba(66,66,66,0.18)',
 
+    // Note name labels on keys and falling notes
     keyLabelTreble:      '#555',
     keyLabelBass:        '#111',
-    fallingLabelTreble:  'rgba(0,0,0,0.9)',
+    fallingLabelTreble:  'rgba(255,255,255,0.95)',
     fallingLabelBass:    'rgba(255,255,255,0.95)',
 
+    // BPM input focus ring
     bpmFocusBorder:  'rgba(229,115,115,0.6)',
     bpmFocusShadow:  'rgba(229,115,115,0.15)',
     bpmBlurBorder:   'rgba(229,115,115,0.25)',
@@ -398,32 +391,29 @@ window.SONG_CONFIG = {
 
   scorePages: 3,
 
-  // ── SVG page systems ─────────────────────────────────────────────────────
-  // Coordinates extracted from raatkali-1/2/3.svg.
-  // start_measure = physical measure number (= logical, since SVG is fully written out).
-  // barline_xs: X positions of barlines (including opening and closing barlines).
+  // bass_bot values extended by 120 to capture low-register noteheads
   svgPageSystems: [
-    // PAGE 1  (5+4+4+4 = 17 measures, physical 1-17)
+    // PAGE 1
     [
-      { treble_top:740.4,  treble_bot:839.6,  bass_top:1000.8, bass_bot:1100.0, barline_xs:[339,890,1306,1726,2142,2762], start_measure:1  },
-      { treble_top:1581.9, treble_bot:1681.1, bass_top:1922.6, bass_bot:2021.8, barline_xs:[215,885,1485,2153,2762],      start_measure:6  },
-      { treble_top:2503.8, treble_bot:2603.0, bass_top:2796.4, bass_bot:2895.6, barline_xs:[215,899,1485,2153,2762],      start_measure:10 },
-      { treble_top:3377.6, treble_bot:3476.8, bass_top:3723.0, bass_bot:3822.2, barline_xs:[215,881,1534,2162,2762],      start_measure:14 },
+      { treble_top:740.4,  treble_bot:839.6,  bass_top:1000.8, bass_bot:1220.0, barline_xs:[339,890,1306,1726,2142,2762], start_measure:1  },
+      { treble_top:1581.9, treble_bot:1681.1, bass_top:1922.6, bass_bot:2141.8, barline_xs:[215,885,1485,2153,2762],       start_measure:6  },
+      { treble_top:2503.8, treble_bot:2603.0, bass_top:2796.4, bass_bot:3015.6, barline_xs:[215,899,1485,2153,2762],       start_measure:10 },
+      { treble_top:3377.6, treble_bot:3476.8, bass_top:3723.0, bass_bot:3942.2, barline_xs:[215,881,1534,2162,2762],       start_measure:14 },
     ],
-    // PAGE 2  (4+4+5+5 = 18 measures, physical 18-35)
+    // PAGE 2
     [
-      { treble_top:461.2,  treble_bot:560.4,  bass_top:815.3,  bass_bot:914.5,  barline_xs:[215,937,1522,2171,2762],      start_measure:18 },
-      { treble_top:1416.7, treble_bot:1515.9, bass_top:1709.2, bass_bot:1808.4, barline_xs:[215,899,1485,2153,2762],      start_measure:22 },
-      { treble_top:2310.6, treble_bot:2409.8, bass_top:2737.4, bass_bot:2836.6, barline_xs:[215,798,1324,1781,2280,2762], start_measure:26 },
-      { treble_top:3338.8, treble_bot:3438.0, bass_top:3713.5, bass_bot:3812.7, barline_xs:[215,800,1311,1811,2232,2762], start_measure:31 },
+      { treble_top:461.2,  treble_bot:560.4,  bass_top:815.3,  bass_bot:1034.5, barline_xs:[215,937,1522,2171,2762],       start_measure:18 },
+      { treble_top:1416.7, treble_bot:1515.9, bass_top:1709.2, bass_bot:1928.4, barline_xs:[215,899,1485,2153,2762],       start_measure:22 },
+      { treble_top:2310.6, treble_bot:2409.8, bass_top:2737.4, bass_bot:2956.6, barline_xs:[215,816,1323,1781,2280,2762],  start_measure:26 },
+      { treble_top:3338.8, treble_bot:3438.0, bass_top:3713.5, bass_bot:3932.7, barline_xs:[215,800,1311,1811,2250,2762],  start_measure:31 },
     ],
-    // PAGE 3  (5+5+5+5 = 20 measures, physical 36-55)
+    // PAGE 3
     [
-      { treble_top:438.8,  treble_bot:538.0,  bass_top:778.0,  bass_bot:877.2,  barline_xs:[215,866,1361,1806,2229,2762], start_measure:36 },
-      { treble_top:1395.4, treble_bot:1494.6, bass_top:1688.0, bass_bot:1787.2, barline_xs:[215,798,1292,1751,2288,2762], start_measure:41 },
-      { treble_top:2305.5, treble_bot:2404.7, bass_top:2659.9, bass_bot:2759.1, barline_xs:[215,752,1295,1802,2274,2762], start_measure:46 },
-      { treble_top:3277.3, treble_bot:3376.6, bass_top:3713.5, bass_bot:3812.7, barline_xs:[215,832,1416,1945,2488,2740], start_measure:51 },
-    ],
+      { treble_top:438.8,  treble_bot:538.0,  bass_top:778.0,  bass_bot:997.2,  barline_xs:[215,866,1361,1806,2228,2762],  start_measure:36 },
+      { treble_top:1395.4, treble_bot:1494.6, bass_top:1688.0, bass_bot:1907.2, barline_xs:[215,798,1292,1750,2288,2762],  start_measure:41 },
+      { treble_top:2305.5, treble_bot:2404.7, bass_top:2659.9, bass_bot:2879.1, barline_xs:[215,752,1295,1802,2274,2762],  start_measure:46 },
+      { treble_top:3277.3, treble_bot:3376.6, bass_top:3713.5, bass_bot:3932.7, barline_xs:[215,832,1416,1945,2488,2762],  start_measure:51 },
+    ]
   ],
 };
 </script>
@@ -477,28 +467,7 @@ window.SONG_CONFIG = {
 
       <h1 id="songTitle"></h1>
 
-<!-- PDF Access Banner -->
-<a href="/dashboard.html" style="
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 auto 6px auto;
-  padding: 9px 18px;
-  background: rgba(255,255,255,0.88);
-  border: 1px solid rgba(235, 50, 70, 0.22);
-  border-radius: 12px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1A1A1F;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
-  letter-spacing: 0.2px;
-  transition: box-shadow 0.2s, transform 0.15s;
-" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,0.12)'"
-   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.07)'">
-  📄 Access the PDF sheet from <strong>My Dashboard</strong>
-</a>
+
 
 <div id="paywall"></div>
 
@@ -551,7 +520,7 @@ window.SONG_CONFIG = {
         <div id="scoreHighlight" style="display:none;"></div>
     </div>
 
-    <!-- FIX 1: Page nav kept in DOM so JS doesn't crash, but hidden via CSS above -->
+    <!-- Page nav kept in DOM so JS doesn't crash, hidden via CSS above -->
     <div id="scorePageNav">
         <button id="scorePrevBtn" disabled>‹ Prev</button>
         <span id="scorePageLabel">Page 1 / 3</span>
@@ -753,7 +722,7 @@ window.SONG_CONFIG = {
     </div>
   </div>
 
-  <!-- FEEDBACK card — fills gap under Playback + Utility via grid placement -->
+  <!-- FEEDBACK card -->
   <div class="ctrl-card" id="panelFeedbackCard">
     <div id="panelFeedbackBubble"></div>
   </div>
@@ -876,39 +845,32 @@ window.SONG_CONFIG = {
 
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 
-<!-- Override SVG highlight colors to match raatkali palette:
-     treble → #E57373 (red/pink), bass → #424242 (dark charcoal)
-     instead of engine.js defaults (treble: #9B2C6E purple, bass: #B45309 gold) -->
+<!-- Override SVG highlight colors to match score-mode: use #E57373 for treble,
+     #424242 for bass, instead of engine.js defaults (purple, gold/amber, green) -->
 <script>
 (function () {
-  const ENGINE_COLORS = new Set([
-    '#9B2C6E', '#9b2c6e',
+  const ENGINE_TREBLE_COLORS = new Set([
+    '#9B2C6E', '#9b2c6e'
+  ]);
+  const ENGINE_BASS_COLORS = new Set([
     '#B45309', '#b45309',
     '#FFC107', '#ffc107',
     '#F59E0B', '#f59e0b',
     '#FBBF24', '#fbbf24',
     '#D97706', '#d97706',
+  ]);
+  const ENGINE_OTHER = new Set([
     '#16a34a', '#16A34A'
   ]);
-
-  // Map engine treble/bass default colors to raatkali colors
   const TREBLE_COLOR = '#E57373';
   const BASS_COLOR   = '#424242';
-
-  // Purple family → treble red
-  const TREBLE_DEFAULTS = new Set(['#9B2C6E','#9b2c6e']);
-  // Gold/amber/green family → bass dark
-  const BASS_DEFAULTS   = new Set([
-    '#B45309','#b45309','#FFC107','#ffc107',
-    '#F59E0B','#f59e0b','#FBBF24','#fbbf24',
-    '#D97706','#d97706','#16a34a','#16A34A'
-  ]);
 
   const _origSetAttr = SVGElement.prototype.setAttribute;
   SVGElement.prototype.setAttribute = function (name, value) {
     if (name === 'fill') {
-      if (TREBLE_DEFAULTS.has(value)) return _origSetAttr.call(this, name, TREBLE_COLOR);
-      if (BASS_DEFAULTS.has(value))   return _origSetAttr.call(this, name, BASS_COLOR);
+      if (ENGINE_TREBLE_COLORS.has(value)) return _origSetAttr.call(this, name, TREBLE_COLOR);
+      if (ENGINE_BASS_COLORS.has(value))   return _origSetAttr.call(this, name, BASS_COLOR);
+      if (ENGINE_OTHER.has(value))         return _origSetAttr.call(this, name, TREBLE_COLOR);
     }
     return _origSetAttr.call(this, name, value);
   };
@@ -925,8 +887,7 @@ window.SONG_CONFIG = {
     observer.disconnect();
 
     const cfg = window.SONG_CONFIG;
-    const sys1 = cfg.svgPageSystems[0][0];
-    const GRACE_SCALE = 0.85;
+    const sys1 = cfg.svgPageSystems[0][0];  // page 1, system 1
 
     const raw = [];
     svgEl.querySelectorAll('path.Note').forEach(el => {
