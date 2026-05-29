@@ -281,11 +281,11 @@ window.SONG_CONFIG = {
   },
 
   // Sequencer: build the ordered list of physical MIDI measures to play.
-  // The sheet has a repeat sign on bars 27–34: they play twice, then
-  // bars 35–42 are the written-out continuation (different material).
-  // select 26–35 → [26, 27..34, 27..34, 35]   (pre, 1st pass, repeat, post)
-  // select 27–34 → [27..34, 27..34]            (repeat both passes)
-  // select 35–42 → [35..42]                    (written second section, no repeat)
+  // The sheet has a repeat sign on bars 27–34. In the MIDI, the second pass
+  // of that repeat is written out as physical measures 35–42 (different content).
+  // select 26–35 → [26, 27..34, 35..42, 35]   (pre, 1st pass, 2nd pass, post)
+  // select 27–34 → [27..34, 35..42]            (repeat both passes)
+  // select 35–42 → [35..42]                    (2nd-pass section directly)
   // select 43–55 → [43..55]                    (ending, plain)
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
@@ -293,7 +293,7 @@ window.SONG_CONFIG = {
     const seq = [], logicalSeq = [];
 
     const push = (l, logical) => {
-      if (l < 1 || l > MAX_LOGICAL_MEASURE || l > SONG_CONFIG.measures) return false;
+      if (l < 1 || l > SONG_CONFIG.measures) return false;
       seq.push(l); logicalSeq.push(logical ?? l);
       return true;
     };
@@ -307,21 +307,26 @@ window.SONG_CONFIG = {
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
     if (repStart <= repEnd) {
-      // First pass: play the selected slice of 27–34
+      // First pass: physical 27–34
       for (let l = repStart; l <= repEnd; l++) {
         if (!push(l)) return null;
       }
-      // Second pass: replay the SAME physical measures again (the repeat)
+      // Second pass: physical 35–42 (written-out repeat in MIDI), logical still 27–34
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
-          if (!push(l, l)) return null;  // same physical measure, same logical
+          const p2 = l + 8;  // 27→35, 28→36, …, 34→42
+          if (p2 > SONG_CONFIG.measures) return null;
+          if (!push(p2, l)) return null;
         }
       }
     }
 
-    // Post-repeat: bars 35 onward (written-out continuation + ending).
-    // Always starts at REND+1=35 regardless of whether the repeat fired.
-    for (let l = Math.max(startLogical, REND + 1); l <= endLogical; l++) {
+    // Post-repeat: bars 35 onward that weren't already covered by the second pass.
+    // If second pass was emitted (covered 35–42), start post-repeat at 43.
+    // Otherwise start at 35 so bars 35–55 are reachable when repeat didn't fire.
+    const secondPassEmitted = (repStart <= repEnd) && !skipRepeats;
+    const postStart = secondPassEmitted ? REND + (REND - RSTART + 1) + 1 : REND + 1;
+    for (let l = Math.max(startLogical, postStart); l <= endLogical; l++) {
       if (!push(l)) return null;
     }
 
