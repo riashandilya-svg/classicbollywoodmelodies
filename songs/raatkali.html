@@ -386,34 +386,44 @@ window.SONG_CONFIG = {
     bpmBlurBorder:   'rgba(229,115,115,0.25)',
   },
 
-  scorePages: 2,
+  scorePages: 3,
 
   repeatStart: 27,
   repeatEnd:   34,
   repeatLen:   8,
 
   // ── svgPageSystems: coordinate maps for SVG score highlighting.
-  //    ⚠️  These are placeholder values — replace with measured coordinates
-  //    once the raatkali SVG sheets are exported and verified.
-  //    Format mirrors aajkal: treble_top/bot, bass_top/bot, barline_xs, start_measure.
-  //    bass_bot is extended by ~120 to capture low-register noteheads.
+  //    Measured directly from raatkali-1.svg, raatkali-2.svg, raatkali-3.svg.
+  //    Each page has 4 systems (viewBox 0 0 2977.2 4208.4).
+  //    bass_bot extended +120 past the bottom staff line to capture low noteheads.
+  //    Logical measure layout:
+  //      Page 1: m1-5, m6-9, m10-13, m14-17
+  //      Page 2: m18-21, m22-25, m26-30 (first pass 27-30), m31-35 (first pass 31-34 + post-repeat 35)
+  //      Page 3: m27-31 (repeat pass), m32-36 (repeat 32-34 + post-repeat 35-36), m37-41, m42-46
   svgPageSystems: [
-    // PAGE 1
+    // PAGE 1  (raatkali-1.svg)
     [
-      { treble_top:677.5,  treble_bot:773.9,  bass_top:915.6,  bass_bot:1132.1, barline_xs:[335,955,1117,1499,1660,2042,2402,2762], start_measure:1  },
-      { treble_top:1366.3, treble_bot:1462.8, bass_top:1650.9, bass_bot:1867.4, barline_xs:[215,759,1056,1354,1652,1961,2374,2762], start_measure:8  },
-      { treble_top:2101.7, treble_bot:2198.1, bass_top:2346.3, bass_bot:2562.7, barline_xs:[215,682,947,1333,1722,2012,2344,2762],  start_measure:15 },
-      { treble_top:2797.0, treble_bot:2893.5, bass_top:3041.6, bass_bot:3258.1, barline_xs:[215,791,1084,1368,1790,2184,2490,2762], start_measure:22 },
-      { treble_top:3492.3, treble_bot:3588.8, bass_top:3730.5, bass_bot:3947.0, barline_xs:[215,843,1092,1492,1740,2124,2372,2762], start_measure:27 }
+      { treble_top:740.4,  treble_bot:839.6,  bass_top:1000.8, bass_bot:1220.0, barline_xs:[339,890,1306,1726,2142,2762],  start_measure:1  },
+      { treble_top:1581.9, treble_bot:1681.1, bass_top:1922.6, bass_bot:2141.8, barline_xs:[215,885,1485,2153,2762],       start_measure:6  },
+      { treble_top:2503.8, treble_bot:2603.0, bass_top:2796.4, bass_bot:3015.6, barline_xs:[215,899,1485,2153,2762],       start_measure:10 },
+      { treble_top:3377.6, treble_bot:3476.8, bass_top:3723.0, bass_bot:3942.2, barline_xs:[215,881,1534,2162,2762],       start_measure:14 },
     ],
-    // PAGE 2
+    // PAGE 2  (raatkali-2.svg)
     [
-      { treble_top:381.4,  treble_bot:477.9,  bass_top:656.2,  bass_bot:872.7,  barline_xs:[215,696,1044,1402,1759,2097,2446,2762], start_measure:34 },
-      { treble_top:1150.5, treble_bot:1247.0, bass_top:1407.3, bass_bot:1623.8, barline_xs:[215,693,1024,1405,1752,2100,2426,2762], start_measure:38 },
-      { treble_top:1901.6, treble_bot:1998.1, bass_top:2191.9, bass_bot:2408.4, barline_xs:[215,739,1078,1439,1796,2096,2418,2762], start_measure:42 },
-      { treble_top:2686.2, treble_bot:2782.7, bass_top:2982.9, bass_bot:3199.4, barline_xs:[215,673,1076,1447,1732,1985,2385,2762], start_measure:45 },
-      { treble_top:3477.2, treble_bot:3573.7, bass_top:3730.5, bass_bot:3947.0, barline_xs:[215,693,1024,1442,1829,2762],           start_measure:47 }
-    ]
+      { treble_top:461.2,  treble_bot:560.4,  bass_top:815.3,  bass_bot:1034.5, barline_xs:[215,937,1522,2171,2762],       start_measure:18 },
+      { treble_top:1416.7, treble_bot:1515.9, bass_top:1709.2, bass_bot:1928.4, barline_xs:[215,899,1485,2153,2762],       start_measure:22 },
+      { treble_top:2310.6, treble_bot:2409.8, bass_top:2737.4, bass_bot:2956.6, barline_xs:[215,798,1324,1781,2280,2762], start_measure:26 },
+      { treble_top:3338.8, treble_bot:3438.0, bass_top:3713.5, bass_bot:3932.7, barline_xs:[215,800,1311,1811,2232,2762], start_measure:31 },
+    ],
+    // PAGE 3  (raatkali-3.svg)
+    // sys1-2: repeat pass of m27-36 (overwrites page-2 buckets; m34 → _svgBucketsPage2)
+    // sys3-4: post-repeat m37-46
+    [
+      { treble_top:438.8,  treble_bot:538.0,  bass_top:778.0,  bass_bot:997.2,  barline_xs:[215,866,1361,1806,2228,2762], start_measure:27 },
+      { treble_top:1395.4, treble_bot:1494.6, bass_top:1688.0, bass_bot:1907.2, barline_xs:[215,798,1292,1750,2288,2762], start_measure:32 },
+      { treble_top:2305.5, treble_bot:2404.7, bass_top:2659.9, bass_bot:2879.1, barline_xs:[215,752,1295,1802,2274,2762], start_measure:37 },
+      { treble_top:3277.3, treble_bot:3376.6, bass_top:3713.5, bass_bot:3932.7, barline_xs:[215,832,1416,1945,2488,2740], start_measure:42 },
+    ],
   ],
 };
 </script>
