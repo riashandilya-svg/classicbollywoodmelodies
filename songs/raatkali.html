@@ -238,7 +238,7 @@ window.SONG_CONFIG = {
   midiFile:  "../midi/raatkali.mid",
   svgBase:   "../svg/raatkali",
   timeSignature: [4, 4],
-  measures:      55,
+  measures:      62,  // MIDI has 62 physical measures (repeat written out: 55 printed + 7 extra)
   repeats:       [],
   pickupBeats:   0,
 
@@ -265,6 +265,9 @@ window.SONG_CONFIG = {
   // Full identity: physical MIDI measure == sheet measure for all 55.
   buildPhysicalToLogical(map) {
     for (let p = 1; p <= 55; p++) map[p] = p;
+    // Physical 56–62: MIDI trailing measures with no printed SVG counterpart.
+    // Map them to sheet 55 so getMeasureFromTime never returns null for these notes.
+    for (let p = 56; p <= 62; p++) map[p] = 55;
     return map;
   },
 
