@@ -850,18 +850,7 @@ window.SONG_CONFIG = {
 })();
 </script>
 
- ────────────────────────────────────────
-     engine.js builds the SVG↔MIDI rank map inside renderAllScorePages(), which
-     is called the moment the user flips the Score toggle. If the toggle is already
-     ON when the page loads (e.g. browser restored it, or user reloaded in Score
-     mode), renderAllScorePages() fires BEFORE loadSongMidi() completes, so
-     allMidiNotes is still empty → rank map = 0 → no highlights ever work.
 
-     Fix: watch #measureTimeline for the pip elements that engine.js injects right
-     after MIDI loads. Once they appear, if the score toggle is already checked,
-     re-fire a synthetic 'change' event so engine re-runs initScoreMode() with a
-     fully-populated allMidiNotes array.
-──────────────────────────────────────────────────────────────────────────── -->
 <script>
 (function() {
   const tl = document.getElementById('measureTimeline');
