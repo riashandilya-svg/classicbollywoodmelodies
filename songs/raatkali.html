@@ -865,6 +865,27 @@ window.SONG_CONFIG = {
 })();
 </script>
 
+<!-- Patch: clamp negative playTimes from rank-map rescue overflow notes.
+     A MIDI note ~20ms before a measure boundary gets rescued to the next measure,
+     producing playTime ≈ -0.02 which causes a stray highlight warning.
+     We intercept Tone.Transport.schedule (used by engine.js to queue notes)
+     and clamp any negative time to 0. -->
+<script>
+(function() {
+  // Wait for Tone.js to load, then wrap Transport.schedule
+  window.addEventListener('load', function() {
+    if (!window.Tone || !Tone.getTransport) return;
+    const transport = Tone.getTransport();
+    if (!transport || !transport.schedule) return;
+    const _origSchedule = transport.schedule.bind(transport);
+    transport.schedule = function(callback, time) {
+      const clampedTime = (typeof time === 'number' && time < 0) ? 0 : time;
+      return _origSchedule(callback, clampedTime);
+    };
+  });
+})();
+</script>
+
 <script type="module" src="../engine.js"></script>
 
 <!-- Supabase + Paywall (shared) -->
