@@ -9,242 +9,92 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../engine.css">
 
-<!-- ✏️ Per-song color override — warm yellow/amber palette for Kaisi Paheli -->
+<!-- ✏️ Per-song colour override — warm amber/yellow palette for Kaisi Paheli -->
 <style>
   :root {
     --accent-primary: #FFC107;
     --accent-success: #22C55E;
     --accent-error:   #EF4444;
-
-    --yellow1: rgba(255, 193, 7, 0.22);
-    --yellow2: rgba(255, 235, 59, 0.16);
-    --softBlack: rgba(0, 0, 0, 0.10);
-
-    --border-soft: rgba(255, 193, 7, 0.18);
+    --border-soft: rgba(255,193,7,0.18);
   }
 
-  /* ── Ambient glow ── */
-  body::before {
-    background: radial-gradient(circle, #ffe082 0%, transparent 70%) !important;
-    opacity: 0.32 !important;
-  }
-  body::after {
-    background: radial-gradient(circle, #fff9c4 0%, transparent 70%) !important;
-    opacity: 0.22 !important;
-  }
+  body::before { background: radial-gradient(circle, #ffe082 0%, transparent 70%) !important; opacity:.32 !important; }
+  body::after  { background: radial-gradient(circle, #fff9c4 0%, transparent 70%) !important; opacity:.22 !important; }
   body {
     background:
-      radial-gradient(900px 520px at 20% 0%,  rgba(255,193,7,0.22), transparent 60%),
-      radial-gradient(900px 520px at 85% 10%, rgba(0,0,0,0.10), transparent 62%),
-      radial-gradient(780px 480px at 50% 80%, rgba(255,235,59,0.16), transparent 60%),
-      radial-gradient(520px 320px at 35% 55%, rgba(255,193,7,0.10),  transparent 60%),
+      radial-gradient(900px 520px at 20% 0%,  rgba(255,193,7,0.22),  transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, rgba(0,0,0,0.10),       transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, rgba(255,235,59,0.16),  transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(255,193,7,0.10),   transparent 60%),
       #ffffff !important;
   }
-  body.dark-mode::before { background: radial-gradient(circle, #f59e0b 0%, transparent 70%) !important; opacity: 0.18 !important; }
-  body.dark-mode::after  { background: radial-gradient(circle, #fbbf24 0%, transparent 70%) !important; opacity: 0.10 !important; }
+  body.dark-mode::before { background: radial-gradient(circle, #f59e0b 0%, transparent 70%) !important; opacity:.18 !important; }
+  body.dark-mode::after  { background: radial-gradient(circle, #fbbf24 0%, transparent 70%) !important; opacity:.10 !important; }
 
-  /* ── Brand bar border ── */
-  #brandBar {
-    border-bottom-color: rgba(255,193,7,0.18) !important;
-  }
+  #brandBar            { border-bottom-color: rgba(255,193,7,0.18) !important; }
+  #hitLine             { background: linear-gradient(90deg,transparent 2%,#FFC107 20%,#FFD54F 50%,#FFC107 80%,transparent 98%) !important;
+                         box-shadow: 0 0 12px #FFC107,0 0 28px rgba(255,193,7,.5) !important; }
+  #gameStage           { background: linear-gradient(180deg,rgba(255,255,255,.75) 0%,rgba(255,253,240,.88) 100%) !important;
+                         border-color: rgba(255,193,7,.12) !important; }
+  body.dark-mode #gameStage { background: linear-gradient(180deg,rgba(28,24,18,.88) 0%,rgba(18,15,8,.95) 100%) !important;
+                              border-color: rgba(251,191,36,.18) !important; }
+  #statsBar            { border-color: rgba(255,193,7,.13) !important; }
+  body.dark-mode #statsBar  { border-color: rgba(251,191,36,.18) !important; }
 
-  /* ── Hit line ── */
-  #hitLine {
-    background: linear-gradient(90deg, transparent 2%, #FFC107 20%, #FFD54F 50%, #FFC107 80%, transparent 98%) !important;
-    box-shadow: 0 0 12px #FFC107, 0 0 28px rgba(255,193,7,0.5) !important;
-  }
+  .ctrl-card           { border-color: rgba(255,193,7,.15) !important;
+                         box-shadow: 0 12px 40px rgba(0,0,0,.07),0 2px 8px rgba(255,193,7,.06) !important; }
+  .ctrl-card:hover     { box-shadow: 0 18px 50px rgba(0,0,0,.1),0 4px 12px rgba(255,193,7,.1) !important; }
+  .ctrl-card-title     { color: #B45309 !important; }
+  body.dark-mode .ctrl-card       { border-color: rgba(251,191,36,.25) !important; }
+  body.dark-mode .ctrl-card-title { color: #fbbf24 !important; }
 
-  /* ── Game stage ── */
-  #gameStage {
-    background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,253,240,0.88) 100%) !important;
-    border-color: rgba(255,193,7,0.12) !important;
-  }
-  body.dark-mode #gameStage {
-    background: linear-gradient(180deg, rgba(28,24,18,0.88) 0%, rgba(18,15,8,0.95) 100%) !important;
-    border-color: rgba(251,191,36,0.18) !important;
-  }
+  .ctrl-btn            { border-color: rgba(255,193,7,.1) !important; }
+  .ctrl-btn:hover:not(:disabled) { background: rgba(255,253,235,.95) !important; color: #B45309 !important;
+                                   box-shadow: 0 6px 16px rgba(255,193,7,.18) !important; }
+  .ctrl-btn.active     { background: linear-gradient(135deg,rgba(255,253,235,.95),rgba(254,243,199,.95)) !important;
+                         color: #B45309 !important; border-color: rgba(255,193,7,.3) !important;
+                         box-shadow: 0 4px 12px rgba(255,193,7,.2) !important; }
+  body.dark-mode .ctrl-btn:hover:not(:disabled) { background: rgba(251,191,36,.12) !important; color: #fbbf24 !important; }
 
-  /* ── Stats bar ── */
-  #statsBar {
-    border-color: rgba(255,193,7,0.13) !important;
-  }
-  body.dark-mode #statsBar {
-    border-color: rgba(251,191,36,0.18) !important;
-  }
+  .ctrl-btn-primary    { background: linear-gradient(135deg,#FFD54F,#FFC107) !important;
+                         box-shadow: 0 6px 20px rgba(255,193,7,.32) !important; color: #1a1a1a !important; }
+  .ctrl-btn-primary:hover:not(:disabled) { box-shadow: 0 10px 28px rgba(255,193,7,.42) !important; }
 
-  /* ── Control cards ── */
-  .ctrl-card {
-    border-color: rgba(255,193,7,0.15) !important;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.07), 0 2px 8px rgba(255,193,7,0.06) !important;
-  }
-  .ctrl-card:hover {
-    box-shadow: 0 18px 50px rgba(0,0,0,0.1), 0 4px 12px rgba(255,193,7,0.1) !important;
-  }
-  .ctrl-card-title {
-    color: #B45309 !important;
-  }
-  body.dark-mode .ctrl-card {
-    border-color: rgba(251,191,36,0.25) !important;
-  }
-  body.dark-mode .ctrl-card-title {
-    color: #fbbf24 !important;
-  }
+  .ctrl-speed-row      { border-color: rgba(255,193,7,.1) !important; }
+  body.dark-mode .ctrl-speed-row { border-color: rgba(251,191,36,.15) !important; }
+  .ctrl-stat-item      { border-color: rgba(255,193,7,.1) !important; }
+  body.dark-mode .ctrl-stat-item { border-color: rgba(251,191,36,.15) !important; }
 
-  /* ── Ctrl buttons ── */
-  .ctrl-btn {
-    border-color: rgba(255,193,7,0.1) !important;
-  }
-  .ctrl-btn:hover:not(:disabled) {
-    background: rgba(255,253,235,0.95) !important;
-    color: #B45309 !important;
-    box-shadow: 0 6px 16px rgba(255,193,7,0.18) !important;
-  }
-  .ctrl-btn.active {
-    background: linear-gradient(135deg, rgba(255,253,235,0.95), rgba(254,243,199,0.95)) !important;
-    color: #B45309 !important;
-    border-color: rgba(255,193,7,0.3) !important;
-    box-shadow: 0 4px 12px rgba(255,193,7,0.2) !important;
-  }
-  body.dark-mode .ctrl-btn:hover:not(:disabled) {
-    background: rgba(251,191,36,0.12) !important;
-    color: #fbbf24 !important;
-  }
+  .panel-note-item     { border-color: rgba(255,193,7,.1) !important; }
+  .panel-note-circle.correct { background: #FFC107 !important; color: #1a1a1a !important; }
+  body.dark-mode .panel-note-item { border-color: rgba(251,191,36,.15) !important; }
+  .note-circle.correct { background: #FFC107 !important; color: #1a1a1a !important; }
 
-  /* ── Primary button ── */
-  .ctrl-btn-primary {
-    background: linear-gradient(135deg, #FFD54F, #FFC107) !important;
-    box-shadow: 0 6px 20px rgba(255,193,7,0.32) !important;
-    color: #1a1a1a !important;
-  }
-  .ctrl-btn-primary:hover:not(:disabled) {
-    box-shadow: 0 10px 28px rgba(255,193,7,0.42) !important;
-  }
+  .measure-pip.done,.measure-pip.active { background: linear-gradient(135deg,#FFD54F,#FFC107) !important; }
+  .measure-pip.active  { box-shadow: 0 0 8px rgba(255,193,7,.5) !important; }
 
-  /* ── Speed row ── */
-  .ctrl-speed-row {
-    border-color: rgba(255,193,7,0.1) !important;
-  }
-  body.dark-mode .ctrl-speed-row {
-    border-color: rgba(251,191,36,0.15) !important;
-  }
+  #trainingProgressFill,#panelProgressFill {
+    background: linear-gradient(90deg,#FFD54F,#FFC107,#22C55E) !important; }
+  #trainingProgressText { color: #B45309 !important; }
+  #trainingProgress,#panelProgressBar { background: rgba(255,193,7,.12) !important; }
 
-  /* ── Stat items ── */
-  .ctrl-stat-item {
-    border-color: rgba(255,193,7,0.1) !important;
-  }
-  body.dark-mode .ctrl-stat-item {
-    border-color: rgba(251,191,36,0.15) !important;
-  }
+  #scoreHighlight      { border-color: #FFC107 !important; background: rgba(255,193,7,.22) !important;
+                         box-shadow: 0 0 0 4px rgba(255,193,7,.15),0 0 16px rgba(255,193,7,.30) !important; }
+  #scoreImg            { border-color: rgba(255,193,7,.15) !important; }
+  .falling-note        { filter: drop-shadow(0 6px 14px rgba(255,193,7,.35)) !important; }
+  #scoreKeyboardLabel  { color: #B45309 !important; }
+  #bottomDock.score-mode { border-top-color: rgba(255,193,7,.18) !important; }
+  body.dark-mode #bottomDock.score-mode { background: rgba(18,15,8,.97) !important; }
 
-  /* ── Panel note items ── */
-  .panel-note-item {
-    border-color: rgba(255,193,7,0.1) !important;
-  }
-  .panel-note-circle.correct {
-    background: #FFC107 !important;
-    color: #1a1a1a !important;
-  }
-  body.dark-mode .panel-note-item {
-    border-color: rgba(251,191,36,0.15) !important;
-  }
-
-  /* ── Note circles (side feedback) ── */
-  .note-circle.correct {
-    background: #FFC107 !important;
-    color: #1a1a1a !important;
-  }
-
-  /* ── Measure pip progress ── */
-  .measure-pip.done,
-  .measure-pip.active {
-    background: linear-gradient(135deg, #FFD54F, #FFC107) !important;
-  }
-  .measure-pip.active {
-    box-shadow: 0 0 8px rgba(255,193,7,0.5) !important;
-  }
-
-  /* ── Training progress bar ── */
-  #trainingProgressFill,
-  #panelProgressFill {
-    background: linear-gradient(90deg, #FFD54F, #FFC107, #22C55E) !important;
-  }
-  #trainingProgressText {
-    color: #B45309 !important;
-  }
-  #trainingProgress,
-  #panelProgressBar {
-    background: rgba(255,193,7,0.12) !important;
-  }
-
-  /* ── Score highlight on SVG ── */
-  #scoreHighlight {
-    border-color: #FFC107 !important;
-    background: rgba(255,193,7,0.22) !important;
-    box-shadow: 0 0 0 4px rgba(255,193,7,0.15), 0 0 16px rgba(255,193,7,0.30) !important;
-  }
-
-  /* ── Score image border ── */
-  #scoreImg {
-    border-color: rgba(255,193,7,0.15) !important;
-  }
-
-  /* ── Falling note drop shadow ── */
-  .falling-note {
-    filter: drop-shadow(0 6px 14px rgba(255,193,7,0.35)) !important;
-  }
-
-  /* ── Score keyboard label ── */
-  #scoreKeyboardLabel {
-    color: #B45309 !important;
-  }
-
-  /* ── Bottom dock (score mode) border ── */
-  #bottomDock.score-mode {
-    border-top-color: rgba(255,193,7,0.18) !important;
-  }
-
-  /* ── Dark mode bottom dock ── */
-  body.dark-mode #bottomDock.score-mode {
-    background: rgba(18,15,8,0.97) !important;
-  }
-
-  /* ── Accent-color for checkboxes ── */
-  #notesStatsToggle,
-  #scoreStatsToggle {
-    accent-color: #FFC107 !important;
-  }
-
-  /* ── BPM input border ── */
-  #bpmInput {
-    border-color: rgba(255,193,7,0.25) !important;
-  }
-
-  /* ── Toggle switch ── */
-  .toggle-switch input:checked + .toggle-track {
-    background: #FFC107 !important;
-  }
-
-  /* ── Dark mode score obj paper ── */
+  #notesStatsToggle,#scoreStatsToggle { accent-color: #FFC107 !important; }
+  #bpmInput            { border-color: rgba(255,193,7,.25) !important; }
+  .toggle-switch input:checked + .toggle-track { background: #FFC107 !important; }
   body.dark-mode.score-mode #scoreObj {
     background: #fffbf0 !important;
-    box-shadow: 0 0 0 12px #fffbf0, 0 4px 32px rgba(255,193,7,0.18) !important;
-  }
+    box-shadow: 0 0 0 12px #fffbf0,0 4px 32px rgba(255,193,7,.18) !important; }
 
-  /* ── YouTube button ── */
-  #youtubeBtn {
-    background: #FFC107 !important;
-    color: #1a1a1a !important;
-  }
-  #youtubeBtn:hover {
-    background: #FFB300 !important;
-  }
-
-  /* ── Stop button in practice card ── */
-  .ctrl-card .ctrl-btn[onclick*="stopButton"] {
-    background: #fff5f5 !important;
-    color: #EF4444 !important;
-    border-color: #fecaca !important;
-  }
+  #youtubeBtn          { background: #FFC107 !important; color: #1a1a1a !important; }
+  #youtubeBtn:hover    { background: #FFB300 !important; }
 </style>
 </head>
 <body>
@@ -260,60 +110,49 @@ window.SONG_CONFIG = {
   timeSignature: [4, 4],
 
   // ── Structural overview ──────────────────────────────────────────────────
-  // Logical measures on the sheet: 36 (m1–m36)
-  // Repeat block: logical m9–m24 plays TWICE (simple block repeat, no 1st/2nd ending).
+  // Logical measures on the sheet: 36  (m1–m36)
+  // Repeat block: logical m9–m24 (16 measures) plays TWICE, no 1st/2nd ending.
+  //
   // Physical MIDI layout:
-  //   Physical  1–8   → logical  1–8   (pre-repeat)
-  //   Physical  9–24  → logical  9–24  (repeat block, first pass)
-  //   Physical 25–40  → logical  9–24  (repeat block, second pass)
-  //   Physical 41–52  → logical 25–36  (post-repeat)
-  // Total physical measures: 52
-  measures:      52,
-
-  // repeatStart / repeatEnd describe the LOGICAL repeat block.
+  //   Physical  1– 8  →  logical  1– 8   (pre-repeat intro)
+  //   Physical  9–24  →  logical  9–24   (repeat block, first  pass)
+  //   Physical 25–40  →  logical  9–24   (repeat block, second pass)
+  //   Physical 41–52  →  logical 25–36   (post-repeat body)
+  //
+  // Total physical measures = 8 + 16 + 16 + 12 = 52
+  measures:    52,
+  repeats:     [{ start: 9, end: 24 }],
   repeatStart: 9,
   repeatEnd:   24,
-  // repeatLen = 16 (physical offset from first-pass start to repeat-pass start).
-  // Engine uses this for:
-  //   isRepeatPassNote : physMeasure > 24 && physMeasure <= 24+16=40
-  //   isRepeatPass (preview mirror) : physMeasure >= 9+16=25 && <= 24+16=40
-  //   firstPassTime = note.time - 16*secondsPerMeasure
   repeatLen:   16,
-
-  repeats: [{ start: 9, end: 24 }],
   pickupBeats: 0,
 
+  // Override the default repeat-pass detector.
+  // Default assumes a 1st-ending at REPEAT_END+1 (like ekladki).
+  // Kaisi Paheli has NO 1st ending — the repeat pass starts immediately at physical 25.
+  isRepeatPassPhysicalMeasure(p) {
+    return p >= 25 && p <= 40;   // physical 25–40 = logical 9–24 (second pass)
+  },
+
   buildPhysicalToLogical(map) {
-    // Pre-repeat and first pass: physical = logical
-    for (let p = 1;  p <= 24; p++) map[p] = p;
-    // Repeat pass: physical 25–40 → logical 9–24
-    for (let p = 25; p <= 40; p++) map[p] = p - 16;
-    // Post-repeat: physical 41–52 → logical 25–36
-    for (let p = 41; p <= 52; p++) map[p] = p - 16;
+    for (let p = 1;  p <= 24; p++) map[p] = p;          // pre-repeat + first pass
+    for (let p = 25; p <= 40; p++) map[p] = p - 16;     // repeat pass  → logical 9–24
+    for (let p = 41; p <= 52; p++) map[p] = p - 16;     // post-repeat  → logical 25–36
     return map;
   },
 
   logicalToPhysicalFirst(logical) {
-    // Logical 1–24: physical = logical (same position in MIDI)
-    // Logical 25–36: they live at physical + 16 (after the repeat pass)
-    if (logical >= 25 && logical <= 36) return logical + 16;
-    return logical;
+    if (logical >= 25 && logical <= 36) return logical + 16;  // post-repeat: shift +16
+    return logical;                                            // pre-repeat / repeat block
   },
 
   logicalToPhysicalSecond(logical) {
-    // Only the repeat block (logical 9–24) has a second physical pass.
-    // Physical repeat pass: 9+16=25 … 24+16=40
-    if (logical >= 9 && logical <= 24) return logical + 16;
+    if (logical >= 9 && logical <= 24) return logical + 16;   // repeat-block second pass
     return null;
   },
 
-  // Pure block-repeat sequencer — no 1st-ending complication.
-  //
-  // Desired play order for a range that covers the repeat block:
-  //   e.g. range 9–24 → 9,10,…,24, 9,10,…,24
-  //   e.g. range 1–25 → 1,…,8, 9,…,24, 9,…,24, 25
-  //   e.g. range 9–14 → 9,…,14, 9,…,14
-  //
+  // Pure block-repeat sequencer — no 1st-ending.
+  // Selecting 9–24 plays:  9,10,…,24,  9,10,…,24
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
     const RSTART = 9, REND = 24;
@@ -327,24 +166,20 @@ window.SONG_CONFIG = {
       return true;
     };
 
-    // ── 1. Pre-repeat measures (logical 1–8) ──────────────────────────────
+    // 1. Pre-repeat (logical 1–8)
     for (let l = startLogical; l <= Math.min(endLogical, RSTART - 1); l++) {
       if (!pushFirst(l)) return null;
     }
 
-    // ── 2. Repeat block (logical 9–24) ────────────────────────────────────
+    // 2. Repeat block (logical 9–24)
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
-    const rangeOverlapsRepeat = repStart <= repEnd;
-
-    if (rangeOverlapsRepeat) {
-      // 2a. First pass (physical 9–24)
+    if (repStart <= repEnd) {
+      // First pass
       for (let l = repStart; l <= repEnd; l++) {
         if (!pushFirst(l)) return null;
       }
-
-      // 2b. Second pass (physical 25–40 = logical 9–24 again).
-      //     Skipped when skipRepeats is true.
+      // Second pass (skipped when skipRepeats)
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
           const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
@@ -355,21 +190,19 @@ window.SONG_CONFIG = {
       }
     }
 
-    // ── 3. Post-repeat measures (logical 25–36 → physical 41–52) ──────────
-    const postStart = Math.max(startLogical, REND + 1);
-    for (let l = postStart; l <= endLogical; l++) {
+    // 3. Post-repeat (logical 25–36 → physical 41–52)
+    for (let l = Math.max(startLogical, REND + 1); l <= endLogical; l++) {
       if (!pushFirst(l)) return null;
     }
 
     return { seq, logicalSeq };
   },
 
-  // Sections use LOGICAL measure numbers (max 36).
   sections: [
-    { label: "Intro",                                  start: 1,  end: 8  },
-    { label: "Kaisi paheli — repeat block (9–24)",     start: 9,  end: 24 },
-    { label: "Kaisi paheli — second half (25–32)",     start: 25, end: 32 },
-    { label: "Outro (33–36)",                          start: 33, end: 36 },
+    { label: "Intro (1–8)",                          start: 1,  end: 8  },
+    { label: "Kaisi paheli — repeat block (9–24)",   start: 9,  end: 24 },
+    { label: "Second half (25–32)",                  start: 25, end: 32 },
+    { label: "Outro (33–36)",                        start: 33, end: 36 },
   ],
 
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
@@ -379,26 +212,36 @@ window.SONG_CONFIG = {
 
   scorePages: 2,
 
-  // ── SVG page/system coordinate map ──────────────────────────────────────
-  // Each entry: treble/bass staff Y extents (in SVG user units), plus
-  // barline_xs that bound each measure column, and start_measure (logical).
-  // Derived by analysing the StaffLines and vertical barline polylines in
-  // kaisipaheli-1.svg / kaisipaheli-2.svg (viewBox 0 0 2977.2 4208.4).
+  // ── SVG page / system coordinates ───────────────────────────────────────
+  // barline_xs derived by taking every-other real BarLine position from the SVG
+  // (the sheet contains sub-beat subdivision barlines between each measure barline).
+  // Staff Y extents from StaffLines analysis of kaisipaheli-1.svg / -2.svg.
+  //
+  // SVG viewBox: 0 0 2977.2 4208.4
   svgPageSystems: [
     // PAGE 1  (kaisipaheli-1.svg)
     [
-      { treble_top:769.8,  treble_bot:869.0,  bass_top:1030.2, bass_bot:1129.4, barline_xs:[338.8,835.7,1360.1,1918.4,2762.4],   start_measure:1  },
-      { treble_top:1546.7, treble_bot:1645.8, bass_top:1968.9, bass_bot:2068.1, barline_xs:[214.8,810.7,1461.0,2007.9,2762.4],   start_measure:5  },
-      { treble_top:2485.3, treble_bot:2584.6, bass_top:2855.5, bass_bot:2954.7, barline_xs:[214.8,816.5,1390.2,2116.7,2762.4],   start_measure:9  },
-      { treble_top:3371.9, treble_bot:3471.1, bass_top:3722.7, bass_bot:3821.9, barline_xs:[214.8,826.4,1343.1,2052.8,2762.4],   start_measure:13 },
+      { treble_top:769.8,  treble_bot:869.0,  bass_top:1030.2, bass_bot:1129.4,
+        barline_xs:[338.8, 1104.8, 1663.1, 2187.5, 2762.4],   start_measure:1  },
+      { treble_top:1546.7, treble_bot:1645.8, bass_top:1968.9, bass_bot:2068.1,
+        barline_xs:[214.8, 810.7,  1461.0, 2116.7, 2762.4],   start_measure:5  },
+      { treble_top:2485.3, treble_bot:2584.6, bass_top:2855.5, bass_bot:2954.7,
+        barline_xs:[214.8, 910.7,  1484.5, 2116.7, 2762.4],   start_measure:9  },
+      { treble_top:3371.9, treble_bot:3471.1, bass_top:3722.7, bass_bot:3821.9,
+        barline_xs:[214.8, 1343.1, 1816.2, 2289.3, 2762.4],   start_measure:13 },
     ],
     // PAGE 2  (kaisipaheli-2.svg)
     [
-      { treble_top:386.2,  treble_bot:485.4,  bass_top:697.1,  bass_bot:796.3,  barline_xs:[214.8,890.5,1648.6,2325.0,2762.4],   start_measure:17 },
-      { treble_top:1099.8, treble_bot:1199.0, bass_top:1346.7, bass_bot:1445.9, barline_xs:[214.8,925.8,1450.0,1974.3,2500.2],   start_measure:21 },
-      { treble_top:1740.0, treble_bot:1839.2, bass_top:2102.0, bass_bot:2201.2, barline_xs:[214.8,696.1,1606.5,2446.0,2762.4],   start_measure:25 },
-      { treble_top:2605.7, treble_bot:2704.9, bass_top:2949.7, bass_bot:3048.9, barline_xs:[214.8,730.3,1238.0,1854.5,2762.4],   start_measure:29 },
-      { treble_top:3343.1, treble_bot:3442.3, bass_top:3658.7, bass_bot:3757.9, barline_xs:[214.8,642.8,1236.8,1708.8,2495.0],   start_measure:33 },
+      { treble_top:386.2,  treble_bot:485.4,  bass_top:697.1,  bass_bot:796.3,
+        barline_xs:[214.8, 1129.5, 1648.6, 2126.6, 2762.4],   start_measure:17 },
+      { treble_top:1099.8, treble_bot:1199.0, bass_top:1346.7, bass_bot:1445.9,
+        barline_xs:[214.8, 925.8,  1450.0, 1974.3, 2762.4],   start_measure:21 },
+      { treble_top:1740.0, treble_bot:1839.2, bass_top:2102.0, bass_bot:2201.2,
+        barline_xs:[214.8, 1092.0, 1754.8, 2446.0, 2762.4],   start_measure:25 },
+      { treble_top:2605.7, treble_bot:2704.9, bass_top:2949.7, bass_bot:3048.9,
+        barline_xs:[214.8, 968.3,  1581.5, 2145.4, 2762.4],   start_measure:29 },
+      { treble_top:3343.1, treble_bot:3442.3, bass_top:3658.7, bass_bot:3757.9,
+        barline_xs:[214.8, 1236.8, 1708.8, 2097.2, 2495.0],   start_measure:33 },
     ],
   ],
 };
@@ -417,74 +260,28 @@ window.SONG_CONFIG = {
 </script>
 
 <div id="brandBar">
-  <!-- Score / Falling-notes toggle — left side -->
   <div id="viewToggleBar">
-      <span id="viewToggleLabel">Notes</span>
-      <label class="toggle-switch" title="Switch between falling notes and sheet music score">
-          <input type="checkbox" id="scoreModeToggle">
-          <div class="toggle-track"></div>
-          <div class="toggle-thumb"></div>
-      </label>
-      <span style="font-size:13px;font-weight:600;color:var(--text-main);">Score</span>
+    <span id="viewToggleLabel">Notes</span>
+    <label class="toggle-switch" title="Switch between falling notes and sheet music score">
+      <input type="checkbox" id="scoreModeToggle">
+      <div class="toggle-track"></div>
+      <div class="toggle-thumb"></div>
+    </label>
+    <span style="font-size:13px;font-weight:600;color:var(--text-main);">Score</span>
   </div>
-
-  <a href="" id="brandLink">
-    <span id="brandName"></span>
-  </a>
-  
-  <a href="" id="youtubeBtn" target="_blank">
-    <span id="youtubeBtnLabel">Quick Guide to Measures &amp; Sheet</span>
-  </a>
+  <a href="" id="brandLink"><span id="brandName"></span></a>
+  <a href="" id="youtubeBtn" target="_blank"><span id="youtubeBtnLabel">Quick Guide to Measures &amp; Sheet</span></a>
 </div>
 
-
-<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); const dm=document.body.classList.contains('dark-mode'); this.textContent=dm?'☀️':'🌙'; localStorage.setItem('darkMode',dm)">🌙</button>
+<button id="darkModeToggle" title="Toggle dark mode"
+  onclick="document.body.classList.toggle('dark-mode');const dm=document.body.classList.contains('dark-mode');this.textContent=dm?'☀️':'🌙';localStorage.setItem('darkMode',dm)">🌙</button>
 
 <h1 id="songTitle"></h1>
 
-<!-- PDF Access Banner -->
-<a href="/dashboard.html" style="
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 auto 6px auto;
-  padding: 9px 18px;
-  background: rgba(255,255,255,0.88);
-  border: 1px solid rgba(255, 193, 7, 0.22);
-  border-radius: 12px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1A1A1F;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
-  letter-spacing: 0.2px;
-  transition: box-shadow 0.2s, transform 0.15s;
-" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,0.12)'"
-   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.07)'">
-  📄 Access the PDF sheet from <strong>My Dashboard</strong>
-</a>
-
 <div id="paywall"></div>
 
-<!-- ===== MOUSE DEBUG OVERLAY ===== -->
-<div id="mouseDebug" style="
-  position: fixed;
-  bottom: 12px;
-  left: 12px;
-  z-index: 99999;
-  background: rgba(0,0,0,0.82);
-  color: #0f0;
-  font-family: monospace;
-  font-size: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  min-width: 300px;
-  max-width: 420px;
-  pointer-events: none;
-  line-height: 1.6;
-  display: none;
-">
+<!-- Mouse debug overlay (hidden by default, Ctrl+Shift+D to show) -->
+<div id="mouseDebug" style="position:fixed;bottom:12px;left:12px;z-index:99999;background:rgba(0,0,0,.82);color:#0f0;font-family:monospace;font-size:12px;padding:10px 14px;border-radius:10px;min-width:300px;max-width:420px;pointer-events:none;line-height:1.6;display:none;">
   <div style="color:#FFD54F;font-weight:bold;margin-bottom:4px">&#x1F5B1; Mouse Input Debug</div>
   <div id="dbg-click-count">Clicks registered: 0</div>
   <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
@@ -498,308 +295,210 @@ window.SONG_CONFIG = {
 
 <div id="app">
 
-<!-- 🎯 Training Progress Bar -->
 <div id="trainingProgress" style="display:none;">
-    <div id="trainingProgressFill"></div>
-    <span id="trainingProgressText">0%</span>
+  <div id="trainingProgressFill"></div>
+  <span id="trainingProgressText">0%</span>
 </div>
 
-<!-- 📄 Score View (hidden by default) -->
+<!-- Score View -->
 <div id="scoreView">
-<div id="scorePageWrapper">
-<div id="scoreObj" style="display:block;width:100%;overflow:visible;">
-  <div id="scorePage1" style="width:100%;"></div>
-  <div id="scorePage2" style="width:100%;"></div>
-</div>
+  <div id="scorePageWrapper">
+    <div id="scoreObj" style="display:block;width:100%;overflow:visible;">
+      <div id="scorePage1" style="width:100%;"></div>
+      <div id="scorePage2" style="width:100%;"></div>
+    </div>
     <div id="scoreHighlight" style="display:none;"></div>
   </div>
-
-  <!-- Page nav kept in DOM so JS doesn't crash, but hidden via CSS -->
   <div id="scorePageNav">
-      <button id="scorePrevBtn" disabled>‹ Prev</button>
-      <span id="scorePageLabel">Page 1 / 2</span>
-      <button id="scoreNextBtn">Next ›</button>
+    <button id="scorePrevBtn" disabled>‹ Prev</button>
+    <span id="scorePageLabel">Page 1 / 2</span>
+    <button id="scoreNextBtn">Next ›</button>
   </div>
 </div>
 
-<!-- Current note display (shown in score mode during practice) -->
 <div id="scoreNoteDisplay">
-    <span>Play:</span>
-    <span id="scoreNoteName">—</span>
-    <span id="scoreNoteHint" style="font-size:14px;opacity:0.75;"></span>
+  <span>Play:</span>
+  <span id="scoreNoteName">—</span>
+  <span id="scoreNoteHint" style="font-size:14px;opacity:0.75;"></span>
 </div>
 
-<!-- Stats Bar -->
 <div id="statsBar">
-    <div class="stat-item">
-        <span class="stat-val" id="statHold">—</span>
-        <span>Hold for</span>
-    </div>
-    <div class="stat-item notes-stat-extra">
-        <span class="stat-val" id="statAccuracy">—</span>
-        <span>Accuracy</span>
-    </div>
-    <div class="stat-item notes-stat-extra">
-        <span class="stat-val" id="statCombo">×0</span>
-        <span>Combo</span>
-    </div>
-    <div class="stat-item notes-stat-extra">
-        <span class="stat-val" id="statPerfect">0</span>
-        <span>Perfect Hits</span>
-    </div>
-    <div class="stat-item notes-stat-extra">
-        <span class="stat-val" id="statBPM">100</span>
-        <span>BPM</span>
-    </div>
-    <label title="Hide extra stats" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;white-space:nowrap;">
-        <input type="checkbox" id="notesStatsToggle" checked style="width:13px;height:13px;accent-color:#FFC107;cursor:pointer;">
-        all stats
-    </label>
+  <div class="stat-item"><span class="stat-val" id="statHold">—</span><span>Hold for</span></div>
+  <div class="stat-item notes-stat-extra"><span class="stat-val" id="statAccuracy">—</span><span>Accuracy</span></div>
+  <div class="stat-item notes-stat-extra"><span class="stat-val" id="statCombo">×0</span><span>Combo</span></div>
+  <div class="stat-item notes-stat-extra"><span class="stat-val" id="statPerfect">0</span><span>Perfect Hits</span></div>
+  <div class="stat-item notes-stat-extra"><span class="stat-val" id="statBPM">100</span><span>BPM</span></div>
+  <label title="Hide extra stats" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;white-space:nowrap;">
+    <input type="checkbox" id="notesStatsToggle" checked style="width:13px;height:13px;accent-color:#FFC107;cursor:pointer;">
+    all stats
+  </label>
 </div>
 
-<!-- Measure Timeline -->
 <div id="measureTimeline"></div>
-
-<!-- MIDI load error banner (hidden until fetch fails) -->
 <div id="midiLoadError" role="alert" aria-live="assertive"></div>
 
-<!-- Feedback right below stats box -->
 <div id="feedbackArea">
-    <div id="feedback"></div>
-    <div id="holdInfo" style="color:#333;"></div>
+  <div id="feedback"></div>
+  <div id="holdInfo" style="color:#333;"></div>
 </div>
 
 <div id="bottomDock">
+  <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
+  <div id="gameStage">
+    <div id="hitLine"></div>
+    <canvas id="canvas" width="1400"></canvas>
+  </div>
 
-    <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
+  <div id="countdownOverlay">3</div>
 
-    <!-- Game Stage wrapping the canvas -->
-    <div id="gameStage">
-      <div id="hitLine"></div>
-      <canvas id="canvas" width="1400"></canvas>
-    </div>
-
-<div id="countdownOverlay">3</div>
-<!-- 🎯 Right-side note indicators -->
-<div id="sideNoteFeedback">
-
+  <div id="sideNoteFeedback">
     <div class="side-note">
-        <div class="note-label">You pressed</div>
-        <div id="pressedNoteCircle" class="note-circle"></div>
+      <div class="note-label">You pressed</div>
+      <div id="pressedNoteCircle" class="note-circle"></div>
     </div>
-
     <div class="side-note">
-        <div class="note-label">Correct note</div>
-        <div id="correctNoteCircle" class="note-circle correct"></div>
-    </div>
-</div>
-
-<!-- ====== PRACTICE / PLAYBACK / UTILITY PANEL ====== -->
-<div id="controlPanel">
-
-  <!-- PRACTICE card -->
-  <div class="ctrl-card" id="panelPracticeCard">
-    <div class="ctrl-card-title">PRACTICE</div>
-    <div class="ctrl-row">
-      <button class="ctrl-btn" id="handLeftBtn" onclick="document.getElementById('handSelect').value='bass'; syncHandBtns()">✋ Left</button>
-      <button class="ctrl-btn active" id="handBothBtn" onclick="document.getElementById('handSelect').value='both'; syncHandBtns()">🎹 Both</button>
-      <button class="ctrl-btn" id="handRightBtn" onclick="document.getElementById('handSelect').value='treble'; syncHandBtns()">✋ Right</button>
-    </div>
-    <div class="ctrl-row" style="gap:10px; align-items:center; justify-content:center;">
-      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
-        Start Measure
-        <input id="panelStartMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
-          oninput="document.getElementById('startMeasureInput').value=this.value"
-          value="1">
-      </label>
-      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
-        End Measure
-        <input id="panelEndMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
-          oninput="document.getElementById('endMeasureInput').value=this.value"
-          value="4">
-      </label>
-    </div>
-    <!-- Song section shortcuts -->
-    <div style="margin-top:6px;">
-      <select id="sectionShortcut"
-        style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:12px;color:#555;font-weight:600;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path d=%22M1 1l5 5 5-5%22 stroke=%22%23aaa%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;"
-        onchange="(function(sel){
-          const val = sel.value;
-          if (!val) return;
-          const [s, e] = val.split('-').map(Number);
-          document.getElementById('panelStartMeasure').value = s;
-          document.getElementById('panelEndMeasure').value   = e;
-          document.getElementById('startMeasureInput').value = s;
-          document.getElementById('endMeasureInput').value   = e;
-          sel.value = '';
-        })(this)">
-        <option value="">🎵 Jump to section…</option>
-        <!-- options injected by engine from SONG_CONFIG.sections -->
-      </select>
-    </div>
-    <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
-    <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff8e1!important;color:#B45309!important;border-color:#ffe082!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
-    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,193,7,0.10);border:1.5px dashed rgba(255,193,7,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
-      <div style="font-size:11px;font-weight:700;color:#B45309;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
-      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff8e1,#fef3c7)!important;color:#92400e!important;border-color:#fde68a!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
+      <div class="note-label">Correct note</div>
+      <div id="correctNoteCircle" class="note-circle correct"></div>
     </div>
   </div>
 
-  <!-- PLAYBACK card -->
-  <div class="ctrl-card" id="panelPlaybackCard">
-    <div class="ctrl-card-title">PLAYBACK</div>
-    <div class="ctrl-row">
-      <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
-      <button class="ctrl-btn" id="beatBtn" onclick="window._panelBeatClick(this)">♩ Beat</button>
-      <button class="ctrl-btn" id="countBtn" onclick="window._panelCountClick(this)">Counting</button>
-    </div>
-    <div class="ctrl-row">
-      <button class="ctrl-btn" id="subdivBtn" onclick="window._panelSubdivClick(this)">1 &amp; 2 &amp;</button>
-    </div>
-    <div class="ctrl-speed-row">
-      <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
-      <span style="font-size:13px;color:#666;">Speed</span>
-      <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
-      <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
-    </div>
-    <div class="ctrl-speed-row" style="margin-top:6px;">
-      <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
-      <input
-        id="bpmInput"
-        type="number"
-        min="20" max="300" step="1"
-        placeholder="—"
-        style="
-          width:70px;
-          text-align:center;
-          font-size:15px;
-          font-weight:700;
-          font-family:inherit;
-          border:1px solid rgba(255,193,7,0.25);
-          border-radius:8px;
-          padding:4px 6px;
-          background:rgba(255,255,255,0.9);
-          color:var(--text-main);
-          outline:none;
-          transition:border-color 0.2s;
-        "
-        title="Type a BPM to set playback speed"
-      />
-      <button
-        id="bpmSetBtn"
-        class="ctrl-btn"
-        style="flex:0;padding:6px 10px !important;font-size:12px !important;"
-        title="Apply BPM"
-      >Set</button>
-      <button
-        id="bpmResetBtn"
-        class="ctrl-btn"
-        style="flex:0;padding:6px 8px !important;font-size:12px !important;"
-        title="Reset to original BPM"
-      >↺</button>
-    </div>
-  </div>
+  <!-- ====== CONTROL PANEL ====== -->
+  <div id="controlPanel">
 
-  <!-- UTILITY card -->
-  <div class="ctrl-card" id="panelUtilityCard">
-    <div class="ctrl-card-title">UTILITY</div>
-    <div class="ctrl-grid-2">
-      <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
-      <button class="ctrl-btn" onclick="document.getElementById('toggleNamesButton').click()">👁 Hide Note Names</button>
-      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
-        <input type="checkbox" id="panelLoopCheckbox" onchange="document.getElementById('loopCheckbox').checked=this.checked; document.getElementById('loopCheckbox').dispatchEvent(new Event('change'))">
-        🔁 Loop Section
-      </label>
-      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
-        <input type="checkbox" id="panelSkipRepeatsCheckbox" onchange="document.getElementById('skipRepeatsCheckbox').checked=this.checked; document.getElementById('skipRepeatsCheckbox').dispatchEvent(new Event('change'))">
-        ↩ Skip Repeats
-      </label>
-      <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
-    </div>
-  </div>
-
-  <!-- FEEDBACK card -->
-  <div class="ctrl-card" id="panelFeedbackCard">
-    <div id="panelFeedbackBubble"></div>
-  </div>
-
-  <!-- STATS card -->
-  <div class="ctrl-card" id="panelStatsCard">
-    <div class="ctrl-card-title" style="display:flex;align-items:center;justify-content:space-between;">
-      <span>STATS</span>
-      <label title="Show/hide stats" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;">
-        <input type="checkbox" id="scoreStatsToggle" checked style="width:13px;height:13px;accent-color:#FFC107;cursor:pointer;">
-        all
-      </label>
-    </div>
-    <div class="ctrl-stats-grid">
-      <div class="ctrl-stat-item">
-        <span class="ctrl-stat-val" id="panelStatHold">—</span>
-        <span class="ctrl-stat-label">Hold for</span>
+    <!-- PRACTICE card -->
+    <div class="ctrl-card" id="panelPracticeCard">
+      <div class="ctrl-card-title">PRACTICE</div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn" id="handLeftBtn"  onclick="document.getElementById('handSelect').value='bass';   syncHandBtns()">✋ Left</button>
+        <button class="ctrl-btn active" id="handBothBtn" onclick="document.getElementById('handSelect').value='both';   syncHandBtns()">🎹 Both</button>
+        <button class="ctrl-btn" id="handRightBtn" onclick="document.getElementById('handSelect').value='treble'; syncHandBtns()">✋ Right</button>
       </div>
-      <div class="ctrl-stat-item score-stat-extra">
-        <span class="ctrl-stat-val" id="panelStatAccuracy">—</span>
-        <span class="ctrl-stat-label">Accuracy</span>
+      <div class="ctrl-row" style="gap:10px;align-items:center;justify-content:center;">
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+          Start Measure
+          <input id="panelStartMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+            oninput="document.getElementById('startMeasureInput').value=this.value" value="1">
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+          End Measure
+          <input id="panelEndMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+            oninput="document.getElementById('endMeasureInput').value=this.value" value="4">
+        </label>
       </div>
-      <div class="ctrl-stat-item score-stat-extra">
-        <span class="ctrl-stat-val" id="panelStatCombo">×0</span>
-        <span class="ctrl-stat-label">Combo</span>
+      <div style="margin-top:6px;">
+        <select id="sectionShortcut"
+          style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:12px;color:#555;font-weight:600;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path d=%22M1 1l5 5 5-5%22 stroke=%22%23aaa%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;"
+          onchange="(function(sel){const val=sel.value;if(!val)return;const[s,e]=val.split('-').map(Number);document.getElementById('panelStartMeasure').value=s;document.getElementById('panelEndMeasure').value=e;document.getElementById('startMeasureInput').value=s;document.getElementById('endMeasureInput').value=e;sel.value=''})(this)">
+          <option value="">🎵 Jump to section…</option>
+        </select>
       </div>
-      <div class="ctrl-stat-item score-stat-extra">
-        <span class="ctrl-stat-val" id="panelStatPerfect">0</span>
-        <span class="ctrl-stat-label">Perfect</span>
-      </div>
-      <div class="ctrl-stat-item score-stat-extra">
-        <span class="ctrl-stat-val" id="panelStatBPM">100</span>
-        <span class="ctrl-stat-label">BPM</span>
+      <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
+      <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff8e1!important;color:#B45309!important;border-color:#ffe082!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
+      <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(255,193,7,.10);border:1.5px dashed rgba(255,193,7,.5);border-radius:12px;padding:8px 10px;text-align:center;">
+        <div style="font-size:11px;font-weight:700;color:#B45309;letter-spacing:.07em;margin-bottom:5px;">LISTENING…</div>
+        <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff8e1,#fef3c7)!important;color:#92400e!important;border-color:#fde68a!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
       </div>
     </div>
-    <!-- Progress bar — only visible in score mode -->
-    <div id="panelProgressWrap">
-      <div id="panelProgressBar">
-        <div id="panelProgressFill"></div>
+
+    <!-- PLAYBACK card -->
+    <div class="ctrl-card" id="panelPlaybackCard">
+      <div class="ctrl-card-title">PLAYBACK</div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
+        <button class="ctrl-btn" id="beatBtn"   onclick="window._panelBeatClick(this)">♩ Beat</button>
+        <button class="ctrl-btn" id="countBtn"  onclick="window._panelCountClick(this)">Counting</button>
       </div>
-      <div id="panelProgressText">0%</div>
+      <div class="ctrl-row">
+        <button class="ctrl-btn" id="subdivBtn" onclick="window._panelSubdivClick(this)">1 &amp; 2 &amp;</button>
+      </div>
+      <div class="ctrl-speed-row">
+        <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
+        <span style="font-size:13px;color:#666;">Speed</span>
+        <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
+        <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
+      </div>
+      <div class="ctrl-speed-row" style="margin-top:6px;">
+        <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
+        <input id="bpmInput" type="number" min="20" max="300" step="1" placeholder="—"
+          style="width:70px;text-align:center;font-size:15px;font-weight:700;font-family:inherit;border:1px solid rgba(255,193,7,.25);border-radius:8px;padding:4px 6px;background:rgba(255,255,255,.9);color:var(--text-main);outline:none;transition:border-color .2s;"
+          title="Type a BPM to set playback speed"/>
+        <button id="bpmSetBtn"   class="ctrl-btn" style="flex:0;padding:6px 10px !important;font-size:12px !important;" title="Apply BPM">Set</button>
+        <button id="bpmResetBtn" class="ctrl-btn" style="flex:0;padding:6px 8px !important;font-size:12px !important;"  title="Reset to original BPM">↺</button>
+      </div>
     </div>
-  </div>
 
-  <!-- NOTE CIRCLES card — score mode only -->
-  <div class="ctrl-card" id="panelNoteCirclesCard">
-    <div class="ctrl-card-title">NOTES</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-      <div class="panel-note-item">
-        <div class="panel-note-circle" id="panelPressedCircle"></div>
-        <span class="panel-note-circle-label">You Pressed</span>
-      </div>
-      <div class="panel-note-item">
-        <div class="panel-note-circle correct" id="panelCorrectCircle"></div>
-        <span class="panel-note-circle-label">Correct Note</span>
+    <!-- UTILITY card -->
+    <div class="ctrl-card" id="panelUtilityCard">
+      <div class="ctrl-card-title">UTILITY</div>
+      <div class="ctrl-grid-2">
+        <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
+        <button class="ctrl-btn" onclick="document.getElementById('toggleNamesButton').click()">👁 Hide Note Names</button>
+        <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+          <input type="checkbox" id="panelLoopCheckbox" onchange="document.getElementById('loopCheckbox').checked=this.checked;document.getElementById('loopCheckbox').dispatchEvent(new Event('change'))">
+          🔁 Loop Section
+        </label>
+        <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+          <input type="checkbox" id="panelSkipRepeatsCheckbox" onchange="document.getElementById('skipRepeatsCheckbox').checked=this.checked;document.getElementById('skipRepeatsCheckbox').dispatchEvent(new Event('change'))">
+          ↩ Skip Repeats
+        </label>
+        <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
       </div>
     </div>
-  </div>
 
-</div>
-<!-- ====== END PANEL ====== -->
+    <!-- FEEDBACK card -->
+    <div class="ctrl-card" id="panelFeedbackCard">
+      <div id="panelFeedbackBubble"></div>
+    </div>
 
-<div class="button-group" id="playbackControls" style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
+    <!-- STATS card -->
+    <div class="ctrl-card" id="panelStatsCard">
+      <div class="ctrl-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>STATS</span>
+        <label title="Show/hide stats" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:.04em;">
+          <input type="checkbox" id="scoreStatsToggle" checked style="width:13px;height:13px;accent-color:#FFC107;cursor:pointer;"> all
+        </label>
+      </div>
+      <div class="ctrl-stats-grid">
+        <div class="ctrl-stat-item"><span class="ctrl-stat-val" id="panelStatHold">—</span><span class="ctrl-stat-label">Hold for</span></div>
+        <div class="ctrl-stat-item score-stat-extra"><span class="ctrl-stat-val" id="panelStatAccuracy">—</span><span class="ctrl-stat-label">Accuracy</span></div>
+        <div class="ctrl-stat-item score-stat-extra"><span class="ctrl-stat-val" id="panelStatCombo">×0</span><span class="ctrl-stat-label">Combo</span></div>
+        <div class="ctrl-stat-item score-stat-extra"><span class="ctrl-stat-val" id="panelStatPerfect">0</span><span class="ctrl-stat-label">Perfect</span></div>
+        <div class="ctrl-stat-item score-stat-extra"><span class="ctrl-stat-val" id="panelStatBPM">100</span><span class="ctrl-stat-label">BPM</span></div>
+      </div>
+      <div id="panelProgressWrap">
+        <div id="panelProgressBar"><div id="panelProgressFill"></div></div>
+        <div id="panelProgressText">0%</div>
+      </div>
+    </div>
+
+    <!-- NOTE CIRCLES card -->
+    <div class="ctrl-card" id="panelNoteCirclesCard">
+      <div class="ctrl-card-title">NOTES</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div class="panel-note-item">
+          <div class="panel-note-circle" id="panelPressedCircle"></div>
+          <span class="panel-note-circle-label">You Pressed</span>
+        </div>
+        <div class="panel-note-item">
+          <div class="panel-note-circle correct" id="panelCorrectCircle"></div>
+          <span class="panel-note-circle-label">Correct Note</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end controlPanel -->
+
+  <!-- Hidden legacy controls required by engine.js -->
+  <div class="button-group" id="playbackControls" style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
     <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
-        <label>
-            Hand:
-            <select id="handSelect">
-                <option value="treble">Right Hand (Treble)</option>
-                <option value="bass">Left Hand (Bass)</option>
-                <option value="both">Both Hands</option>
-            </select>
-        </label>
-        <label>
-            Start Measure:
-            <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;">
-        </label>
-        <label>
-            End Measure:
-            <input id="endMeasureInput" type="number" min="1" value="4" style="width:60px;">
-        </label>
-        <button id="startPracticeButton">Start Practice</button>
+      <label>Hand: <select id="handSelect">
+        <option value="treble">Right Hand (Treble)</option>
+        <option value="bass">Left Hand (Bass)</option>
+        <option value="both">Both Hands</option>
+      </select></label>
+      <label>Start Measure: <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;"></label>
+      <label>End Measure:   <input id="endMeasureInput"   type="number" min="1" value="4" style="width:60px;"></label>
+      <button id="startPracticeButton">Start Practice</button>
     </div>
     <button id="stopButton">Stop</button>
     <button id="freeModeButton">Free Mode</button>
@@ -810,74 +509,50 @@ window.SONG_CONFIG = {
     <button id="countToggle">Counting</button>
     <button id="subdivisionToggle">1 &amp; 2 &amp;</button>
     <button id="languageToggle">EN</button>
-    <label style="display:flex;align-items:center;gap:6px;font-size:16px;">
-        <input type="checkbox" id="skipRepeatsCheckbox">
-        Skip repeats in sheet
-    </label>
-    <label style="display:flex;align-items:center;gap:6px;font-size:16px;">
-        <input type="checkbox" id="loopCheckbox">
-        Loop section
-    </label>
+    <label><input type="checkbox" id="skipRepeatsCheckbox"> Skip repeats in sheet</label>
+    <label><input type="checkbox" id="loopCheckbox"> Loop section</label>
     <button id="speedDown">–</button>
     <span id="speedDisplay" style="font-size:18px;min-width:60px;text-align:center;">1.0×</span>
     <button id="speedUp">+</button>
-</div>
+  </div>
 
-<div id="notesDisplay" style="display: none;">
+  <div id="notesDisplay" style="display:none;">
     <h2>Note Numbers:</h2>
     <div class="note-list" id="noteList"></div>
-</div>
-</div>   <!-- closes bottomDock -->
-</div>   <!-- closes app -->
+  </div>
+
+</div><!-- end bottomDock -->
+</div><!-- end app -->
 
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 
-<!-- Override SVG highlight colours to match warm yellow/amber Kaisi Paheli palette.
-     treble → #FFC107 amber-yellow  |  bass → #F59E0B deeper amber -->
+<!-- Recolour engine SVG highlights to amber/yellow for this song.
+     treble → #FFC107  |  bass → #F59E0B -->
 <script>
 (function () {
-  // Intercept engine.js fill colours and recolour for this song's palette.
-  const ENGINE_TREBLE_COLORS = new Set([
-    '#9B2C6E', '#9b2c6e',
-    '#E57373', '#e57373',
-    '#EF9A9A', '#ef9a9a',
-    '#16a34a', '#16A34A',
-    '#3B82F6', '#3b82f6'
-  ]);
-  const ENGINE_BASS_COLORS = new Set([
-    '#B45309', '#b45309',
-    '#FFC107', '#ffc107',
-    '#F59E0B', '#f59e0b',
-    '#FBBF24', '#fbbf24',
-    '#7C3AED', '#7c3aed',
-    '#A78BFA', '#a78bfa',
-    '#EAB308', '#eab308'
-  ]);
-  const TREBLE_COLOR = '#FFC107';   // amber-yellow
-  const BASS_COLOR   = '#F59E0B';   // deeper amber
-
-  const _origSetAttr = SVGElement.prototype.setAttribute;
-  SVGElement.prototype.setAttribute = function (name, value) {
-    if (name === 'fill') {
-      if (ENGINE_TREBLE_COLORS.has(value)) return _origSetAttr.call(this, name, TREBLE_COLOR);
-      if (ENGINE_BASS_COLORS.has(value))   return _origSetAttr.call(this, name, BASS_COLOR);
+  const TREBLE_SRCS = new Set(['#9B2C6E','#9b2c6e','#E57373','#e57373','#EF9A9A','#ef9a9a','#16a34a','#16A34A','#3B82F6','#3b82f6']);
+  const BASS_SRCS   = new Set(['#B45309','#b45309','#FFC107','#ffc107','#F59E0B','#f59e0b','#FBBF24','#fbbf24','#7C3AED','#7c3aed','#A78BFA','#a78bfa','#EAB308','#eab308']);
+  const T = '#FFC107', B = '#F59E0B';
+  const _orig = SVGElement.prototype.setAttribute;
+  SVGElement.prototype.setAttribute = function(n, v) {
+    if (n === 'fill') {
+      if (TREBLE_SRCS.has(v)) return _orig.call(this, n, T);
+      if (BASS_SRCS.has(v))   return _orig.call(this, n, B);
     }
-    return _origSetAttr.call(this, name, value);
+    return _orig.call(this, n, v);
   };
 })();
 </script>
 
 <script type="module" src="../engine.js"></script>
 
-<!-- Supabase + Paywall (shared) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabaseClient.js"></script>
 <script src="../js/paywall.js"></script>
 
-<!-- Login check + paywall trigger -->
 <script type="module">
   if (window.DEV_MODE) {
-    console.info('[DEV_MODE] Auth and paywall bypassed. Set DEV_MODE=false in config.js to go live.');
+    console.info('[DEV_MODE] Auth and paywall bypassed.');
     document.getElementById('app').style.display = 'block';
   } else if (!window.supabase) {
     console.error('[FATAL] window.supabase not initialized.');
@@ -894,9 +569,8 @@ window.SONG_CONFIG = {
       if (typeof window.showPaywall !== 'function') {
         console.error('[FATAL] window.showPaywall not defined.');
       } else {
-        const cfg = window.SONG_CONFIG;
         window.showPaywall({
-          productId: cfg.productId,
+          productId: window.SONG_CONFIG.productId,
           title: "This song is locked",
           body: "Please buy to unlock this lesson.",
           onSuccess: () => { document.getElementById('app').style.display = 'block'; }
