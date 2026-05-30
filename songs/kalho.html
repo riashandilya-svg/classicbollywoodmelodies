@@ -257,6 +257,17 @@ window.SONG_CONFIG = {
   repeatEnd:   8,
   repeatLen:   8,
 
+  // Physical measures 9-16 are the second (repeat) pass of logical measures 1-8.
+  // The default engine formula (physMeasure > REPEAT_END+1) misses physical 9,
+  // causing physical m9's notes to not be detected as repeat pass → rank mis-routing.
+  isRepeatPassPhysicalMeasure(physMeasure) {
+    return physMeasure >= 9 && physMeasure <= 16;
+  },
+
+  // The second pass starts 8 physical measures after the first pass.
+  // Engine uses this to mirror repeat-pass playTime → first-pass SVG elements.
+  repeatPhysicalOffset: 8,
+
   buildPhysicalToLogical(map) {
     for (let p = 1;  p <= 8;  p++) map[p] = p;           // first pass of repeat
     for (let p = 9;  p <= 16; p++) map[p] = p - 8;       // second pass → logical 1-8
@@ -307,11 +318,9 @@ window.SONG_CONFIG = {
 
     // Repeat block: all first-pass first, then all second-pass
     if (repStart <= repEnd) {
-      // First pass: logical 1-8 → physical 1-8
       for (let l = repStart; l <= repEnd; l++) {
         if (!pushFirst(l)) return null;
       }
-      // Second pass (when repeats are ON): logical 1-8 → physical 9-16
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
           const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
@@ -326,11 +335,6 @@ window.SONG_CONFIG = {
     for (let l = postStart; l <= endLogical; l++) {
       if (!pushFirst(l)) return null;
     }
-
-    console.log(`[REPEAT SEQ] startLogical=${startLogical} endLogical=${endLogical} skipRepeats=${skipRepeats}`);
-    console.log(`[REPEAT SEQ] repStart=${repStart} repEnd=${repEnd} repOverlap=${repStart<=repEnd}`);
-    console.log(`[REPEAT SEQ] seq=`, seq);
-    console.log(`[REPEAT SEQ] logicalSeq=`, logicalSeq);
 
     return { seq, logicalSeq };
   },
