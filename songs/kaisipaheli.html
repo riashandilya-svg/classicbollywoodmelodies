@@ -213,8 +213,12 @@ window.SONG_CONFIG = {
   scorePages: 2,
 
   // ── SVG page / system coordinates ───────────────────────────────────────
-  // barline_xs derived by taking every-other real BarLine position from the SVG
-  // (the sheet contains sub-beat subdivision barlines between each measure barline).
+  // barline_xs: actual SVG BarLine X positions, taking every-other barline to group
+  // 2 half-measure segments into 1 full 4/4 measure (MuseScore draws a subdivision
+  // barline at the half-measure boundary in every measure).
+  // Page 2 sys1 boundary at 890.5 (not 1129.5) — groups segs correctly as 4 measures.
+  // Page 2 sys3 boundary at 2114.6 (not 2446.0) — fixes the last measure grouping.
+  // All other systems confirmed against actual SVG BarLine element positions.
   // Staff Y extents from StaffLines analysis of kaisipaheli-1.svg / -2.svg.
   //
   // SVG viewBox: 0 0 2977.2 4208.4
@@ -233,11 +237,11 @@ window.SONG_CONFIG = {
     // PAGE 2  (kaisipaheli-2.svg)
     [
       { treble_top:386.2,  treble_bot:485.4,  bass_top:697.1,  bass_bot:796.3,
-        barline_xs:[214.8, 1129.5, 1648.6, 2126.6, 2762.4],   start_measure:17 },
+        barline_xs:[214.8, 890.5,  1648.6, 2126.6, 2762.4],   start_measure:17 },
       { treble_top:1099.8, treble_bot:1199.0, bass_top:1346.7, bass_bot:1445.9,
         barline_xs:[214.8, 925.8,  1450.0, 1974.3, 2762.4],   start_measure:21 },
       { treble_top:1740.0, treble_bot:1839.2, bass_top:2102.0, bass_bot:2201.2,
-        barline_xs:[214.8, 1092.0, 1754.8, 2446.0, 2762.4],   start_measure:25 },
+        barline_xs:[214.8, 1092.0, 1754.8, 2114.6, 2762.4],   start_measure:25 },
       { treble_top:2605.7, treble_bot:2704.9, bass_top:2949.7, bass_bot:3048.9,
         barline_xs:[214.8, 968.3,  1581.5, 2145.4, 2762.4],   start_measure:29 },
       { treble_top:3343.1, treble_bot:3442.3, bass_top:3658.7, bass_bot:3757.9,
