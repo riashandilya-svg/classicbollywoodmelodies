@@ -264,6 +264,21 @@ window.SONG_CONFIG = {
     { label: "Coda / ending",    start: 66, end: 71 },
   ],
 
+  // ── 6/8 measure-time fix ─────────────────────────────────────────────────
+  // The engine multiplies timeSignature[0] × secondsPerBeat(quarter) giving
+  // 6 × 0.667 = 4.0s per measure. But at 90 BPM in true 6/8, one measure =
+  // 6 eighth notes = 3 quarter notes = 2.0s. Override to use 3 × spb instead.
+  buildMeasureTimeMap: function(config, tempos, secondsPerBeat) {
+    const spm = secondsPerBeat * 3; // 3 quarter notes per 6/8 measure
+    const map = {};
+    let cursor = 0;
+    for (let m = 1; m <= config.measures; m++) {
+      map[m] = { start: cursor, end: cursor + spm };
+      cursor += spm;
+    }
+    return map;
+  },
+
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
   brandName:    "Ria Om Shandilya",
   youtubeUrl:   "https://www.youtube.com/watch?v=FaJh5yr51iw",
