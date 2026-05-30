@@ -5127,10 +5127,27 @@ function _buildSvgMidiMap() {
             // rank=0 with the genuine first note of that measure — do NOT increment the
             // rank counter so the genuine first note also gets rank=0. Both notes will
             // highlight the same SVG notehead (rank=0), which is correct.
+            //
+            // EXCEPTION — grace-first buckets: when the target bucket's rank=0 SVG element
+            // is a grace notehead (smaller scale in SVG transform), the overflow note IS
+            // that grace note visually. It must CONSUME rank=0 exclusively (increment the
+            // counter) so that the genuine first REAL note of the measure gets rank=1,
+            // mapping to the first real (non-grace) notehead in the SVG bucket.
+            // Without this, both the grace note and the real first note compete for rank=0
+            // (the grace SVG slot), causing the real note to highlight the wrong element.
+            const overflowTargetIsGraceFirst = didOverflow && !isPermanentlyEmpty &&
+                !!_bucketFirstIsGrace[bucketKey];
+
+            // When the overflow note exclusively occupies a grace slot, also count it
+            // in assignedCount so the next genuine note doesn't re-fire overflow.
+            if (overflowTargetIsGraceFirst) {
+                assignedCount[newCapKey] = (assignedCount[newCapKey] ?? 0) + 1;
+            }
+
             let rawRank;
-            if (didOverflow && !isPermanentlyEmpty) {
-                // Peek at rank=0 without consuming — the genuine first note of this
-                // bucket will also get rank=0 when it arrives.
+            if (didOverflow && !isPermanentlyEmpty && !overflowTargetIsGraceFirst) {
+                // Normal barline-straddle: peek at rank=0 without consuming — the genuine
+                // first note of this bucket will also get rank=0 when it arrives.
                 rawRank = rankCounters[bucketKey]; // don't increment
             } else {
                 rawRank = rankCounters[bucketKey]++;
