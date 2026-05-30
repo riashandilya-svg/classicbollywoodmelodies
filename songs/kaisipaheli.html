@@ -214,50 +214,37 @@ window.SONG_CONFIG = {
   scorePages: 2,
 
   // ── SVG page / system coordinates ───────────────────────────────────────
-  // barline_xs: every-other real BarLine X from the SVG (the sheet has beat-level
-  // subdivision barlines between each measure barline — we take only the measure ones).
+  // barline_xs derived by taking every-other real BarLine position from the SVG
+  // (the sheet contains sub-beat subdivision barlines between each measure barline).
   // Staff Y extents from StaffLines analysis of kaisipaheli-1.svg / -2.svg.
-  // Corrected 2026-05: fixed wrong barline positions in P1-sys4, P2-sys1..5.
   //
   // SVG viewBox: 0 0 2977.2 4208.4
   svgPageSystems: [
-    // PAGE 1  (kaisipaheli-1.svg) — 4 systems × 4 measures = m1–m16
+    // PAGE 1  (kaisipaheli-1.svg)
     [
-      // m1–m4 : pre-repeat intro (correct — unchanged)
       { treble_top:769.8,  treble_bot:869.0,  bass_top:1030.2, bass_bot:1129.4,
         barline_xs:[338.8, 1104.8, 1663.1, 2187.5, 2762.4],   start_measure:1  },
-      // m5–m8 : pre-repeat (correct — unchanged)
       { treble_top:1546.7, treble_bot:1645.8, bass_top:1968.9, bass_bot:2068.1,
         barline_xs:[214.8, 810.7,  1461.0, 2116.7, 2762.4],   start_measure:5  },
-      // m9–m12 : start of repeat block (correct — unchanged)
       { treble_top:2485.3, treble_bot:2584.6, bass_top:2855.5, bass_bot:2954.7,
         barline_xs:[214.8, 910.7,  1484.5, 2116.7, 2762.4],   start_measure:9  },
-      // m13–m16 : repeat block mid-section.
-      // Full barlines include a structural double-barline at x≈705 (mid-section marker).
-      // Taking the correct every-other measure barlines starting from that boundary:
-      // [705.2, 1106.6, 1579.7, 2052.8, 2525.8, 2762.4] → 5 slots.
-      // We use start_measure=12 so slot-0 ([194,705)=m12-tail) absorbs any pre-705 notes
-      // and the real m13–m16 notes fall in slots 1–4.  Tune start_measure if needed.
       { treble_top:3371.9, treble_bot:3471.1, bass_top:3722.7, bass_bot:3821.9,
-        barline_xs:[214.8, 705.2, 1106.6, 1579.7, 2052.8, 2525.8, 2762.4], start_measure:12 },
+        barline_xs:[214.8, 1343.1, 1816.2, 2289.3, 2762.4],   start_measure:13 },
     ],
-    // PAGE 2  (kaisipaheli-2.svg) — 5 systems × 4 measures = m17–m36
+    // PAGE 2  (kaisipaheli-2.svg)
     [
-      // m17–m20 : fixed — was using wrong every-other picks (skipped first real boundary)
       { treble_top:386.2,  treble_bot:485.4,  bass_top:697.1,  bass_bot:796.3,
-        barline_xs:[214.8, 890.5, 1368.5, 1887.6, 2325.0, 2762.4],   start_measure:17 },
-      // m21–m24 : fixed — last barline was wrong (2762.4 → 2500.2)
+        barline_xs:[214.8, 1129.5, 1648.6, 2126.6, 2762.4],   start_measure:17 },
       { treble_top:1099.8, treble_bot:1199.0, bass_top:1346.7, bass_bot:1445.9,
-        barline_xs:[214.8, 925.8,  1450.0, 1974.3, 2500.2],   start_measure:21 },
-      // m25–m28 : fixed — last barline was wrong (2762.4 → 2446.0)
+        barline_xs:[214.8, 925.8,  1450.0, 1974.3, 2762.4],   start_measure:21 },
       { treble_top:1740.0, treble_bot:1839.2, bass_top:2102.0, bass_bot:2201.2,
-        barline_xs:[214.8, 1092.0, 1754.8, 2446.0],           start_measure:25 },
-      // m29–m32 : correct — unchanged
+        barline_xs:[214.8, 1092.0, 1754.8, 2446.0, 2762.4],   start_measure:25 },
       { treble_top:2605.7, treble_bot:2704.9, bass_top:2949.7, bass_bot:3048.9,
         barline_xs:[214.8, 968.3,  1581.5, 2145.4, 2762.4],   start_measure:29 },
-      // m33–m36 : fixed — last barline was wrong (2495.0 → 2739.6)
+      // FIX: last barline corrected from 2495.0 → 2762.4 so notes at tx=2534–2690
+      // (m36 tail) are captured in the bucket instead of falling outside all slots.
       { treble_top:3343.1, treble_bot:3442.3, bass_top:3658.7, bass_bot:3757.9,
-        barline_xs:[214.8, 1236.8, 2097.2, 2739.6],           start_measure:33 },
+        barline_xs:[214.8, 1236.8, 1708.8, 2097.2, 2762.4],   start_measure:33 },
     ],
   ],
 };
