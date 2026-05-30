@@ -760,6 +760,33 @@ window.SONG_CONFIG = {
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script type="module" src="../engine.js"></script>
 
+<!-- 🔇 Suppress trill highlight on measure 41 (trill overflows SVG bucket into m42) -->
+<!-- Coordinate bounds: page-2, system-3 treble staff, x 1954–2309, y 1900–2380 (SVG units) -->
+<script type="module">
+  const _origSetAttr = SVGElement.prototype.setAttribute;
+  SVGElement.prototype.setAttribute = function(name, value) {
+    if (name === 'fill' && value && value !== 'none') {
+      const svgEl = this.ownerSVGElement;
+      if (svgEl) {
+        try {
+          const bbox = this.getBBox();
+          const ctm  = this.getCTM();
+          // Transform bbox origin to SVG coordinate space
+          // getCTM gives element→viewport; we need element coords in SVG user units
+          // For MuseScore SVGs the viewBox matches user units directly, so bbox.x/y suffice
+          const x = bbox.x, y = bbox.y;
+          // Measure 41 notehead region on page 2 (SVG viewBox 0 0 2976.38 4209.44)
+          // system 3: treble top=1936, bass bot=2321; x: 1954–2309
+          if (x >= 1950 && x <= 2315 && y >= 1890 && y <= 2330) {
+            return; // silently block — trill noteheads in m41 stay uncoloured
+          }
+        } catch (_) { /* getBBox can throw for hidden elements */ }
+      }
+    }
+    _origSetAttr.call(this, name, value);
+  };
+</script>
+
 <!-- Supabase + Paywall (shared) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabaseClient.js"></script>
