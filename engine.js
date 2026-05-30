@@ -2786,21 +2786,21 @@ const visualStart =
             // If this preview note is from the repeat pass, mirror to first-pass SVG elements
             const physMeasure = getMeasureFromTime(note.time);
             const isRepeatPass = physMeasure !== null &&
-                physMeasure >= REPEAT_START + REPEAT_LEN &&
-                physMeasure <= REPEAT_END + REPEAT_LEN;
+                physMeasure > REPEAT_END + 1 &&
+                physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
             let notesToHighlight;
             if (isRepeatPass) {
-                // Use raw MIDI time (not playTime) to locate first-pass equivalents.
-                // playTime is interleaved-index-based (repeat-pass m29 idx=2, first-pass
-                // m29 idx=1 — offset is 1×secondsPerMeasure, NOT REPEAT_LEN×secondsPerMeasure).
-                // Raw MIDI time offsets are always exactly REPEAT_LEN×secondsPerMeasure.
-                const firstPassRawTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                // Use playTime offset to locate first-pass equivalents — correctly handles
+                // interleaved playTime numbering (REPEAT_PHYSICAL_OFFSET measures apart).
+                const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                 notesToHighlight = sectionNotes.filter(n =>
-                    Math.abs(n.time - firstPassRawTime) < 0.01
+                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
                 );
                 if (!notesToHighlight.length) {
-                    // First-pass measures not in range — fall back to allMidiNotes
+                    // First-pass measures are not in the current range (e.g. range 36→37).
+                    // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
+                    const firstPassRawTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                     notesToHighlight = allMidiNotes.filter(n =>
                         Math.abs(n.time - firstPassRawTime) < 0.01
                     );
@@ -2819,6 +2819,7 @@ const visualStart =
             const seen = new Set();
             const allIndices = [];
             for (const sn of notesToHighlight) {
+                if (sn.duration < 0.1) continue; // grace note — ornamental, never highlight
                 const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                 if (seen.has(k)) continue;
                 seen.add(k);
@@ -4595,17 +4596,16 @@ addMidiFallingRectangle(
                 const ht = setTimeout(() => {
                     if (!fullSongPlaying) return;
 
-                    // Determine whether this timestamp falls in the repeat pass
-                    // (physical measures 15-21 → logical 7-13).
+                    // Determine whether this timestamp falls in the repeat pass.
                     const physMeasure = getMeasureFromTime(note.time);
                     const isRepeatPass = physMeasure !== null &&
-                        physMeasure >= REPEAT_START + REPEAT_LEN &&
-                        physMeasure <= REPEAT_END + REPEAT_LEN;
+                        physMeasure > REPEAT_END + 1 &&
+                        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
                     let notesToHighlight;
                     if (isRepeatPass) {
-                        // Mirror: find the first-pass notes at the equivalent time
-                        const firstPassTime = note.time - REPEAT_LEN * secondsPerMeasure;
+                        // Mirror: find the first-pass notes using REPEAT_PHYSICAL_OFFSET
+                        const firstPassTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
                         notesToHighlight = allMidiNotes.filter(n =>
                             Math.abs(n.time - firstPassTime) < 0.01
                         );
@@ -4624,6 +4624,7 @@ addMidiFallingRectangle(
                     const seen = new Set();
                     const allIndices = [];
                     for (const sn of notesToHighlight) {
+                        if (sn.duration < 0.1) continue; // grace note — ornamental, never highlight
                         const k = `${sn.time.toFixed(4)}|${sn.midi}|${sn.track}`;
                         if (seen.has(k)) continue;
                         seen.add(k);
@@ -5373,22 +5374,22 @@ function onTrainingNoteSpawned(noteObj) {
     // If this note is from the repeat pass, mirror to the first-pass equivalent notes
     const physMeasure = getMeasureFromTime(noteObj.time);
     const isRepeatPass = physMeasure !== null &&
-        physMeasure >= REPEAT_START + REPEAT_LEN &&
-        physMeasure <= REPEAT_END + REPEAT_LEN;
+        physMeasure > REPEAT_END + 1 &&
+        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
 
     let simultaneousNotes;
     if (isRepeatPass) {
-        // Use raw MIDI time (not playTime) to locate first-pass equivalents.
-        // playTime is interleaved-index-based (repeat-pass m29 idx=2, first-pass
-        // m29 idx=1 — offset is 1×secondsPerMeasure, NOT REPEAT_LEN×secondsPerMeasure).
-        // Raw MIDI time offsets are always exactly REPEAT_LEN×secondsPerMeasure.
-        const firstPassRawTime = noteObj.time - REPEAT_LEN * secondsPerMeasure;
+        // Use playTime offset to locate first-pass equivalents — this correctly handles
+        // the interleaved playTime numbering where repeat-pass and first-pass offsets
+        // are REPEAT_PHYSICAL_OFFSET measures apart in playTime space.
+        const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
         simultaneousNotes = practiceNotes.filter(n =>
-            Math.abs(n.time - firstPassRawTime) < 0.01
+            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
         );
         if (!simultaneousNotes.length) {
             // First-pass measures are not in the current range (e.g. range 36→37).
             // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
+            const firstPassRawTime = noteObj.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
             simultaneousNotes = allMidiNotes.filter(n =>
                 Math.abs(n.time - firstPassRawTime) < 0.01
             );
@@ -5407,12 +5408,18 @@ function onTrainingNoteSpawned(noteObj) {
     console.log(`🎵 onTrainingNoteSpawned: notePlayTime=${notePlayTime.toFixed(4)} isRepeatPass=${isRepeatPass} simultaneousNotes=${simultaneousNotes.length}`);
 
     // Deduplicate by time+midi+track so we don't double-lookup.
+    // Skip grace notes (duration < 0.1s) — they are ornamental and must never drive
+    // a score highlight. Non-overflowed grace notes get playTime ≈ 0 (same as the
+    // first real beat), so they pass the simultaneousNotes filter and would cause
+    // _svgIndicesForMidiNote to return the grace SVG element plus any bass noteheads
+    // within 6 px — incorrectly lighting up the bass clef on beat 1.
     // Also skip notes that are carried-across sustains (_bgHeldNotes) — those are
     // already physically held from a previous slot and do NOT need a new score
     // highlight. Highlighting them here causes a stray green/purple flash right
     // after a successful press before the app moves to the next musical event.
     const seen = new Set();
     for (const n of simultaneousNotes) {
+        if (n.duration < 0.1) continue; // grace note — ornamental, never highlight
         if (_bgHeldNotes && _bgHeldNotes.has(n.midi)) continue; // carried-across sustain — skip
         const k = `${n.time.toFixed(4)}|${n.midi}|${n.track}`;
         if (seen.has(k)) continue;
