@@ -110,53 +110,52 @@ window.SONG_CONFIG = {
   timeSignature: [4, 4],
 
   // ── Structural overview ──────────────────────────────────────────────────
-  // Logical measures on the sheet: 36  (m1–m36)
-  // Repeat block: logical m9–m24 (16 measures) plays TWICE, no 1st/2nd ending.
+  // MIDI analysis (45 physical measures at 120 BPM, 4/4):
+  //   Physical  1– 4  → logical  1– 4   (intro, unique)
+  //   Physical  5–12  → logical  5–12   (repeat block, first  pass, 8 measures)
+  //   Physical 13–20  → logical  5–12   (repeat block, second pass — same sheet measures)
+  //   Physical 21–28  → logical 13–20   (middle section part 1)
+  //   Physical 29–36  → logical 21–28   (middle section part 2)
+  //   Physical 37–44  → logical 29–36   (outro — same music as L5–12 written out separately)
+  //   Physical 45     → logical 29      (ending fragment, absorbed into outro)
   //
-  // Physical MIDI layout:
-  //   Physical  1– 8  →  logical  1– 8   (pre-repeat intro)
-  //   Physical  9–24  →  logical  9–24   (repeat block, first  pass)
-  //   Physical 25–40  →  logical  9–24   (repeat block, second pass)
-  //   Physical 41–52  →  logical 25–36   (post-repeat body)
+  // Logical measures on the sheet: 36  (L1–L36)
+  // Repeat block on sheet: L5–L12 (8 measures), plays twice via repeat sign.
   //
-  // Total physical measures = 8 + 16 + 16 + 12 = 52
-  measures:    52,
-  repeats:     [{ start: 9, end: 24 }],
-  repeatStart: 9,
-  repeatEnd:   24,
-  repeatLen:   16,
-  repeatPassRawTimeOffset: 32,  // physical 25 (t=48s) - physical 9 (t=16s) = 32s
+  // Total physical measures = 45
+  measures:    45,
+  repeats:     [{ start: 5, end: 12 }],
+  repeatStart: 5,
+  repeatEnd:   12,
+  repeatLen:   8,
+  repeatPassRawTimeOffset: 16,  // physical 13 (t=24s) - physical 5 (t=8s) = 16s
   pickupBeats: 0,
 
-  // Override the default repeat-pass detector.
-  // Default assumes a 1st-ending at REPEAT_END+1 (like ekladki).
-  // Kaisi Paheli has NO 1st ending — the repeat pass starts immediately at physical 25.
+  // Repeat pass = physical 13–20 (second play of the 8-measure block L5–L12).
   isRepeatPassPhysicalMeasure(p) {
-    return p >= 25 && p <= 40;   // physical 25–40 = logical 9–24 (second pass)
+    return p >= 13 && p <= 20;
   },
 
   buildPhysicalToLogical(map) {
-    for (let p = 1;  p <= 24; p++) map[p] = p;          // pre-repeat + first pass
-    for (let p = 25; p <= 40; p++) map[p] = p - 16;     // repeat pass  → logical 9–24
-    for (let p = 41; p <= 52; p++) map[p] = p - 16;     // post-repeat  → logical 25–36
+    for (let p = 1;  p <= 12; p++) map[p] = p;          // intro + repeat first pass (identity)
+    for (let p = 13; p <= 45; p++) map[p] = p - 8;      // all remaining shift by −8
     return map;
   },
 
   logicalToPhysicalFirst(logical) {
-    if (logical >= 25 && logical <= 36) return logical + 16;  // post-repeat: shift +16
-    return logical;                                            // pre-repeat / repeat block
+    if (logical >= 13 && logical <= 36) return logical + 8;  // middle + outro: shift +8
+    return logical;                                           // intro or repeat block (L1–L12)
   },
 
   logicalToPhysicalSecond(logical) {
-    if (logical >= 9 && logical <= 24) return logical + 16;   // repeat-block second pass
+    if (logical >= 5 && logical <= 12) return logical + 8;   // repeat-block second pass
     return null;
   },
 
-  // Pure block-repeat sequencer — no 1st-ending.
-  // Selecting 9–24 plays:  9,10,…,24,  9,10,…,24
+  // Sequencer: repeat block is L5–L12 (8 measures, plays twice).
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
-    const RSTART = 9, REND = 24;
+    const RSTART = 5, REND = 12;
     const seq = [], logicalSeq = [];
 
     const pushFirst = (l) => {
@@ -167,20 +166,18 @@ window.SONG_CONFIG = {
       return true;
     };
 
-    // 1. Pre-repeat (logical 1–8)
+    // 1. Pre-repeat (logical 1–4)
     for (let l = startLogical; l <= Math.min(endLogical, RSTART - 1); l++) {
       if (!pushFirst(l)) return null;
     }
 
-    // 2. Repeat block (logical 9–24)
+    // 2. Repeat block (logical 5–12)
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
     if (repStart <= repEnd) {
-      // First pass
       for (let l = repStart; l <= repEnd; l++) {
         if (!pushFirst(l)) return null;
       }
-      // Second pass (skipped when skipRepeats)
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
           const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
@@ -191,7 +188,7 @@ window.SONG_CONFIG = {
       }
     }
 
-    // 3. Post-repeat (logical 25–36 → physical 41–52)
+    // 3. Post-repeat (logical 13–36 → physical 21–44)
     for (let l = Math.max(startLogical, REND + 1); l <= endLogical; l++) {
       if (!pushFirst(l)) return null;
     }
@@ -200,10 +197,10 @@ window.SONG_CONFIG = {
   },
 
   sections: [
-    { label: "Intro (1–8)",                          start: 1,  end: 8  },
-    { label: "Kaisi paheli — repeat block (9–24)",   start: 9,  end: 24 },
-    { label: "Second half (25–32)",                  start: 25, end: 32 },
-    { label: "Outro (33–36)",                        start: 33, end: 36 },
+    { label: "Intro (1–4)",                          start: 1,  end: 4  },
+    { label: "Kaisi paheli — repeat block (5–12)",   start: 5,  end: 12 },
+    { label: "Middle section (13–28)",               start: 13, end: 28 },
+    { label: "Outro (29–36)",                        start: 29, end: 36 },
   ],
 
   brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
