@@ -174,6 +174,21 @@ const REPEAT_START = SONG_CONFIG.repeatStart || 0;
 const REPEAT_END   = SONG_CONFIG.repeatEnd   || 0;
 const REPEAT_LEN   = SONG_CONFIG.repeatLen   || 0;
 const REPEAT_PHYSICAL_OFFSET = SONG_CONFIG.repeatPhysicalOffset || 0;
+
+// Generic helper: is a given physical measure part of the repeat pass?
+// Songs can override via SONG_CONFIG.isRepeatPassPhysicalMeasure(p) → bool.
+// Default fallback: the repeat pass occupies physical measures
+// (REPEAT_END + 1) .. (REPEAT_END + REPEAT_LEN), inclusive.
+function isRepeatPassPhysicalMeasure(physMeasure) {
+  if (physMeasure === null || physMeasure === undefined) return false;
+  if (typeof SONG_CONFIG.isRepeatPassPhysicalMeasure === 'function') {
+    return SONG_CONFIG.isRepeatPassPhysicalMeasure(physMeasure);
+  }
+  if (REPEAT_LEN === 0) return false;
+  // Default matches the original engine arithmetic: repeat pass starts at REPEAT_END+2
+  // (REPEAT_END+1 is typically the 1st-ending measure, not part of the repeat pass).
+  return physMeasure > REPEAT_END + 1 && physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+}
 function buildPhysicalToLogicalMap(config) {
   const map = [];
   if (config.buildPhysicalToLogical) {
@@ -2785,9 +2800,7 @@ const visualStart =
 
             // If this preview note is from the repeat pass, mirror to first-pass SVG elements
             const physMeasure = getMeasureFromTime(note.time);
-            const isRepeatPass = physMeasure !== null &&
-                physMeasure > REPEAT_END + 1 &&
-                physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+            const isRepeatPass = isRepeatPassPhysicalMeasure(physMeasure);
 
             let notesToHighlight;
             if (isRepeatPass) {
@@ -4598,9 +4611,7 @@ addMidiFallingRectangle(
 
                     // Determine whether this timestamp falls in the repeat pass.
                     const physMeasure = getMeasureFromTime(note.time);
-                    const isRepeatPass = physMeasure !== null &&
-                        physMeasure > REPEAT_END + 1 &&
-                        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+                    const isRepeatPass = isRepeatPassPhysicalMeasure(physMeasure);
 
                     let notesToHighlight;
                     if (isRepeatPass) {
@@ -4809,25 +4820,6 @@ function _buildSvgNoteIndex() {
             if (bestIdx >= 0 && bestDist < 40) tiedNoteheadSet.add(bestIdx);
         });
 
-        // Special case — measure REPEAT_END treble, page 2:
-        // The tied whole note that continues from m(REPEAT_END-1) is correctly identified as
-        // a tied continuation and would normally be excluded. But we want it highlighted
-        // (it's visually prominent). Un-exclude it so it ends up in _svgBucketsPage2[REPEAT_END][treble].
-        if (pageNum === 2 && REPEAT_END > 0) {
-            const sysRepeatEnd = SVG_PAGE_SYSTEMS[1]?.find(s => s.start_measure === REPEAT_END);
-            if (sysRepeatEnd) {
-                for (const ri of tiedNoteheadSet) {
-                    const rn = raw[ri];
-                    const inTreble = rn.ty >= sysRepeatEnd.treble_top - 50 && rn.ty <= sysRepeatEnd.treble_bot + 50;
-                    const inMx    = rn.tx >= sysRepeatEnd.barline_xs[0] && rn.tx < sysRepeatEnd.barline_xs[1];
-                    if (inTreble && inMx) {
-                        tiedNoteheadSet.delete(ri);
-                        break; // only one tied whole note to un-exclude
-                    }
-                }
-            }
-        }
-
         totalTied += tiedNoteheadSet.size;
 
         // ── Step 3: annotate each notehead ───────────────────────────────
@@ -4856,11 +4848,15 @@ function _buildSvgNoteIndex() {
                         const idx = _svgNoteElements.length;
                         _svgNoteElements.push({ el: n.el, tx: n.tx, ty: n.ty, clef, sheet_measure, isGrace: n.isGrace, pageNum });
 
-                        // For songs with a repeat, page-2 copies of REPEAT_END go into
-                        // _svgBucketsPage2 so first-pass highlights use page-1 noteheads
-                        // and repeat-pass highlights use page-2 noteheads.
-                        const isRepeatPassPage = (REPEAT_END > 0 && pageNum >= 2 && sheet_measure === REPEAT_END);
-                        const targetBuckets = isRepeatPassPage ? _svgBucketsPage2 : _svgBuckets;
+                        // For songs with a repeat whose repeat-end measure spans multiple pages,
+                        // route page-2+ copies of that measure into _svgBucketsPage2 so
+                        // first-pass highlights (page 1) and repeat-pass highlights (page 2+) stay separate.
+                        // If the measure is only on one page (page1BucketHasData after first page),
+                        // everything goes to _svgBuckets and _svgBucketsPage2 stays empty.
+                        const page1AlreadyHasData = pageNum > 1 && REPEAT_END > 0 &&
+                            sheet_measure === REPEAT_END &&
+                            (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
+                        const targetBuckets = page1AlreadyHasData ? _svgBucketsPage2 : _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
                         break;
@@ -4985,31 +4981,13 @@ function _buildSvgMidiMap() {
             // does not fire a second time on the already-corrected sheetMeasure.
             let hardcodedGraceCorrected = false;
 
-            // REPEAT_END bass AND treble: _svgBuckets[REPEAT_END][bass|treble] is empty because the
-            // page-1 SVG only has a tied whole note (excluded as a tied continuation). The actual
-            // playable noteheads live on page 2 (_svgBucketsPage2[REPEAT_END][bass|treble]).
-            // Suppress the overflow→REPEAT_END+1 so all REPEAT_END notes stay at sheetMeasure=REPEAT_END
-            // and _svgIndicesForMidiNote can route them to the correct page-2 bucket.
-            // Only applies to songs with repeats (where this page-layout scenario occurs).
-            if (REPEAT_LEN > 0 && sheetMeasure === REPEAT_END && (clef === 'bass' || clef === 'treble')) {
-                hardcodedGraceCorrected = true;
-            }
-
-            // Grace corrections for empty-treble measures inside the repeat block,
-            // and the repeat-pass grace note that lands in logical REPEAT_END.
-            // Only applicable for songs that have a repeat section (REPEAT_LEN > 0).
-            // Empty-treble measures are REPEAT_START+1, REPEAT_START+3, REPEAT_START+5
-            // (the alternating bass-only measures in the repeat block).
-            if (REPEAT_LEN > 0 && note.duration < 0.1) {
-                const rs1 = REPEAT_START + 1, rs3 = REPEAT_START + 3, rs5 = REPEAT_START + 5;
-                if (sheetMeasure === rs1 || sheetMeasure === rs3 || sheetMeasure === rs5) {
-                    sheetMeasure += 1;
-                    hardcodedGraceCorrected = true;
-                } else if (sheetMeasure === REPEAT_END && clef === 'treble') {
-                    // Repeat pass: treble grace note for logical REPEAT_START lands in logical REPEAT_END.
-                    // Always redirect to logical REPEAT_START.
-                    // NOTE: bass clef intentionally excluded — bass REPEAT_END has genuine short notes.
-                    sheetMeasure = REPEAT_START;
+            // Song-specific grace-note and measure corrections can be provided via
+            // SONG_CONFIG.correctSheetMeasure(sheetMeasure, note, clef) → correctedMeasure | null.
+            // If it returns a number, that measure is used and overflow is suppressed.
+            if (typeof SONG_CONFIG.correctSheetMeasure === 'function') {
+                const corrected = SONG_CONFIG.correctSheetMeasure(sheetMeasure, note, clef);
+                if (corrected !== null && corrected !== undefined) {
+                    sheetMeasure = corrected;
                     hardcodedGraceCorrected = true;
                 }
             }
@@ -5071,7 +5049,7 @@ function _buildSvgMidiMap() {
             // doesn't have the key yet) and gets mis-routed to the next sheet measure.
             // Physical measure 14 is the 1st ending (NOT part of the repeat pass).
             // The repeat pass occupies physical REPEAT_END+2 .. REPEAT_END+REPEAT_LEN+1 = 15..21.
-            const isRepeatPassNote = physMeasure > REPEAT_END && physMeasure <= REPEAT_END + REPEAT_LEN;
+            const isRepeatPassNote = isRepeatPassPhysicalMeasure(physMeasure);
             const overflowKey = `${sheetMeasure}|${clef}`;
             // For permanently-empty buckets (cap===0), ALL notes must be redirected —
             // not just the first one. overflowFired only blocks re-triggering for
@@ -5080,12 +5058,12 @@ function _buildSvgMidiMap() {
             // chord member landing here needs the same redirect.
             const alreadyFired = overflowFired.has(overflowKey);
             const isPermanentlyEmpty = cap === 0;
-            // For permanently-empty buckets (cap===0): in songs WITH repeats the
-            // redirect fires on both passes (used < 2). In songs WITHOUT repeats
-            // (REPEAT_LEN === 0) an empty bucket simply means a rest-only measure
-            // in one clef — we must NOT redirect, or every subsequent rank shifts.
+            // For permanently-empty buckets (cap===0): redirect fires on both passes
+            // (used < 2) only when repeats are active — otherwise an empty bucket
+            // simply means a rest-only measure and must NOT redirect.
+            const hasRepeats = REPEAT_LEN > 0 || typeof SONG_CONFIG.isRepeatPassPhysicalMeasure === 'function';
             const emptyBucketShouldOverflow = isPermanentlyEmpty &&
-                (REPEAT_LEN > 0 ? used < 2 : false);
+                (hasRepeats ? used < 2 : false);
             // For permanently-empty buckets (cap===0) the redirect must fire on BOTH
             // passes — there are no SVG noteheads here at all, so every note landing
             // in this bucket is always wrong, regardless of first vs. repeat pass.
@@ -5378,9 +5356,7 @@ function onTrainingNoteSpawned(noteObj) {
 
     // If this note is from the repeat pass, mirror to the first-pass equivalent notes
     const physMeasure = getMeasureFromTime(noteObj.time);
-    const isRepeatPass = physMeasure !== null &&
-        physMeasure > REPEAT_END + 1 &&
-        physMeasure <= REPEAT_END + REPEAT_LEN + 1;
+    const isRepeatPass = isRepeatPassPhysicalMeasure(physMeasure);
 
     let simultaneousNotes;
     if (isRepeatPass) {
