@@ -400,21 +400,21 @@ window.SONG_CONFIG = {
       { treble_top:699.6,  treble_bot:798.8,  bass_top:960.0,  bass_bot:1059.2, barline_xs:[339,981,1453,1863,2336,2762], start_measure:1  },
       { treble_top:1578.8, treble_bot:1678.0, bass_top:1942.8, bass_bot:2042.0, barline_xs:[215,860,1276,1638,2228,2762], start_measure:6  },
       { treble_top:2561.7, treble_bot:2660.8, bass_top:2822.1, bass_bot:2921.2, barline_xs:[215,863,1356,1822,2327,2762], start_measure:11 },
-      { treble_top:3440.9, treble_bot:3540.1, bass_top:3701.3, bass_bot:3800.5, barline_xs:[215,772,1258,1764,2270,2762], start_measure:16 }
+      { treble_top:3440.9, treble_bot:3540.1, bass_top:3701.3, bass_bot:3800.5, barline_xs:[215,772,1258,1764,2270,2762], start_measure:17 }
     ],
-    // PAGE 2  (logical measures 21-40, 4 systems × 5 measures)
+    // PAGE 2  (logical measures 22-41, 4 systems × 5 measures)
     [
-      { treble_top:425.7,  treble_bot:524.9,  bass_top:692.8,  bass_bot:792.0,  barline_xs:[215,824,1337,1850,2332,2762], start_measure:21 },
-      { treble_top:1346.2, treble_bot:1445.5, bass_top:1684.5, bass_bot:1783.7, barline_xs:[215,761,1237,1736,2204,2762], start_measure:26 },
-      { treble_top:2337.9, treble_bot:2437.1, bass_top:2692.4, bass_bot:2791.6, barline_xs:[215,826,1309,1744,2312,2762], start_measure:31 },
-      { treble_top:3345.8, treble_bot:3445.0, bass_top:3672.6, bass_bot:3771.8, barline_xs:[215,832,1331,1782,2263,2762], start_measure:36 }
+      { treble_top:425.7,  treble_bot:524.9,  bass_top:692.8,  bass_bot:792.0,  barline_xs:[215,824,1337,1850,2332,2762], start_measure:22 },
+      { treble_top:1346.2, treble_bot:1445.5, bass_top:1684.5, bass_bot:1783.7, barline_xs:[215,761,1237,1736,2204,2762], start_measure:27 },
+      { treble_top:2337.9, treble_bot:2437.1, bass_top:2692.4, bass_bot:2791.6, barline_xs:[215,826,1309,1744,2312,2762], start_measure:32 },
+      { treble_top:3345.8, treble_bot:3445.0, bass_top:3672.6, bass_bot:3771.8, barline_xs:[215,832,1331,1782,2263,2762], start_measure:37 }
     ],
-    // PAGE 3  (logical measures 41-60, 4 systems × 5 measures)
+    // PAGE 3  (logical measures 42-60, 4 systems × 5 measures)
     [
-      { treble_top:396.1,  treble_bot:495.3,  bass_top:711.6,  bass_bot:810.8,  barline_xs:[215,842,1283,1776,2298,2762], start_measure:41 },
-      { treble_top:1395.9, treble_bot:1495.1, bass_top:1656.3, bass_bot:1755.5, barline_xs:[215,870,1354,1870,2320,2762], start_measure:46 },
-      { treble_top:2340.6, treble_bot:2439.8, bass_top:2663.7, bass_bot:2762.9, barline_xs:[215,848,1394,1858,2334,2762], start_measure:51 },
-      { treble_top:3348.0, treble_bot:3447.2, bass_top:3669.0, bass_bot:3768.1, barline_xs:[215,914,1394,1782,2384,2740], start_measure:56 }
+      { treble_top:396.1,  treble_bot:495.3,  bass_top:711.6,  bass_bot:810.8,  barline_xs:[215,842,1283,1776,2298,2762], start_measure:42 },
+      { treble_top:1395.9, treble_bot:1495.1, bass_top:1656.3, bass_bot:1755.5, barline_xs:[215,870,1354,1870,2320,2762], start_measure:47 },
+      { treble_top:2340.6, treble_bot:2439.8, bass_top:2663.7, bass_bot:2762.9, barline_xs:[215,848,1394,1858,2334,2762], start_measure:52 },
+      { treble_top:3348.0, treble_bot:3447.2, bass_top:3669.0, bass_bot:3768.1, barline_xs:[215,914,1394,1782,2384,2740], start_measure:57 }
     ]
   ],
 };
@@ -848,8 +848,10 @@ window.SONG_CONFIG = {
 
 <script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 
-<!-- Override SVG highlight colors to match score-mode: use #E57373 for all notes
-     instead of engine.js defaults (treble: #9B2C6E purple, bass: #B45309 gold) -->
+<!-- Override SVG highlight colors to match score-mode: use teal for all notes
+     instead of engine.js defaults (treble: #9B2C6E purple, bass: #B45309 gold).
+     Also suppresses highlights on grace noteheads (scale < 0.85 in their transform
+     matrix) — grace notes are ornamental and should not light up during practice. -->
 <script>
 (function () {
   // Colors engine.js uses for treble and bass highlights (purple, gold/amber, green)
@@ -863,10 +865,25 @@ window.SONG_CONFIG = {
     '#16a34a', '#16A34A'
   ]);
   const SCORE_MODE_COLOR = '#26A69A';
+  const GRACE_SCALE_THRESHOLD = 0.85; // matches engine.js
+
+  function isGraceNotehead(el) {
+    // Grace noteheads have a smaller scale factor in their SVG matrix transform.
+    // Check the 'a' (scale-x) component of matrix(a,b,c,d,e,f).
+    const t = el.getAttribute('transform') || '';
+    const mm = t.match(/matrix\(\s*([\d.eE+-]+)/);
+    if (!mm) return false;
+    return parseFloat(mm[1]) < GRACE_SCALE_THRESHOLD;
+  }
 
   const _origSetAttr = SVGElement.prototype.setAttribute;
   SVGElement.prototype.setAttribute = function (name, value) {
     if (name === 'fill' && ENGINE_COLORS.has(value)) {
+      // Suppress highlight on grace noteheads — they are ornamental and should
+      // not light up alongside the bass notes at the same time position.
+      if (this.classList && this.classList.contains('Note') && isGraceNotehead(this)) {
+        return; // swallow the highlight call silently
+      }
       return _origSetAttr.call(this, name, SCORE_MODE_COLOR);
     }
     return _origSetAttr.call(this, name, value);
@@ -991,4 +1008,3 @@ window.SONG_CONFIG = {
 
 </body>
 </html>
-
