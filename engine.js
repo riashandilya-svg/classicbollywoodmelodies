@@ -2804,20 +2804,36 @@ const visualStart =
 
             let notesToHighlight;
             if (isRepeatPass) {
-                // Use playTime offset to locate first-pass equivalents — correctly handles
-                // interleaved playTime numbering (REPEAT_PHYSICAL_OFFSET measures apart).
-                const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
-                notesToHighlight = sectionNotes.filter(n =>
-                    Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
-                );
+                // Strategy 1: raw-time offset — works when repeat pass has different musical content.
+                const rawTimeOffset = typeof SONG_CONFIG.repeatPassRawTimeOffset === 'number'
+                    ? SONG_CONFIG.repeatPassRawTimeOffset
+                    : (REPEAT_PHYSICAL_OFFSET > 0 ? REPEAT_PHYSICAL_OFFSET * secondsPerMeasure : null);
+
+                if (rawTimeOffset !== null) {
+                    const firstPassRawTime = note.time - rawTimeOffset;
+                    notesToHighlight = sectionNotes.filter(n =>
+                        !isRepeatPassPhysicalMeasure(getMeasureFromTime(n.time)) &&
+                        Math.abs(n.time - firstPassRawTime) < 0.015
+                    );
+                    if (!notesToHighlight.length) {
+                        notesToHighlight = allMidiNotes.filter(n =>
+                            !isRepeatPassPhysicalMeasure(getMeasureFromTime(n.time)) &&
+                            Math.abs(n.time - firstPassRawTime) < 0.015
+                        );
+                    }
+                } else {
+                    notesToHighlight = [];
+                }
+
+                // Strategy 2: playTime offset (original)
                 if (!notesToHighlight.length) {
-                    // First-pass measures are not in the current range (e.g. range 36→37).
-                    // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
-                    const firstPassRawTime = note.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
-                    notesToHighlight = allMidiNotes.filter(n =>
-                        Math.abs(n.time - firstPassRawTime) < 0.01
+                    const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
+                    notesToHighlight = sectionNotes.filter(n =>
+                        Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
                     );
                 }
+
+                // Strategy 3: last resort
                 if (!notesToHighlight.length) {
                     notesToHighlight = sectionNotes.filter(n =>
                         Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
@@ -4769,15 +4785,6 @@ function _buildSvgNoteIndex() {
 
         const pageSystems = SVG_PAGE_SYSTEMS[pageNum - 1] || [];
 
-        // Snapshot whether REPEAT_END already has data from earlier pages BEFORE
-        // processing this page's noteheads.  The check must be computed once here,
-        // not inside the per-notehead loop, because the first notehead of REPEAT_END
-        // that gets routed to _svgBuckets would immediately flip the flag from false
-        // to true, causing all subsequent noteheads of the same measure (on the same
-        // page) to be incorrectly routed to _svgBucketsPage2.
-     const repeatEndHasDataFromPriorPages = pageNum > 1 && REPEAT_END > 0 &&
-    (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
-
         // ── Step 1: collect all noteheads for this page ──────────────────
         // SVG matrix() can use comma OR space separators per spec; handle both.
         // The matrix 'a' value (scale) distinguishes grace notes (≈0.6754) from
@@ -4860,14 +4867,11 @@ function _buildSvgNoteIndex() {
                         // For songs with a repeat whose repeat-end measure spans multiple pages,
                         // route page-2+ copies of that measure into _svgBucketsPage2 so
                         // first-pass highlights (page 1) and repeat-pass highlights (page 2+) stay separate.
-                        // If the measure is only on one page (page1BucketHasData from a prior page),
+                        // If the measure is only on one page (page1BucketHasData after first page),
                         // everything goes to _svgBuckets and _svgBucketsPage2 stays empty.
-                        // NOTE: use repeatEndHasDataFromPriorPages (computed once per page, above)
-                        // rather than re-checking _svgBuckets here — the bucket check must not
-                        // be evaluated inside the per-notehead loop because the very first notehead
-                        // of REPEAT_END would flip it from false to true, routing all remaining
-                        // noteheads of that measure to _svgBucketsPage2 on the same page.
-                        const page1AlreadyHasData = sheet_measure === REPEAT_END && repeatEndHasDataFromPriorPages;
+                        const page1AlreadyHasData = pageNum > 1 && REPEAT_END > 0 &&
+                            sheet_measure === REPEAT_END &&
+                            (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
                         const targetBuckets = page1AlreadyHasData ? _svgBucketsPage2 : _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
@@ -4940,18 +4944,6 @@ function _buildSvgMidiMap() {
     for (const [m, clefs] of Object.entries(_svgBuckets)) {
         for (const c of ['treble', 'bass']) {
             bucketCapacity[`${m}|${c}`] = (clefs[c] || []).length;
-        }
-    }
-    // Also include _svgBucketsPage2 for measures where _svgBuckets has no data.
-    // This ensures REPEAT_END measures whose noteheads landed in _svgBucketsPage2
-    // (because page 1 of the sheet has them and page 2 is a repeat-pass copy)
-    // still report the correct capacity — preventing spurious cap=0 overflows.
-    for (const [m, clefs] of Object.entries(_svgBucketsPage2)) {
-        for (const c of ['treble', 'bass']) {
-            const key = `${m}|${c}`;
-            if (!bucketCapacity[key]) {
-                bucketCapacity[key] = (clefs[c] || []).length;
-            }
         }
     }
 
@@ -5384,21 +5376,39 @@ function onTrainingNoteSpawned(noteObj) {
 
     let simultaneousNotes;
     if (isRepeatPass) {
-        // Use playTime offset to locate first-pass equivalents — this correctly handles
-        // the interleaved playTime numbering where repeat-pass and first-pass offsets
-        // are REPEAT_PHYSICAL_OFFSET measures apart in playTime space.
-        const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
-        simultaneousNotes = practiceNotes.filter(n =>
-            Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
-        );
+        // Strategy 1: use raw-time offset to find first-pass notes at the same beat position.
+        // Works even when the repeat pass has different musical content than the first pass.
+        // Songs supply SONG_CONFIG.repeatPassRawTimeOffset (seconds) for this purpose;
+        // fall back to REPEAT_PHYSICAL_OFFSET * secondsPerMeasure for songs that set that.
+        const rawTimeOffset = typeof SONG_CONFIG.repeatPassRawTimeOffset === 'number'
+            ? SONG_CONFIG.repeatPassRawTimeOffset
+            : (REPEAT_PHYSICAL_OFFSET > 0 ? REPEAT_PHYSICAL_OFFSET * secondsPerMeasure : null);
+
+        if (rawTimeOffset !== null) {
+            const firstPassRawTime = noteObj.time - rawTimeOffset;
+            simultaneousNotes = practiceNotes.filter(n =>
+                !isRepeatPassPhysicalMeasure(getMeasureFromTime(n.time)) &&
+                Math.abs(n.time - firstPassRawTime) < 0.015
+            );
+            if (!simultaneousNotes.length) {
+                simultaneousNotes = allMidiNotes.filter(n =>
+                    !isRepeatPassPhysicalMeasure(getMeasureFromTime(n.time)) &&
+                    Math.abs(n.time - firstPassRawTime) < 0.015
+                );
+            }
+        } else {
+            simultaneousNotes = [];
+        }
+
+        // Strategy 2: playTime offset (original — works when both passes have identical notes)
         if (!simultaneousNotes.length) {
-            // First-pass measures are not in the current range (e.g. range 36→37).
-            // Fall back: find the first-pass equivalents by raw MIDI time in allMidiNotes.
-            const firstPassRawTime = noteObj.time - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
-            simultaneousNotes = allMidiNotes.filter(n =>
-                Math.abs(n.time - firstPassRawTime) < 0.01
+            const firstPassPlayTime = notePlayTime - REPEAT_PHYSICAL_OFFSET * secondsPerMeasure;
+            simultaneousNotes = practiceNotes.filter(n =>
+                Math.abs((n.playTime ?? n.time) - firstPassPlayTime) < 0.01
             );
         }
+
+        // Strategy 3: last resort — use repeat-pass note's own position
         if (!simultaneousNotes.length) {
             simultaneousNotes = practiceNotes.filter(n =>
                 Math.abs((n.playTime ?? n.time) - notePlayTime) < 0.01
