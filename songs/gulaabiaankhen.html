@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gulaabi Aankhen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../engine.css">
+<!-- ✏️ Per-song color override — rose/pink palette for Gulaabi Aankhen -->
+<style>
+  :root {
+    --accent-primary: #E11D74;
+    --accent-success: #22C55E;
+    --accent-error:   #EF4444;
+
+    --pink1: rgba(225, 29, 116, 0.20);
+    --pink2: rgba(251, 182, 206, 0.18);
+    --softWhite: rgba(255, 255, 255, 0.10);
+
+    --border-soft: rgba(225, 29, 116, 0.18);
+  }
+
+  /* ── Ambient glow ── */
+  body::before {
+    background: radial-gradient(circle, #fbb6ce 0%, transparent 70%) !important;
+    opacity: 0.32 !important;
+  }
+  body::after {
+    background: radial-gradient(circle, #fce7f3 0%, transparent 70%) !important;
+    opacity: 0.22 !important;
+  }
+  body {
+    background:
+      radial-gradient(900px 520px at 20% 0%,  rgba(225,29,116,0.18), transparent 60%),
+      radial-gradient(900px 520px at 85% 10%, rgba(255,255,255,0.10), transparent 62%),
+      radial-gradient(780px 480px at 50% 80%, rgba(251,182,206,0.18), transparent 60%),
+      radial-gradient(520px 320px at 35% 55%, rgba(225,29,116,0.10),  transparent 60%),
+      #ffffff !important;
+  }
+  body.dark-mode::before { background: radial-gradient(circle, #e11d74 0%, transparent 70%) !important; opacity: 0.18 !important; }
+  body.dark-mode::after  { background: radial-gradient(circle, #f472b6 0%, transparent 70%) !important; opacity: 0.10 !important; }
+
+  /* ── Brand bar border ── */
+  #brandBar {
+    border-bottom-color: rgba(225,29,116,0.18) !important;
+  }
+
+  /* ── Hit line ── */
+  #hitLine {
+    background: linear-gradient(90deg, transparent 2%, #e11d74 20%, #f472b6 50%, #e11d74 80%, transparent 98%) !important;
+    box-shadow: 0 0 12px #e11d74, 0 0 28px rgba(225,29,116,0.5) !important;
+  }
+
+  /* ── Game stage ── */
+  #gameStage {
+    background: linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,245,250,0.88) 100%) !important;
+    border-color: rgba(225,29,116,0.12) !important;
+  }
+  body.dark-mode #gameStage {
+    background: linear-gradient(180deg, rgba(30,20,28,0.88) 0%, rgba(18,10,16,0.95) 100%) !important;
+    border-color: rgba(244,114,182,0.18) !important;
+  }
+
+  /* ── Stats bar ── */
+  #statsBar {
+    border-color: rgba(225,29,116,0.13) !important;
+  }
+  body.dark-mode #statsBar {
+    border-color: rgba(244,114,182,0.18) !important;
+  }
+
+  /* ── Control cards ── */
+  .ctrl-card {
+    border-color: rgba(225,29,116,0.15) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.07), 0 2px 8px rgba(225,29,116,0.06) !important;
+  }
+  .ctrl-card:hover {
+    box-shadow: 0 18px 50px rgba(0,0,0,0.1), 0 4px 12px rgba(225,29,116,0.10) !important;
+  }
+  .ctrl-card-title {
+    color: #E11D74 !important;
+  }
+  body.dark-mode .ctrl-card {
+    border-color: rgba(244,114,182,0.25) !important;
+  }
+  body.dark-mode .ctrl-card-title {
+    color: #f472b6 !important;
+  }
+
+  /* ── Ctrl buttons ── */
+  .ctrl-btn {
+    border-color: rgba(225,29,116,0.10) !important;
+  }
+  .ctrl-btn:hover:not(:disabled) {
+    background: rgba(255,245,250,0.95) !important;
+    color: #E11D74 !important;
+    box-shadow: 0 6px 16px rgba(225,29,116,0.18) !important;
+  }
+  .ctrl-btn.active {
+    background: linear-gradient(135deg, rgba(255,245,250,0.95), rgba(252,231,243,0.95)) !important;
+    color: #E11D74 !important;
+    border-color: rgba(225,29,116,0.3) !important;
+    box-shadow: 0 4px 12px rgba(225,29,116,0.2) !important;
+  }
+  body.dark-mode .ctrl-btn:hover:not(:disabled) {
+    background: rgba(244,114,182,0.12) !important;
+    color: #f472b6 !important;
+  }
+
+  /* ── Primary button ── */
+  .ctrl-btn-primary {
+    background: linear-gradient(135deg, #f472b6, #e11d74) !important;
+    box-shadow: 0 6px 20px rgba(225,29,116,0.32) !important;
+  }
+  .ctrl-btn-primary:hover:not(:disabled) {
+    box-shadow: 0 10px 28px rgba(225,29,116,0.42) !important;
+  }
+
+  /* ── Speed row ── */
+  .ctrl-speed-row {
+    border-color: rgba(225,29,116,0.10) !important;
+  }
+  body.dark-mode .ctrl-speed-row {
+    border-color: rgba(244,114,182,0.15) !important;
+  }
+
+  /* ── Stat items ── */
+  .ctrl-stat-item {
+    border-color: rgba(225,29,116,0.10) !important;
+  }
+  body.dark-mode .ctrl-stat-item {
+    border-color: rgba(244,114,182,0.15) !important;
+  }
+
+  /* ── Panel note items ── */
+  .panel-note-item {
+    border-color: rgba(225,29,116,0.10) !important;
+  }
+  .panel-note-circle.correct {
+    background: #E11D74 !important;
+  }
+  body.dark-mode .panel-note-item {
+    border-color: rgba(244,114,182,0.15) !important;
+  }
+
+  /* ── Note circles (side feedback) — correct = pink ── */
+  .note-circle.correct {
+    background: #E11D74 !important;
+  }
+
+  /* ── Measure pip progress ── */
+  .measure-pip.done,
+  .measure-pip.active {
+    background: linear-gradient(135deg, #f472b6, #e11d74) !important;
+  }
+  .measure-pip.active {
+    box-shadow: 0 0 8px rgba(225,29,116,0.5) !important;
+  }
+
+  /* ── Training progress bar ── */
+  #trainingProgressFill,
+  #panelProgressFill {
+    background: linear-gradient(90deg, #f472b6, #e11d74, #22C55E) !important;
+  }
+  #trainingProgressText {
+    color: #E11D74 !important;
+  }
+  #trainingProgress,
+  #panelProgressBar {
+    background: rgba(225,29,116,0.12) !important;
+  }
+
+  /* ── Score highlight on SVG ── */
+  #scoreHighlight {
+    border-color: #E11D74 !important;
+    background: rgba(225,29,116,0.18) !important;
+    box-shadow: 0 0 0 4px rgba(225,29,116,0.12), 0 0 16px rgba(225,29,116,0.28) !important;
+  }
+
+  /* ── Score image border ── */
+  #scoreImg {
+    border-color: rgba(225,29,116,0.15) !important;
+  }
+
+  /* ── Falling note drop shadow ── */
+  .falling-note {
+    filter: drop-shadow(0 6px 14px rgba(225,29,116,0.35)) !important;
+  }
+
+  /* ── Score keyboard label ── */
+  #scoreKeyboardLabel {
+    color: #E11D74 !important;
+  }
+
+  /* ── Bottom dock (score mode) border ── */
+  #bottomDock.score-mode {
+    border-top-color: rgba(225,29,116,0.18) !important;
+  }
+
+  /* ── Dark mode bottom dock ── */
+  body.dark-mode #bottomDock.score-mode {
+    background: rgba(18,10,16,0.97) !important;
+  }
+
+  /* ── Accent-color for checkboxes ── */
+  #notesStatsToggle,
+  #scoreStatsToggle {
+    accent-color: #E11D74 !important;
+  }
+
+  /* ── BPM input border ── */
+  #bpmInput {
+    border-color: rgba(225,29,116,0.25) !important;
+  }
+
+  /* ── Toggle switch ── */
+  .toggle-switch input:checked + .toggle-track {
+    background: #E11D74 !important;
+  }
+
+  /* ── Dark mode score obj paper ── */
+  body.dark-mode.score-mode #scoreObj {
+    background: #fff0f6 !important;
+    box-shadow: 0 0 0 12px #fff0f6, 0 4px 32px rgba(225,29,116,0.18) !important;
+  }
+
+  /* ── Stop button pink tint ── */
+  .ctrl-btn[onclick*="stopButton"] {
+    background: #fff0f6 !important;
+    color: #E11D74 !important;
+    border-color: #fbb6ce !important;
+  }
+</style>
+</head>
+<body>
+
+<script src="../config.js"></script>
+<script>
+window.SONG_CONFIG = {
+  id:        "gulaabiaankhen",
+  title:     "Gulaabi Aankhen",
+  productId: "song:gulaabiaankhen",
+  midiFile:  "../midi/gulaabiaankhen.mid",
+  svgBase:   "../svg/gulaabiaankhen",
+  timeSignature: [4, 4],
+  measures:      84,
+  scorePages:    3,
+
+  // No sheet repeats — MIDI is linear
+  repeats: [],
+
+  pickupBeats: 0,
+
+  sections: [
+    { label: "Intro",           start: 1,  end: 6  },
+    { label: "Mukhda",          start: 7,  end: 18 },
+    { label: "Antara 1",        start: 19, end: 36 },
+    { label: "Mukhda (reprise)",start: 37, end: 48 },
+    { label: "Antara 2",        start: 49, end: 66 },
+    { label: "Mukhda (reprise)",start: 67, end: 78 },
+    { label: "Outro",           start: 79, end: 84 },
+  ],
+
+  brandUrl:     "https://riashandilya-svg.github.io/classicbollywoodmelodies/index.html",
+  brandName:    "Ria Om Shandilya",
+  youtubeUrl:   "https://www.youtube.com/watch?v=FaJh5yr51iw",
+  youtubeLabel: "Quick Guide to Measures & Sheet",
+
+  // ── Theme: rose/pink palette for "Gulaabi Aankhen" ──────────────────────────
+  themeOverride: {
+    trebleNote:        '#E11D74',
+    bassNote:          '#EAB308',
+    trebleFallTop:     'rgba(251,182,206,0.92)',
+    trebleFallMid1:    'rgba(244,114,182,0.88)',
+    trebleFallMid2:    'rgba(225,29,116,0.90)',
+    trebleFallBot:     'rgba(157,23,77,0.94)',
+    trebleFallShadow:  'rgba(244,114,182,0.55)',
+    bassFallTop:       'rgba(255,251,150,0.92)',
+    bassFallMid1:      'rgba(255,236,50,0.88)',
+    bassFallMid2:      'rgba(250,204,21,0.90)',
+    bassFallBot:       'rgba(202,138,4,0.94)',
+    bassFallShadow:    'rgba(245,158,11,0.4)',
+    whiteKeyTrebleTop: '#FBB6CE',
+    whiteKeyTrebleBot: '#F472B6',
+    whiteKeyBassTop:   '#FEF9C3',
+    whiteKeyBassBot:   '#FDE047',
+    blackKeyTrebleTop: '#F472B6',
+    blackKeyTrebleBot: '#9D174D',
+    blackKeyBassTop:   '#FEF9C3',
+    blackKeyBassBot:   '#CA8A04',
+    keyTrebleGlowShadow: '#f472b6',
+    keyTrebleGlowFillW:  'rgba(244,114,182,0.15)',
+    keyTrebleGlowFillB:  'rgba(244,114,182,0.4)',
+    keyBassGlowShadow:   '#FDE047',
+    keyBassGlowFillW:    'rgba(253,224,71,0.15)',
+    keyLabelTreble:      '#555',
+    keyLabelBass:        '#78350F',
+    fallingLabelTreble:  'rgba(255,255,255,0.95)',
+    fallingLabelBass:    'rgba(255,255,255,0.95)',
+    bpmFocusBorder:  'rgba(225,29,116,0.6)',
+    bpmFocusShadow:  'rgba(225,29,116,0.15)',
+    bpmBlurBorder:   'rgba(225,29,116,0.25)',
+  },
+
+  // svgPageSystems: measured from gulaabiaankhen-1.svg, -2.svg, -3.svg
+  // viewBox: 0 0 2976.38 4209.44
+  // 14 systems × 6 measures = 84 total
+  svgPageSystems: [
+    // PAGE 1 — m1–m6, m7–m12, m13–m18, m19–m24
+    [
+      { treble_top: 743.2,  treble_bot: 842.4,  bass_top: 1003.6, bass_bot: 1102.8, barline_xs: [338.6, 878.6, 1167.4, 1564.8, 1964.6, 2362.0, 2761.8], start_measure: 1  },
+      { treble_top: 1622.8, treble_bot: 1722.0, bass_top: 1883.3, bass_bot: 1982.5, barline_xs: [214.6, 766.3, 1170.7, 1576.1, 1889.4, 2325.6, 2761.8], start_measure: 7  },
+      { treble_top: 2502.5, treble_bot: 2601.7, bass_top: 2762.9, bass_bot: 2862.1, barline_xs: [214.6, 761.7, 1193.3, 1624.9, 2025.2, 2517.6, 2761.8], start_measure: 13 },
+      { treble_top: 3382.1, treble_bot: 3481.3, bass_top: 3724.2, bass_bot: 3823.4, barline_xs: [214.6, 746.6, 1143.2, 1538.2, 1928.4, 2357.8, 2761.8], start_measure: 19 },
+    ],
+    // PAGE 2 — m25–m30, m31–m36, m37–m42, m43–m48, m49–m54
+    [
+      { treble_top: 386.0,  treble_bot: 485.2,  bass_top: 737.5,  bass_bot: 836.7,  barline_xs: [214.6, 739.7, 1132.8, 1576.5, 1969.6, 2366.4, 2761.8], start_measure: 25 },
+      { treble_top: 1179.0, treble_bot: 1278.2, bass_top: 1494.6, bass_bot: 1593.8, barline_xs: [214.6, 753.6, 1141.3, 1510.1, 1857.2, 2330.1, 2761.8], start_measure: 31 },
+      { treble_top: 1936.1, treble_bot: 2035.3, bass_top: 2221.7, bass_bot: 2320.9, barline_xs: [214.6, 797.6, 1237.4, 1601.1, 1954.2, 2308.8, 2761.8], start_measure: 37 },
+      { treble_top: 2663.2, treble_bot: 2762.4, bass_top: 2956.6, bass_bot: 3055.9, barline_xs: [214.6, 796.4, 1228.9, 1689.0, 2108.3, 2430.8, 2761.8], start_measure: 43 },
+      { treble_top: 3398.2, treble_bot: 3497.4, bass_top: 3724.2, bass_bot: 3823.4, barline_xs: [214.6, 732.0, 1042.6, 1444.5, 1876.8, 2324.3, 2761.8], start_measure: 49 },
+    ],
+    // PAGE 3 — m55–m60, m61–m66, m67–m72, m73–m78, m79–m84
+    [
+      { treble_top: 398.7,  treble_bot: 497.9,  bass_top: 672.7,  bass_bot: 771.9,  barline_xs: [214.6, 730.7, 1132.9, 1585.1, 1995.4, 2378.6, 2761.8], start_measure: 55 },
+      { treble_top: 1076.3, treble_bot: 1175.6, bass_top: 1403.2, bass_bot: 1502.5, barline_xs: [214.6, 721.4, 1112.5, 1508.5, 1905.9, 2355.4, 2761.8], start_measure: 61 },
+      { treble_top: 1806.9, treble_bot: 1906.1, bass_top: 2149.1, bass_bot: 2248.3, barline_xs: [214.6, 737.0, 1129.8, 1526.2, 1935.2, 2356.9, 2761.8], start_measure: 67 },
+      { treble_top: 2603.6, treble_bot: 2702.8, bass_top: 2945.9, bass_bot: 3045.1, barline_xs: [214.6, 744.9, 1144.1, 1554.4, 1959.9, 2362.5, 2761.8], start_measure: 73 },
+      { treble_top: 3349.5, treble_bot: 3448.8, bass_top: 3657.5, bass_bot: 3756.7, barline_xs: [214.6, 856.8, 1379.9, 1901.7, 2423.5, 2730.7, 2757.2], start_measure: 79 },
+    ],
+  ],
+};
+</script>
+
+<script>
+  (function(){
+    if(localStorage.getItem('darkMode')==='true'){
+      document.body.classList.add('dark-mode');
+      document.addEventListener('DOMContentLoaded',function(){
+        var btn=document.getElementById('darkModeToggle');
+        if(btn) btn.textContent='☀️';
+      });
+    }
+  })();
+</script>
+
+<div id="brandBar">
+  <!-- Score / Falling-notes toggle — left side -->
+  <div id="viewToggleBar">
+      <span id="viewToggleLabel">Notes</span>
+      <label class="toggle-switch" title="Switch between falling notes and sheet music score">
+          <input type="checkbox" id="scoreModeToggle">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+      </label>
+      <span style="font-size:13px;font-weight:600;color:var(--text-main);">Score</span>
+  </div>
+
+  <a href="" id="brandLink">
+    <span id="brandName"></span>
+  </a>
+  
+  <a href="" id="youtubeBtn" target="_blank">
+    <span id="youtubeBtnLabel">Quick Guide to Measures &amp; Sheet</span>
+  </a>
+</div>
+
+
+<button id="darkModeToggle" title="Toggle dark mode" onclick="document.body.classList.toggle('dark-mode'); const dm=document.body.classList.contains('dark-mode'); this.textContent=dm?'☀️':'🌙'; localStorage.setItem('darkMode',dm)">🌙</button>
+<script>
+  (function(){
+    if(localStorage.getItem('darkMode')==='true'){
+      document.body.classList.add('dark-mode');
+      document.addEventListener('DOMContentLoaded',function(){
+        var btn=document.getElementById('darkModeToggle');
+        if(btn) btn.textContent='☀️';
+      });
+    }
+  })();
+</script>
+
+      <h1 id="songTitle"></h1>
+
+<div id="paywall"></div>
+
+<!-- ===== MOUSE DEBUG OVERLAY ===== -->
+<div id="mouseDebug" style="
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.82);
+  color: #0f0;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  min-width: 300px;
+  max-width: 420px;
+  pointer-events: none;
+  line-height: 1.6;
+  display: none;
+">
+  <div style="color:#FFD54F;font-weight:bold;margin-bottom:4px">&#x1F5B1; Mouse Input Debug</div>
+  <div id="dbg-click-count">Clicks registered: 0</div>
+  <div id="dbg-swallowed">Swallowed (guard fired): 0</div>
+  <div id="dbg-latch-state">Latched notes: -</div>
+  <div id="dbg-pressed-state">midiPressedNotes: -</div>
+  <div id="dbg-last-event">Last event: -</div>
+  <div id="dbg-hold-state">holdEvaluated: - | noteHoldStartTime: -</div>
+  <div id="dbg-training-state">trainingActive: - | waitingForInput: -</div>
+  <div style="margin-top:6px;color:#aaa;font-size:10px">Toggle: Ctrl+Shift+D</div>
+</div>
+
+      <div id="app">
+
+      <!-- 🎯 Training Progress Bar -->
+<div id="trainingProgress" style="display:none;">
+    <div id="trainingProgressFill"></div>
+    <span id="trainingProgressText">0%</span>
+</div>
+
+
+<!-- 📄 Score View (hidden by default) -->
+<div id="scoreView">
+<div id="scorePageWrapper">
+<div id="scoreObj" style="display:block;width:100%;overflow:visible;">
+  <div id="scorePage1" style="width:100%;"></div>
+  <div id="scorePage2" style="width:100%;"></div>
+  <div id="scorePage3" style="width:100%;"></div>
+</div>
+        <div id="scoreHighlight" style="display:none;"></div>
+    </div>
+
+    <div id="scorePageNav">
+        <button id="scorePrevBtn" disabled>‹ Prev</button>
+        <span id="scorePageLabel">Page 1 / 3</span>
+        <button id="scoreNextBtn">Next ›</button>
+    </div>
+</div>
+
+<!-- Current note display (shown in score mode during practice) -->
+<div id="scoreNoteDisplay">
+    <span>Play:</span>
+    <span id="scoreNoteName">—</span>
+    <span id="scoreNoteHint" style="font-size:14px;opacity:0.75;"></span>
+</div>
+<!-- Stats Bar -->
+<div id="statsBar">
+    <div class="stat-item">
+        <span class="stat-val" id="statHold">—</span>
+        <span>Hold for</span>
+    </div>
+    <div class="stat-item notes-stat-extra">
+        <span class="stat-val" id="statAccuracy">—</span>
+        <span>Accuracy</span>
+    </div>
+    <div class="stat-item notes-stat-extra">
+        <span class="stat-val" id="statCombo">×0</span>
+        <span>Combo</span>
+    </div>
+    <div class="stat-item notes-stat-extra">
+        <span class="stat-val" id="statPerfect">0</span>
+        <span>Perfect Hits</span>
+    </div>
+    <div class="stat-item notes-stat-extra">
+        <span class="stat-val" id="statBPM">100</span>
+        <span>BPM</span>
+    </div>
+    <label title="Hide extra stats" style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;white-space:nowrap;">
+        <input type="checkbox" id="notesStatsToggle" checked style="width:13px;height:13px;accent-color:#E11D74;cursor:pointer;">
+        all stats
+    </label>
+</div>
+
+<!-- Measure Timeline -->
+<div id="measureTimeline"></div>
+
+<!-- MIDI load error banner (hidden until fetch fails) -->
+<div id="midiLoadError" role="alert" aria-live="assertive"></div>
+
+<!-- Feedback right below stats box -->
+<div id="feedbackArea">
+    <div id="feedback"></div>
+    <div id="holdInfo" style="color:#333;"></div>
+</div>
+
+<div id="bottomDock">
+
+    <div id="scoreKeyboardLabel">🎹 Play the highlighted key</div>
+
+    <!-- Game Stage wrapping the canvas -->
+    <div id="gameStage">
+      <div id="hitLine"></div>
+      <canvas id="canvas" width="1400"></canvas>
+    </div>
+
+<div id="countdownOverlay">3</div>
+<!-- 🎯 Right-side note indicators -->
+<div id="sideNoteFeedback">
+
+    <div class="side-note">
+        <div class="note-label">You pressed</div>
+        <div id="pressedNoteCircle" class="note-circle"></div>
+    </div>
+
+    <div class="side-note">
+        <div class="note-label">Correct note</div>
+        <div id="correctNoteCircle" class="note-circle correct"></div>
+    </div>
+</div>
+<!-- ====== PRACTICE / PLAYBACK / UTILITY PANEL ====== -->
+<div id="controlPanel">
+
+  <!-- PRACTICE card -->
+  <div class="ctrl-card" id="panelPracticeCard">
+    <div class="ctrl-card-title">PRACTICE</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="handLeftBtn" onclick="document.getElementById('handSelect').value='bass'; syncHandBtns()">✋ Left</button>
+      <button class="ctrl-btn active" id="handBothBtn" onclick="document.getElementById('handSelect').value='both'; syncHandBtns()">🎹 Both</button>
+      <button class="ctrl-btn" id="handRightBtn" onclick="document.getElementById('handSelect').value='treble'; syncHandBtns()">✋ Right</button>
+    </div>
+    <div class="ctrl-row" style="gap:10px; align-items:center; justify-content:center;">
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+        Start Measure
+        <input id="panelStartMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+          oninput="document.getElementById('startMeasureInput').value=this.value"
+          value="1">
+      </label>
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#666;font-weight:600;">
+        End Measure
+        <input id="panelEndMeasure" type="number" min="1" style="width:64px;padding:7px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:14px;text-align:center;"
+          oninput="document.getElementById('endMeasureInput').value=this.value"
+          value="6">
+      </label>
+    </div>
+    <!-- Song section shortcuts -->
+    <div style="margin-top:6px;">
+      <select id="sectionShortcut"
+        style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid #ececec;background:#fafafa;font-size:12px;color:#555;font-weight:600;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%228%22 viewBox=%220 0 12 8%22><path d=%22M1 1l5 5 5-5%22 stroke=%22%23aaa%22 stroke-width=%221.5%22 fill=%22none%22 stroke-linecap=%22round%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;"
+        onchange="(function(sel){
+          const val = sel.value;
+          if (!val) return;
+          const [s, e] = val.split('-').map(Number);
+          document.getElementById('panelStartMeasure').value = s;
+          document.getElementById('panelEndMeasure').value   = e;
+          document.getElementById('startMeasureInput').value = s;
+          document.getElementById('endMeasureInput').value   = e;
+          sel.value = '';
+        })(this)">
+        <option value="">🎵 Jump to section…</option>
+        <!-- options injected by engine from SONG_CONFIG.sections -->
+</select>
+    </div>
+    <button class="ctrl-btn-primary" onclick="document.getElementById('startPracticeButton').click()">▶ Start Practice</button>
+    <button class="ctrl-btn" style="width:100%;margin-top:8px;background:#fff0f6!important;color:#9d174d!important;border-color:#fbb6ce!important;" onclick="document.getElementById('stopButton').click()">■ Stop</button>
+    <div id="skipPreviewBox" style="display:none;margin-top:8px;background:rgba(225,29,116,0.10);border:1.5px dashed rgba(225,29,116,0.5);border-radius:12px;padding:8px 10px;text-align:center;">
+      <div style="font-size:11px;font-weight:700;color:#9d174d;letter-spacing:0.07em;margin-bottom:5px;">LISTENING…</div>
+      <button id="skipPreviewBtn" class="ctrl-btn" style="width:100%;background:linear-gradient(135deg,#fff0f6,#fce7f3)!important;color:#9d174d!important;border-color:#fbb6ce!important;font-weight:700!important;font-size:12px!important;" onclick="window._skipPreview()">⏩ Skip to My Turn</button>
+    </div>
+  </div>
+
+  <!-- PLAYBACK card -->
+  <div class="ctrl-card" id="panelPlaybackCard">
+    <div class="ctrl-card-title">PLAYBACK</div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" onclick="document.getElementById('playSongButton').click()">▶ Play</button>
+      <button class="ctrl-btn" id="beatBtn" onclick="window._panelBeatClick(this)">♩ Beat</button>
+      <button class="ctrl-btn" id="countBtn" onclick="window._panelCountClick(this)">Counting</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="subdivBtn" onclick="window._panelSubdivClick(this)">1 &amp; 2 &amp;</button>
+    </div>
+    <div class="ctrl-speed-row">
+      <button id="panelSpeedDown" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedDown').click()">–</button>
+      <span style="font-size:13px;color:#666;">Speed</span>
+      <span class="ctrl-speed-val" id="panelSpeedDisplay">1.0×</span>
+      <button id="panelSpeedUp" class="ctrl-btn" style="flex:0;padding:10px 14px !important;" onclick="document.getElementById('speedUp').click()">+</button>
+    </div>
+    <div class="ctrl-speed-row" style="margin-top:6px;">
+      <span style="font-size:13px;color:#666;white-space:nowrap;">BPM</span>
+      <input
+        id="bpmInput"
+        type="number"
+        min="20" max="300" step="1"
+        placeholder="—"
+        style="
+          width:70px;
+          text-align:center;
+          font-size:15px;
+          font-weight:700;
+          font-family:inherit;
+          border:1px solid rgba(225,29,116,0.25);
+          border-radius:8px;
+          padding:4px 6px;
+          background:rgba(255,255,255,0.9);
+          color:var(--text-main);
+          outline:none;
+          transition:border-color 0.2s;
+        "
+        title="Type a BPM to set playback speed"
+      />
+      <button
+        id="bpmSetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 10px !important;font-size:12px !important;"
+        title="Apply BPM"
+      >Set</button>
+      <button
+        id="bpmResetBtn"
+        class="ctrl-btn"
+        style="flex:0;padding:6px 8px !important;font-size:12px !important;"
+        title="Reset to original BPM"
+      >↺</button>
+    </div>
+  </div>
+
+  <!-- UTILITY card -->
+  <div class="ctrl-card" id="panelUtilityCard">
+    <div class="ctrl-card-title">UTILITY</div>
+    <div class="ctrl-grid-2">
+      <button class="ctrl-btn" onclick="document.getElementById('freeModeButton').click()">🎹 Free Mode</button>
+      <button class="ctrl-btn" onclick="document.getElementById('toggleNamesButton').click()">👁 Hide Note Names</button>
+      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="panelLoopCheckbox" onchange="document.getElementById('loopCheckbox').checked=this.checked; document.getElementById('loopCheckbox').dispatchEvent(new Event('change'))">
+        🔁 Loop Section
+      </label>
+      <label class="ctrl-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">
+        <input type="checkbox" id="panelSkipRepeatsCheckbox" onchange="document.getElementById('skipRepeatsCheckbox').checked=this.checked; document.getElementById('skipRepeatsCheckbox').dispatchEvent(new Event('change'))">
+        ↩ Skip Repeats
+      </label>
+      <button class="ctrl-btn ctrl-grid-full" onclick="document.getElementById('resetButton').click()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- FEEDBACK card -->
+  <div class="ctrl-card" id="panelFeedbackCard">
+    <div id="panelFeedbackBubble"></div>
+  </div>
+
+  <!-- STATS card -->
+  <div class="ctrl-card" id="panelStatsCard">
+    <div class="ctrl-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>STATS</span>
+      <label title="Show/hide stats" style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:600;color:#aaa;letter-spacing:0.04em;">
+        <input type="checkbox" id="scoreStatsToggle" checked style="width:13px;height:13px;accent-color:#E11D74;cursor:pointer;">
+        all
+      </label>
+    </div>
+    <div class="ctrl-stats-grid">
+      <div class="ctrl-stat-item">
+        <span class="ctrl-stat-val" id="panelStatHold">—</span>
+        <span class="ctrl-stat-label">Hold for</span>
+      </div>
+      <div class="ctrl-stat-item score-stat-extra">
+        <span class="ctrl-stat-val" id="panelStatAccuracy">—</span>
+        <span class="ctrl-stat-label">Accuracy</span>
+      </div>
+      <div class="ctrl-stat-item score-stat-extra">
+        <span class="ctrl-stat-val" id="panelStatCombo">×0</span>
+        <span class="ctrl-stat-label">Combo</span>
+      </div>
+      <div class="ctrl-stat-item score-stat-extra">
+        <span class="ctrl-stat-val" id="panelStatPerfect">0</span>
+        <span class="ctrl-stat-label">Perfect</span>
+      </div>
+      <div class="ctrl-stat-item score-stat-extra">
+        <span class="ctrl-stat-val" id="panelStatBPM">100</span>
+        <span class="ctrl-stat-label">BPM</span>
+      </div>
+    </div>
+    <!-- Progress bar — only visible in score mode -->
+    <div id="panelProgressWrap">
+      <div id="panelProgressBar">
+        <div id="panelProgressFill"></div>
+      </div>
+      <div id="panelProgressText">0%</div>
+    </div>
+  </div>
+
+  <!-- NOTE CIRCLES card — score mode only -->
+  <div class="ctrl-card" id="panelNoteCirclesCard">
+    <div class="ctrl-card-title">NOTES</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+      <div class="panel-note-item">
+        <div class="panel-note-circle" id="panelPressedCircle"></div>
+        <span class="panel-note-circle-label">You Pressed</span>
+      </div>
+      <div class="panel-note-item">
+        <div class="panel-note-circle correct" id="panelCorrectCircle"></div>
+        <span class="panel-note-circle-label">Correct Note</span>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+<!-- ====== END PANEL ====== -->
+
+<div class="button-group" id="playbackControls" style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
+    <div id="practiceControls" style="display:flex;gap:10px;align-items:center;">
+        <label>
+            Hand:
+            <select id="handSelect">
+                <option value="treble">Right Hand (Treble)</option>
+                <option value="bass">Left Hand (Bass)</option>
+                <option value="both">Both Hands</option>
+            </select>
+        </label>
+    
+        <label>
+            Start Measure:
+            <input id="startMeasureInput" type="number" min="1" value="1" style="width:60px;">
+        </label>
+        
+        <label>
+            End Measure:
+            <input id="endMeasureInput" type="number" min="1" value="6" style="width:60px;">
+        </label>
+        
+    
+        <button id="startPracticeButton">Start Practice</button>
+    </div>
+    <button id="stopButton">Stop</button>
+    <button id="freeModeButton">Free Mode</button>
+    <button id="resetButton">Reset</button>
+    <button id="toggleNamesButton">Hide Note Names</button>
+<button id="playSongButton">Play Full Song</button>
+<button id="beatToggle">Beat</button>
+<button id="countToggle">Counting</button>
+<button id="subdivisionToggle">1 & 2 &</button>
+<button id="languageToggle">EN</button>
+    
+<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
+    <input type="checkbox" id="skipRepeatsCheckbox">
+    Skip repeats in sheet
+</label>
+
+<label style="display:flex;align-items:center;gap:6px;font-size:16px;">
+    <input type="checkbox" id="loopCheckbox">
+    Loop section
+</label>
+
+
+    <button id="speedDown">–</button>
+    <span id="speedDisplay" style="font-size:18px;min-width:60px;text-align:center;">1.0×</span>
+    <button id="speedUp">+</button>
+</div>
+
+<div id="notesDisplay" style="display: none;">
+    <h2>Note Numbers:</h2>
+    <div class="note-list" id="noteList"></div>
+</div>   <!-- closes bottomDock -->
+</div>   <!-- closes midiDisplay -->
+</div> <!-- closes app -->
+
+<script defer src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+<script type="module" src="../engine.js"></script>
+
+<!-- Supabase + Paywall (shared) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabaseClient.js"></script>
+<script src="../js/paywall.js"></script>
+
+<!-- Login check + paywall trigger -->
+<script type="module">
+  if (window.DEV_MODE) {
+    console.info('[DEV_MODE] Auth and paywall bypassed. Set DEV_MODE=false in config.js to go live.');
+    document.getElementById('app').style.display = 'block';
+  } else if (!window.supabase) {
+    console.error('[FATAL] window.supabase not initialized.');
+  } else {
+    async function requireLogin() {
+      try {
+        const { data } = await window.supabase.auth.getSession();
+        if (!data.session) { window.location.replace("/login.html"); return false; }
+        return true;
+      } catch (e) { console.error("Auth check failed.", e); return false; }
+    }
+    const loggedIn = await requireLogin();
+    if (loggedIn) {
+      if (typeof window.showPaywall !== 'function') {
+        console.error('[FATAL] window.showPaywall not defined.');
+      } else {
+        const cfg = window.SONG_CONFIG;
+        window.showPaywall({
+          productId: cfg.productId,
+          title: "This song is locked",
+          body: "Please buy to unlock this lesson.",
+          onSuccess: () => { document.getElementById('app').style.display = 'block'; }
+        });
+      }
+    }
+    window.addEventListener("pageshow", requireLogin);
+  }
+</script>
+
+</body>
+</html>
