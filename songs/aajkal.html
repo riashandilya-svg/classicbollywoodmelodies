@@ -279,6 +279,7 @@ window.SONG_CONFIG = {
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
     if (startLogical > endLogical) return null;
     const RSTART = 29, REND = 36;
+    const cfg = window.SONG_CONFIG;
     const seq = [], logicalSeq = [];
 
     const preEnd    = Math.min(endLogical,   RSTART - 1);
@@ -286,35 +287,41 @@ window.SONG_CONFIG = {
     const repEnd    = Math.min(endLogical,   REND);
     const postStart = Math.max(startLogical, REND + 1);
 
-    const pushFirst = (l) => {
-      if (l > MAX_LOGICAL_MEASURE) return false;
-      const p1 = window.SONG_CONFIG.logicalToPhysicalFirst(l);
-      if (p1 > SONG_CONFIG.measures) return false;
-      seq.push(p1); logicalSeq.push(l);
+    const pushPhysical = (p, l) => {
+      if (p == null || p > cfg.measures) return false;
+      seq.push(p); logicalSeq.push(l);
       return true;
     };
 
-    // Pre-repeat measures
+    const pushFirst = (l) => {
+      if (l > MAX_LOGICAL_MEASURE) return false;
+      const p1 = cfg.logicalToPhysicalFirst(l);
+      return pushPhysical(p1, l);
+    };
+
+    // Pre-repeat measures (logical 1-28)
     for (let l = startLogical; l <= preEnd; l++) {
       if (!pushFirst(l)) return null;
     }
 
-    // Repeat block: all first-pass first, then all second-pass
+    // Repeat block (logical 29-36):
+    //   First pass:  physical 29-36  → logical 29-36
+    //   Second pass: physical 37-44  → logical 29-36  (only when skipRepeats is false)
     if (repStart <= repEnd) {
+      // First pass
       for (let l = repStart; l <= repEnd; l++) {
         if (!pushFirst(l)) return null;
       }
+      // Second pass (the actual repeat)
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
-          const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
-          if (p2 !== null && p2 <= SONG_CONFIG.measures) {
-            seq.push(p2); logicalSeq.push(l);
-          }
+          const p2 = cfg.logicalToPhysicalSecond(l);
+          if (!pushPhysical(p2, l)) return null;
         }
       }
     }
 
-    // Post-repeat measures
+    // Post-repeat measures (logical 37-73)
     for (let l = postStart; l <= endLogical; l++) {
       if (!pushFirst(l)) return null;
     }
@@ -390,10 +397,6 @@ window.SONG_CONFIG = {
   },
 
   scorePages: 3,
-
-  repeatStart: 29,
-  repeatEnd:   36,
-  repeatLen:   8,
 
   svgPageSystems: [
     // PAGE 1
@@ -993,4 +996,3 @@ window.SONG_CONFIG = {
 
 </body>
 </html>
-
