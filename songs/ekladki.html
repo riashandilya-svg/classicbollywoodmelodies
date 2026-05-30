@@ -251,7 +251,9 @@ window.SONG_CONFIG = {
   // The MIDI contains physical measures 1-39: measures 1-14 (first pass),
   // 15-21 (repeat of logical 7-13), then 22-39 (logical 15-32).
   measures:      39,
-  repeats:       [],
+  // Tells the engine a repeat exists so it uses buildPhysicalPracticeMeasureSequence.
+  // logical 7-13 = repeat block; physical 14 = 1st ending; physical 15-21 = repeat pass.
+  repeats:       [{ start: 7, end: 13 }],
   pickupBeats:   0,
 
   // ── Repeat: physical measures 7-13 play twice in the MIDI.
@@ -300,6 +302,9 @@ window.SONG_CONFIG = {
   //     7,8,9,10,11,12,13     (second pass — repeat block only, no 1st ending)
   //     15                    (continues after repeat)
   //
+  //   Physical sequence for 7-15:  7,8,9,10,11,12,13,14, 15,16,17,18,19,20,21, 22
+  //   Logical sequence for 7-15:   7,8,9,10,11,12,13,14,  7, 8, 9,10,11,12,13, 15
+  //
   //   Measure 14 (1st ending): inserted BETWEEN first and second pass of the repeat block.
   //   It never plays after the second pass.
   buildPhysicalPracticeMeasureSequence(startLogical, endLogical, skipRepeats, { MAX_LOGICAL_MEASURE, SONG_CONFIG }) {
@@ -315,25 +320,32 @@ window.SONG_CONFIG = {
       return true;
     };
 
-    // Pre-repeat measures (1-6)
+    // ── 1. Pre-repeat measures (logical 1-6) ──────────────────────────────
     for (let l = startLogical; l <= Math.min(endLogical, RSTART - 1); l++) {
       if (!pushFirst(l)) return null;
     }
 
-    // Does this range overlap the repeat block (7-13)?
+    // ── 2. Repeat block (logical 7-13) ────────────────────────────────────
     const repStart = Math.max(startLogical, RSTART);
     const repEnd   = Math.min(endLogical,   REND);
-    if (repStart <= repEnd) {
-      // First pass of repeat block
+    const rangeOverlapsRepeat = repStart <= repEnd;
+
+    if (rangeOverlapsRepeat) {
+      // 2a. First pass of repeat block (physical 7-13)
       for (let l = repStart; l <= repEnd; l++) {
         if (!pushFirst(l)) return null;
       }
-      // 1st ending (measure 14): only insert if the full repeat block end (13) is
-      // included in this range. It slots in right after the first pass.
-      if (repEnd === REND) {
+
+      // 2b. 1st ending (logical/physical 14): only when the range reaches the end
+      //     of the repeat block (logical 13). Slots in right after the first pass.
+      //     Also include when endLogical >= FIRST_ENDING (range explicitly covers m14).
+      const includeFirstEnding = repEnd === REND && endLogical >= REND;
+      if (includeFirstEnding) {
         if (!pushFirst(FIRST_ENDING)) return null;
       }
-      // Second pass of repeat block (no 1st ending — it is skipped)
+
+      // 2c. Second pass of repeat block (physical 15-21 = logical 7-13 again).
+      //     Skipped when skipRepeats is true.
       if (!skipRepeats) {
         for (let l = repStart; l <= repEnd; l++) {
           const p2 = window.SONG_CONFIG.logicalToPhysicalSecond(l);
@@ -343,11 +355,12 @@ window.SONG_CONFIG = {
         }
       }
     } else if (startLogical <= FIRST_ENDING && endLogical >= FIRST_ENDING) {
-      // Range covers measure 14 but not the repeat block — treat as a plain measure
+      // Range covers measure 14 (1st ending) but NOT the repeat block — plain measure.
       if (!pushFirst(FIRST_ENDING)) return null;
     }
 
-    // Post-repeat measures (15+) — measure 14 is never included here
+    // ── 3. Post-repeat measures (logical 15-32 → physical 22-39) ──────────
+    //     postStart is always >= 15 so it never re-enters the repeat block.
     const postStart = Math.max(startLogical, FIRST_ENDING + 1);
     for (let l = postStart; l <= endLogical; l++) {
       if (!pushFirst(l)) return null;
