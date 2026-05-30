@@ -4769,6 +4769,15 @@ function _buildSvgNoteIndex() {
 
         const pageSystems = SVG_PAGE_SYSTEMS[pageNum - 1] || [];
 
+        // Snapshot whether REPEAT_END already has data from earlier pages BEFORE
+        // processing this page's noteheads.  The check must be computed once here,
+        // not inside the per-notehead loop, because the first notehead of REPEAT_END
+        // that gets routed to _svgBuckets would immediately flip the flag from false
+        // to true, causing all subsequent noteheads of the same measure (on the same
+        // page) to be incorrectly routed to _svgBucketsPage2.
+        const repeatEndHasDataFromPriorPages = pageNum > 1 && REPEAT_END > 0 &&
+            (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
+
         // ── Step 1: collect all noteheads for this page ──────────────────
         // SVG matrix() can use comma OR space separators per spec; handle both.
         // The matrix 'a' value (scale) distinguishes grace notes (≈0.6754) from
@@ -4851,11 +4860,14 @@ function _buildSvgNoteIndex() {
                         // For songs with a repeat whose repeat-end measure spans multiple pages,
                         // route page-2+ copies of that measure into _svgBucketsPage2 so
                         // first-pass highlights (page 1) and repeat-pass highlights (page 2+) stay separate.
-                        // If the measure is only on one page (page1BucketHasData after first page),
+                        // If the measure is only on one page (page1BucketHasData from a prior page),
                         // everything goes to _svgBuckets and _svgBucketsPage2 stays empty.
-                        const page1AlreadyHasData = pageNum > 1 && REPEAT_END > 0 &&
-                            sheet_measure === REPEAT_END &&
-                            (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
+                        // NOTE: use repeatEndHasDataFromPriorPages (computed once per page, above)
+                        // rather than re-checking _svgBuckets here — the bucket check must not
+                        // be evaluated inside the per-notehead loop because the very first notehead
+                        // of REPEAT_END would flip it from false to true, routing all remaining
+                        // noteheads of that measure to _svgBucketsPage2 on the same page.
+                        const page1AlreadyHasData = sheet_measure === REPEAT_END && repeatEndHasDataFromPriorPages;
                         const targetBuckets = page1AlreadyHasData ? _svgBucketsPage2 : _svgBuckets;
                         if (!targetBuckets[sheet_measure]) targetBuckets[sheet_measure] = { treble: [], bass: [] };
                         targetBuckets[sheet_measure][clef].push(idx);
@@ -4928,6 +4940,18 @@ function _buildSvgMidiMap() {
     for (const [m, clefs] of Object.entries(_svgBuckets)) {
         for (const c of ['treble', 'bass']) {
             bucketCapacity[`${m}|${c}`] = (clefs[c] || []).length;
+        }
+    }
+    // Also include _svgBucketsPage2 for measures where _svgBuckets has no data.
+    // This ensures REPEAT_END measures whose noteheads landed in _svgBucketsPage2
+    // (because page 1 of the sheet has them and page 2 is a repeat-pass copy)
+    // still report the correct capacity — preventing spurious cap=0 overflows.
+    for (const [m, clefs] of Object.entries(_svgBucketsPage2)) {
+        for (const c of ['treble', 'bass']) {
+            const key = `${m}|${c}`;
+            if (!bucketCapacity[key]) {
+                bucketCapacity[key] = (clefs[c] || []).length;
+            }
         }
     }
 
