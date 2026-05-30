@@ -325,6 +325,14 @@ window.SONG_CONFIG = {
       { treble_top:3346.0, treble_bot:3557.0, bass_top:3693.1, bass_bot:3792.3, barline_xs:[214.8,777.5,1181.0,1584.5,2070.2,2473.7,2757.8],                 start_measure:66 },
     ],
   ],
+
+  // Measure 1 has a bass rest in the SVG (melody-only intro), but the MIDI
+  // contains bass notes timed to m1. Redirect them to m2 so they highlight
+  // the correct noteheads (the bass enters visually at measure 2).
+  correctSheetMeasure(sheetMeasure, note, clef) {
+    if (sheetMeasure === 1 && clef === 'bass') return 2;
+    return null;
+  },
 };
 </script>
 
@@ -377,28 +385,9 @@ window.SONG_CONFIG = {
 
       <h1 id="songTitle"></h1>
 
-<!-- PDF Access Banner -->
-<a href="/dashboard.html" style="
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 auto 6px auto;
-  padding: 9px 18px;
-  background: rgba(255,255,255,0.88);
-  border: 1px solid rgba(235, 50, 70, 0.22);
-  border-radius: 12px;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1A1A1F;
-  text-decoration: none;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.07);
-  letter-spacing: 0.2px;
-  transition: box-shadow 0.2s, transform 0.15s;
-" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 18px rgba(0,0,0,0.12)'"
-   onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(0,0,0,0.07)'">
-  📄 Access the PDF sheet from <strong>My Dashboard</strong>
-</a>
+
+
+
 
 
 
