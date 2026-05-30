@@ -125,6 +125,7 @@ window.SONG_CONFIG = {
   repeatStart: 9,
   repeatEnd:   24,
   repeatLen:   16,
+  repeatPassRawTimeOffset: 32,  // physical 25 (t=48s) - physical 9 (t=16s) = 32s
   pickupBeats: 0,
 
   // Override the default repeat-pass detector.
@@ -553,42 +554,6 @@ window.SONG_CONFIG = {
 </script>
 
 <script type="module" src="../engine.js"></script>
-
-<!-- ── REPEAT HIGHLIGHT DEBUG — remove when done ── -->
-<script type="module">
-setTimeout(() => {
-  const orig = window.onTrainingNoteSpawned;
-  if (typeof orig !== "function") {
-    console.warn("[DEBUG] onTrainingNoteSpawned not on window — engine may not expose it");
-    return;
-  }
-  window.onTrainingNoteSpawned = function(noteObj) {
-    const RPIO = window.SONG_CONFIG?.repeatPhysicalOffset ?? 0;
-    const SPM  = window.secondsPerMeasure ?? 2;
-    const playT = noteObj.playTime ?? noteObj.time;
-    const rawT  = noteObj.time;
-    const m25start = window.MEASURE_TIME_MAP?.[25]?.start ?? Infinity;
-    const m41start = window.MEASURE_TIME_MAP?.[41]?.start ?? Infinity;
-    const isRepeat = rawT >= m25start && rawT < m41start;
-    if (isRepeat) {
-      const offset    = RPIO * SPM;
-      const fpPlayTime = playT - offset;
-      const fpRawTime  = rawT  - offset;
-      const pn = window.practiceNotes ?? [];
-      const near = pn.filter(n => Math.abs((n.playTime ?? n.time) - fpPlayTime) < 0.05)
-                     .map(n => "midi="+n.midi+" rawT="+n.time.toFixed(4)+" playT="+(n.playTime??n.time).toFixed(4)+" phys="+n.physicalMeasure);
-      console.group("🔁 REPEAT midi="+noteObj.midi+" rawT="+rawT.toFixed(4)+" playT="+playT.toFixed(4));
-      console.log("  RPIO="+RPIO+"  SPM="+SPM.toFixed(4)+"  offset="+offset.toFixed(4));
-      console.log("  firstPassPlayTime="+fpPlayTime.toFixed(4)+"  firstPassRawTime="+fpRawTime.toFixed(4));
-      console.log("  practiceNotes near fpPlayTime (±0.05s): ["+near.length+"]", near);
-      console.groupEnd();
-    }
-    return orig.call(this, noteObj);
-  };
-  console.log("[DEBUG] patch applied ✅");
-}, 3000);
-</script>
-<!-- ── END DEBUG ── -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabaseClient.js"></script>
