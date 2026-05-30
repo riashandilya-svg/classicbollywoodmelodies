@@ -4775,8 +4775,8 @@ function _buildSvgNoteIndex() {
         // that gets routed to _svgBuckets would immediately flip the flag from false
         // to true, causing all subsequent noteheads of the same measure (on the same
         // page) to be incorrectly routed to _svgBucketsPage2.
-        const repeatEndHasDataFromPriorPages = pageNum > 1 && REPEAT_END > 0 &&
-            (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
+     const repeatEndHasDataFromPriorPages = pageNum > 1 && REPEAT_END > 0 &&
+    (_svgBuckets[REPEAT_END]?.treble?.length > 0 || _svgBuckets[REPEAT_END]?.bass?.length > 0);
 
         // ── Step 1: collect all noteheads for this page ──────────────────
         // SVG matrix() can use comma OR space separators per spec; handle both.
