@@ -5226,13 +5226,18 @@ function _svgIndicesForMidiNote(noteObj, hand) {
     const { clef } = entry;
     if (hand !== 'both' && clef !== hand) return [];
 
-    // For songs with a repeat, REPEAT_END noteheads live in _svgBucketsPage2
-    // (the page-1 copy only has a tied whole note which is excluded from the bucket).
-    // Both first-pass and repeat-pass notes for that measure use _svgBucketsPage2.
+    // For songs with a repeat, REPEAT_END noteheads may live in _svgBucketsPage2
+    // (when the page-1 copy only has a tied whole note that was excluded from the bucket).
+    // However, if REPEAT_END falls on page 1 (e.g. ekladki where m13 is on page 1),
+    // _svgBuckets[REPEAT_END] will have real data and must be used directly.
+    // Rule: prefer _svgBuckets when it has entries for this measure; only fall back to
+    // _svgBucketsPage2 when the primary bucket is empty (the original page-2 case).
     const physMeasure2 = REPEAT_END > 0 ? getMeasureFromTime(noteObj.time) : null;
     const isRepeatPass2 = REPEAT_END > 0 && entry.sheet_measure === REPEAT_END &&
                           physMeasure2 !== null && physMeasure2 > REPEAT_END;
-    const bucketSource = (REPEAT_END > 0 && (isRepeatPass2 || entry.sheet_measure === REPEAT_END))
+    const page1BucketHasData = REPEAT_END > 0 && entry.sheet_measure === REPEAT_END &&
+                               (_svgBuckets[REPEAT_END]?.[entry.clef]?.length ?? 0) > 0;
+    const bucketSource = (REPEAT_END > 0 && (isRepeatPass2 || entry.sheet_measure === REPEAT_END) && !page1BucketHasData)
         ? _svgBucketsPage2
         : _svgBuckets;
 
